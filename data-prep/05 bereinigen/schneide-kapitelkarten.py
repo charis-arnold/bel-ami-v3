@@ -41,7 +41,7 @@ SKRIPT = os.path.dirname(os.path.abspath(__file__))
 DATA_PREP = os.path.dirname(SKRIPT)
 ROOT = os.path.dirname(DATA_PREP)
 KARTEN = os.path.join(ROOT, "bilder-karten")
-BASIS = os.path.join(DATA_PREP, "export", "cas scrollytelling - paris kapitelkarte.png")
+BASIS = os.path.join(DATA_PREP, "00 qgis-quellen", "cas scrollytelling - paris kapitelkarte.png")
 
 # EPSG:3857, wie aus QGIS exportiert
 BASIS_3857 = {"xmin": 247907.651, "ymin": 6244994.107, "xmax": 270857.651, "ymax": 6256724.107}
