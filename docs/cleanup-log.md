@@ -986,3 +986,95 @@ wäre ein Neubau, dem 63 Zeilen altes CSS wenig helfen.
 
 **Am sichtbaren Verhalten ändert sich nichts** — die Regeln trafen seit dem
 Initial Commit auf kein einziges Element im DOM.
+
+---
+
+## Schritt 9 — Irreführendes `OV_`-Präfix an drei Namen bereinigt
+
+**Datum:** 20. August 2026
+**Dateien:** `uebersichtsrouten.js`, `ortsveraenderung.js`
+**Ausgangsfassung:** Commit `3754a90`
+**Ergebnis:** 10 Einfügungen, 14 Löschungen — reine Umbenennung plus eine
+gestrichene Kommentarnotiz
+
+### Der Fund
+
+Drei Namen in `uebersichtsrouten.js` trugen das Präfix `OV_`/`ov`, das im
+Projekt für den Schlussakt „Ortsveränderung" steht — sie gehören aber zu
+`kapitelScheiben()`/`kapitelHitze()` im Übersichtsrouten-Akt. Die
+Modularisierung hatte sie deshalb bewusst **nicht** nach `ortsveraenderung.js`
+verschoben (siehe `docs/modularisierung-log.md`, Modul 2), das falsche Präfix
+aber stehen lassen.
+
+Der Preis dafür stand in `ortsveraenderung.js`: eine dreizeilige Notiz im
+Dateikopf, die einzig existierte, um die Nichtzugehörigkeit zu erklären — und
+deren Ortsangabe („sind in sketch.js geblieben") nach der Modularisierung
+ohnehin überholt war.
+
+### Was wurde umbenannt
+
+| alt | neu | Vorkommen |
+|---|---|---|
+| `OV_SCHEIBE_GRUNDANTEIL` | `KAPITEL_SCHEIBE_GRUNDANTEIL` | 3 (Zeilen 87, 96, 97) |
+| `OV_NACHGLUEHEN` | `KAPITEL_NACHGLUEHEN` | 3 (Zeilen 104, 123, 128) |
+| `ovScheiben` | `scheibenCache` | 5 (Zeilen 88, 91 ×2, 112, 113) |
+
+Dazu ersatzlos gestrichen: die Notiz in `ortsveraenderung.js:29–31` samt
+zugehöriger Leerzeile. Sie ist mit dem Präfix gegenstandslos geworden — das
+ist der eigentliche Gewinn der Umbenennung: der Kommentar musste nicht
+korrigiert werden, er entfällt.
+
+### Warum `scheibenCache` und nicht `kapitelScheibenCache`
+
+Der naheliegende Name hätte `kapitelScheiben` als Teilstring enthalten, womit
+eine Suche nach der Funktion `kapitelScheiben` auch den Cache gefunden hätte.
+Nach mehreren Schritten, deren Sicherheit ausschliesslich auf grep-basierten
+Referenzprüfungen beruhte (siehe u.a. den methodischen Hinweis in
+[Schritt 8](#schritt-8--verwaistes-css-des-dom-spine-panels-entfernt)), ist
+Trennschärfe bei der Namenswahl ein handfester Wert, kein Stilfrage.
+
+`scheibenCache` erfüllt drei Bedingungen:
+
+- **Grep-eindeutig** — kein gemeinsames Token mit `kapitelScheiben`. Eine Suche
+  nach `kapitelScheiben` liefert jetzt ausschliesslich Funktion und Aufrufer.
+- **Folgt der Hauskonvention** für Caches, `<Gegenstand>Cache`:
+  `annotationBoxPlatzCache` (`annotationsbox.js:60`), `spineLayoutCache`
+  (`spine-horizontal.js:176`).
+- **Nicht unterspezifiziert** — „Scheibe" hat projektweit genau eine Bedeutung.
+  Ausserhalb von `uebersichtsrouten.js` kommt der Begriff nur in `sketch.js`
+  (Zeilen 761–778) für dieselbe Sache vor.
+
+Ausgeschlossen wurde `uebersichtScheiben`: der Name ist bereits als lokale
+Variable in `sketch.js:766` vergeben; ein global fast gleich heissender Name
+hätte eine neue Verwechslung geschaffen statt einer beseitigten.
+
+Bei `KAPITEL_NACHGLUEHEN` wurde `SCHEIBE_NACHGLUEHEN` erwogen — der Wert ist
+streng genommen ein Anteil *einer Scheibe* (`breite * KAPITEL_NACHGLUEHEN`),
+nicht eines Kapitels. Den Ausschlag gab, dass das Nachglühende tatsächlich das
+Kapitel ist (Route und Badge) und dass das Präfixpaar mit
+`KAPITEL_SCHEIBE_GRUNDANTEIL` zusammenhält.
+
+### Prüfungen
+
+- **Verhalten identisch:** `kapitelScheiben()` und `kapitelHitze()` wurden im
+  Original in JavaScriptCore ausgeführt — gegen die echten Routendaten aus
+  `kapitel-routen-uebersicht.json`, vor und nach der Umbenennung. Verglichen
+  wurden die **17 Scheibengrenzen** (`von`/`bis` je Kapitel, volle Präzision)
+  und **3417 `kapitelHitze()`-Stützstellen** (201 Abtastpunkte je Scheibe):
+  **byte-identisch**. Auch die Cache-Identität (`kapitelScheiben() ===
+  kapitelScheiben()`) gilt unverändert.
+- **Syntax:** alle zwölf in `index.html` geladenen Skripte parsen fehlerfrei
+  (JavaScriptCore, `new Function(quelltext)`).
+- **Restreferenzen:** null Treffer für `OV_SCHEIBE_GRUNDANTEIL`,
+  `OV_NACHGLUEHEN` und `ovScheiben` in allen `.js`-, `.html`- und
+  `.css`-Dateien.
+- **Vorkommenszählung:** vor dem Ersetzen je Name gegen eine erwartete Anzahl
+  geprüft. Der erste Lauf brach dabei ab (`ovScheiben`: 5 statt 4 erwartet) —
+  Zeile 91 enthält den Namen zweimal (`if (ovScheiben) return ovScheiben;`).
+  Die Datei blieb dabei unverändert; erst nach Korrektur der Erwartung wurde
+  geschrieben.
+
+**Nicht angefasst:** `docs/modularisierung-log.md` und
+`docs/code-analyse-sketch-js.md` nennen die alten Namen an neun Stellen. Beide
+sind historische Protokolle des damaligen Stands und werden nicht rückwirkend
+umgeschrieben.

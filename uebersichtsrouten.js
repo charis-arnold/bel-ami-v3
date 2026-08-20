@@ -84,24 +84,24 @@ let kapitelHover = null;       // Kapitelnummer unter der Maus (fürs Cursor/Hig
 // Grundanteil wird trotzdem gleichmässig verteilt, damit auch ein kurzes
 // Kapitel genug Strecke für Badge und Einstiegstext behält — ohne ihn bekäme
 // Kapitel 2 mit einem von 10974 Punkten praktisch keine.
-const OV_SCHEIBE_GRUNDANTEIL = 0.45; // Anteil des Akts, der gleichmässig verteilt wird
-let ovScheiben = null;
+const KAPITEL_SCHEIBE_GRUNDANTEIL = 0.45; // Anteil des Akts, der gleichmässig verteilt wird
+let scheibenCache = null;
 
 function kapitelScheiben() {
-  if (ovScheiben) return ovScheiben;
+  if (scheibenCache) return scheibenCache;
   let liste = Object.keys(uebersichtsRouten || {}).sort();
   if (!liste.length) return [];
   let laengen = liste.map(nr => uebersichtsRouten[nr].length);
   let summe = laengen.reduce((a, b) => a + b, 0) || 1;
-  let grund = OV_SCHEIBE_GRUNDANTEIL / liste.length;
-  let rest = 1 - OV_SCHEIBE_GRUNDANTEIL;
+  let grund = KAPITEL_SCHEIBE_GRUNDANTEIL / liste.length;
+  let rest = 1 - KAPITEL_SCHEIBE_GRUNDANTEIL;
   let anteile = liste.map((nr, i) => grund + rest * laengen[i] / summe);
   // Am Ende Platz für das Nachglühen des LETZTEN Kapitels reservieren: seine
   // Scheibe endete sonst exakt bei 1.0, und weil der Aktfortschritt dort
   // geklemmt wird, läge sein Abkühlfenster jenseits des Erreichbaren — Punkt,
   // Nummer und Route von Kapitel 18 blieben dauerhaft in der Hoverfarbe.
   // Alle Scheiben werden dafür um denselben Faktor gestaucht (rund 0.2 %).
-  let stauchung = 1 / (1 + anteile[anteile.length - 1] * OV_NACHGLUEHEN);
+  let stauchung = 1 / (1 + anteile[anteile.length - 1] * KAPITEL_NACHGLUEHEN);
   let scheiben = [];
   let kum = 0;
   liste.forEach((nr, i) => {
@@ -109,8 +109,8 @@ function kapitelScheiben() {
     scheiben.push({ nr, von: kum, bis: kum + anteil });
     kum += anteil;
   });
-  ovScheiben = scheiben;
-  return ovScheiben;
+  scheibenCache = scheiben;
+  return scheibenCache;
 }
 
 // Wie "heiss" ein Kapitel gerade ist: 1 während seiner eigenen Scheibe des
@@ -120,12 +120,12 @@ function kapitelScheiben() {
 // Der Wechsel fällt mit der Übergabe zusammen: sobald das nächste Kapitel
 // aktiv wird, ist das vorherige gold. Das Nachglühen dauert nur so lange,
 // dass kein harter Farbsprung entsteht. Auf 0 gesetzt springt die Farbe hart um.
-const OV_NACHGLUEHEN = 0.05; // Anteil einer Scheibe für den Übergang
+const KAPITEL_NACHGLUEHEN = 0.05; // Anteil einer Scheibe für den Übergang
 
 function kapitelHitze(fortschritt, scheibe) {
   if (!scheibe) return 0;
   let breite = scheibe.bis - scheibe.von;
-  return 1 - constrain(map(fortschritt, scheibe.bis, scheibe.bis + breite * OV_NACHGLUEHEN, 0, 1), 0, 1);
+  return 1 - constrain(map(fortschritt, scheibe.bis, scheibe.bis + breite * KAPITEL_NACHGLUEHEN, 0, 1), 0, 1);
 }
 
 function zeichneUebersichtsrouten(bbox, alpha, fortschritt) {

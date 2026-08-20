@@ -26,10 +26,6 @@
    SK_EINBLENDEN / SK_RAUSZOOM / SK_TEXT / OV_KARTE_AUS / OV_ZOOM, dazu
    ovZoomBbox() und zeichneOrtsveraenderung().
 
-   NICHT hier: OV_SCHEIBE_GRUNDANTEIL, OV_NACHGLUEHEN und ovScheiben. Sie
-   tragen dasselbe Präfix, gehören aber zu kapitelScheiben()/kapitelHitze()
-   im Übersichtsrouten-Akt und sind in sketch.js geblieben.
-
    Wird in index.html VOR sketch.js geladen. Kein Top-Level-Initialisierer
    dieser Datei ruft eine Funktion auf — beim Laden wird nichts ausgewertet.
 ============================================================================= */
