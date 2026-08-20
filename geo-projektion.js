@@ -67,6 +67,33 @@ let startBbox = { west: 2.221893023741224, east: 2.4280563814466545, south: 48.8
 // Identisch mit BASIS_3857 in schneide-kapitelkarten.py: dieses Bild liegt auf
 // derselben Grundlage wie die geschnittenen Kapitelkarten.
 let uebersichtBbox = { west: 2.2269923194085774, east: 2.4331556771226127, south: 48.82366665448583, north: 48.892993566082404 };
+
+// ch1ImgBbox — kapitel01-qgis-karte-web.png (Kapitel-1-Kartenausschnitt).
+//
+// Anders als bei den beiden Bboxen darüber ist der QGIS-Ursprung dieses Werts
+// NICHT überliefert. Rückgerechnet ergibt er X 258020.147 .. 261867.290,
+// Y 6252295.939 .. 6254841.177 — keine runden Zahlen, während dieselbe
+// Rückrechnung bei startBbox/uebersichtBbox exakt die oben notierten
+// Ausschnitte trifft. Der Wert stammt also nicht aus einem in QGIS
+// abgelesenen Ausschnitt; wie er entstanden ist, ist nicht festgehalten.
+//
+// Überprüft und korrekt am 20.08.2026, nach derselben Methode wie oben
+// (Gegenprobe an eindeutigen Fixpunkten), hier mit zwei Plätzen aus den
+// echten Kapitel-1-Daten: Place de la Madeleine (2.324236 / 48.869718) trifft
+// den Platz zwischen Boulevard Malesherbes, Rue Royale und Rue Boissy
+// d'Anglas; Place de l'Opéra (2.330905 / 48.871706) trifft das Opernhaus
+// zwischen Rue Scribe, Rue Gluck und Rue Auber. Alle 18 ortRuns von Kapitel 1
+// liegen im Bild.
+//
+// Die beiden .pgw-Weltdateien in data-prep/export (gelöscht in d69a78b)
+// gehören NICHT zu diesem Bild: sie beschreiben ein rund 10 % weiteres, mit
+// dem Mittelpunkt 1138 m östlich und 412 m südlich versetztes Kartenfenster.
+// Ihre Werte hier einzusetzen zöge die Route rund 1.5 km nach Osten.
+//
+// Wird kapitel01-qgis-karte-web.png je neu exportiert, gehören die exakten
+// QGIS-Koordinaten (X min/max, Y min/max in EPSG:3857) hierher — im selben
+// Format wie bei startBbox/uebersichtBbox. Ohne sie lässt sich der Wert nicht
+// nachziehen, sondern nur wieder empirisch gegenprüfen.
 let ch1ImgBbox = { west: 2.317834413581757, east: 2.352393886019969, south: 48.86683338890839, north: 48.881871498351956 };
 
 let mapOffsetX = -250;

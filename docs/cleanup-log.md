@@ -1078,3 +1078,97 @@ Kapitel ist (Route und Badge) und dass das Präfixpaar mit
 `docs/code-analyse-sketch-js.md` nennen die alten Namen an neun Stellen. Beide
 sind historische Protokolle des damaligen Stands und werden nicht rückwirkend
 umgeschrieben.
+
+---
+
+## Schritt 10 — Herkunft von `ch1ImgBbox` dokumentiert
+
+**Datum:** 20. August 2026
+**Datei:** `geo-projektion.js`
+**Änderung:** 27 Einfügungen, 0 Löschungen — **ausschliesslich Kommentar**,
+kein Wert angefasst
+
+### Anlass
+
+Eine erneute Prüfung der beiden `.pgw`-Weltdateien zu `kapitel01-qgis-karte.png`
+(in `d69a78b` gelöscht, für die Prüfung kurz aus der Historie geholt und danach
+wieder verworfen) sollte eine früher notierte Abweichung von rund 490 m an der
+Nordgrenze von `ch1ImgBbox` klären.
+
+### Ergebnis: `ch1ImgBbox` ist korrekt, die Weltdateien sind veraltet
+
+Die 490 m bestätigen sich rechnerisch (−498,4 m), sind aber nicht der
+eigentliche Befund. Gegen `kapitel01-qgis-karte 2.pgw` (EPSG:3857, die
+massgebliche der beiden — die andere ist eine fehlerhafte Grad-Umrechnung, die
+die cos(Breite)-Korrektur auf beide Achsen statt nur auf die Breite anwendet):
+
+| Kante | World-File | Code | Δ Meter |
+|---|---|---|---|
+| west | 2,300502858 | 2,317834414 | +1269,0 |
+| east | 2,338633875 | 2,352393886 | +1007,5 |
+| south | 48,869759568 | 48,866833389 | −325,7 |
+| north | 48,886348500 | 48,881871498 | **−498,4** |
+
+Der Code-Ausschnitt ist gleichmässig 90,6 % so breit **und** so hoch wie der
+des Weltfiles, sein Mittelpunkt liegt 1138 m östlich und 412 m südlich. Eine
+uniforme Skalierung plus Verschiebung ist keine Georeferenz-Abweichung, sondern
+ein anderes Kartenfenster — die `.pgw`-Dateien gehören zu einem früheren
+Exportstand, genau wie `d69a78b` beim Löschen vermerkte.
+
+Entschieden hat die Gegenprobe am Fixpunkt, dieselbe Methode, die der
+Kommentarblock über `startBbox` für die Place de l'Étoile beschreibt. Die
+echten Kapitel-1-Koordinaten wurden unter beiden Hypothesen auf
+`kapitel01-qgis-karte-web.png` (4783 × 3164) projiziert:
+
+- **Mit `ch1ImgBbox`:** Place de la Madeleine trifft den Platz zwischen
+  Boulevard Malesherbes, Rue Royale und Rue Boissy d'Anglas; Place de l'Opéra
+  trifft das Opernhaus zwischen Rue Scribe, Rue Gluck und Rue Auber. Alle 18
+  `ortRuns` liegen im Bild.
+- **Mit dem Weltfile-Ausschnitt:** dieselben Punkte landen rund 1,5 km östlich
+  — die Madeleine an der Rue Vivienne und unterhalb des Bildrands, die Opéra an
+  der Rue du Croissant beim Bourse-Viertel.
+
+Ein Seitenverhältnis-Test stützt das: `ch1ImgBbox` als Web Mercator gelesen
+ergibt 1,511506 gegenüber 1,511694 des Bildes (Abweichung 1,24·10⁻⁴, rund
+0,6 px über die Bildbreite); als Plate Carrée gelesen ergäbe sie 2,298 und
+passte damit gar nicht.
+
+**Es gab also nichts zu korrigieren.** Am Code wurde kein Wert verändert.
+
+### Der verbliebene Befund: fehlende Herkunft
+
+Rechnet man aus jeder der drei Bboxen den EPSG:3857-Ausschnitt zurück,
+reproduziert das Verfahren bei `startBbox` und `uebersichtBbox` **exakt** die
+in ihren Kommentaren notierten Zahlen. Bei `ch1ImgBbox` ergibt es
+X 258020.147 .. 261867.290, Y 6252295.939 .. 6254841.177 — keine runden Werte.
+Der Wert stammt also nicht aus einem in QGIS abgelesenen Ausschnitt, und wie er
+entstanden ist, war nirgends festgehalten. Ein `kapitel01-bbox.json` gibt es
+ebenfalls nicht; Kapitel 1 steht ausserhalb der Pipeline, die 02–18 erzeugt
+(`schneide-kapitelkarten.py`).
+
+### Was ergänzt wurde
+
+Ein Kommentarblock über `ch1ImgBbox` im Format der beiden Nachbarn, der
+festhält:
+
+1. dass der QGIS-Ursprung **nicht überliefert** ist, samt der rückgerechneten
+   Zahlen und der Begründung, warum sie keine abgelesenen Werte sein können;
+2. dass der Wert am 20.08.2026 mit Madeleine und Opéra gegengeprüft und
+   **korrekt** ist;
+3. dass die `.pgw`-Dateien aus `data-prep/export` **nicht** zu diesem Bild
+   gehören, mit dem Betrag der Abweichung — damit niemand sie aus der Historie
+   holt und für eine Korrektur hält;
+4. dass bei einem Neu-Export von `kapitel01-qgis-karte-web.png` die exakten
+   QGIS-Koordinaten (X min/max, Y min/max in EPSG:3857) hierher gehören, im
+   Format von `startBbox`/`uebersichtBbox`.
+
+### Prüfungen
+
+- **Werte unverändert:** `startBbox`, `uebersichtBbox` und `ch1ImgBbox`
+  byte-identisch zu `HEAD` verglichen.
+- **Diff:** 27 Einfügungen, 0 Löschungen; jede eingefügte Zeile ist eine
+  Kommentar- oder Leerzeile.
+- **Syntax:** `geo-projektion.js` parst fehlerfrei (JavaScriptCore).
+- **Arbeitsverzeichnis:** die aus der Historie geholten `.pgw`-Dateien lagen
+  nur im Scratchpad und wurden nach der Prüfung gelöscht; im Repo liegt keine
+  `.pgw`-Datei.
