@@ -1088,3 +1088,158 @@ Dieses Modul trägt alles, was auf der Karte liegt — ein Fehler wäre sofort u
 
 Ein Versatz der ganzen Ebene gegenüber der Karte deutet auf
 `mapOffsetX/mapOffsetY`, eine Verzerrung auf `coverCrop`/`cropToBbox`.
+
+---
+
+## Modul 7 — `dom-aufbau.js`
+
+**Datum:** 20. August 2026
+**Neu:** `dom-aufbau.js` (295 Zeilen, davon 46 Kopfkommentar)
+**Aus:** `sketch.js` — 249 Zeilen entfernt (2070 → 1821)
+**Geändert:** `index.html` — ein `<script>`-Tag ergänzt
+
+Entspricht **Gruppe 3 („DOM-Aufbau & Register")** der Analyse. Damit ist
+`sketch.js` erstmals unter 2000 Zeilen.
+
+### Was wurde verschoben
+
+Zwei Blöcke — `oeffneRegister` lag vor `setup()`, die sechs `baue*`-Funktionen
+dahinter:
+
+**Block A — `sketch.js` Zeilen 204–217** (14 Zeilen):
+
+| Zeilen (vorher) | Element |
+|---|---|
+| 204–210 | Kommentarkopf zum Akkordeon-Verhalten der beiden Register |
+| 211–217 | `oeffneRegister()` |
+
+**Block B — `sketch.js` Zeilen 289–521** (233 Zeilen):
+
+| Zeilen (vorher) | Element |
+|---|---|
+| 289–302 | `baueGedankenColumn()` |
+| 304–360 | Kommentarkopf + `baueKapitelRegister()` — Plan/Graph, „Alle", Kapitel 01–18 |
+| 362–471 | Kommentarkopf + `baueLegende()` — Inhalt aus `KREIS_KATEGORIEN`/`CATEGORY_LABELS` gebaut |
+| 473–487 | `baueKartenMarkierungen()` |
+| 489–505 | `baueStationsMarker()` |
+| 507–521 | `baueZwischenMarker()` |
+
+### Zur ausdrücklich gestellten Frage: kein Zugriff auf `geo-projektion.js`
+
+Geprüft, weil vermutet: **null Zugriffe auf `lonLatToScreen`, `coverCrop`,
+`mapOffsetX/Y` oder die Bboxen.** Der Grund ist eine saubere Arbeitsteilung —
+diese Funktionen **bauen** nur DOM-Knoten und hängen sie in ihre Container;
+ihre Bildschirmposition bekommen sie erst später in `draw()`, das dafür
+`lonLatToScreen()` aufruft und `el.style.left/top` setzt. Die Geo-Ebene wird
+hier nie berührt.
+
+Ebenfalls null: `kartendekor.js`, `ortsveraenderung.js`, `fotomarker.js`,
+`annotationsbox.js`, `sonifikation.js`.
+
+**Ein Zugriff auf ein Fachmodul:** `baueKapitelRegister()` ruft
+`setzeKapitelAnsichtModus()` aus `spine-horizontal.js` — die Klick-Handler der
+„Plan"/„Graph"-Hälften oben im Register. Ein Laufzeitzugriff aus einem
+Event-Listener, für die Ladereihenfolge belanglos.
+
+Damit ist dies nach Modul 6 der zweite Fall, in dem ein ausgelagertes Modul ein
+anderes nutzt — die Module bleiben aber weiterhin fast vollständig entkoppelt.
+
+### Das breiteste Abhängigkeitsprofil bisher
+
+26 Namen aus `sketch.js`, dazu 3 aus `datenbereinigung.js`:
+
+| Art | Namen |
+|---|---|
+| DOM-Wurzeln | `gedankenColumn`, `kartenMarkierungenEl`, `kapitelRegister`, `legendeInhalt`, `registerTabs` |
+| erzeugte Knoten | `modusZeile`, `planEintrag`, `graphEintrag`, `leerzeile`, `alleEintrag`, `kapitelRegisterEintraege`, `legendeValenzText`, `legendeValenzKreis`, `legendeFwertHinweis` |
+| gefüllte Listen | `gedankenEintraege`, `markierungsEintraege`, `stationsMarker`, `zwischenMarker` |
+| Konstanten | `WEITERE_KAPITEL_NUMMERN`, `LEGENDE_VALENZ_KARTE`, `LEGENDE_FWERT_KARTE`, `FWERT_PUNKT_DURCHMESSER` |
+| Navigation | `scrolleZuKapitel1`, `springeZuKapitelZoom`, `springeZurUebersicht` |
+| Daten | `stationenData` |
+| aus `datenbereinigung.js` | `KREIS_KATEGORIEN`, `CATEGORY_LABELS`, `FWERT_PUNKT_FARBE` |
+
+**Keine dieser Variablen ist mitgewandert.** Sie werden nach dem Aufbau
+allesamt von `draw()` weiterverwendet — die Listen je Frame durchlaufen, die
+Element-Referenzen für Sichtbarkeit und Aktiv-Zustand gelesen. Sie dienen also
+nicht nur diesem Modul, anders als die `fotoPopup*`-Handles in Modul 4.
+
+Der Zustand ist damit **geteilt, nicht gekapselt** — wie bei Modul 3, nur
+ausgeprägter. Bei einer Umstellung auf ES-Module wäre dieses Modul das
+aufwändigste: Entweder wandern die vier Listen und neun Element-Referenzen mit,
+oder die `baue*`-Funktionen geben ihre Ergebnisse zurück, statt in globale
+Variablen zu schreiben. Letzteres wäre die sauberere Fassung und ohnehin die
+natürlichere Form für eine Aufbaufunktion.
+
+### Wer von aussen hierher greift
+
+Ausschliesslich `setup()`:
+
+| `sketch.js` | Zugriff |
+|---|---|
+| 249, 252 | hängt `oeffneRegister` an die Klick-Listener von `legendeTab`/`prologTab` |
+| 272–277 | ruft `baueGedankenColumn()`, `baueKartenMarkierungen()`, `baueKapitelRegister()`, `baueLegende()`, `baueStationsMarker()`, `baueZwischenMarker()` |
+
+### Ladereihenfolge in `index.html`
+
+```diff
+   <script src="annotationsbox.js"></script>
++  <script src="dom-aufbau.js"></script>
+   <script src="sketch.js"></script>
+```
+
+Direkt vor `sketch.js`, weil `setup()` dort die Funktionen ruft. Die Datei
+enthält **ausschliesslich Funktionsdeklarationen** — kein
+Top-Level-Initialisierer, also kein Ladezeit-Risiko.
+
+### Nachweis: keine Logikänderung
+
+| Block | Zeilen | Vergleich |
+|---|---|---|
+| A (`oeffneRegister`) | 14 | **zeichenweise identisch** |
+| B (sechs `baue*`) | 233 | **zeichenweise identisch** |
+
+### Weitere Prüfungen
+
+- **Syntax:** alle zehn JS-Dateien parsen fehlerfrei.
+- **Ladereihenfolge ausgeführt:** alle zehn laden in `index.html`-Reihenfolge
+  fehlerfrei (JavaScriptCore, mit Stubs).
+- **Namenskollisionen:** keine (245 Top-Level-Namen).
+- **Nahtstellen:** `bereinigeEingangsdaten()` grenzt jetzt direkt an `setup()`,
+  und `getScrollProgress()` an den Kommentarkopf von `draw()`.
+
+### Zwischenstand der Modularisierung
+
+| Datei | Zeilen |
+|---|---|
+| `sketch.js` | **1821** (von ursprünglich 3497) |
+| `ortsveraenderung.js` | 659 |
+| `datenbereinigung.js` | 474 |
+| `spine-horizontal.js` | 441 |
+| `sonifikation.js` | 309 |
+| `dom-aufbau.js` | 295 |
+| `kartendekor.js` | 187 |
+| `annotationsbox.js` | 129 |
+| `geo-projektion.js` | 116 |
+| `fotomarker.js` | 112 |
+
+`sketch.js` hat damit rund **48 %** seines ursprünglichen Umfangs abgegeben und
+liegt erstmals unter 2000 Zeilen. Was dort bleibt, ist im Kern noch
+`preload`/`setup`/`draw`/`mousePressed`, die Kreisgrafik, die Route und die
+Kapitel-Navigation.
+
+### Manueller Test
+
+Alles Gebaute erscheint einmalig beim Laden — fehlt etwas, fehlt es vollständig.
+
+1. **Kapitelregister links:** „Plan"/„Graph"-Zeile, Leerzeile, „Alle", dann
+   Kapitel 1–18. In einer Kapitel-Ansicht muss der aktive Eintrag hervorgehoben
+   sein.
+2. **Plan/Graph anklicken** — der Umschalter geht über `setzeKapitelAnsichtModus`
+   in `spine-horizontal.js`, also über die Modulgrenze.
+3. **Legende rechts** aufklappen: drei Kategoriezeilen mit farbigen Kreisen,
+   Schraffur-Hinweis, Valenz-Zeilen, F-Wert-Block mit drei Punktgrössen.
+4. **Prolog-Register** darunter: Klick auf eines der beiden Tabs muss das andere
+   schliessen (Akkordeon über `oeffneRegister`).
+5. Die Marker-Ebenen (`baueKartenMarkierungen`, `baueStationsMarker`,
+   `baueZwischenMarker`) bauen DOM-Knoten, die `draw()` derzeit dauerhaft
+   unsichtbar schaltet — sichtbar wird davon nichts, das ist unverändert.
