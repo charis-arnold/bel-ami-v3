@@ -348,3 +348,213 @@ und der Schlusstext blendet ein.
 Bleibt der Bildschirm im letzten Akt leer oder meldet die Konsole
 `zeichneOrtsveraenderung is not defined`, fehlt das Script-Tag oder steht nach
 `sketch.js`.
+
+---
+
+## Modul 3 — `spine-horizontal.js`
+
+**Datum:** 20. August 2026
+**Neu:** `spine-horizontal.js` (441 Zeilen, davon 49 Kopfkommentar)
+**Aus:** `sketch.js` — 393 Zeilen entfernt (2680 → 2287)
+**Geändert:** `index.html` — ein `<script>`-Tag ergänzt
+
+Entspricht **Gruppe 9 („Graph-Ansicht / horizontale Spine")** der Analyse, dort
+als „zweitsauberster Kandidat" geführt. Die Prüfung zeigt: sauber abgegrenzt ist
+der **Code**, nicht der **Zustand** — dazu unten mehr.
+
+### Was wurde verschoben
+
+Anders als bei Modul 1 und 2 waren es **zwei getrennte Blöcke**:
+
+**Block A — Play-Zustand, `sketch.js` Zeilen 91–100** (10 Zeilen), lag oben bei
+den übrigen Zustandsvariablen:
+
+| Zeile | Element |
+|---|---|
+| 91 | `let grafikSpielt` |
+| 92 | `let grafikStartZeit` |
+| 93 | `let grafikFortschritt` |
+| 94–99 | Kommentar zum Play-Ausblenden des Einstiegstexts |
+| 100 | `let grafikPlayAusblendStart` |
+
+**Block B — der Spine-Abschnitt, `sketch.js` Zeilen 2299–2679** (381 Zeilen), bis
+dahin das Ende der Datei:
+
+| Zeilen (vorher) | Element |
+|---|---|
+| 2299–2301 | Abschnittskopf „Spine in p5" |
+| 2303–2306 | `spineEintraegep5`, `spineEintraegeKapitel` |
+| 2308–2334 | `setzeKapitelAnsichtModus()` |
+| 2336–2354 | `aktuelleGrafikAnimationDauer()` |
+| 2356–2369 | `toggleGrafikPlay()` |
+| 2371–2375 | `aktualisiereGrafikFortschritt()` |
+| 2388–2414 | `SPINE_PUNKT_ABSTAND`, `SPINE_RAND_LINKS`/`_RECHTS`/`_OBEN`/`_UNTEN`, `SPINE_LABEL_*` (5), `spineLayoutCache` |
+| 2416–2505 | `spineLayout()` |
+| 2507–2679 | `zeichneSpineHorizontal()` |
+
+Beide Blöcke stehen in `spine-horizontal.js` unverändert untereinander, Block A
+zuerst.
+
+### Ein Name, der zurückblieb
+
+**`grafikPlayButton`** (`sketch.js:90`) fällt wörtlich unter „alle
+`grafik*`-State-Variablen", ist aber kein Zustand, sondern ein DOM-Handle — und
+wird **ausschliesslich in `setup()` und `draw()`** benutzt, nie im Modul.
+Verschoben hätte er eine Variable im Spine-Modul deklariert, die nur `sketch.js`
+anfasst. Er steht daher weiterhin bei den übrigen DOM-Referenzen.
+
+Analog zur Entscheidung bei `OV_SCHEIBE_GRUNDANTEIL` in Modul 2: das gemeinsame
+Präfix ist kein Zugehörigkeitsbeweis.
+
+### Der Zustand ist geteilt, nicht gekapselt
+
+Das ist der wesentliche Unterschied zu den bisherigen Modulen. `kartendekor.js`
+ist vollständig eigenständig, `ortsveraenderung.js` liest zwar von aussen, hält
+seinen Zustand aber für sich. Hier dagegen **schreibt `sketch.js` in den Zustand
+des Moduls**:
+
+| Von | Zeile | Zugriff |
+|---|---|---|
+| `draw()` | 599, 600 | **schreibt** `spineEintraegep5` |
+| `draw()` | 611, 614 | **schreibt** `spineEintraegeKapitel` |
+| `setzeKapitelAnsichtZurueck()` | 2231–2233 | **schreibt** `grafikSpielt`, `grafikFortschritt`, `grafikPlayAusblendStart` |
+| `draw()` | 866, 1004, 1089–1136 | liest `spineEintraege*`, `grafikSpielt`, `grafikPlayAusblendStart` |
+| `draw()` | 868, 869 | ruft `aktualisiereGrafikFortschritt()`, `zeichneSpineHorizontal()` |
+| `setup()` | 281 | hängt `toggleGrafikPlay` an den Play-Button |
+| `baueKapitelRegister()` | 395, 402 | ruft `setzeKapitelAnsichtModus()` |
+
+Das trägt, weil `let` auf Top-Level eines klassischen Scripts im globalen
+Lexical Environment landet und von später geladenen Dateien les- **und
+schreibbar** ist. Bei einer späteren Umstellung auf ES-Module reicht ein
+`export` hier aber nicht: importierte Bindungen sind schreibgeschützt. Dann
+müsste der Zustand hinter Setter-Funktionen wandern (etwa
+`setzeSpineEintraege()`, `setzeGrafikZustandZurueck()`) oder `draw()` müsste den
+Aufbau der Spine-Caches an das Modul abgeben — die naheliegendere Lösung, denn
+inhaltlich gehört er ohnehin dorthin.
+
+### Abhängigkeiten des Moduls nach aussen
+
+16 Namen, alle erst zur Laufzeit gebraucht:
+
+| aus `sketch.js` (5) | aus `datenbereinigung.js` (6) | aus `sonifikation.js` (5) |
+|---|---|---|
+| `kapitelAnsichtsModus` | `KREIS_KATEGORIEN` | `SONIFIKATION_GESAMTDAUER_SEK` |
+| `zoomedKapitel` | `ROUTE_COLOR_RGB` | `sonifikationSpieltGerade` |
+| `stationenData` | `kreisRadius` | `beendeSonifikationAudio` |
+| `zeichneKreiseFuerRun` | `wohnungFilterFuerOrt` | `spieleKapitel1SonifikationAudio` |
+| `zeichneFwertPunkte` | `sammleAnnotationenNachOrtBasis` | `spieleKapitelSonifikationAudio` |
+| | `zaehleAnnotationenLiveNachOrtBasis` | |
+
+Keine Zugriffe auf `kartendekor.js` oder `ortsveraenderung.js` — die drei Module
+kennen einander nicht.
+
+### Abhängigkeitszyklus mit `sonifikation.js`
+
+Beide Dateien greifen **gegenseitig** aufeinander zu:
+
+```
+spine-horizontal.js ──5 Namen──▶ sonifikation.js
+                    ◀──2 Namen──
+```
+
+Zurück greift `sonifikation.js` an zwei Stellen:
+
+| Zeile | Zugriff |
+|---|---|
+| 264 | `let eintraege = spineEintraegeKapitel[nr];` |
+| 292 | `let gesamtdauerSek = aktuelleGrafikAnimationDauer() / 1000;` |
+
+In der Ladereihenfolge steht `spine-horizontal.js` an Position 4,
+`sonifikation.js` an Position 6 — eine der beiden Dateien steht also
+zwangsläufig vor ihrer Abhängigkeit. **Das trägt nur, weil sämtliche Zugriffe in
+beiden Richtungen zur Laufzeit stattfinden:** `sonifikation.js:264/292` stehen in
+`spieleKapitelSonifikationAudio()`, das Modul ruft die Audio-Funktionen erst aus
+`toggleGrafikPlay()` heraus.
+
+Geprüft und im Kopfkommentar der Datei als Warnung festgehalten: **kein
+Top-Level-Initialisierer darf hier je eine fremde Funktion aufrufen.** Der
+einzige nicht-literale Initialisierer ist derzeit `new WeakMap()` für
+`spineLayoutCache` — ein eingebauter Konstruktor ohne Fremdbezug.
+
+Inhaltlich ist der Zyklus kein Zufall: Ton und Wachstumsanimation müssen
+dieselbe Gesamtdauer verwenden, damit sie synchron laufen. Aufzulösen wäre er,
+indem die Dauerberechnung in eine dritte, abhängigkeitsfreie Datei wandert.
+
+### Ladereihenfolge in `index.html`
+
+```diff
+   <script src="datenbereinigung.js"></script>
+   <script src="kartendekor.js"></script>
+   <script src="ortsveraenderung.js"></script>
++  <script src="spine-horizontal.js"></script>
+   <script src="sketch.js"></script>
+   <script src="sonifikation.js"></script>
+```
+
+### Nachweis: keine Logikänderung
+
+| Block | Original | Modul | Vergleich |
+|---|---|---|---|
+| A (`grafik*`) | `HEAD:sketch.js` ab Z. 91 | 10 Zeilen | **zeichenweise identisch** |
+| B (Spine) | `HEAD:sketch.js` ab Z. 2299 | 381 Zeilen | **zeichenweise identisch** |
+
+### Ladereihenfolge praktisch getestet
+
+Erstmals nicht nur statisch geprüft, sondern ausgeführt: alle sechs Dateien
+wurden in JavaScriptCore in exakt der `index.html`-Reihenfolge geladen, mit
+minimalen Stubs für `document`/`window` und die p5-Konstanten.
+
+- Alle sechs Dateien laden **fehlerfrei** — kein `ReferenceError`, keine
+  Temporal-Dead-Zone-Verletzung.
+- Stichprobe über Dateigrenzen hinweg nach dem Laden: `zeichneSpineHorizontal`,
+  `aktuelleGrafikAnimationDauer`, `toggleGrafikPlay`, `setzeKapitelAnsichtModus`,
+  `zeichneOrtsveraenderung`, `zeichneWindrose` und `draw` sind `function`;
+  `grafikFortschritt` ist `number`, `spineEintraegeKapitel` `object`,
+  `SPINE_PUNKT_ABSTAND` und `SONIFIKATION_GESAMTDAUER_SEK` `number`.
+- `grafikPlayButton` ist erwartungsgemäss `undefined` — es wird erst in `setup()`
+  aus dem DOM geholt.
+
+Der Test deckt das Laden ab, nicht das Laufzeitverhalten (dafür fehlt p5).
+
+### Weitere Prüfungen
+
+- **Syntax:** alle sechs JS-Dateien parsen fehlerfrei.
+- **Alle 22 Definitionen** liegen in `spine-horizontal.js`; in `sketch.js`
+  stehen nur noch die Zugriffe aus `setup()`, `baueKapitelRegister()`, `draw()`
+  und `setzeKapitelAnsichtZurueck()`.
+- **Keine unerwarteten Reste:** eine Suche nach `SPINE_*`/`spine*` in
+  `sketch.js` findet ausschliesslich die sechs Zugriffe auf
+  `spineEintraegep5`/`spineEintraegeKapitel` in `draw()`.
+- **Nahtstellen:** bei Zeile 90 folgt auf `let grafikPlayButton;` direkt der
+  Georeferenz-Abschnitt; am Dateiende schliesst `springeZurUebersicht()` die
+  Datei ab.
+
+### Zwischenstand der Modularisierung
+
+| Datei | Zeilen |
+|---|---|
+| `sketch.js` | **2287** (von ursprünglich 3497) |
+| `ortsveraenderung.js` | 659 |
+| `datenbereinigung.js` | 475 |
+| `spine-horizontal.js` | 441 |
+| `kartendekor.js` | 187 |
+| `sonifikation.js` | unverändert |
+
+`sketch.js` hat damit rund **35 %** seines ursprünglichen Umfangs abgegeben.
+
+### Manueller Test
+
+1. Ein Kapitel öffnen, im Kapitelregister links auf **„Graph"** schalten — die
+   waagrechte Spine muss erscheinen, mit Ortspunkten, Beschriftungen und
+   Rückkehr-Bögen.
+2. **Play** drücken: die Kreise wachsen von links nach rechts, der Ton läuft
+   synchron, der Kapitel-Einstiegstext blendet aus. Button wechselt auf ❚❚.
+3. **Pause** und erneut Play: die Spine wächst an derselben Stelle weiter (der
+   Ton beginnt neu — bekanntes Verhalten, Strudel kann nicht einsteigen).
+4. Auf **„Plan"** zurückschalten: Animation springt auf 0, Ton stoppt.
+5. Kapitel wechseln: die Ansicht startet wieder in der Kartenansicht.
+6. Kapitel 1 gegenprüfen — es nutzt die eigene Sonifikationsdauer
+   (`SONIFIKATION_GESAMTDAUER_SEK`), 02–18 die daraus abgeleitete pro Eintrag.
+
+Meldet die Konsole `zeichneSpineHorizontal is not defined` oder bleibt der
+Play-Button wirkungslos, steht das Script-Tag falsch.
