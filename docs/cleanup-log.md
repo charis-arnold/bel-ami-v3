@@ -1428,3 +1428,113 @@ ein Fremd-Origin weniger, auf den der Seitenaufbau wartet.
 
 Die Python-Pipeline in `data-prep/` ist von der Änderung unberührt; sie hat mit
 der JS-seitigen d3-Einbindung nichts zu tun.
+
+---
+
+## Schritt 13 — `gedanken`-Feld bewusst behalten, Foto-Merker nach `fotomarker.js` verschoben
+
+**Datum:** 20. August 2026
+**Dateien:** `sketch.js`, `fotomarker.js`, `geo-projektion.js`
+**Ausgangsfassung:** Commit `4378bb6`
+**Ergebnis:** 20 Einfügungen, 26 Löschungen — reine Verschiebung, keine
+Logikänderung
+
+Arbeitet zwei weitere Punkte einer „später"-Liste ab. Der erste endet mit einer
+begründeten **Nicht**-Entfernung.
+
+### C) `stationenData.gedanken` — geprüft und bewusst behalten
+
+Der Befund aus [Schritt 4](#schritt-4--gedanken-spalte-vollständig-entfernt)
+lautete: das Feld hat keinen Leser mehr. Das stimmt für den Code — die einzige
+Berührung ist die Normalisierung in `datenbereinigung.js:266`
+(`rohdaten.gedanken = arrayFuer(rohdaten.gedanken)`), eine Schreiboperation
+ohne Leser seit `a47fdd9`. Drei Befunde sprechen dennoch gegen ein Entfernen:
+
+**1. Das Feld ist befüllt, mit redaktionellem Inhalt.** Nicht leer, wie
+„verwaist" nahelegt:
+
+| Datei | Einträge |
+|---|---|
+| `kapitel01-stationen.json` | 5 (Champs-Élysées/Bois de Boulogne, Afrika, Bois de Boulogne, Parc Monceau, imaginierter Sommergarten) |
+| `kapitel03-stationen.json` | 4 (Canteleu, Militärzeit & Ankunft in Paris, Erträumtes Liebesabenteuer, Algerien) |
+| Kapitel 02, 04–18 | `[]` |
+
+**2. Die Kapitel-1-Einträge sind die Herkunft noch lebender Konstanten.** Die
+fünf `gedanken[].ort`-Werte wurden gegen die Schlüssel von `GEDANKEN_FILTER`
+geprüft: **identisch, alle fünf, keine Abweichung in beide Richtungen.** Die
+Kette `gedanken[].ort` → `GEDANKEN_FILTER` → `GEDANKEN_ZIEL_ORT` ist der Grund,
+warum gedachte Orte bei ihrem echten Schauplatz mitzählen, und
+`GEDANKEN_ZIEL_ORT` ist aktiv (98 wahre Auswertungen in der Zweigmessung aus
+[Schritt 11](#schritt-11--vier-sicher-tote-codestellen-aus-der-gesamtsuche-entfernt)).
+Die vier Kapitel-3-Einträge sind in keiner Konstante abgebildet und wären
+ersatzlos verloren.
+
+**3. Die Pipeline schreibt das Feld aktiv.** `baue-kapitel-stationen.py:428`
+und `baue-kapitel-stationen-aus-geojson.py:579` emittieren `"gedanken": []`;
+`baue-sammelpunkte-handkuriert.py:46` führt es unter „Unangetastet bleiben".
+Ein Entfernen aus den JSON-Dateien wäre beim nächsten Pipeline-Lauf rückgängig
+gemacht.
+
+**Ergebnis: nichts entfernt.** Auch die Normalisierungszeile bleibt — sie ist
+eine von sechs gleichförmigen (`route`, `gedanken`, `markierungen`,
+`routenPunkte`, `annotationen`, `ortRuns`); sie einzeln zu streichen macht den
+Block uneinheitlich, spart nichts messbar und wäre falsch, sobald das Feld
+wieder einen Leser bekommt.
+
+### D) `letzterFotoOffsetX` / `letzterFotoOffsetY` — verschoben
+
+Vorgemerkt im Modularisierungs-Log (Modul 6): der Umzug nach `fotomarker.js`
+war seit der Auslagerung von `mapOffsetX`/`mapOffsetY` nach `geo-projektion.js`
+möglich, aber nicht ausgeführt.
+
+**Der Ausschlag gab die Nachbarschaft.** Die beiden Merker gehören zu einem
+Trio, das in `draw()` gemeinsam geschrieben und in `mousePressed()` gemeinsam
+gelesen wird — und das dritte Mitglied, `letzteActiveBbox`, **wohnte bereits in
+`fotomarker.js`**. Der bisherige Zustand war also keine saubere Trennung,
+sondern ein Schnitt mitten durch drei zusammengehörige Variablen.
+
+| Datei | Zeile (vorher) | Änderung |
+|---|---|---|
+| `sketch.js` | 98–105 | Deklaration samt achtzeiligem Kommentar zum ausstehenden Umzug **entfernt** |
+| `fotomarker.js` | 52 | Deklaration neben `letzteActiveBbox` eingefügt, mit gemeinsamem Kommentar |
+| `fotomarker.js` | 30–36 | Absatz „NICHT hier: letzterFotoOffsetX / …" gestrichen — beschrieb das Gegenteil |
+| `fotomarker.js` | 11–14 | Abhängigkeits-Header: `mapOffsetX/mapOffsetY` kommen aus `geo-projektion.js`, nicht aus `sketch.js` |
+| `fotomarker.js` | 43–44 | Neuer Abschnitt „ACHTUNG: Auswertung beim LADEN" statt der Zusicherung, die Datei lese beim Laden nichts Fremdes |
+| `geo-projektion.js` | 31 | Verweis „sketch.js wertet mapOffsetX beim Laden aus" auf `fotomarker.js` umgeschrieben |
+
+Die letzte Header-Änderung ist die inhaltlich wichtigste: `fotomarker.js` hat
+jetzt erstmals einen Top-Level-Initialisierer, der fremde Variablen liest. Das
+trägt (Ladeposition 7 gegen 2), macht die Datei aber von der Reihenfolge
+abhängig — dieselbe Konstruktion, die `kreisgrafik.js` bereits im Header
+ausweist.
+
+### Prüfungen
+
+- **Startwerte identisch:** unmittelbar nach dem Laden, vor `setup()`/`draw()`,
+  im alten wie im neuen Stand `letzterFotoOffsetX=-250`,
+  `letzterFotoOffsetY=0`, `letzteActiveBbox=null`. `mapOffsetX`/`mapOffsetY`
+  werden nirgends zur Laufzeit neu zugewiesen, der frühere Auswertungszeitpunkt
+  ändert also nichts.
+- **Verhalten byte-identisch:** vollständige Zeichenspur über **251
+  Scrollpositionen** plus ein **37 × 23-Mausraster** über `mousePressed()` —
+  also genau den Pfad, der die Merker liest. Protokolliert wurden alle
+  Zeichenaufrufe mit Argumenten sowie bei jedem Mausschritt die aktuellen
+  Merkerwerte: **135 639 Spurzeilen, byte-identisch** zwischen `HEAD` und dem
+  neuen Stand.
+- **Negativprobe zur Ladereihenfolge:** wird `fotomarker.js` versuchsweise
+  **vor** `geo-projektion.js` geladen, bricht der Start mit
+  `ReferenceError: Cannot access 'mapOffsetX' before initialization`. Der neue
+  Header-Warnhinweis ist damit belegt, nicht dekorativ.
+- **Integrationslauf:** alle zwölf Skripte laden in Ladereihenfolge ohne
+  Top-Level-Fehler; 15 von 15 Funktionsprüfungen und 3 von 3 Härtetests
+  fehlerfrei.
+- **Syntax:** alle zwölf Skripte parsen fehlerfrei.
+- **Restreferenzen:** `letzterFotoOffset` erscheint als Deklaration nur noch
+  einmal, in `fotomarker.js`.
+
+### Nicht angefasst
+
+Der Foto-Teil von `mousePressed()` bleibt in `sketch.js`. Ihn zu verschieben
+(etwa als `fotoMarkerUnterMaus()` im Modul) wäre eine Änderung am Kontrollfluss
+und gehört in einen eigenen Schritt — so bereits im Modularisierungs-Log
+vermerkt.

@@ -27,9 +27,9 @@
    ch1ImgBbox            nur sketch.js (Bildausschnitt-Berechnung in draw())
 
    Deshalb steht diese Datei in index.html GANZ VORNE, direkt nach
-   datenbereinigung.js und vor allen anderen Modulen: sketch.js wertet
-   mapOffsetX beim Laden aus (siehe letzterFotoOffsetX dort), und alle
-   übrigen Module greifen zur Laufzeit hierher.
+   datenbereinigung.js und vor allen anderen Modulen: fotomarker.js wertet
+   mapOffsetX/mapOffsetY beim Laden aus (siehe letzterFotoOffsetX dort), und
+   alle übrigen Module greifen zur Laufzeit hierher.
 
    NICHT hier: haversineMeter(). Die Funktion sitzt in kartendekor.js, wo
    zeichneMassstabsleiste() ihr einziger Aufrufer ist — sie berechnet echte

@@ -95,15 +95,6 @@ let kapitelAnsichtsModus = 'karte';
 let kapitel1ZoomAmount = 0;
 let grafikPlayButton;
 
-// --- Foto-Marker: Marker, Popup und Trefferradius liegen in fotomarker.js. ---
-// Diese beiden Merker stehen noch hier. Ihre Deklaration initialisiert sich aus
-// mapOffsetX/mapOffsetY und wird BEIM LADEN ausgewertet — solange die beiden
-// ebenfalls in sketch.js standen, hätte das in einer vorher geladenen Datei
-// nicht getragen. Seit geo-projektion.js sie führt und VOR fotomarker.js
-// geladen wird, wäre ein Umzug dorthin möglich (siehe
-// docs/modularisierung-log.md, Modul 6).
-let letzterFotoOffsetX = mapOffsetX, letzterFotoOffsetY = mapOffsetY; // fürs Hit-Testing in mousePressed
-
 // --- Übersichtsrouten (Kapitel 02–18, nur in der letzten, rausgezoomten Ansicht) ---
 let uebersichtsRouten = {};
 

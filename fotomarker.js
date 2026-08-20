@@ -8,10 +8,10 @@
    sichtbare Bbox und den Kartenoffset als Parameter und zeichnet sich in
    jeder Kartenansicht gleich.
 
-   --- Abhängigkeiten NACH AUSSEN (alle erst zur Laufzeit) -------------------
-   aus sketch.js:           lonLatToScreen, mapOffsetX/mapOffsetY (als
-                            Default-Parameter von zeichneFotoMarker, erst beim
-                            Aufruf ausgewertet), letzterFotoOffsetX/Y
+   --- Abhängigkeiten NACH AUSSEN -------------------------------------------
+   aus geo-projektion.js:   lonLatToScreen (zur Laufzeit) sowie mapOffsetX/
+                            mapOffsetY — diese beiden BEIM LADEN, siehe den
+                            Hinweis zur Ladereihenfolge unten
    aus datenbereinigung.js: FWERT_COLOR_RGB
    aus p5:                  Zeichen- und Text-API, drawingContext, mouseX/mouseY
 
@@ -27,21 +27,20 @@
                              Hover-Test der Kapitel-Badges — dieselbe Distanz,
                              damit sich alle Klickziele der Karte gleich anfühlen
 
-   NICHT hier: letzterFotoOffsetX / letzterFotoOffsetY. Sie gehören inhaltlich
-   dazu, ihre Deklaration initialisiert sich aber aus mapOffsetX/mapOffsetY —
-   also BEIM LADEN. Als diese beiden noch in sketch.js standen, hätte das hier
-   einen ReferenceError geworfen; sie blieben deshalb dort.
-   Seit Modul 6 führt geo-projektion.js mapOffsetX/mapOffsetY und wird vor
-   dieser Datei geladen — der Umzug wäre jetzt möglich, ist aber noch nicht
-   erfolgt (siehe docs/modularisierung-log.md, Modul 6).
-
    Der Foto-Teil von mousePressed() ist ebenfalls in sketch.js geblieben:
    mousePressed ist eine p5-Lifecycle-Funktion und behandelt zuerst die
    Kapitel-Badges, dann die Foto-Marker. Sie aufzuteilen hiesse, den
    Kontrollfluss umzubauen — eine Logikänderung, die diese Schritte vermeiden.
 
-   Wird in index.html VOR sketch.js geladen. Kein Top-Level-Initialisierer
-   dieser Datei ruft eine Funktion auf oder liest eine fremde Variable.
+   --- ACHTUNG: Auswertung beim LADEN ---------------------------------------
+   let letzterFotoOffsetX = mapOffsetX, letzterFotoOffsetY = mapOffsetY;
+   Diese Zeile liest zwei fremde Variablen beim Laden. Diese Datei MUSS
+   deshalb nach geo-projektion.js stehen — sonst ReferenceError. Sie ist der
+   einzige Top-Level-Zugriff nach aussen; keine Funktion wird beim Laden
+   aufgerufen. (Bis zum Umzug standen die beiden Merker in sketch.js, weil
+   mapOffsetX/mapOffsetY dort lagen — siehe cleanup-log.md, Schritt 13.)
+
+   Wird in index.html VOR sketch.js geladen.
 ============================================================================= */
 
 // DOM-Referenzen des Popups — in setup() aus dem Dokument geholt.
@@ -49,7 +48,11 @@ let fotoPopup, fotoPopupTitel, fotoPopupPlz, fotoPopupBild, fotoPopupBeschreibun
 
 // --- Foto-Marker (separate, additive Ebene — Fotobank Huma-Num/FNP) ---
 let fotoMarkerListe = [];
+// Zustand des zuletzt gezeichneten Frames, den mousePressed() in sketch.js
+// fürs Hit-Testing braucht: dieselbe Bbox und derselbe Kartenoffset, mit denen
+// die Marker gezeichnet wurden. Alle drei werden in draw() gemeinsam gesetzt.
 let letzteActiveBbox = null;
+let letzterFotoOffsetX = mapOffsetX, letzterFotoOffsetY = mapOffsetY;
 // Trefferradius fürs Anklicken — auch von zeichneUebersichtsrouten (sketch.js)
 // für die Kapitel-Badges genutzt, damit alle Klickziele der Karte dieselbe
 // Grosszügigkeit haben.
