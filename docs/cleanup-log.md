@@ -1176,3 +1176,109 @@ festhält:
 - **Arbeitsverzeichnis:** die aus der Historie geholten `.pgw`-Dateien lagen
   nur im Scratchpad und wurden nach der Prüfung gelöscht; im Repo liegt keine
   `.pgw`-Datei.
+
+---
+
+## Schritt 11 — Vier sicher tote Codestellen aus der Gesamtsuche entfernt
+
+**Datum:** 20. August 2026
+**Dateien:** `annotationsbox.js`, `ortsveraenderung.js`, `datenbereinigung.js`
+**Ausgangsfassung:** Commit `370f06f`
+**Ergebnis:** 8 Einfügungen, 35 Löschungen
+
+### Fundquelle
+
+Eine projektweite Suche nach totem und wirkungslosem Code über alle zwölf
+JS-Dateien. Verfahren: 251 Top-Level-Deklarationen inventarisiert und auf
+kommentarbereinigtem Quelltext referenzgezählt; 187 `if`-Bedingungen
+instrumentiert und ihre Zweigabdeckung gemessen, während der Code die volle
+Anwendung durchlief (300 Scrollpositionen, alle 18 Kapitel gezoomt in beiden
+Ansichtsmodi, Play-Animation, Hover-Raster, vier Fensterbreiten). Die
+Instrumentierung wurde vorher als verhaltenstreu geprüft.
+
+Die Suche ergab vier **sicher** tote Stellen (unten), mehrere wahrscheinlich
+tote (nicht angefasst, siehe „Nicht entfernt") und keine verwaisten
+CSS-Regeln — letzteres das Ergebnis von [Schritt 8](#schritt-8--verwaistes-css-des-dom-spine-panels-entfernt).
+
+### Was wurde entfernt
+
+| Datei | Zeilen (vorher) | Element |
+|---|---|---|
+| `annotationsbox.js` | 53–55 | `const ANNOTATION_BOX_PLATZ_FEST = {}` samt Kommentar |
+| `annotationsbox.js` | 63 | Wächterzeile `if (ANNOTATION_BOX_PLATZ_FEST[kapitelNr]) return …` |
+| `ortsveraenderung.js` | 605 | Ternär-Zweig `: k.textSeite === 'links' ? false` |
+| `ortsveraenderung.js` | 608 | `else if (k.textSeite === 'rechts-fix') …` |
+| `datenbereinigung.js` | 430–451 | `versetzeKollidierendePunkte()` samt Kommentarblock |
+
+**1. `ANNOTATION_BOX_PLATZ_FEST`** war als leeres Objektliteral deklariert,
+projektweit nie beschrieben, und ihr einziger Lesezugriff war die
+Übersteuerungs-Abfrage am Anfang von `annotationBoxPlatz()`. Der Wächter kann
+strukturell nie wahr werden — dasselbe Muster wie `istParis` in
+[Schritt 6](#schritt-6--nie-aktive-paris-sonderbehandlung-in-bauespinedaten-entfernt).
+Gemessen: 1123 Auswertungen, 0 mal wahr.
+
+**2./3. Die beiden toten `textSeite`-Zweige.** Die Tabelle der sieben
+Ortsveränderungs-Knoten ist ein Literal in derselben Datei; ihre vollständige
+Werteliste lautet `links-fix` (3×), `oben-fix` (2×), `rechts` (2×). Die Werte
+`'rechts-fix'` und `'links'` kommen nicht vor. Gemessen: 70 Auswertungen des
+`rechts-fix`-Zweigs, 0 mal wahr.
+
+Der Ternär-Zweig (`'links'`) wurde von der `if`-Instrumentierung **nicht**
+erfasst und kam nur beim Nachlesen der Fundstelle ans Licht. Daraus folgt für
+künftige Suchen: Ternäre, `&&`/`||`-Kurzschlüsse und `.filter()`-Prädikate
+bleiben mit diesem Verfahren unsichtbar; in dieser Klasse können weitere Fälle
+stecken.
+
+**4. `versetzeKollidierendePunkte()`** hatte projektweit keine einzige
+Referenz — die einzige Funktion in dieser Lage, die kein p5-Lebenszyklus-Hook
+ist. Ihr Kommentar wies sie selbst als „additiv, aktuell ungenutzt" aus, also
+als bewusst vorgehaltenes Werkzeug. Sie wird auf ausdrückliche Anweisung
+entfernt; wer sie zurückholen will, findet sie in diesem Commit.
+
+Zusätzlich angepasst: der Kommentarblock über der Knotentabelle
+(`ortsveraenderung.js:139–147`) dokumentierte `'rechts-fix'` und `'links'` als
+gültige Werte. Er nennt jetzt die drei tatsächlich behandelten und hält fest,
+dass die Gegenstücke entfernt wurden.
+
+### Prüfungen
+
+- **Referenzprüfung vor jeder Entfernung:** alle vier Namen projektweit in
+  `.js`, `.html`, `.css`, `.md` und `.py` gesucht, Kommentare eingeschlossen.
+  Ausser den oben genannten Fundstellen nur historische Erwähnungen in
+  `docs/modularisierung-log.md` und `docs/code-analyse-sketch-js.md` (nicht
+  angefasst) sowie der nachgezogene Kommentar.
+- **Verhalten identisch — Zeichenspur:** Jeder Zeichenaufruf
+  (`line`, `ellipse`, `text`, `fillText`, `fill`, `stroke`, …) wurde samt
+  Argumenten protokolliert, während `zeichneOrtsveraenderung()` **101
+  Aktpositionen in vier Fensterbreiten** durchlief — 28 656 Aufrufe, vorher und
+  nachher **byte-identisch**. Dazu 72 Entscheidungen von `annotationBoxPlatz()`
+  (18 Kapitel × 4 Fenstergrössen), ebenfalls unverändert. Das deckt genau die
+  Ortsveränderungs-Ansicht ab, die von den Punkten 2 und 3 betroffen ist.
+- **Integrationslauf:** alle zwölf Skripte laden in Ladereihenfolge ohne
+  Top-Level-Fehler; 15 von 15 Funktionsprüfungen und 3 von 3 Härtetests
+  fehlerfrei.
+- **Syntax:** alle zwölf Skripte parsen fehlerfrei.
+- **Restreferenzen:** null Treffer für alle vier Namen im Code.
+
+### Nicht entfernt
+
+Die als *wahrscheinlich* tot eingestuften Funde blieben unangetastet, weil ihre
+Wirkungslosigkeit datenabhängig statt strukturell ist:
+`istVorzeitigeErwaehnung()` (feuert 3800×, immer `false`),
+`GEDANKEN_ORTRUN_UNTERDRUECKT` (greift an beiden Verwendungsstellen nie) und
+der Wächter `!kapitelKarten[nr] && !KAPITEL_MIT_SPINE_PANEL.has(nr)`.
+Ebenso das bewusst deaktivierte `KARTEN_MARKER_SICHTBAR` aus
+[Schritt 5](#schritt-5--karten-marker-stillgelegt-statt-entfernt).
+
+### Offener Folgebefund
+
+**Die d3-Bibliothek wird nicht mehr gebraucht.** `versetzeKollidierendePunkte()`
+enthielt mit `d3.group()` den **einzigen** d3-Aufruf im gesamten Projekt; nach
+ihrer Entfernung ist `<script src="https://d3js.org/d3.v6.min.js">`
+(`index.html:10`) eine Abhängigkeit ohne Nutzer. Die verbliebene Erwähnung in
+`datenbereinigung.js:336` („Zählt per d3.rollup") ist ein Kommentar, dessen
+Funktion längst mit reinem JavaScript arbeitet.
+
+**Nicht angefasst** — das Entfernen einer externen Abhängigkeit ist eine eigene
+Entscheidung. Wer sie trifft, sollte auch den irreführenden Kommentar in
+Zeile 336 mitnehmen.

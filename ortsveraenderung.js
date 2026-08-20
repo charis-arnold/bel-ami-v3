@@ -137,11 +137,14 @@ const OV_TEXT_ABSTAND = 30;      // Luft zwischen Kreisrand und seitlichem Textb
                                  // (je Knoten über textAbstand überschreibbar)
 const OV_TEXT_ABSTAND_OBEN = 46; // mehr Luft bei den Blöcken über dem Kreis
 // textSeite legt fest, wo der Erläuterungsblock steht:
-//   'links-fix' / 'rechts-fix' — am linken bzw. rechten Fensterrand
-//   'links'     / 'rechts'     — direkt neben dem Kreis, Seite vorgegeben
-//   'oben-fix'                 — über dem Kreis, linke Textkante auf dessen Achse
-//   ohne Angabe                — seitlich neben dem Kreis, nach aussen von
-//                                der Bildmitte gewählt
+//   'links-fix' — am linken Fensterrand
+//   'rechts'    — direkt neben dem Kreis, Seite vorgegeben
+//   'oben-fix'  — über dem Kreis, linke Textkante auf dessen Achse
+//   ohne Angabe — seitlich neben dem Kreis, nach aussen von der Bildmitte
+//                 gewählt
+// (Die Gegenstücke 'rechts-fix' und 'links' waren nie in Gebrauch und wurden
+// entfernt, siehe Schritt 11 im Cleanup-Log — wer sie braucht, muss die
+// jeweilige Verzweigung wieder ergänzen.)
 // Alle fixierten Varianten werden bei der Zoomberechnung NICHT mitgezählt:
 // sie stehen fest, und die Kreise sollen sich ihretwegen nicht verschieben.
 // Der Text ist in jedem Fall linksbündig gesetzt.
@@ -602,10 +605,8 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
         // Links endet die Linie am linken Boxrand, rechts am rechten — so
         // spannt sie einmal über die Boxbreite und der Text bleibt frei.
         let rechtsDavon = k.textSeite === 'rechts' ? true
-          : k.textSeite === 'links' ? false
           : anker.x < width / 2;
         if (k.textSeite === 'links-fix') linksBuendig = OV_TEXT_RAND;
-        else if (k.textSeite === 'rechts-fix') linksBuendig = width - OV_TEXT_RAND - breite;
         else linksBuendig = rechtsDavon
           ? anker.x + endRand + abstand
           : anker.x - endRand - abstand - breite;

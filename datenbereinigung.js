@@ -426,27 +426,3 @@ function baueSpineDaten(daten, hauptorte) {
 
   return eintraege;
 }
-
-// ---------------------------------------------------------------------------
-// Wiederverwendbares Werkzeug (additiv, aktuell ungenutzt) — verteilt Punkte
-// mit (fast) identischen Koordinaten leicht versetzt auf einen kleinen Kreis,
-// damit künftige Kapitel überlappende Marker nicht händisch per
-// Ausschluss-Liste lösen müssen. Wird auf die bestehende Darstellung NICHT
-// angewendet (die ist bereits über WOHNUNG_SAMMELPUNKT_* / istVorzeitigeErwaehnung
-// gelöst) — reine Vorbereitung für spätere Kapitel.
-// ---------------------------------------------------------------------------
-
-function versetzeKollidierendePunkte(punkte, mindestabstandGrad = 0.00005) {
-  let gruppen = d3.group(punkte, p => `${Math.round(p.lon / mindestabstandGrad)}:${Math.round(p.lat / mindestabstandGrad)}`);
-  let ergebnis = [];
-  gruppen.forEach(gruppe => {
-    if (gruppe.length === 1) {
-      ergebnis.push({ ...gruppe[0], versatzWinkel: 0, versatzIndex: 0, versatzAnzahl: 1 });
-      return;
-    }
-    gruppe.forEach((p, i) => {
-      ergebnis.push({ ...p, versatzWinkel: (i / gruppe.length) * Math.PI * 2, versatzIndex: i, versatzAnzahl: gruppe.length });
-    });
-  });
-  return ergebnis;
-}

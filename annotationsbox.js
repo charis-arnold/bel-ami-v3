@@ -50,9 +50,6 @@
 // Scrollen nicht springt.
 // ---------------------------------------------------------------------------
 const ANNOTATION_BOX_PLAETZE = ['oben-links', 'unten-links', 'oben-rechts', 'unten-rechts'];
-// Manuelle Festlegung je Kapitel ('01'..'18'), überstimmt die automatische
-// Wahl — für den Fall, dass ein Kapitel gestalterisch anders liegen soll.
-const ANNOTATION_BOX_PLATZ_FEST = {};
 const ANNOTATION_BOX_BREITE = 572;   // max-width 520px + 2x26px Innenabstand, siehe .annotation-text
 const ANNOTATION_BOX_RAND_X = 0.05;  // left/right 5%, siehe .annotation-box
 const ANNOTATION_BOX_RAND_OBEN = 0.10;
@@ -60,7 +57,6 @@ const ANNOTATION_BOX_RAND_UNTEN = 0.12;
 const annotationBoxPlatzCache = new Map(); // "kapitel|breite|hoehe" -> Platz
 
 function annotationBoxPlatz(kapitelNr, daten, bbox) {
-  if (ANNOTATION_BOX_PLATZ_FEST[kapitelNr]) return ANNOTATION_BOX_PLATZ_FEST[kapitelNr];
   let schluessel = `${kapitelNr}|${Math.round(width)}|${Math.round(height)}`;
   if (annotationBoxPlatzCache.has(schluessel)) return annotationBoxPlatzCache.get(schluessel);
 
