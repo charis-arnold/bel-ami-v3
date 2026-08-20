@@ -558,3 +558,186 @@ Der Test deckt das Laden ab, nicht das Laufzeitverhalten (dafür fehlt p5).
 
 Meldet die Konsole `zeichneSpineHorizontal is not defined` oder bleibt der
 Play-Button wirkungslos, steht das Script-Tag falsch.
+
+---
+
+## Modul 4 — `fotomarker.js`
+
+**Datum:** 20. August 2026
+**Neu:** `fotomarker.js` (110 Zeilen, davon 44 Kopfkommentar)
+**Aus:** `sketch.js` — 56 Zeilen entfernt (2287 → 2231)
+**Geändert:** `index.html` — ein `<script>`-Tag ergänzt
+
+Entspricht **Gruppe 6 („Foto-Marker & Popup")** der Analyse. Das kleinste
+Modul bisher — und das erste, bei dem „nur verschieben" an eine echte Grenze
+stiess.
+
+### Was wurde verschoben
+
+Der Bereich lag **nicht** zusammenhängend, sondern in vier getrennten Stücken:
+
+| Zeilen (vorher) | Element |
+|---|---|
+| 61 | `let fotoPopup, fotoPopupTitel, fotoPopupPlz, fotoPopupBild, fotoPopupBeschreibung;` |
+| 120–122 | Abschnittskommentar, `fotoMarkerListe`, `letzteActiveBbox` |
+| 124 | `const FOTO_MARKER_TREFFER_RADIUS = 12;` |
+| 1174–1215 | Abschnittskopf „Foto-Marker (Fotobank Huma-Num/FNP)" + `zeichneFotoMarker()` |
+| 1238–1249 | `oeffneFotoPopup()`, `schliesseFotoPopup()` |
+
+Die **DOM-Handles aus Zeile 61** waren in der Vorgabe nicht genannt, sind aber
+mitgewandert: `fotoPopupTitel`, `fotoPopupPlz`, `fotoPopupBild` und
+`fotoPopupBeschreibung` werden ausserhalb des Moduls **nur** in `setup()`
+befüllt und sonst nirgends gelesen; `fotoPopup` zusätzlich für zwei Listener.
+Sie dienen ausschliesslich dem Popup.
+
+Das unterscheidet sie von `grafikPlayButton` (Modul 3), der zurückblieb: der
+wird im Modul überhaupt nicht benutzt, nur in `setup()` und `draw()`.
+
+### Zwei Dinge blieben bewusst zurück
+
+**1. `letzterFotoOffsetX` / `letzterFotoOffsetY` (`sketch.js:123`)**
+
+Die Deklaration lautet:
+
+```js
+let letzterFotoOffsetX = mapOffsetX, letzterFotoOffsetY = mapOffsetY;
+```
+
+Sie **liest beim Laden** zwei Variablen, die in `sketch.js` (Zeilen 116/117)
+deklariert sind. In einer Datei, die vor `sketch.js` geladen wird, läge dieser
+Zugriff vor deren Deklaration.
+
+Isoliert nachgestellt: eine früher geladene Datei, die auf diese Weise ein
+späteres `let` liest, bricht mit
+`ReferenceError: Can't find variable: mapOffsetX` ab. Die Datei wäre damit
+komplett wirkungslos — `zeichneFotoMarker` undefiniert, `draw()` scheitert.
+
+Genau der Fall, vor dem der Kopfkommentar von `spine-horizontal.js` warnt;
+hier tritt er zum ersten Mal real auf. Die Alternativen wären gewesen, die
+Initialisierung zu verzögern (`let letzterFotoOffsetX, letzterFotoOffsetY;`)
+oder das Modul hinter `sketch.js` zu laden — beides nach Rückfrage verworfen
+zugunsten der Variante ohne jede Verhaltensänderung. Die beiden Merker stehen
+jetzt direkt bei `mapOffsetX`/`mapOffsetY`, mit einem Kommentar, der erklärt
+warum.
+
+**2. Der Foto-Teil von `mousePressed()`**
+
+`mousePressed` ist eine p5-Lifecycle-Funktion und behandelt zwei Dinge
+nacheinander: erst die Kapitel-Badges (mit `return`), dann die Foto-Marker.
+Die Foto-Schleife herauszulösen hiesse, eine neue Funktion zu erfinden und den
+Kontrollfluss umzubauen — eine Logikänderung, die alle bisherigen Module
+vermieden haben. Die Funktion bleibt vollständig in `sketch.js`; vor der
+Schleife steht jetzt ein Verweis:
+
+```js
+// Foto-Marker: Treffertest und Popup liegen in fotomarker.js
+```
+
+Ein späterer Umbau (etwa `fotoMarkerUnterMaus()` im Modul, aufgerufen aus
+`mousePressed`) wäre sinnvoll, gehört aber in einen eigenen Schritt.
+
+### `FOTO_MARKER_TREFFER_RADIUS` ist mitgewandert
+
+Die Konstante wird auch von `zeichneUebersichtsrouten()` genutzt (zwei Stellen,
+Hover-Test der Kapitel-Badges) — dieselbe Distanz, damit sich alle Klickziele
+der Karte gleich grosszügig anfühlen. Nach Rückfrage mitgenommen: Name und
+Hauptnutzung gehören zum Fotomarker, `sketch.js` greift jetzt für die zwei
+Hover-Tests darauf zu.
+
+Anders als bei `OV_SCHEIBE_GRUNDANTEIL` (Modul 2), das zurückblieb: dort lagen
+Name und Nutzung auseinander, hier decken sie sich.
+
+### Abhängigkeiten des Moduls nach aussen
+
+Die kürzeste Liste aller bisherigen Module — vier Namen:
+
+| aus `sketch.js` | aus `datenbereinigung.js` |
+|---|---|
+| `lonLatToScreen` | `FWERT_COLOR_RGB` |
+| `mapOffsetX`, `mapOffsetY` (Default-Parameter von `zeichneFotoMarker`, erst beim Aufruf ausgewertet) | |
+| `letzterFotoOffsetX`, `letzterFotoOffsetY` (siehe oben) | |
+
+Keine Zugriffe auf `kartendekor.js`, `ortsveraenderung.js`, `spine-horizontal.js`
+oder `sonifikation.js`. Kein Zugriff auf `zoomedKapitel`, `kapitelZoomAmount`
+oder `SCROLL_MEILENSTEINE` — die Ebene kennt keinen Erzählzustand.
+
+### Wer von aussen hierher greift
+
+| Von | Zugriff |
+|---|---|
+| `preload()` | lädt `fotomarker.json` nach `fotoMarkerListe` |
+| `bereinigeEingangsdaten()` | ersetzt sie durch `bereinigeFotoMarker(...)` |
+| `setup()` | befüllt die fünf `fotoPopup*`-Handles, hängt drei Listener auf `schliesseFotoPopup` |
+| `draw()` | schreibt `letzteActiveBbox`, ruft `zeichneFotoMarker()` |
+| `mousePressed()` | liest `fotoMarkerListe`, `letzteActiveBbox`, `FOTO_MARKER_TREFFER_RADIUS`, ruft `oeffneFotoPopup()` |
+| `zeichneUebersichtsrouten()` | liest `FOTO_MARKER_TREFFER_RADIUS` |
+
+Wie bei Modul 3 ist der Zustand **geteilt, nicht gekapselt**: `preload()`,
+`bereinigeEingangsdaten()`, `setup()` und `draw()` schreiben hinein.
+
+### Ladereihenfolge in `index.html`
+
+```diff
+   <script src="datenbereinigung.js"></script>
+   <script src="kartendekor.js"></script>
+   <script src="ortsveraenderung.js"></script>
+   <script src="spine-horizontal.js"></script>
++  <script src="fotomarker.js"></script>
+   <script src="sketch.js"></script>
+   <script src="sonifikation.js"></script>
+```
+
+### Nachweis: keine Logikänderung
+
+Jeder verschobene Codeblock wurde einzeln gegen `HEAD:sketch.js` verglichen:
+
+| Block | Zeilen | Vergleich |
+|---|---|---|
+| DOM-Handles | 1 | identisch |
+| `fotoMarkerListe` / `letzteActiveBbox` | 2 | identisch |
+| `FOTO_MARKER_TREFFER_RADIUS` | 1 | identisch |
+| `zeichneFotoMarker()` | 38 | identisch |
+| `oeffneFotoPopup()` | 8 | identisch |
+| `schliesseFotoPopup()` | 3 | identisch |
+
+Neu hinzugekommen sind ausschliesslich **Kommentare**: der Dateikopf, drei
+Zeilen zum Trefferradius, vier Zeilen bei den zurückgebliebenen Merkern in
+`sketch.js` und der Verweis in `mousePressed`. Kein ausführbares Zeichen wurde
+geändert.
+
+### Weitere Prüfungen
+
+- **Syntax:** alle sieben JS-Dateien parsen fehlerfrei.
+- **Ladereihenfolge ausgeführt:** alle sieben Dateien laden in
+  `index.html`-Reihenfolge fehlerfrei (JavaScriptCore, mit Stubs) — der
+  TDZ-Fall tritt dank der zurückgelassenen Zeile 123 nicht ein.
+- **Namenskollisionen:** keine (245 Top-Level-Namen über alle Dateien).
+- **Definitionen:** alle acht liegen in `fotomarker.js`, `letzterFotoOffsetX/Y`
+  erwartungsgemäss in `sketch.js:123`.
+
+### Zwischenstand der Modularisierung
+
+| Datei | Zeilen |
+|---|---|
+| `sketch.js` | **2231** (von ursprünglich 3497) |
+| `ortsveraenderung.js` | 659 |
+| `datenbereinigung.js` | 475 |
+| `spine-horizontal.js` | 441 |
+| `kartendekor.js` | 187 |
+| `fotomarker.js` | 110 |
+| `sonifikation.js` | unverändert |
+
+`sketch.js` hat damit rund **36 %** seines ursprünglichen Umfangs abgegeben.
+
+### Manueller Test
+
+1. In einer Kartenansicht (Startseite, Kapitel-Zoom, Übersicht) müssen die
+   Sternchen-Marker sichtbar sein; im Kapitel-Zoom grösser als in der Übersicht
+   (Grösse skaliert mit `kartenZoomFaktor`).
+2. Mit der Maus darüberfahren: das Sternchen wird grösser und rot (`#C2511C`),
+   daneben erscheint ein schwarzes Label mit dem Fototitel.
+3. Klicken: das Popup öffnet mit Bild, Titel, PLZ und Beschreibung.
+4. Schliessen auf drei Wegen prüfen — Schliessen-Knopf, Klick auf den
+   Hintergrund, Escape.
+5. In der Graph-Ansicht dürfen **keine** Marker zu sehen sein.
+6. Im Schlussakt blenden sie mit der Karte aus.

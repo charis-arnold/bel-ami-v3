@@ -58,7 +58,6 @@ let annotationText;
 let annotationInner;
 let annotationTag;
 let annotationBar;
-let fotoPopup, fotoPopupTitel, fotoPopupPlz, fotoPopupBild, fotoPopupBeschreibung;
 let scrollFortschritt, scrollFortschrittFuellung; // Fortschrittsleiste unten (Übersicht Scrollytelling-Hauptstrang) — ausgeblendet während einer Kapitel-Ansicht (siehe kapitelAnsichtsModus)
 let kapitelRegister; // Kapitelregister links (inkl. Plan/Graph + Alle), sichtbar während eines Kapitel-Zooms
 let kapitelRegisterEintraege = {}; // nr -> Eintrags-Element, fürs Aktiv-Highlighting in draw()
@@ -117,11 +116,11 @@ let ch1ImgBbox = { west: 2.317834413581757, east: 2.352393886019969, south: 48.8
 let mapOffsetX = -250;
 let mapOffsetY = 0;
 
-// --- Foto-Marker (separate, additive Ebene — Fotobank Huma-Num/FNP) ---
-let fotoMarkerListe = [];
-let letzteActiveBbox = null;
+// --- Foto-Marker: Marker, Popup und Trefferradius liegen in fotomarker.js. ---
+// Nur diese beiden Merker bleiben hier: ihre Deklaration initialisiert sich aus
+// mapOffsetX/mapOffsetY (oben) und wird BEIM LADEN ausgewertet — in fotomarker.js,
+// das vor sketch.js geladen wird, läge das vor deren Deklaration.
 let letzterFotoOffsetX = mapOffsetX, letzterFotoOffsetY = mapOffsetY; // fürs Hit-Testing in mousePressed
-const FOTO_MARKER_TREFFER_RADIUS = 12;
 
 // --- Übersichtsrouten (Kapitel 02–18, nur in der letzten, rausgezoomten Ansicht) ---
 let uebersichtsRouten = {};
@@ -1171,49 +1170,6 @@ function draw() {
 // eigenes, per window.sonifikationSpieltAb kurzgeschlossenes Karten-Bild —
 // entfernt, da es die Graph-Ansicht beim Abspielen unerwartet verdeckte.
 
-// ---------------------------------------------------------------------------
-// Foto-Marker (Fotobank Huma-Num/FNP) — eigenständige, additive Ebene
-// ---------------------------------------------------------------------------
-
-function zeichneFotoMarker(activeBbox, offsetX = mapOffsetX, offsetY = mapOffsetY, alphaMultiplier = 1, kartenZoomFaktor = 0) {
-  if (alphaMultiplier <= 0) return; // z.B. Kreisvergleich-Akt — keine Karte mehr, also auch keine Foto-Marker
-  // Grösse skaliert mit dem Zoom: 11 (wie die Kapitelnummern) nur ganz
-  // draussen in der Übersicht — dieselbe Fläche wirkt in einem eingezoomten
-  // Kartenausschnitt (viel kleinerer geografischer Ausschnitt auf derselben
-  // Canvas-Grösse, alles andere also visuell grösser) winzig. kartenZoomFaktor
-  // (0 = Übersicht, 1 = voll in Kapitel-1- oder Kapitel-Kartenausschnitt
-  // gezoomt, siehe Aufrufer) skaliert linear bis zur alten festen Grösse
-  // (20/24, vor der "wie Kapitelnummern"-Angleichung) hoch.
-  let sternGroesse = lerp(11, 20, constrain(kartenZoomFaktor, 0, 1));
-  fotoMarkerListe.forEach(f => {
-    let pos = lonLatToScreen(f.lon, f.lat, activeBbox, offsetX, offsetY);
-    let hover = dist(mouseX, mouseY, pos.x, pos.y) < FOTO_MARKER_TREFFER_RADIUS;
-
-    noStroke();
-    fill(hover
-      ? color(FWERT_COLOR_RGB.r, FWERT_COLOR_RGB.g, FWERT_COLOR_RGB.b, 255 * alphaMultiplier) // #C2511C
-      : color(33, 43, 46, 255 * alphaMultiplier)); // #212B2E
-    textAlign(CENTER, CENTER);
-    textStyle(BOLD);
-    textSize(hover ? sternGroesse * 1.2 : sternGroesse);
-    drawingContext.fillText('*', pos.x, pos.y - 3); // leichte optische Korrektur nach oben (Sternchen-Glyphe); p5s text() bleibt bei laufender Animation manchmal unsichtbar, siehe zeichneSpineHorizontal
-
-    if (hover) {
-      textFont("'Source Sans 3', sans-serif"); // wie .annotation-tag (var(--sans)) und die Kreis-Labels/Kapitelnummern
-      textStyle(BOLD); // .annotation-tag ist font-weight: 700
-      textSize(11);
-      let label = f.titel || 'Foto ansehen';
-      let tw = textWidth(label) + 16;
-      fill(0, 200 * alphaMultiplier);
-      rect(pos.x + 10, pos.y - 12, tw, 20, 4);
-      fill(255, 255 * alphaMultiplier);
-      textAlign(LEFT, CENTER);
-      drawingContext.fillText(label, pos.x + 18, pos.y - 2);
-    }
-  });
-  textStyle(NORMAL);
-}
-
 function mousePressed() {
   if (kapitelHover === '01') { scrolleZuKapitel1(); return; }
   // Über springeZuKapitelZoom statt direkt über oeffneKapitelZoom: Der
@@ -1226,6 +1182,7 @@ function mousePressed() {
   // an den Anfang des Akts zurück, genau wie der Klick im Kapitelregister.
   if (kapitelHover) { springeZuKapitelZoom(kapitelHover); return; }
   if (!letzteActiveBbox) return;
+  // Foto-Marker: Treffertest und Popup liegen in fotomarker.js
   for (let f of fotoMarkerListe) {
     let pos = lonLatToScreen(f.lon, f.lat, letzteActiveBbox, letzterFotoOffsetX, letzterFotoOffsetY);
     if (dist(mouseX, mouseY, pos.x, pos.y) < FOTO_MARKER_TREFFER_RADIUS) {
@@ -1233,19 +1190,6 @@ function mousePressed() {
       return;
     }
   }
-}
-
-function oeffneFotoPopup(f) {
-  fotoPopupTitel.textContent = f.titel || '';
-  fotoPopupPlz.textContent = f.plz || '';
-  fotoPopupBild.src = f.fotoUrl;
-  fotoPopupBild.alt = f.titel || '';
-  fotoPopupBeschreibung.textContent = f.beschreibung || '';
-  fotoPopup.classList.add('offen');
-}
-
-function schliesseFotoPopup() {
-  fotoPopup.classList.remove('offen');
 }
 
 // ---------------------------------------------------------------------------
