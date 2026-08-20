@@ -1177,6 +1177,42 @@ festhält:
   nur im Scratchpad und wurden nach der Prüfung gelöscht; im Repo liegt keine
   `.pgw`-Datei.
 
+### Nachtrag — Strukturvergleich mit dem `startBbox`-Fehler
+
+Nachgereicht am 20. August 2026, weil der Verdacht bestand, es handle sich um
+denselben Fehlertyp wie bei [Fix 2 im Bugfix-Log](bugfix-log.md) (Route auf der
+Schlusskarte um 568 m versetzt). Der Vergleich widerlegt das eindeutig:
+
+| | Breite | Höhe | Art der Abweichung |
+|---|---|---|---|
+| **`startBbox`-Bug (Fix 2)** | 100,000 % | 100,000 % | reiner Versatz: −567,7 m X, +115,7 m Y |
+| **`ch1ImgBbox` vs. `.pgw`** | **90,63 %** | **90,65 %** | Massstabsänderung *und* Versatz: +1138 m Ost, −412 m Nord |
+
+Bei `startBbox` war die Grösse des Kartenfensters **exakt** gleich und nur der
+Ursprung falsch — die Signatur von „Werte vom falschen Bild übernommen". Bei
+`ch1ImgBbox` ist das Fenster der Weltdatei gleichmässig 9,4 % grösser als das
+des Codes. Ein falscher Referenzpunkt erzeugt keine Skalierung; es handelt sich
+schlicht um einen **anderen Kartenausschnitt**, nicht um denselben mit falschem
+Ursprung.
+
+Auch die übrigen naheliegenden Fehlerarten scheiden aus: keine vertauschten
+Achsen (beide Bboxen sind achsenrichtig), kein Rundungsfehler (die Beträge sind
+drei Grössenordnungen zu gross), kein falscher Ursprung (dann fehlte die
+Skalierung).
+
+Eine Projektionsverwechslung gibt es allerdings — **in der Weltdatei, nicht im
+Code**: `kapitel01-qgis-karte.pgw` (die Grad-Variante) ergibt 137,80 % Breite
+bei 90,64 % Höhe. Diese Asymmetrie entsteht, weil dort die cos(Breite)-Korrektur
+auf *beide* Achsen angewandt wurde statt nur auf die Breite. Massgeblich von den
+beiden ist deshalb `kapitel01-qgis-karte 2.pgw` (EPSG:3857).
+
+Fix 2 führte `ch1ImgBbox` bereits unter „Nicht betroffen — eigener Export, kein
+Versatz feststellbar". Dieser Nachtrag bestätigt das unabhängig und mit Zahlen.
+
+Die Weltdateien lagen zuletzt in Commit `fd2a423` vor und wurden in `d69a78b`
+gelöscht; für den Vergleich wurden sie ausschliesslich über `git show` gelesen,
+ohne Checkout und ohne Änderung am Arbeitsverzeichnis.
+
 ---
 
 ## Schritt 11 — Vier sicher tote Codestellen aus der Gesamtsuche entfernt
