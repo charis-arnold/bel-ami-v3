@@ -96,9 +96,13 @@ Klassen jetzt von keiner Stelle mehr vergeben werden:
 - `style.css:409`, `421` — `.spine-entry`, `.spine-entry.aktiv`
 - `style.css:426–427` — `.spine-entry.spalte-gedanke`, `.spine-entry.spalte-markierung`
 
-In `index.html` gibt es kein passendes Element mehr. Diese Regeln sind
+~~In `index.html` gibt es kein passendes Element mehr. Diese Regeln sind
 Kandidaten für einen eigenen Bereinigungsschritt; `style.css` wurde in
-Schritt 1 bewusst nicht angefasst.
+Schritt 1 bewusst nicht angefasst.~~
+→ **erledigt in [Schritt 8](#schritt-8--verwaistes-css-des-dom-spine-panels-entfernt).**
+Dort zeigte sich, dass der verwaiste Bereich grösser war als hier notiert
+(zusätzlich `.spine-panel` und `.spine-heading`, zusammen der ganze Abschnitt 6)
+und dass das Panel schon seit dem Initial Commit nie in Betrieb war.
 
 ---
 
