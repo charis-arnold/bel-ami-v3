@@ -2863,7 +2863,17 @@ function zeichneUebersichtsrouten(bbox, alpha, fortschritt) {
     let labelAlpha = (zoomedKapitel && kapitelNr !== zoomedKapitel)
       ? alpha * (1 - kapitelZoomAmount)
       : alpha;
-    if (labelAlpha <= 0) return;
+    // Unter 1/255 ist ein Alpha auf dem 8-Bit-Kanal ohnehin nicht mehr
+    // darstellbar. Der frühere Test (<= 0) griff nie: kapitelZoomAmount wird
+    // per lerp() nachgeführt und läuft nur asymptotisch gegen 1, labelAlpha
+    // wurde also beliebig klein, aber nie 0. Die Badges der übrigen Kapitel
+    // liefen dadurch im Kapitel-Zoom endlos weiter — und wurden sichtbar,
+    // weil das fill() unten von p5 übersprungen wird, sobald labelAlpha von
+    // Frame zu Frame gleich bleibt: zeichneKreiseOrtRuns (oben) schreibt über
+    // zeichneKreisLabels direkt in drawingContext.fillStyle und umgeht p5s
+    // Zwischenspeicher, das darauf folgende fillText() erbte dann dessen
+    // volle Deckkraft (derselbe Fallstrick wie in zeichneOrtsveraenderung).
+    if (labelAlpha < 1) return;
 
     let start = lonLatToScreen(punkte[0][0], punkte[0][1], bbox, 0, 0); // zentrierte Übersichtskarte, kein mapOffsetX
     // Für das gerade gezoomte Kapitel zum tatsächlichen Anfang der genauen
@@ -2963,15 +2973,25 @@ function zeichneUebersichtsrouten(bbox, alpha, fortschritt) {
   // Kapitel 1 hat keine Übersichtsroute in uebersichtsRouten (eigene, separat
   // gezeichnete Route/Startpunkt) — Nummer wird hier eigens ergänzt, klickbar
   // wie die anderen, aber Klick scrollt zurück zu Kapitel 1 statt in ein Bild
-  // zu zoomen (siehe scrolleZuKapitel1/mousePressed). Bleibt immer klickbar,
-  // auch während eines anderen Kapitel-Zooms (Rückweg).
-  let ch1Start = lonLatToScreen(stationenData.routenPunkte[0][0], stationenData.routenPunkte[0][1], bbox, 0, 0); // zentrierte Übersichtskarte, kein mapOffsetX
-  let ch1Hover = dist(mouseX, mouseY, ch1Start.x, ch1Start.y) < FOTO_MARKER_TREFFER_RADIUS;
-  if (ch1Hover) kapitelHover = '01';
-  if (ch1Hover) fill(FWERT_COLOR_RGB.r, FWERT_COLOR_RGB.g, FWERT_COLOR_RGB.b, alpha); // #C2511C
-  else fill(33, 43, 46, alpha); // #212B2E
-  ellipse(ch1Start.x, ch1Start.y, ch1Hover ? 11 : 8, ch1Hover ? 11 : 8);
-  drawingContext.fillText('01', ch1Start.x + 8, ch1Start.y); // siehe Kommentar oben (p5s text()-Bug)
+  // zu zoomen (siehe scrolleZuKapitel1/mousePressed).
+  //
+  // Blendet im Kapitel-Zoom mit aus, nach derselben Regel wie 02–18 (siehe
+  // labelAlpha oben). Vorher stand die 01 dort bewusst als Rückweg-Anker
+  // stehen — sie war damit aber die einzige sichtbare Kapitelnummer in einer
+  // Detailansicht, die sonst keine zeigt. Der Rückweg läuft weiterhin über
+  // das Kapitelregister links, Escape und Hochscrollen.
+  // Hover/Klick sitzen bewusst INNERHALB des Guards: ein unsichtbares
+  // Klickziel auf der Kapitelkarte wäre schlimmer als gar keines.
+  let ch1Alpha = zoomedKapitel ? alpha * (1 - kapitelZoomAmount) : alpha;
+  if (ch1Alpha >= 1) {
+    let ch1Start = lonLatToScreen(stationenData.routenPunkte[0][0], stationenData.routenPunkte[0][1], bbox, 0, 0); // zentrierte Übersichtskarte, kein mapOffsetX
+    let ch1Hover = dist(mouseX, mouseY, ch1Start.x, ch1Start.y) < FOTO_MARKER_TREFFER_RADIUS;
+    if (ch1Hover) kapitelHover = '01';
+    if (ch1Hover) fill(FWERT_COLOR_RGB.r, FWERT_COLOR_RGB.g, FWERT_COLOR_RGB.b, ch1Alpha); // #C2511C
+    else fill(33, 43, 46, ch1Alpha); // #212B2E
+    ellipse(ch1Start.x, ch1Start.y, ch1Hover ? 11 : 8, ch1Hover ? 11 : 8);
+    drawingContext.fillText('01', ch1Start.x + 8, ch1Start.y); // siehe Kommentar oben (p5s text()-Bug)
+  }
 
   textStyle(NORMAL);
   cursor(kapitelHover ? HAND : ARROW);
