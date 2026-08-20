@@ -284,11 +284,16 @@ Block. Das Byte selbst ist unverändert erhalten, sein String-Literal
 
 ### Weiterhin offen
 
-**NUL-Byte in `datenbereinigung.js`, jetzt Zeile 427** (vor diesem Nachtrag
+~~**NUL-Byte in `datenbereinigung.js`, jetzt Zeile 427** (vor diesem Nachtrag
 Zeile 438) — im String-Literal `'\x00PARIS_ALLGEMEIN'` innerhalb von
-`zaehleAnnotationenLiveNachOrtBasis()`.
+`zaehleAnnotationenLiveNachOrtBasis()`.~~
+→ **erledigt in [Schritt 6](#schritt-6--nie-aktive-paris-sonderbehandlung-in-bauespinedaten-entfernt).**
+Zwei Korrekturen zur damaligen Notiz: Das Byte lag in `baueSpineDaten()`, nicht
+in `zaehleAnnotationenLiveNachOrtBasis()` (die endet bei Zeile 415). Und es war
+ein **rohes** NUL-Byte, nicht die vierstellige Escape-Schreibweise `\x00` —
+die kam im ganzen Projekt kein einziges Mal vor.
 
-Bewusst **nicht** angefasst; wird separat betrachtet. Bis dahin gilt für alle
+Bewusst **nicht** angefasst; wird separat betrachtet. Bis dahin galt für alle
 weiteren Arbeitsschritte:
 
 - Referenzsuchen über `grep` erfassen `datenbereinigung.js` **nicht** — die
@@ -625,3 +630,123 @@ Wer den Schalter später auf `true` legt, stösst auf drei Altlasten:
 3. **`revealIndex`** wird beim Bauen in jedes Marker-Objekt geschrieben, aber
    nirgends gelesen. Das war einmal die Grundlage für gestaffeltes Einblenden;
    die Vergleichslogik dazu existiert nicht mehr.
+
+---
+
+## Schritt 6 — Nie aktive Paris-Sonderbehandlung in `baueSpineDaten()` entfernt
+
+**Datum:** 20. August 2026
+**Dateien:** `datenbereinigung.js`, `kreisgrafik.js`, `sketch.js`
+**Ausgangsfassung:** Commit `d69a78b`
+**Ergebnis:** `datenbereinigung.js` 474 → 452 Zeilen, `kreisgrafik.js` 488 → 486,
+`sketch.js` unverändert 889 — 22 Einfügungen, 46 Löschungen
+
+Damit erledigt sich zugleich der seit dem [Nachtrag zu Schritt 2](#weiterhin-offen)
+offene Befund zum NUL-Byte: die Zeile, die es enthielt, fällt ersatzlos weg.
+
+### Der Fund
+
+`baueSpineDaten()` fasste alle Annotationen, deren Ort in der Konstanten
+`PARIS_ALLGEMEIN` stand (`'Paris'`, `'Paris (allgemein)'`, `'unspezifisch'`,
+`'Strassenecken von Paris (allgemein)'`), zu **einem** gemeinsamen
+Spine-Eintrag „Paris allgemein" zusammen. Der Map-Schlüssel dafür war ein
+Pseudo-Schlüssel mit NUL-Präfix, damit er mit keinem echten Ortsnamen
+kollidieren konnte.
+
+**Dieser Codepfad war nicht mehr erreichbar.** Die Bedingung `istParis` wird
+mit den aktuellen Daten nie wahr — aus zwei voneinander unabhängigen Gründen:
+
+1. **Kapitel 02–18 waren nie betroffen.** Nur der Aufruf für Kapitel 1
+   (`sketch.js:285`) übergab überhaupt ein `opts`-Argument; der Aufruf für die
+   übrigen Kapitel (`sketch.js:299`) liess `parisAllgemein` auf dem leeren
+   Default-Set stehen.
+2. **Für Kapitel 1 blockiert der `ortBasis`-Vorrang.** Die Funktion liest
+   `a.ortBasis || a.ort || ''`. Die vier vagen Namen stehen im
+   Kapitel-1-Datensatz ausschliesslich im Feld `ort` — und alle 14
+   betroffenen Annotationen haben ein gesetztes, konkretes `ortBasis`
+   (z.B. `ort: 'Paris (allgemein)'` → `ortBasis: 'Place de la Madeleine'`).
+   `a.ort` wird daher nie erreicht.
+
+Punkt 2 ist das Ergebnis genau der Datenbereinigung, nach der die Datei heisst:
+Die vagen Ortsangaben wurden auf konkrete Orte aufgelöst, der Rohwert blieb in
+`ort` als Herkunftsnachweis stehen. Damit hatte die Zusammenfassung ihren
+Gegenstand verloren. Eingeführt wurde der Zweig in Commit `11153ee`
+(„Kreisdiagramm: ergänzen, F-Werte"), der die Funktion von einer Schleife über
+`runs` (mit `r.ort`) auf eine Schleife über `annotationen` (mit `ortBasis`-
+Vorrang) umstellte — im selben Commit, der auch das NUL-Byte hereinbrachte.
+Beim Umbau lief die Sonderbehandlung ins Leere, wurde aber mitgenommen.
+
+### Beleg vor der Änderung
+
+`baueSpineDaten()` wurde nicht nachgebaut, sondern **im Original ausgeführt**:
+`datenbereinigung.js` unverändert in JavaScriptCore (`jsc`) geladen, mit den
+echten Kapiteldaten aus `kapitel01-…` bis `kapitel18-stationen.json` und
+denselben Argumenten wie in `draw()`.
+
+- `istParis` traf bei **0 von 150** Annotationen in Kapitel 1 zu.
+- Der Pseudo-Schlüssel wurde **kein einziges Mal** als Map-Schlüssel gesetzt.
+- Einträge mit `typ: 'muted'`: **0**. Kapitel 1 erzeugte 18 Einträge, alle
+  `'location'`/`'rueckkehr'` — passend zum Kommentar in `spine-horizontal.js:90`
+  („Kapitel 1, 18, mehr als jedes andere").
+- Keines der 18 Kapitel-JSONs enthält einen der vier Namen in `ortBasis` oder
+  in `ortRuns[].ort` (159 ortRuns insgesamt geprüft).
+
+### Was wurde entfernt
+
+| Datei | Zeilen (vorher) | Element |
+|---|---|---|
+| `datenbereinigung.js` | 54–59 | Konstante `PARIS_ALLGEMEIN` (vier Ortsnamen) |
+| `datenbereinigung.js` | 403–405 | Kommentarabsatz zu `opts.parisAllgemein` |
+| `datenbereinigung.js` | 416, 417, 424 | `opts`-Parameter, `parisAllgemein`-Default, `istParis` |
+| `datenbereinigung.js` | 427 | Pseudo-Schlüssel — **die Zeile mit dem NUL-Byte** |
+| `datenbereinigung.js` | 432–436 | Absorptions-Zweig `if (istParis) return;` samt Kommentar |
+| `datenbereinigung.js` | 441–444 | Die drei `istParis ? … : …`-Ternäre im Eintrags-Objekt |
+| `sketch.js` | 285 | Argument `{ parisAllgemein: PARIS_ALLGEMEIN }` |
+| `kreisgrafik.js` | 98 | `if (PARIS_ALLGEMEIN.has(ort)) return 'UNBESTIMMT';` |
+| `kreisgrafik.js` | 24–25, 84, 131–133 | Erwähnungen in Header und Kommentaren |
+
+Mit dem Wegfall des Pseudo-Schlüssels ist der Map-Schlüssel immer der Ortsname
+selbst. Die Variablen `indexNachSchluessel`/`laufenderSchluessel` heissen
+deshalb jetzt `indexNachOrt`/`laufenderOrt`, und die Zwischenvariable
+`schluessel` entfällt. `typ: 'location'` bleibt erhalten — der Renderer prüft
+zwar nur auf `'rueckkehr'`, aber `'location'` ist die dokumentierte Gegenprobe.
+
+### Prüfungen nach der Änderung
+
+- **Verhalten identisch:** Dieselbe `jsc`-Ausführung wie oben, vorher und
+  nachher, über **alle 18 Kapitel** — Spine-Einträge und
+  `sammelpunktKategorie()`-Ergebnisse als JSON serialisiert und verglichen:
+  **byte-identisch**. Kapitel 1 erzeugt weiterhin 18 Einträge.
+- **Syntax:** `datenbereinigung.js`, `sketch.js` und `kreisgrafik.js` parsen
+  fehlerfrei (JavaScriptCore, `new Function(quelltext)`).
+- **Restreferenzen:** `PARIS_ALLGEMEIN`, `parisAllgemein`, `istParis`,
+  `'muted'` — null Treffer in allen `.js`- und `.html`-Dateien.
+- **NUL-Bytes:** null in sämtlichen versionierten Textdateien. Damit ist
+  `datenbereinigung.js` wieder eine gewöhnliche Textdatei — die binärsichere
+  Sonderbehandlung aus dem Nachtrag zu Schritt 2 entfällt, `grep` erfasst die
+  Datei ab jetzt wieder normal.
+
+### Offener Folgebefund
+
+**`sammelpunktKategorie()` in `kreisgrafik.js` greift derzeit überhaupt nicht
+mehr** — nicht nur der entfernte `PARIS_ALLGEMEIN`-Zweig, sondern auch die
+fünf Präfix-Kategorien darunter (`'Erinnerung (Kapitel'`, `'Phantasie (Kapitel'`,
+`'Wunsch (Kapitel'`, `'Gedanken (Kapitel'`, `'Unbestimmt (Kapitel'`).
+
+Die Funktion wird an beiden Aufrufstellen (`kreisgrafik.js:135`,
+`annotationsbox.js:86`) mit `r.ort` aus `ortRuns` aufgerufen. Über alle 18
+Kapitel hinweg trägt **kein einziger der 159 ortRuns** einen dieser Präfixe.
+`'Unbestimmt (Kapitel XX)'` kommt in elf Kapiteldateien vor — aber wie im
+Paris-Fall nur in `annotationen[].ort`, während `ortRuns` aus `ortBasis`
+gebaut wird. Die Funktion liefert damit ausnahmslos `null`, die Map
+`keineAdresseNachKategorie` bleibt leer, und `zeichneOrteOhneAdresse()`
+(`kreisgrafik.js:183`) wird nie aufgerufen — der Sammelpunkt-Kreis unterhalb
+des Kapitelregisters erscheint nie.
+
+Das ist dieselbe Ursache wie oben, betrifft aber ein sichtbares Feature statt
+toten Codes: Entweder ist die Anzeige unbeabsichtigt ausgefallen (dann gehört
+der Lesezugriff auf `ort` statt `ortBasis` umgestellt), oder das Feature ist
+bewusst entfallen (dann sind `SAMMELPUNKT_KATEGORIEN`, `sammelpunktKategorie`,
+`zeichneOrteOhneAdresse`, die Box `#orteOhneAdresse` und das zugehörige CSS
+toter Code). **Nicht angefasst** — die Entscheidung braucht erst eine Antwort
+darauf, was die Anzeige zeigen soll.

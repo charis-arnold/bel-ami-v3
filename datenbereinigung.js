@@ -51,13 +51,6 @@ const KREIS_KATEGORIEN = [
   { key: 'gold_hell', farbe: [202, 179, 122] },
 ];
 
-const PARIS_ALLGEMEIN = new Set([
-  'Paris',
-  'Paris (allgemein)',
-  'unspezifisch',
-  'Strassenecken von Paris (allgemein)',
-]);
-
 // Kapitel 1s Spine zeigt jeden ortRun, der auch auf der Karte einen eigenen
 // Kreis bekommt — siehe ortRunsFuerSpine() weiter unten (dynamisch, nicht
 // mehr eine feste Liste, damit Karte und Spine nie auseinanderlaufen).
@@ -400,9 +393,7 @@ function zaehleAnnotationenLiveNachOrtBasis(filter, annIndex, daten = stationenD
 
 // daten: ein bereinigtes stationenData-Objekt (Kapitel 1 oder ein anderes
 // Kapitel). hauptorte: Set der ortRun-Namen, die einen Spine-Eintrag
-// bekommen sollen. opts.parisAllgemein (Default leer): Set von Ortsnamen,
-// die zu einem gemeinsamen "Paris allgemein"-Eintrag zusammengefasst werden
-// (siehe Kapitel 1).
+// bekommen sollen.
 //
 // Läuft (anders als früher) direkt über daten.annotationen statt über die
 // bereits zu je einem Kreis pro Ort ZUSAMMENGEFÜHRTEN daten.ortRuns — nur
@@ -413,36 +404,23 @@ function zaehleAnnotationenLiveNachOrtBasis(filter, annIndex, daten = stationenD
 // gleicher ortBasis wird zu genau einem Eintrag; alle bandCounts werden nur
 // noch live (über den jeweiligen annIndex zur Spielkopf-Position) gezählt,
 // nicht mehr aus einem vorberechneten Endstand.
-function baueSpineDaten(daten, hauptorte, opts = {}) {
-  let parisAllgemein = opts.parisAllgemein || new Set();
+function baueSpineDaten(daten, hauptorte) {
   let eintraege = [];
-  let indexNachSchluessel = new Map(); // Schlüssel (Ortsname oder Paris-Pseudo-Schlüssel) -> Index in eintraege
-  let laufenderSchluessel = null; // welcher zusammenhängende Besuch gerade läuft
+  let indexNachOrt = new Map(); // ortBasis-Name -> Index in eintraege
+  let laufenderOrt = null; // welcher zusammenhängende Besuch gerade läuft
 
   (daten.annotationen || []).forEach((a, ai) => {
     let ort = a.ortBasis || a.ort || '';
-    let istParis = parisAllgemein.has(ort);
-    if (!istParis && !hauptorte.has(ort)) { laufenderSchluessel = null; return; }
+    if (!hauptorte.has(ort)) { laufenderOrt = null; return; }
 
-    let schluessel = istParis ? ' PARIS_ALLGEMEIN' : ort;
-    if (laufenderSchluessel === schluessel) return; // derselbe Besuch läuft weiter, kein neuer Eintrag
-    laufenderSchluessel = schluessel;
+    if (laufenderOrt === ort) return; // derselbe Besuch läuft weiter, kein neuer Eintrag
+    laufenderOrt = ort;
 
-    if (indexNachSchluessel.has(schluessel)) {
-      // Paris allgemein bleibt bewusst EIN gemeinsamer Eintrag (zu vage für
-      // eine sinnvolle "Rückkehr" pro einzelner Wiederaufnahme) — jede
-      // Wiederaufnahme wird hier still absorbiert, statt einen Bogen zu
-      // bekommen.
-      if (istParis) return;
-      eintraege.push({ typ: 'rueckkehr', text: ort, rv: ai, zielIndex: indexNachSchluessel.get(schluessel) });
+    if (indexNachOrt.has(ort)) {
+      eintraege.push({ typ: 'rueckkehr', text: ort, rv: ai, zielIndex: indexNachOrt.get(ort) });
     } else {
-      indexNachSchluessel.set(schluessel, eintraege.length);
-      eintraege.push({
-        typ: istParis ? 'muted' : 'location',
-        text: istParis ? 'Paris allgemein' : ort,
-        rv: ai,
-        ortBasis: istParis ? parisAllgemein : ort,
-      });
+      indexNachOrt.set(ort, eintraege.length);
+      eintraege.push({ typ: 'location', text: ort, rv: ai, ortBasis: ort });
     }
   });
 

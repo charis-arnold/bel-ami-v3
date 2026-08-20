@@ -21,8 +21,8 @@
    Steuerung über den winkel-Parameter von zeichneKreiseFuerRun().
 
    --- Abhängigkeiten NACH AUSSEN (Laufzeit) --------------------------------
-   aus datenbereinigung.js (15): KREIS_KATEGORIEN, kreisRadius, FWERT_PUNKTGROESSE,
-     FWERT_PUNKT_FARBE, hexZuRgb, PARIS_ALLGEMEIN, zaehleAnnotationenLiveNachOrtBasis,
+   aus datenbereinigung.js (14): KREIS_KATEGORIEN, kreisRadius, FWERT_PUNKTGROESSE,
+     FWERT_PUNKT_FARBE, hexZuRgb, zaehleAnnotationenLiveNachOrtBasis,
      sammleAnnotationenNachOrtBasis, wohnungFilterFuerOrt, wohnungSplitAi,
      istVorzeitigeErwaehnung, WOHNUNG_SAMMELPUNKT_ANKER,
      WOHNUNG_SAMMELPUNKT_ABSORBIERTE_ORTRUNS, GEDANKEN_ORTRUN_UNTERDRUECKT,
@@ -81,7 +81,7 @@ function drawHatchedCircle(cx, cy, r, color, alphaSkala = 1) {
 
 // Orte ohne konkrete Adresse werden nicht mehr in einen einzigen
 // "UNBESTIMMT"-Topf geworfen, sondern nach Art des Inhalts getrennt: reine
-// Ortsunkenntnis (generisches "Unbestimmt (Kapitel XX)"/PARIS_ALLGEMEIN)
+// Ortsunkenntnis (generisches "Unbestimmt (Kapitel XX)")
 // gegenüber Erinnerung/Phantasie/Wunsch/Gedanken — Inhalte, die gar keine
 // reale Szene an einem echten Ort sind, sondern im Kopf der Figur spielen
 // (siehe Kapitel 3: Kindheitserinnerung, erträumtes Liebesabenteuer, etc.).
@@ -95,7 +95,6 @@ const SAMMELPUNKT_KATEGORIEN = [
 ];
 
 function sammelpunktKategorie(ort) {
-  if (PARIS_ALLGEMEIN.has(ort)) return 'UNBESTIMMT';
   let treffer = SAMMELPUNKT_KATEGORIEN.find(k => ort.startsWith(k.prefix));
   return treffer ? treffer.label : null;
 }
@@ -128,12 +127,11 @@ function zeichneKreiseOrtRuns(punktIndex, annIndex, activeBbox, offsetX = mapOff
       if (GEDANKEN_ORTRUN_UNTERDRUECKT.has(r.ort)) return;
       if (r.ort === RUE_NOTRE_DAME_DE_LORETTE_ORT && annIndex < wohnungSplitAi(daten)) return;
     }
-    // Orte ohne echte, konkrete Adresse (Kapitel-1s Alt-Sammelbecken
-    // "Paris (allgemein)" & Co. — PARIS_ALLGEMEIN — sowie der generische
-    // Sammelpunkt "Unbestimmt (Kapitel XX)" der automatisch gebauten
-    // Kapitel 02–18): erscheinen nicht mehr auf der Karte an einer
-    // erfundenen Koordinate, sondern gesammelt als ein Kreis unterhalb des
-    // Kapitelregisters (siehe zeichneOrteOhneAdresse-Aufruf am Funktionsende).
+    // Orte ohne echte, konkrete Adresse (generischer Sammelpunkt
+    // "Unbestimmt (Kapitel XX)" der automatisch gebauten Kapitel 02–18):
+    // erscheinen nicht mehr auf der Karte an einer erfundenen Koordinate,
+    // sondern gesammelt als ein Kreis unterhalb des Kapitelregisters
+    // (siehe zeichneOrteOhneAdresse-Aufruf am Funktionsende).
     let kategorie = sammelpunktKategorie(r.ort);
     if (kategorie) {
       if (!keineAdresseNachKategorie.has(kategorie)) {

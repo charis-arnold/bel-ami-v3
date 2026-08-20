@@ -282,7 +282,7 @@ function draw() {
   background(220);
 
   if (spineEintraegep5.length === 0 && stationenData.ortRuns) {
-    spineEintraegep5 = baueSpineDaten(stationenData, ortRunsFuerSpine(stationenData), { parisAllgemein: PARIS_ALLGEMEIN });
+    spineEintraegep5 = baueSpineDaten(stationenData, ortRunsFuerSpine(stationenData));
   }
   // Generisches Spine-Panel fürs jeweils gezoomte Kapitel (02–18, ausser 01 —
   // das hat sein eigenes live wachsendes Panel), einmal berechnet und dann
