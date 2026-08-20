@@ -499,3 +499,129 @@ Verwandt: `GEDANKEN_ZIEL_ORT` und `GEDANKEN_ORTRUN_UNTERDRUECKT` in
 `datenbereinigung.js` bleiben in Gebrauch. Sie steuern, wie gedachte Orte in die
 Kreisgrafik der *echten* Orte einfliessen, und sind von der entfernten Spalte
 unabhängig.
+
+---
+
+## Schritt 5 — Karten-Marker stillgelegt statt entfernt
+
+**Datum:** 20. August 2026
+**Datei:** `sketch.js`
+**Ergebnis:** 1803 → 1816 Zeilen (+13)
+
+Der erste Schritt in diesem Protokoll, der **nichts entfernt**. Die drei
+Marker-Ebenen der Kapitel-1-Ansicht sollen erhalten bleiben und später
+reaktivierbar sein — nur ihre wirkungslose Rechenlast fällt weg. Deshalb wird
+die Datei hier länger statt kürzer.
+
+### Ausgangslage
+
+`baueKartenMarkierungen()`, `baueStationsMarker()` und `baueZwischenMarker()`
+(alle in `dom-aufbau.js`) bauen beim Start zusammen **16 DOM-Elemente**:
+
+| Funktion | Quelle | aktive Einträge |
+|---|---|---|
+| `baueKartenMarkierungen` | `stationenData.markierungen` | 1 |
+| `baueStationsMarker` | `stationenData.route` (ohne Index 0) | 10 |
+| `baueZwischenMarker` | `stationenData.zwischenPunkte` | 5 |
+
+Sie sind seit längerem dauerhaft ausgeblendet — `draw()` setzte für jedes
+Element `classList.toggle('sichtbar', false)` mit dem Literal `false`, und
+`.karten-markierung` hat per CSS `opacity: 0`.
+
+Anders als bei der Gedanken-Spalte (Schritt 4) fehlte hier aber ein früher
+Ausstieg: Die Positionierung lief in **jedem Frame weiter**.
+
+### Was eingespart wird
+
+Pro Frame für alle 16 Elemente, ohne jede sichtbare Wirkung:
+
+| | pro Frame | bei 60 fps |
+|---|---|---|
+| `lonLatToScreen()`-Aufrufe | 16 | 960/s |
+| `style.left` / `style.top`-Zuweisungen | 32 | 1920/s |
+| `classList.toggle()` | 16 | 960/s |
+
+Die Style-Zuweisungen wiegen am schwersten: Jede schreibt ins Layout-Modell des
+Browsers, und das in einer Animationsschleife.
+
+### Umsetzung
+
+**1. Schaltkonstante** vor den drei Arrays (`sketch.js:63`):
+
+```js
+const KARTEN_MARKER_SICHTBAR = false;
+```
+
+Mit Kommentar, der festhält, was übersprungen wird, wie man es umlegt, und dass
+für vollständiges Einblenden zusätzlich
+`.karten-markierung .label { display: none }` in `style.css` fallen muss —
+sonst erschienen nur die Punkte ohne Beschriftung.
+
+**2. Block-Guard** um die drei Schleifen (`sketch.js:712`):
+
+```js
+  if (KARTEN_MARKER_SICHTBAR) {
+    markierungsEintraege.forEach(m => { … });
+    stationsMarker.forEach(m => { … });
+    zwischenMarker.forEach(m => { … });
+  }
+```
+
+Die Schleifenkörper sind unverändert, nur eingerückt.
+
+**3. `toggle`-Parameter umgestellt** — in allen drei Schleifen:
+
+```diff
+-      m.el.classList.toggle('sichtbar', false);
++      m.el.classList.toggle('sichtbar', KARTEN_MARKER_SICHTBAR);
+```
+
+Damit ist die Konstante ein **echter Schalter**: Auf `true` gesetzt läuft die
+Positionierung wieder *und* die Elemente bekommen die `sichtbar`-Klasse. Mit dem
+Literal `false` wäre das Umlegen eine Falle gewesen — die Rechenlast käme
+zurück, sichtbar würde nichts.
+
+### Warum ein Block-Guard und kein `return`
+
+Naheliegend wäre `if (!sichtbar) return;` gewesen, das Muster aus Schritt 4.
+Dort stand es aber **innerhalb** des `forEach`-Callbacks und übersprang nur
+einen Eintrag. An dieser Stelle wären wir im Rumpf von `draw()` selbst: Ein
+`return` hätte die restlichen **107 Zeilen abgebrochen** — Hero-Fade,
+Begleittexte, Kapitel-Einstiegstexte und die Foto-Marker-Ebene. Deshalb ein
+Block, kein Ausstieg.
+
+Gegengeprüft: `draw()` enthält weiterhin **keinen einzigen `return` auf
+Funktionsebene** und läuft bis zur letzten Anweisung (`zeichneFotoMarker`)
+durch.
+
+### Nicht angefasst
+
+Die drei Funktionen in `dom-aufbau.js`, der Container `#kartenMarkierungen` in
+`index.html`, sämtliches CSS (`.karten-markierung` und Varianten) sowie die drei
+Arrays samt Inhalt. Die DOM-Knoten werden weiterhin bei jedem Start gebaut und
+stehen zur Reaktivierung bereit.
+
+**Am sichtbaren Verhalten ändert sich nichts.** Die Klasse `sichtbar` wurde nie
+gesetzt; die Elemente stehen seit ihrer Erzeugung auf `opacity: 0`.
+
+### Prüfungen
+
+- **Syntax:** `sketch.js` parst fehlerfrei.
+- **`draw()` vollständig:** keine `return`-Anweisung auf Funktionsebene,
+  554 Zeilen laufen durch.
+- **Ladereihenfolge:** alle zehn Dateien laden unverändert fehlerfrei.
+- **Diff:** 34 Einfügungen, 21 Löschungen — der umgestellte Block plus zehn
+  Kommentarzeilen.
+
+### Offene Befunde zur möglichen Reaktivierung
+
+Wer den Schalter später auf `true` legt, stösst auf drei Altlasten:
+
+1. **`.karten-markierung .label { display: none }`** (`style.css:327`) blendet
+   die Ortsnamen unabhängig vom Schalter aus.
+2. **Die Klassen `stations-marker` und `zwischen-marker`** werden vergeben, aber
+   in keiner CSS-Regel angesprochen — alle drei Marker-Arten sähen identisch aus
+   (9 px schwarzer Punkt).
+3. **`revealIndex`** wird beim Bauen in jedes Marker-Objekt geschrieben, aber
+   nirgends gelesen. Das war einmal die Grundlage für gestaffeltes Einblenden;
+   die Vergleichslogik dazu existiert nicht mehr.

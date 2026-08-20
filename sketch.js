@@ -50,6 +50,17 @@ let kapitel03Data; // eigenes Datenset fürs Kapitel-3-Spine-Panel (Kartenaussch
 // pro Kapitel (wie bisher nur für Kapitel 3) folgt in einem Folgeschritt.
 const WEITERE_KAPITEL_NUMMERN = ['02', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18'];
 let weitereKapitelDaten = {}; // z.B. weitereKapitelDaten['04'].ortRuns
+// Ortspunkte/Labels auf der Karte (Kapitel-1-Ansicht) sind derzeit dauerhaft
+// ausgeblendet. Die DOM-Knoten werden weiterhin gebaut (baueKartenMarkierungen/
+// baueStationsMarker/baueZwischenMarker in dom-aufbau.js), aber draw()
+// überspringt ihre Positionierung: 16 Elemente x lonLatToScreen plus zwei
+// style-Zuweisungen je Frame, deren Ergebnis niemand sieht.
+//
+// Auf true gesetzt läuft alles wieder — die Konstante steuert sowohl den
+// Rechenweg als auch die 'sichtbar'-Klasse. Zum vollständigen Einblenden muss
+// zusätzlich .karten-markierung .label { display: none } in style.css fallen,
+// sonst erscheinen nur die Punkte ohne Beschriftung.
+const KARTEN_MARKER_SICHTBAR = false;
 let markierungsEintraege = [];
 let stationsMarker = [];
 let zwischenMarker = [];
@@ -695,27 +706,29 @@ function draw() {
     legendeFwertHinweis.textContent = inKapitelGrafikAnsicht ? LEGENDE_FWERT_GRAPH : LEGENDE_FWERT_KARTE;
   }
 
-  // DOM-Marker
-  // Ortspunkte/Labels auf der Karte (Kapitel-1-Ansicht) für den Moment
-  // ausgeblendet — Route/Kreisgrafik/Spine bleiben davon unberührt sichtbar.
-  markierungsEintraege.forEach(m => {
-    let p = lonLatToScreen(m.lon, m.lat, activeBbox);
-    m.el.style.left = p.x + 'px';
-    m.el.style.top = p.y + 'px';
-    m.el.classList.toggle('sichtbar', false);
-  });
-  stationsMarker.forEach(m => {
-    let p = lonLatToScreen(m.lon, m.lat, activeBbox);
-    m.el.style.left = p.x + 'px';
-    m.el.style.top = p.y + 'px';
-    m.el.classList.toggle('sichtbar', false);
-  });
-  zwischenMarker.forEach(m => {
-    let p = lonLatToScreen(m.lon, m.lat, activeBbox);
-    m.el.style.left = p.x + 'px';
-    m.el.style.top = p.y + 'px';
-    m.el.classList.toggle('sichtbar', false);
-  });
+  // DOM-Marker — Ortspunkte/Labels auf der Karte (Kapitel-1-Ansicht). Derzeit
+  // ausgeblendet und deshalb komplett übersprungen, siehe
+  // KARTEN_MARKER_SICHTBAR oben. Route/Kreisgrafik/Spine sind davon unberührt.
+  if (KARTEN_MARKER_SICHTBAR) {
+    markierungsEintraege.forEach(m => {
+      let p = lonLatToScreen(m.lon, m.lat, activeBbox);
+      m.el.style.left = p.x + 'px';
+      m.el.style.top = p.y + 'px';
+      m.el.classList.toggle('sichtbar', KARTEN_MARKER_SICHTBAR);
+    });
+    stationsMarker.forEach(m => {
+      let p = lonLatToScreen(m.lon, m.lat, activeBbox);
+      m.el.style.left = p.x + 'px';
+      m.el.style.top = p.y + 'px';
+      m.el.classList.toggle('sichtbar', KARTEN_MARKER_SICHTBAR);
+    });
+    zwischenMarker.forEach(m => {
+      let p = lonLatToScreen(m.lon, m.lat, activeBbox);
+      m.el.style.left = p.x + 'px';
+      m.el.style.top = p.y + 'px';
+      m.el.classList.toggle('sichtbar', KARTEN_MARKER_SICHTBAR);
+    });
+  }
 
   // Hero / Marker Opacity
   let heroProgress = constrain(map(progress, SCROLL_MEILENSTEINE.heroFadeStart, SCROLL_MEILENSTEINE.heroFadeEnd, 0, 1), 0, 1);
