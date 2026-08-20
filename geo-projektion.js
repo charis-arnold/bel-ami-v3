@@ -36,28 +36,36 @@
    Meterdistanzen für die Balkenlänge, nicht die Bildschirmprojektion.
 ============================================================================= */
 
-// Georeferenz beider Übersichtskarten (Startseite und Überblickseite). Sie
-// stammen aus demselben QGIS-Ausschnitt und haben auch dieselben Pixelmasse,
-// teilen sich also eine Bbox. Exakte Werte aus QGIS (EPSG:3857:
-// X 247907.651 .. 270857.651, Y 6244994.107 .. 6256724.107), umgerechnet mit
-// derselben Web-Mercator-Formel wie die Kapitelkarten (siehe BASIS_3857/
-// x2lon/y2lat in data-prep/05 bereinigen/schneide-kapitelkarten.py) — damit
-// liegen Übersichts- und Kapitelkarten auf derselben Grundlage.
-// Auf beiden Bildern gegengeprüft, indem bekannte Fixpunkte darauf projiziert
-// wurden: Gare Saint-Lazare landet auf dem Gleisfächer, Concorde am
-// Tuilerien-Rand, Madeleine auf ihrem Kirchenblock.
-// startBbox — paris-startkarte-web.png. Exakte Georeferenz aus QGIS
-// (EPSG:3857: X 247907.651 .. 270857.651, Y 6244994.107 .. 6256724.107).
+// Georeferenz der beiden Übersichtskarten (Startseite und Überblickseite).
 //
-// Zwischenzeitlich standen hier X 247340.000 / Y 6245109.800 (568 m weiter
-// westlich, 116 m weiter nördlich). Gegenprobe: dieselbe Kapitelroute auf
-// dasselbe Bild projiziert folgt mit den Werten unten exakt den Strassen,
-// mit den anderen läuft sie quer durch die Häuserblöcke und schneidet die
-// Tuilerien — auf 6000px Bildbreite ein Versatz von 148px. Falls doch ein
-// Export mit jenem Ausschnitt existiert, gehören die Werte zu DEM Bild,
-// nicht zu diesem.
-let startBbox = { west: 2.2269923194085774, east: 2.4331556771226127, south: 48.82366665448583, north: 48.892993566082404 };
-// uebersichtBbox — paris-ueberblickkarte-web.png, unverändert.
+// ACHTUNG — die beiden Bilder zeigen NICHT denselben Ausschnitt. Sie haben
+// dieselben Pixelmasse (6000 x 3067) und dieselbe Ausdehnung (22950 x 11730 m),
+// stammen aber aus zwei QGIS-Exporten mit um 568 m verschobenem Kartenfenster.
+// Sie brauchen deshalb JE EINE EIGENE Bbox. Bis 20.08.2026 trugen beide
+// dieselben Werte (die der Überblickskarte); die Routen lagen dadurch auf der
+// Start- und Schlusskarte um 568 m — 148 px im Bild, rund 46 px auf dem
+// Bildschirm — neben den Strassen. Siehe docs/bugfix-log.md, Fix 2.
+//
+// Beide Werte sind aus QGIS in EPSG:3857 abgelesen und mit derselben
+// Web-Mercator-Formel umgerechnet wie die Kapitelkarten (x2lon/y2lat, siehe
+// data-prep/05 bereinigen/schneide-kapitelkarten.py).
+//
+// Gegenprobe für beide Bilder, mit einem Fixpunkt, der keine Auslegung
+// zulässt: die Place de l'Étoile, deren zwölf Avenuen strahlenförmig von
+// einem Punkt ausgehen (2.2950 / 48.8738). Auf jedem der beiden Bilder trifft
+// NUR die jeweils zugehörige Bbox das Sternzentrum; die andere landet rund
+// 148 px westlich davon in einem Häuserblock.
+
+// startBbox — paris-startkarte-web.png (Startseite UND Schlusskarte, siehe
+// currentBgBbox in draw()). QGIS EPSG:3857:
+// X 247340.000 .. 270290.000, Y 6245109.800 .. 6256840.000
+let startBbox = { west: 2.221893023741224, east: 2.4280563814466545, south: 48.82435089471847, north: 48.89367804058055 };
+
+// uebersichtBbox — paris-ueberblickkarte-web.png (Übersichtsakt mit allen 18
+// Routen). QGIS EPSG:3857:
+// X 247907.651 .. 270857.651, Y 6244994.107 .. 6256724.107
+// Identisch mit BASIS_3857 in schneide-kapitelkarten.py: dieses Bild liegt auf
+// derselben Grundlage wie die geschnittenen Kapitelkarten.
 let uebersichtBbox = { west: 2.2269923194085774, east: 2.4331556771226127, south: 48.82366665448583, north: 48.892993566082404 };
 let ch1ImgBbox = { west: 2.317834413581757, east: 2.352393886019969, south: 48.86683338890839, north: 48.881871498351956 };
 

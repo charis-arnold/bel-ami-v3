@@ -227,3 +227,115 @@ Härtung (fillStyle im Badge-Block und anderswo direkt setzen, statt sich auf
 p5s Durchschrieb zu verlassen) wurde bewusst **nicht** Teil dieses Fixes — sie
 beträfe zusätzlich die über p5 gezeichneten `ellipse()`-Punkte und gehört in
 einen eigenen Schritt.
+
+---
+
+## Fix 2 — Route auf Start- und Schlusskarte um 568 m versetzt
+
+**Datum:** 20. August 2026
+**Datei:** `geo-projektion.js` (bis Modul 6: `sketch.js`)
+**Betroffen seit:** Eintragung der Bbox-Werte, lange vor der Modularisierung
+**Gemeldet von:** Charis Arnold
+
+### Symptom
+
+Auf der Schlusskarte lagen die achtzehn Routen nicht auf den Strassen, sondern
+sichtbar daneben. Auf der **Überblickskarte** dagegen stimmte alles — dieser
+Unterschied war der entscheidende Hinweis.
+
+### Ursache
+
+`startBbox` und `uebersichtBbox` trugen **identische Werte**, obwohl sie zu
+zwei verschiedenen Bildern gehören:
+
+| Bild | verwendet für | tatsächlicher Ausschnitt (EPSG:3857) |
+|---|---|---|
+| `paris-ueberblickkarte-web.png` | Übersichtsakt | X 247907.651 .. 270857.651 |
+| `paris-startkarte-web.png` | Startseite **und Schlusskarte** | X 247340.000 .. 270290.000 |
+
+Beide Bilder haben dieselben Pixelmasse (6000 × 3067) und dieselbe Ausdehnung
+(22 950 × 11 730 m), stammen aber aus zwei QGIS-Exporten mit **um 568 m
+verschobenem Kartenfenster** (X +567,651 m, Y −115,7 m — ein reiner Versatz,
+keine Skalierung).
+
+Der alte Kommentar hielt die Fehlannahme ausdrücklich fest: *„Sie stammen aus
+demselben QGIS-Ausschnitt und haben auch dieselben Pixelmasse, teilen sich also
+eine Bbox."* Übernommen worden waren die Werte von `BASIS_3857` aus
+`data-prep/05 bereinigen/schneide-kapitelkarten.py` — der Georeferenz des
+**Kapitelkarten**-Basisbilds (`cas scrollytelling - paris kapitelkarte.png`,
+10 629 × 5 433 px). Für die Überblickskarte passt das, für die Startkarte nicht.
+
+Kein Rundungs- oder Umrechnungsfehler: die Umrechnung war exakt, nur einem
+falschen Bild zugeordnet.
+
+**Auswirkung:** 568 m entsprechen 148 px im 6000 px breiten Bild und rund 46 px
+auf dem Bildschirm. Auf der Startseite fiel das kaum auf (dort liegt nur ein
+einzelner Routenpunkt), auf der Schlusskarte mit allen achtzehn Routen sofort.
+
+### Beleg
+
+Fixpunkt **Place de l'Étoile** (2.2950 / 48.8738) — der Platz, von dem zwölf
+Avenuen strahlenförmig ausgehen, also ein Punkt ohne Auslegungsspielraum. Beide
+Bboxen wurden auf beide Bilder projiziert:
+
+| Bild | alte (gemeinsame) Bbox | QGIS-Werte der Startkarte |
+|---|---|---|
+| Überblickskarte | **trifft das Sternzentrum** | 148 px daneben |
+| Startkarte | 148 px daneben, im Häuserblock | **trifft das Sternzentrum** |
+
+Gegengeprüft an Île de la Cité (Insel vs. linkes Ufer) und am Gleisfächer von
+Gare Saint-Lazare — beide bestätigen dasselbe Bild.
+
+Der alte Kommentar behauptete das Gegenteil (*„Gare Saint-Lazare landet auf dem
+Gleisfächer"*); diese frühere Gegenprobe war nachweislich falsch.
+
+### Fix
+
+`startBbox` auf die Georeferenz ihres eigenen Bildes gesetzt:
+
+```diff
+-let startBbox = { west: 2.2269923194085774, east: 2.4331556771226127, south: 48.82366665448583, north: 48.892993566082404 };
++let startBbox = { west: 2.221893023741224, east: 2.4280563814466545, south: 48.82435089471847, north: 48.89367804058055 };
+```
+
+Umgerechnet aus X 247340.000 .. 270290.000 / Y 6245109.800 .. 6256840.000 mit
+derselben Web-Mercator-Formel wie die Pipeline (R = 6 378 137 m).
+`uebersichtBbox` blieb unverändert.
+
+Der Kommentarblock wurde ersetzt: Er warnt jetzt ausdrücklich davor, die beiden
+Bboxen wieder gleichzusetzen, nennt für jedes Bild die eigenen QGIS-Werte und
+beschreibt die Étoile-Gegenprobe als nachvollziehbaren Test.
+
+### Nicht betroffen
+
+- **Kapitelkarten 02–18** — Bild und `bbox.json` stammen beide aus
+  `BASIS_3857` und sind in sich konsistent.
+- **`ch1ImgBbox`** (Kapitel-1-Karte) — eigener Export, kein Versatz feststellbar.
+- **`uebersichtBbox`** — durch den Fixpunkt als korrekt bestätigt.
+
+### Kein Zusammenhang mit der Modularisierung
+
+Der Verdacht lag zunächst auf der Extraktion von `geo-projektion.js` (Modul 6).
+Ausgeschlossen durch: zeichenweise Gleichheit aller vier Projektionsfunktionen
+und aller Bbox-Konstanten, byte-identische `draw()`/`zeichneUebersichtsrouten`/
+`zeichneRoute`, sowie einen numerischen Durchlauf **beider Codestände** mit
+identischem Ergebnis auf zwölf Nachkommastellen. Der Versatz bestand, seit die
+Werte eingetragen wurden.
+
+### Prüfungen
+
+- **Syntax:** `geo-projektion.js` parst fehlerfrei.
+- **Fixpunkt nach dem Fix:** Étoile trifft auf **beiden** Bildern das
+  Sternzentrum, jeweils mit der zugehörigen Bbox.
+- **Routenüberlagerung:** Alle 18 Routen auf die Startkarte projiziert, alte
+  und neue Bbox übereinandergelegt — die neue folgt den Strassen, die alte
+  läuft quer durch die Häuserblöcke.
+- **Diff:** eine geänderte Wertzeile, sonst nur Kommentar.
+
+### Manueller Test
+
+1. Startseite: der Routen-Startpunkt muss auf dem Strassenzug liegen.
+2. Bis ans Ende scrollen: auf der Schlusskarte müssen alle achtzehn Routen den
+   Strassen folgen.
+3. Überblicksakt gegenprüfen — dort war es vorher schon richtig und muss es
+   bleiben.
