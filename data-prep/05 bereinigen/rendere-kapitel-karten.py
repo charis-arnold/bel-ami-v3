@@ -35,10 +35,10 @@ Verwendung:
 
 WICHTIG: Dieses Skript rendert Kapitel, die explizit in KAPITEL_BBOXEN
 eingetragen sind, PLUS Kapitel 01 als Sonderfall (KAPITEL01_BBOX): Kapitel 01
-hat kein eigenes "kapitel karten/kapitelXX-{karte.png,bbox.json}"-Paar,
-sondern wird nach wie vor direkt im Projekt-Root als kapitel01-karte.png
-abgelegt und ohne begleitende bbox.json gerendert — sketch.js lädt das Bild
-von dort (ch1Image = loadImage('kapitel01-karte.png')) und trägt die
+hat kein eigenes "bilder-karten/kapitelXX-{karte.png,bbox.json}"-Paar,
+sondern wird als bilder-karten/kapitel01-qgis-karte-web.png abgelegt und ohne
+begleitende bbox.json gerendert — sketch.js lädt das Bild von dort
+(ch1Image = loadImage('bilder-karten/kapitel01-qgis-karte-web.png')) und trägt die
 zugehörige Bbox als Literal (ch1ImgBbox) im Code, lädt sie also NICHT aus
 einer JSON-Datei wie die übrigen Kapitel. KAPITEL01_BBOX unten MUSS daher
 manuell in Sync mit ch1ImgBbox in sketch.js gehalten werden, falls sich der
@@ -74,7 +74,7 @@ import osmnx as ox
 SKRIPT_ORDNER = os.path.dirname(os.path.abspath(__file__))        # .../data-prep/05 bereinigen
 DATA_PREP_ORDNER = os.path.dirname(SKRIPT_ORDNER)                   # .../data-prep
 PROJEKT_ROOT = os.path.dirname(DATA_PREP_ORDNER)                    # Projekt-Root
-KARTEN_ORDNER = os.path.join(PROJEKT_ROOT, "kapitel karten")
+KARTEN_ORDNER = os.path.join(PROJEKT_ROOT, "bilder-karten")
 
 ox.settings.use_cache = True
 ox.settings.cache_folder = os.path.join(DATA_PREP_ORDNER, "cache")

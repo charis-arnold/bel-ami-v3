@@ -56,19 +56,22 @@
 // NUR die jeweils zugehörige Bbox das Sternzentrum; die andere landet rund
 // 148 px westlich davon in einem Häuserblock.
 
-// startBbox — paris-startkarte-web.png (Startseite UND Schlusskarte, siehe
+// startBbox — bilder-karten/paris-startkarte-web.png (Startseite UND
+// Schlusskarte, siehe
 // currentBgBbox in draw()). QGIS EPSG:3857:
 // X 247340.000 .. 270290.000, Y 6245109.800 .. 6256840.000
 let startBbox = { west: 2.221893023741224, east: 2.4280563814466545, south: 48.82435089471847, north: 48.89367804058055 };
 
-// uebersichtBbox — paris-ueberblickkarte-web.png (Übersichtsakt mit allen 18
+// uebersichtBbox — bilder-karten/paris-ueberblickkarte-web.png (Übersichts-
+// akt mit allen 18
 // Routen). QGIS EPSG:3857:
 // X 247907.651 .. 270857.651, Y 6244994.107 .. 6256724.107
 // Identisch mit BASIS_3857 in schneide-kapitelkarten.py: dieses Bild liegt auf
 // derselben Grundlage wie die geschnittenen Kapitelkarten.
 let uebersichtBbox = { west: 2.2269923194085774, east: 2.4331556771226127, south: 48.82366665448583, north: 48.892993566082404 };
 
-// ch1ImgBbox — kapitel01-qgis-karte-web.png (Kapitel-1-Kartenausschnitt).
+// ch1ImgBbox — bilder-karten/kapitel01-qgis-karte-web.png
+// (Kapitel-1-Kartenausschnitt).
 //
 // Anders als bei den beiden Bboxen darüber ist der QGIS-Ursprung dieses Werts
 // NICHT überliefert. Rückgerechnet ergibt er X 258020.147 .. 261867.290,
@@ -90,7 +93,8 @@ let uebersichtBbox = { west: 2.2269923194085774, east: 2.4331556771226127, south
 // dem Mittelpunkt 1138 m östlich und 412 m südlich versetztes Kartenfenster.
 // Ihre Werte hier einzusetzen zöge die Route rund 1.5 km nach Osten.
 //
-// Wird kapitel01-qgis-karte-web.png je neu exportiert, gehören die exakten
+// Wird bilder-karten/kapitel01-qgis-karte-web.png je neu exportiert, gehören
+// die exakten
 // QGIS-Koordinaten (X min/max, Y min/max in EPSG:3857) hierher — im selben
 // Format wie bei startBbox/uebersichtBbox. Ohne sie lässt sich der Wert nicht
 // nachziehen, sondern nur wieder empirisch gegenprüfen.

@@ -31,9 +31,11 @@ const KAPITEL_EINSTIEG_FADE_MS = 800;
 const KAPITEL_EINSTIEG_SCROLL_START = 0.015;
 const KAPITEL_EINSTIEG_SCROLL_ENDE = 0.06;
 // bgImage: Startseite/erste Übersicht vor dem Zoom in Kapitel 1
-// (paris-startkarte-web.png). bgImage2: "zweite" Übersichtskarte, die nach
+// (bilder-karten/paris-startkarte-web.png). bgImage2: "zweite" Übersichts-
+// karte, die nach
 // dem Rauszoomen aus Kapitel 1 gezeigt wird (Übersichtsrouten- und
-// Kreisvergleich-Akt, paris-ueberblickkarte-web.png). Beide stammen aus
+// Kreisvergleich-Akt, bilder-karten/paris-ueberblickkarte-web.png). Beide
+// stammen aus
 // demselben QGIS-Ausschnitt und haben dieselben Pixelmasse, teilen sich also
 // Bbox (uebersichtBbox) und Crop-Rechenweg — es wechselt nur, welches Bild
 // gezeichnet wird (siehe currentBgImage in draw()).
@@ -101,9 +103,10 @@ let uebersichtsRouten = {};
 // --- Kapitelausschnitte: Startpunkt/Nummer einer Übersichtsroute wird zum
 // Link, der auf den eigenen Kartenausschnitt dieses Kapitels zoomt. Nur
 // Kapitel, die hier einen Eintrag haben, sind klickbar — das sind exakt die
-// Kapitel, für die "kapitel karten/kapitelXX-{karte.png,bbox.json}"
+// Kapitel, für die "bilder-karten/kapitelXX-{karte.png,bbox.json}"
 // existiert (aktuell alle außer 01 — das hat sein eigenes, handverfeinertes
-// System, siehe kapitel01-qgis-karte-web.png/stationenData). vAnchor/hAnchor
+// System, siehe bilder-karten/kapitel01-qgis-karte-web.png/stationenData).
+// vAnchor/hAnchor
 // (optional, siehe coverCrop):
 // verschieben den sichtbaren Ausschnitt vertikal bzw. horizontal innerhalb
 // des Kapitelbilds, ohne die zugrundeliegende karte.png/bbox.json neu
@@ -155,9 +158,9 @@ function datenFuerKapitel(nr) {
 }
 
 function preload() {
-  bgImage = loadImage('paris-startkarte-web.png');
-  bgImage2 = loadImage('paris-ueberblickkarte-web.png');
-  ch1Image = loadImage('kapitel01-qgis-karte-web.png');
+  bgImage = loadImage('bilder-karten/paris-startkarte-web.png');
+  bgImage2 = loadImage('bilder-karten/paris-ueberblickkarte-web.png');
+  ch1Image = loadImage('bilder-karten/kapitel01-qgis-karte-web.png');
 
   const kapitelDatenDateien = [
     { nr: '01', ziel: 'stationenData' },
@@ -177,11 +180,8 @@ function preload() {
 
   Object.keys(kapitelKarten).forEach(nr => {
     if (OHNE_EIGENEN_KARTENAUSSCHNITT.includes(nr)) return;
-    // Ordnername "kapitel karten" enthält ein Leerzeichen — explizit als
-    // %20 kodiert, damit loadImage/loadJSON (fetch-basiert) den Pfad
-    // zuverlässig auflösen, unabhängig vom Server/Browser-Verhalten.
-    kapitelKarten[nr].bild = loadImage(`kapitel%20karten/kapitel${nr}-karte.png`);
-    kapitelKarten[nr].bboxRaw = loadJSON(`kapitel%20karten/kapitel${nr}-bbox.json`);
+    kapitelKarten[nr].bild = loadImage(`bilder-karten/kapitel${nr}-karte.png`);
+    kapitelKarten[nr].bboxRaw = loadJSON(`bilder-karten/kapitel${nr}-bbox.json`);
   });
 }
 
