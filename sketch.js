@@ -779,31 +779,6 @@ function baueZwischenMarker() {
   });
 }
 
-function baueSpineTimeline() {
-  spineLinie = document.createElement('div');
-  spineLinie.className = 'spine-linie';
-  spineTimeline.appendChild(spineLinie);
-
-  stationenData.route.forEach((station, i) => {
-    fuegeSpineEintragHinzu(station.ort, 'route', i);
-    stationenData.gedanken.filter(g => g.nachStation === i).forEach(g => fuegeSpineEintragHinzu(g.ort, 'gedanke', i));
-    stationenData.markierungen.filter(m => m.nachStation === i).forEach(m => fuegeSpineEintragHinzu(m.ort, 'markierung', i));
-  });
-}
-
-function fuegeSpineEintragHinzu(text, typ, stationIndex) {
-  let el = document.createElement('div');
-  el.className = 'spine-entry' + (typ !== 'route' ? ' spalte-' + typ : '');
-  let dot = document.createElement('div');
-  dot.className = 'ortspunkt';
-  let label = document.createElement('span');
-  label.textContent = text;
-  el.appendChild(dot);
-  el.appendChild(label);
-  spineTimeline.appendChild(el);
-  spineEintraege.push({ el, stationIndex });
-}
-
 // ---------------------------------------------------------------------------
 // draw()
 // ---------------------------------------------------------------------------
