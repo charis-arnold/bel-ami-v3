@@ -874,3 +874,115 @@ JS-Mechanik ist jetzt historisch.
 
 **Am sichtbaren Verhalten ändert sich nichts** ausser dem Wegfall des seit dem
 18. August 2026 ohnehin leeren Sammelpunkt-Kreises.
+
+---
+
+## Schritt 8 — Verwaistes CSS des DOM-Spine-Panels entfernt
+
+**Datum:** 20. August 2026
+**Datei:** `style.css`
+**Ausgangsfassung:** Commit `6b8d3fe`
+**Ergebnis:** 1063 → 998 Zeilen — 65 Löschungen, keine Einfügung
+
+Abschluss des in [Schritt 1](#schritt-1--toter-spine-timeline-code-entfernt)
+notierten Folgebefunds zu den verwaisten Spine-Klassen.
+
+### Der Fund: älter und grösser als die Notiz aus Schritt 1
+
+Die Notiz aus Schritt 1 hielt fest, dass `.spine-timeline`, `.spine-linie`,
+`.spine-entry` (plus `.aktiv`, `.spalte-gedanke`, `.spalte-markierung`) in
+`style.css:392–427` „seither" verwaist seien — also seit dem Entfernen von
+`baueSpineTimeline()`/`fuegeSpineEintragHinzu()`. Die Neuprüfung korrigiert das
+in zwei Punkten.
+
+**Erstens: der Umfang war grösser.** Zum verwaisten Bereich gehörten auch
+`.spine-panel` und `.spine-heading`, die in der Notiz fehlten — zusammen der
+komplette Abschnitt 6 „Spine-Panel (Graph-Ansicht)". Hätte man nur die sechs
+notierten Klassen entfernt, wäre eine Abschnittsüberschrift mit zwei
+verwaisten Regeln stehen geblieben.
+
+**Zweitens: das Panel war nie in Betrieb — nicht erst seit Schritt 1, sondern
+seit dem Initial Commit dieses Repos.** Im Initial Commit `fa1212e` gilt:
+
+- `baueSpineTimeline()` war zwar definiert (`sketch.js:631`), wurde aber
+  **nirgends aufgerufen**.
+- Die darin verwendeten Variablen `spineTimeline`, `spineLinie` und
+  `spineEintraege` waren **nirgends deklariert** (die ähnlich heissenden
+  `spineEintraegep5`/`spineEintraegeKapitel` sind die Canvas-Datenhalter der
+  horizontalen Spine und haben damit nichts zu tun).
+- `index.html` enthielt **kein einziges Spine-Element**.
+
+Ein Aufruf hätte also sofort einen `ReferenceError` geworfen. Das vertikale
+DOM-Spine-Panel ist ein Überbleibsel aus v2, bei dem Code und CSS mit ins
+Projekt kamen, das Markup aber nicht. Schritt 1 hat davon die Funktionshülle
+entfernt, Schritt 8 jetzt das CSS.
+
+**Methodischer Hinweis:** `.spalte-gedanke`/`.spalte-markierung` wurden nie
+literal im Quelltext gesetzt, sondern zusammengebaut —
+`el.className = 'spine-entry' + (typ !== 'route' ? ' spalte-' + typ : '')`.
+Eine wörtliche Suche nach `spalte-gedanke` findet deshalb auch in der Historie
+nichts. Bei CSS-Aufräumarbeiten reicht die Suche nach dem vollständigen
+Klassennamen nicht; nach Fragmenten (`'spalte-'`) muss mitgesucht werden.
+
+### Was wurde entfernt
+
+Abschnitt 6 vollständig, `style.css:332–394` samt Abschnittsüberschrift und den
+beiden nachfolgenden Leerzeilen:
+
+| Zeile (vorher) | Regel |
+|---|---|
+| 332–334 | Abschnittsüberschrift „6) Spine-Panel (Graph-Ansicht)" |
+| 336 | `.spine-panel` |
+| 350 | `.spine-heading` |
+| 356 | `.spine-timeline` |
+| 364 | `.spine-linie` |
+| 373 | `.spine-entry` |
+| 385 | `.spine-entry.aktiv` |
+| 390–391 | `.spine-entry.spalte-gedanke`, `.spine-entry.spalte-markierung` |
+
+**Bewusst stehen geblieben — kein Kollateralschaden:**
+
+- **`.aktiv`** wird weiterhin gebraucht: `.kapitel-register-item.aktiv` und
+  `.kapitel-register-modus-item.aktiv` (jetzt Zeilen 453 und 493), gesetzt aus
+  `sketch.js` (`classList.toggle('aktiv', …)`). Nur die kombinierten Selektoren
+  mit `.spine-entry` fielen weg.
+- **`.ortspunkt`** (jetzt Zeilen 291, 321) gehört zu den in
+  [Schritt 5](#schritt-5--karten-marker-stillgelegt-statt-entfernt)
+  stillgelegten Kartenmarkierungen, deren DOM-Knoten `dom-aufbau.js` weiterhin
+  baut. Der entfernte Spine-Code hatte die Klasse nur mitbenutzt.
+
+Die **Abschnittsnummerierung wurde nicht angepasst**: `style.css` hat bereits
+Lücken bei 5 und 8 aus früheren Entfernungen. Eine weitere Lücke bei 6 folgt
+damit der bestehenden Konvention; ein Durchnummerieren hätte alle folgenden
+Überschriften ohne Nutzen verändert.
+
+### Warum ersatzlos und nicht stillgelegt
+
+Anders als bei den Kartenmarkierungen aus Schritt 5 gibt es hier keinen
+Reaktivierungspfad: Funktion, Variablen und Markup fehlen alle, und die heutige
+Graph-Ansicht (`spine-horizontal.js`) zeichnet ausschliesslich auf den
+p5-Canvas — kein `classList`, kein `className`, kein `createElement`. Sie kann
+von diesem CSS also gar nicht profitieren. Eine Rückkehr zum vertikalen Panel
+wäre ein Neubau, dem 63 Zeilen altes CSS wenig helfen.
+
+### Prüfungen
+
+- **Referenzprüfung vor dem Löschen:** alle sieben Klassennamen projektweit in
+  `.js`, `.html` und `.css` gesucht — Fundstellen ausschliesslich in
+  `style.css`. `style.css` ist das einzige Stylesheet; `index.html` hat keinen
+  `<style>`-Block (einziges `style=`-Attribut ist die Scrollhöhe der
+  `.scroll-track`).
+- **Dynamisch gebaute Klassennamen:** zusätzlich nach Fragmenten und
+  Template-Literalen in `classList.add/toggle/remove` und `className`-
+  Zuweisungen gesucht — keine Treffer im aktuellen Code.
+- **Historie:** jeder Commit daraufhin geprüft, ob die Klassen je aus JS oder
+  HTML gesetzt wurden. `.spine-entry`/`.spine-linie` nur bis `eff2b4d`
+  (Schritt 1); `.spine-panel`, `.spine-heading`, `.spine-timeline` **nie**.
+- **Restreferenzen:** null Treffer für alle sieben Namen.
+- **Struktur:** Klammerbilanz ausgeglichen (99 `{` / 99 `}`), `var(--sans)`
+  weiterhin 16-mal in Gebrauch, Nahtstelle folgt der Zwei-Leerzeilen-Konvention
+  zwischen Abschnitten.
+- **Diff:** ausschliesslich Löschungen — `1 file changed, 65 deletions(-)`.
+
+**Am sichtbaren Verhalten ändert sich nichts** — die Regeln trafen seit dem
+Initial Commit auf kein einziges Element im DOM.
