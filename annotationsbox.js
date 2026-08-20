@@ -17,8 +17,7 @@
    --- Abhängigkeiten NACH AUSSEN (alle erst zur Laufzeit) -------------------
    aus sketch.js:           annotationText (für getComputedStyle — die Boxhöhe
                             wird aus der echten Schriftgrösse geschätzt),
-                            lonLatToScreen, mapOffsetX/mapOffsetY,
-                            sammelpunktKategorie
+                            lonLatToScreen, mapOffsetX/mapOffsetY
    aus datenbereinigung.js: KREIS_KATEGORIEN, kreisRadius, wohnungFilterFuerOrt,
                             zaehleAnnotationenLiveNachOrtBasis
    aus p5:                  width/height, drawingContext (nur zum Textmessen)
@@ -83,7 +82,6 @@ function annotationBoxPlatz(kapitelNr, daten, bbox) {
   let letzterIndex = daten.annotationen.length - 1;
   let kreise = [];
   (daten.ortRuns || []).forEach(r => {
-    if (sammelpunktKategorie(r.ort)) return; // liegt im Kasten, nicht auf der Karte
     let bc = zaehleAnnotationenLiveNachOrtBasis(wohnungFilterFuerOrt(r.ort), letzterIndex, daten);
     let radius = 0;
     KREIS_KATEGORIEN.forEach(kat => {

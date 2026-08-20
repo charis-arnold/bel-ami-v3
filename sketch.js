@@ -71,7 +71,6 @@ let kapitelRegister; // Kapitelregister links (inkl. Plan/Graph + Alle), sichtba
 let kapitelRegisterEintraege = {}; // nr -> Eintrags-Element, fürs Aktiv-Highlighting in draw()
 let planEintrag, graphEintrag; // "Plan"/"Graph"-Hälften oben im Register, fürs Aktiv-Highlighting in draw()
 let modusZeile, leerzeile, alleEintrag; // Plan/Graph-Zeile + Abstandshalter + "Alle" — in der Übersicht (kein Kapitel gezoomt) blendet draw() modusZeile/leerzeile aus und markiert alleEintrag als aktiv
-let orteOhneAdresse; // Platzhalter-Box unterhalb des Kapitelregisters, liefert die Bildschirmposition für zeichneOrteOhneAdresse()
 let legendeBox; // Register-Container (Tab+Inhalt), mitte rechts — sichtbar wie kapitelRegister (Plan UND Graph)
 let legendeValenzText, legendeValenzKreis; // Valenz-Zeile der Legende — Text/Symbol wechseln je Ansicht (siehe draw())
 const LEGENDE_VALENZ_KARTE = 'Volltonfarbe: links negativ, rechts positiv bewertet';
@@ -230,7 +229,6 @@ function setup() {
   annotationTag = document.getElementById('annotationTag');
   annotationBar = document.getElementById('annotationBar');
   kapitelRegister = document.getElementById('kapitelRegister');
-  orteOhneAdresse = document.getElementById('orteOhneAdresse');
   registerTabs = document.getElementById('registerTabs');
   legendeBox = document.getElementById('legendeBox');
   legendeTab = document.getElementById('legendeTab');
@@ -669,16 +667,6 @@ function draw() {
     // sonst bliebe eine veraltete Hervorhebung vom zuletzt betrachteten
     // Kapitel stehen.
     Object.values(kapitelRegisterEintraege).forEach(eintrag => eintrag.classList.remove('aktiv'));
-  }
-
-  // Orte-ohne-Adresse-Box direkt unterhalb des Kapitelregisters andocken
-  // (dessen Höhe variiert nicht, aber so bleibt es robust gegen künftige
-  // Änderungen an der Registergröße) — nur in der Kartenansicht relevant,
-  // im Strahl-Modus (Spine) gibt es keine geografischen Kreise.
-  orteOhneAdresse.classList.toggle('sichtbar', inKapitelAnsicht && kapitelAnsichtsModus === 'karte');
-  if (inKapitelAnsicht) {
-    let registerRect = kapitelRegister.getBoundingClientRect();
-    orteOhneAdresse.style.top = (registerRect.bottom + 12) + 'px';
   }
 
   // Untere Scroll-Fortschritt-Leiste: nur ausserhalb jeder Kapitel-Ansicht

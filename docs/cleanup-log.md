@@ -728,6 +728,11 @@ zwar nur auf `'rueckkehr'`, aber `'location'` ist die dokumentierte Gegenprobe.
 
 ### Offener Folgebefund
 
+→ **erledigt in [Schritt 7](#schritt-7--sammelpunkt-kreis-orte-ohne-adresse-vollständig-entfernt).**
+Die dort ergänzte Historie korrigiert eine Ungenauigkeit dieses Absatzes: für
+die Präfix-Kategorien war **nicht** der `ortBasis`-Vorrang die Ursache (anders
+als beim Paris-Zweig), sondern eine spätere, bewusste Datenumstellung.
+
 **`sammelpunktKategorie()` in `kreisgrafik.js` greift derzeit überhaupt nicht
 mehr** — nicht nur der entfernte `PARIS_ALLGEMEIN`-Zweig, sondern auch die
 fünf Präfix-Kategorien darunter (`'Erinnerung (Kapitel'`, `'Phantasie (Kapitel'`,
@@ -750,3 +755,122 @@ bewusst entfallen (dann sind `SAMMELPUNKT_KATEGORIEN`, `sammelpunktKategorie`,
 `zeichneOrteOhneAdresse`, die Box `#orteOhneAdresse` und das zugehörige CSS
 toter Code). **Nicht angefasst** — die Entscheidung braucht erst eine Antwort
 darauf, was die Anzeige zeigen soll.
+
+---
+
+## Schritt 7 — Sammelpunkt-Kreis "Orte ohne Adresse" vollständig entfernt
+
+**Datum:** 20. August 2026
+**Dateien:** `kreisgrafik.js`, `annotationsbox.js`, `sketch.js`, `index.html`, `style.css`
+**Ausgangsfassung:** Commit `8ccc9ad`
+**Ergebnis:** `kreisgrafik.js` 486 → 403 Zeilen, `sketch.js` 889 → 877,
+`style.css` 1089 → 1063, `annotationsbox.js` 129 → 127, `index.html` 109 → 107
+— 31 Einfügungen, 156 Löschungen
+
+Damit erledigt sich der in
+[Schritt 6](#schritt-6--nie-aktive-paris-sonderbehandlung-in-bauespinedaten-entfernt)
+offen gebliebene Folgebefund.
+
+### Der Fund
+
+Orte ohne konkrete Adresse bekamen keinen Kreis auf der Karte (dort hätten sie
+eine frei erfundene Koordinate gebraucht), sondern wurden nach Kategorie
+gesammelt und als eigener Kreis-Stapel unterhalb des Kapitelregisters
+gezeichnet. Die Mechanik bestand aus fünf Teilen: der Kategorientabelle
+`SAMMELPUNKT_KATEGORIEN`, der Zuordnung `sammelpunktKategorie()`, dem
+Sammel-Zweig in `zeichneKreiseOrtRuns()`, dem Zeichner
+`zeichneOrteOhneAdresse()` und der unsichtbaren Platzhalter-Box
+`#orteOhneAdresse`, die nur die Bildschirmposition lieferte.
+
+**Kein einziger ortRun erreichte diese Mechanik mehr.** `sammelpunktKategorie()`
+wird an beiden Aufrufstellen mit `r.ort` aus `ortRuns` aufgerufen und lieferte
+über alle 18 Kapitel ausnahmslos `null`; `keineAdresseNachKategorie` blieb
+folglich leer und `zeichneOrteOhneAdresse()` wurde nie aufgerufen.
+
+### Bestätigung: bewusst stillgelegt, nicht kaputtgegangen
+
+Zwei unabhängige Belege, dass das Feature absichtlich aufgegeben wurde:
+
+**1. Die Datenpipeline sagt es selbst.** In
+`data-prep/05 bereinigen/baue-sammelpunkte-handkuriert.py` steht im Kopfkommentar
+zur Regel, dass jede Annotation zu dem Ort zählt, an dem sie empfunden wird:
+
+> „Erinnerungen, Wünsche, Vorstellungen und blosse Erwähnungen bekommen also
+> keinen eigenen Kreis und kein Sammelbecken, sondern gehören zum Schauplatz,
+> an dem die Figur gerade steht. […] (Die Sammelbecken-Mechanik in sketch.js —
+> `SAMMELPUNKT_KATEGORIEN`/`zeichneOrteOhneAdresse` — wird dadurch nicht mehr
+> gebraucht; sie bleibt vorerst ungenutzt stehen.)"
+
+**2. Die Git-Historie datiert den Umstieg genau.** Jeder Commit wurde daraufhin
+geprüft, ob die `ortRuns` irgendeiner Kapiteldatei je einen Sammelpunkt-Namen
+trugen:
+
+| Commit | Datum | Treffer in `ortRuns` |
+|---|---|---|
+| `fa1212e` … `17da603` | 11.–13. Aug. | 11 |
+| `75e7e8f` | 18. Aug. | 6 |
+| `ff335fc` | 18. Aug. | 4 |
+| `ab1a474` | 18. Aug. | 5 |
+| **`b6ddbdf`** „Update: Karten und Routen" | **18. Aug.** | **0** |
+| alle folgenden bis `8ccc9ad` | 18.–20. Aug. | 0 |
+
+`b6ddbdf` ist derselbe Commit, der `baue-sammelpunkte-handkuriert.py` umstellte
+(65 geänderte Zeilen, u.a. das Entfernen der Sammelpunkt-Koordinaten wie
+`"Unbestimmt (Kapitel 03)"`). Seit dem 18. August 2026 erzeugt die Pipeline
+keine Sammelpunkt-`ortRuns` mehr — die Anzeige war ab da leer. Das war **sechs
+Tage nach** dem `ortBasis`-Umbau (`11153ee`, 12. Aug.) und von ihm unabhängig;
+die in Schritt 6 vermutete gemeinsame Ursache trifft für die Präfix-Kategorien
+also nicht zu.
+
+Die Beobachtung, dass der Sammelpunkt-Kreis auch auf der Live-Seite v2 nicht
+mehr zu sehen war, stammt aus der Projektleitung und deckt sich mit diesem
+Befund; sie wurde hier nicht eigens nachgeprüft (kein Zugriff auf die
+veröffentlichte Fassung).
+
+### Was wurde entfernt
+
+| Datei | Zeilen (vorher) | Element |
+|---|---|---|
+| `kreisgrafik.js` | 82–100 | Kommentarblock, `SAMMELPUNKT_KATEGORIEN`, `sammelpunktKategorie()` |
+| `kreisgrafik.js` | 112 | `let keineAdresseNachKategorie = new Map()` |
+| `kreisgrafik.js` | 130–145 | Sammel-Zweig `if (kategorie) { … }` samt Kommentar |
+| `kreisgrafik.js` | 182–184 | Aufruf `zeichneOrteOhneAdresse(...)` am Funktionsende |
+| `kreisgrafik.js` | 187–224 | `zeichneOrteOhneAdresse()` samt Kommentarblock |
+| `kreisgrafik.js` | 31–32, 45 | Header: `orteOhneAdresse`-Abhängigkeit, Zugriff aus `annotationsbox.js` |
+| `annotationsbox.js` | 21, 86 | Header-Abhängigkeit und `if (sammelpunktKategorie(r.ort)) return;` |
+| `sketch.js` | 74 | Deklaration `let orteOhneAdresse` |
+| `sketch.js` | 233 | `document.getElementById('orteOhneAdresse')` in `setup()` |
+| `sketch.js` | 674–682 | Sichtbarkeits-Toggle und Andocken der Box in `draw()` |
+| `index.html` | 61 | `<div class="orte-ohne-adresse" id="orteOhneAdresse">` |
+| `style.css` | 579–603 | Kommentar, `.orte-ohne-adresse`, `.orte-ohne-adresse.sichtbar` |
+
+Der `else`-Zweig in `zeichneKreiseOrtRuns()` — das eigentliche Zeichnen der
+Kartenkreise — ist damit der einzig verbliebene Pfad und wurde um eine Ebene
+ausgerückt. `leereBandCounts()` **bleibt**: die Funktion wird ausserhalb
+weiterhin von `ortsveraenderung.js` (Zeilen 263, 283) gebraucht.
+
+**Nicht angefasst:** `baue-sammelpunkte-handkuriert.py`. Das Skript baut
+`ortBasis`/`ortRuns`/`routenPunkte` für alle Kapitel und ist unabhängig von der
+entfernten Anzeige weiterhin in Betrieb; nur sein erklärender Hinweis auf die
+JS-Mechanik ist jetzt historisch.
+
+### Prüfungen
+
+- **Referenzprüfung vor dem Löschen:** `sammelpunktKategorie`,
+  `zeichneOrteOhneAdresse`, `SAMMELPUNKT_KATEGORIEN`, `orteOhneAdresse`,
+  `orte-ohne-adresse`, `keineAdresseNachKategorie` — alle Fundstellen in `.js`,
+  `.html` und `.css` erfasst und oben aufgeführt. `leereBandCounts` als einziger
+  weiterhin gebrauchter Nachbar identifiziert und stehen gelassen.
+- **Verhalten:** Die **entfernte** Verzweigung wurde vor dem Löschen aus
+  `HEAD:kreisgrafik.js` extrahiert und in JavaScriptCore gegen die echten
+  `ortRuns` aller 18 Kapitel ausgeführt: **159 von 159** ortRuns liefen in den
+  behaltenen Karten-Zweig, **0** in den entfernten Sammelbecken-Zweig. Das
+  Auflösen des `if`/`else` ist damit verhaltensneutral.
+- **Spine unverändert:** `baueSpineDaten()` liefert über alle 18 Kapitel
+  weiterhin exakt dieselben Einträge wie vor Schritt 6 (Kapitel 1: 18).
+- **Syntax:** alle **zwölf** in `index.html` geladenen Skripte parsen
+  fehlerfrei (JavaScriptCore, `new Function(quelltext)`).
+- **Restreferenzen:** null Treffer für sämtliche entfernten Namen.
+
+**Am sichtbaren Verhalten ändert sich nichts** ausser dem Wegfall des seit dem
+18. August 2026 ohnehin leeren Sammelpunkt-Kreises.

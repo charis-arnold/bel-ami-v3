@@ -28,8 +28,8 @@
      WOHNUNG_SAMMELPUNKT_ABSORBIERTE_ORTRUNS, GEDANKEN_ORTRUN_UNTERDRUECKT,
      RUE_NOTRE_DAME_DE_LORETTE_ORT
    aus geo-projektion.js (3): lonLatToScreen, mapOffsetX, mapOffsetY
-   aus sketch.js (3): stationenData, orteOhneAdresse (Platzhalter-Box unter dem
-     Kapitelregister), kapitel1ZoomAmount (blendet das Startpunkt-Label ein)
+   aus sketch.js (2): stationenData, kapitel1ZoomAmount (blendet das
+     Startpunkt-Label ein)
    aus p5: Zeichen- und Text-API, drawingContext
 
    --- ACHTUNG: Auswertung beim LADEN ---------------------------------------
@@ -42,7 +42,6 @@
    sketch.js              zeichneKreiseOrtRuns (Kapitel-1-Route und Kapitel-Zoom)
    ortsveraenderung.js    zeichneKreiseFuerRun, zeichneFwertPunkte, leereBandCounts
    spine-horizontal.js    zeichneKreiseFuerRun, zeichneFwertPunkte
-   annotationsbox.js      sammelpunktKategorie
    dom-aufbau.js          FWERT_PUNKT_DURCHMESSER (Legendenaufbau)
 
    Damit ist dies nach geo-projektion.js die zweite gemeinsame Grundlage
@@ -79,26 +78,6 @@ function drawHatchedCircle(cx, cy, r, color, alphaSkala = 1) {
 // Route
 // ---------------------------------------------------------------------------
 
-// Orte ohne konkrete Adresse werden nicht mehr in einen einzigen
-// "UNBESTIMMT"-Topf geworfen, sondern nach Art des Inhalts getrennt: reine
-// Ortsunkenntnis (generisches "Unbestimmt (Kapitel XX)")
-// gegenüber Erinnerung/Phantasie/Wunsch/Gedanken — Inhalte, die gar keine
-// reale Szene an einem echten Ort sind, sondern im Kopf der Figur spielen
-// (siehe Kapitel 3: Kindheitserinnerung, erträumtes Liebesabenteuer, etc.).
-// Reihenfolge hier bestimmt die Stapel-Reihenfolge in zeichneOrteOhneAdresse.
-const SAMMELPUNKT_KATEGORIEN = [
-  { prefix: 'Erinnerung (Kapitel', label: 'ERINNERUNG' },
-  { prefix: 'Phantasie (Kapitel', label: 'PHANTASIE' },
-  { prefix: 'Wunsch (Kapitel', label: 'WUNSCH' },
-  { prefix: 'Gedanken (Kapitel', label: 'GEDANKEN' },
-  { prefix: 'Unbestimmt (Kapitel', label: 'UNBESTIMMT' },
-];
-
-function sammelpunktKategorie(ort) {
-  let treffer = SAMMELPUNKT_KATEGORIEN.find(k => ort.startsWith(k.prefix));
-  return treffer ? treffer.label : null;
-}
-
 function leereBandCounts() {
   return {
     gold_dunkel: { neg: 0, pos: 0, neutral: 0, unrated: 0 },
@@ -109,7 +88,6 @@ function leereBandCounts() {
 
 function zeichneKreiseOrtRuns(punktIndex, annIndex, activeBbox, offsetX = mapOffsetX, offsetY = mapOffsetY, daten = stationenData) {
   let runs = daten.ortRuns || [];
-  let keineAdresseNachKategorie = new Map(); // Label -> bandCounts
   let labelKandidaten = [];
 
   runs.forEach(r => {
@@ -127,100 +105,39 @@ function zeichneKreiseOrtRuns(punktIndex, annIndex, activeBbox, offsetX = mapOff
       if (GEDANKEN_ORTRUN_UNTERDRUECKT.has(r.ort)) return;
       if (r.ort === RUE_NOTRE_DAME_DE_LORETTE_ORT && annIndex < wohnungSplitAi(daten)) return;
     }
-    // Orte ohne echte, konkrete Adresse (generischer Sammelpunkt
-    // "Unbestimmt (Kapitel XX)" der automatisch gebauten Kapitel 02–18):
-    // erscheinen nicht mehr auf der Karte an einer erfundenen Koordinate,
-    // sondern gesammelt als ein Kreis unterhalb des Kapitelregisters
-    // (siehe zeichneOrteOhneAdresse-Aufruf am Funktionsende).
-    let kategorie = sammelpunktKategorie(r.ort);
-    if (kategorie) {
-      if (!keineAdresseNachKategorie.has(kategorie)) {
-        keineAdresseNachKategorie.set(kategorie, leereBandCounts());
-      }
-      let bc = keineAdresseNachKategorie.get(kategorie);
-      ['gold_dunkel', 'gold_mittel', 'gold_hell'].forEach(cat => {
-        ['neg', 'pos', 'neutral', 'unrated'].forEach(v => {
-          bc[cat][v] += (r.bandCounts[cat]?.[v] || 0);
-        });
+    // Alle ortRuns wachsen live mit annIndex (nicht nur die Hauptorte) —
+    // so löst wirklich jede Annotation irgendwo auf der Karte eine
+    // sichtbare Änderung aus, statt dass Nebenerwähnungen als fertiger,
+    // fest vorberechneter Kreis auf einmal aufploppen.
+    let pos = lonLatToScreen(r.lon, r.lat, activeBbox, offsetX, offsetY);
+    let filter = wohnungFilterFuerOrt(r.ort);
+    let bandCounts = zaehleAnnotationenLiveNachOrtBasis(filter, annIndex, daten);
+    let radius = zeichneKreiseFuerRun(pos.x, pos.y, bandCounts, 1);
+    let fwertAnnotationen = sammleAnnotationenNachOrtBasis(filter, annIndex, daten).filter(a => a.hasFwert);
+    zeichneFwertPunkte(pos.x, pos.y, radius, fwertAnnotationen, 1);
+    if (radius > 0) {
+      // Label mit demselben Begriff wie in der Spine (r.ort) — erst
+      // sammeln, Kollisionen erst nach der Schleife auflösen (siehe
+      // zeichneKreisLabels), da sich mehrere Kreise dieselbe Koordinate
+      // teilen können (z.B. Aussenraum/Innenraum-Paare).
+      // Der Kreis des Routen-Startpunkts ("Lokal in der Nähe der Rue
+      // Notre-Dame de Lorette", revealIndex 0) ist schon auf der Startseite
+      // zu sehen — seine Beschriftung soll dort aber noch fehlen und erst
+      // mit dem Kapitel-1-Kartenausschnitt einblenden. Deckkraft daher am
+      // Zoomstand (kapitel1ZoomAmount) statt fest 1. Farbe wie alle anderen
+      // Labels (#212B2E); vorher stand hier fest #9DA69D.
+      let istRoutenStart = daten === stationenData && r.ort === WOHNUNG_SAMMELPUNKT_ANKER;
+      labelKandidaten.push({
+        ankerX: pos.x, ankerY: pos.y,
+        x: pos.x, y: pos.y + 15,
+        text: r.ort.toUpperCase(), // .annotation-tag ist text-transform: uppercase
+        farbe: null,
+        alpha: istRoutenStart ? kapitel1ZoomAmount : 1,
       });
-    } else {
-      // Alle ortRuns wachsen live mit annIndex (nicht nur die Hauptorte) —
-      // so löst wirklich jede Annotation irgendwo auf der Karte eine
-      // sichtbare Änderung aus, statt dass Nebenerwähnungen als fertiger,
-      // fest vorberechneter Kreis auf einmal aufploppen.
-      let pos = lonLatToScreen(r.lon, r.lat, activeBbox, offsetX, offsetY);
-      let filter = wohnungFilterFuerOrt(r.ort);
-      let bandCounts = zaehleAnnotationenLiveNachOrtBasis(filter, annIndex, daten);
-      let radius = zeichneKreiseFuerRun(pos.x, pos.y, bandCounts, 1);
-      let fwertAnnotationen = sammleAnnotationenNachOrtBasis(filter, annIndex, daten).filter(a => a.hasFwert);
-      zeichneFwertPunkte(pos.x, pos.y, radius, fwertAnnotationen, 1);
-      if (radius > 0) {
-        // Label mit demselben Begriff wie in der Spine (r.ort) — erst
-        // sammeln, Kollisionen erst nach der Schleife auflösen (siehe
-        // zeichneKreisLabels), da sich mehrere Kreise dieselbe Koordinate
-        // teilen können (z.B. Aussenraum/Innenraum-Paare).
-        // Der Kreis des Routen-Startpunkts ("Lokal in der Nähe der Rue
-        // Notre-Dame de Lorette", revealIndex 0) ist schon auf der Startseite
-        // zu sehen — seine Beschriftung soll dort aber noch fehlen und erst
-        // mit dem Kapitel-1-Kartenausschnitt einblenden. Deckkraft daher am
-        // Zoomstand (kapitel1ZoomAmount) statt fest 1. Farbe wie alle anderen
-        // Labels (#212B2E); vorher stand hier fest #9DA69D.
-        let istRoutenStart = daten === stationenData && r.ort === WOHNUNG_SAMMELPUNKT_ANKER;
-        labelKandidaten.push({
-          ankerX: pos.x, ankerY: pos.y,
-          x: pos.x, y: pos.y + 15,
-          text: r.ort.toUpperCase(), // .annotation-tag ist text-transform: uppercase
-          farbe: null,
-          alpha: istRoutenStart ? kapitel1ZoomAmount : 1,
-        });
-      }
     }
   });
 
   zeichneKreisLabels(labelKandidaten);
-
-  if (keineAdresseNachKategorie.size > 0) {
-    zeichneOrteOhneAdresse(keineAdresseNachKategorie);
-  }
-}
-
-// Kreise + Labels für Orte ohne konkrete Adresse — Startposition kommt aus
-// der unsichtbaren .orte-ohne-adresse-Box in index.html (direkt unterhalb
-// des Kapitelregisters angedockt, siehe draw()), nicht aus lon/lat. Mehrere
-// Kategorien (Erinnerung/Phantasie/Wunsch/Gedanken/Unbestimmt) stapeln sich
-// untereinander in fester, grosszügiger Distanz (max. Kreisdurchmesser laut
-// kreisRadius ist 2*100px, plus Label-Zeile darunter) — nur Kategorien mit
-// tatsächlichem Inhalt (radius > 0) belegen einen Stapelplatz.
-function zeichneOrteOhneAdresse(nachKategorie) {
-  let rect = orteOhneAdresse.getBoundingClientRect();
-  let cx = rect.left + rect.width / 2;
-  let cy = rect.top + rect.height / 2;
-  // Die Box dockt unterhalb des vollen 18-Kapitel-Registers an, d.h. sie
-  // sitzt oft schon nahe am unteren Bildschirmrand — nach unten bleibt wenig
-  // Luft. Abstand bewusst knapp gewählt (reicht für die aktuell einzigen
-  // mehrfach gleichzeitig aktiven Kategorien, Kapitel 3: max. ~44px Radius);
-  // sollte ein Kapitel künftig mehrere SEHR grosse Kategorien gleichzeitig
-  // haben, müsste die Anordnung grundsätzlicher überarbeitet werden (z.B.
-  // horizontal statt vertikal stapeln).
-  const STAPEL_ABSTAND = 90;
-
-  let reihenfolge = SAMMELPUNKT_KATEGORIEN.map(k => k.label);
-  let platz = 0;
-  reihenfolge.forEach(label => {
-    let bandCounts = nachKategorie.get(label);
-    if (!bandCounts) return;
-    let y = cy + platz * STAPEL_ABSTAND;
-    let radius = zeichneKreiseFuerRun(cx, y, bandCounts);
-    if (radius > 0) {
-      zeichneKreisLabels([{
-        ankerX: cx, ankerY: y,
-        x: cx, y: y + 15,
-        text: label,
-        farbe: null,
-      }]);
-      platz++;
-    }
-  });
 }
 
 // Zeichnet die Kreis-Labels und löst dabei Überlagerungen auf: Kandidaten
