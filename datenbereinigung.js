@@ -1,7 +1,7 @@
 /* =============================================================================
-   datenbereinigung.js — Datenbereinigung (D3)
+   datenbereinigung.js — Datenbereinigung (reines JS)
    CAS Generative Data Design: Datenaufbereitung (Python, siehe data-prep/)
-   → Datenbereinigung (hier, D3) → Zeichnen (sketch.js, p5).
+   → Datenbereinigung (hier, reines JS) → Zeichnen (sketch.js, p5).
    Enthält ausschliesslich reine Datenfunktionen — keine p5-Zeichenaufrufe.
 ============================================================================= */
 
@@ -333,7 +333,7 @@ function istVorzeitigeErwaehnung(r, daten = stationenData) {
   return !!halteort && halteort.revealIndex !== r.revealIndex;
 }
 
-// Zählt (per d3.rollup), wie viele Annotationen zu ortBasis (String oder Set
+// Zählt, wie viele Annotationen zu ortBasis (String oder Set
 // mehrerer ortBasis-Werte, oder eine konkrete Annotations-id) bereits an
 // Reihenfolge-Position annIndex erreicht sind — dieselbe Logik, nach der die
 // Kreise in der Spine wachsen. Wird auch auf der Route (Hauptorte) und in

@@ -1318,3 +1318,113 @@ Funktion längst mit reinem JavaScript arbeitet.
 **Nicht angefasst** — das Entfernen einer externen Abhängigkeit ist eine eigene
 Entscheidung. Wer sie trifft, sollte auch den irreführenden Kommentar in
 Zeile 336 mitnehmen.
+
+---
+
+## Schritt 12 — NUL-Byte nachverifiziert, d3-Abhängigkeit entfernt
+
+**Datum:** 20. August 2026
+**Dateien:** `index.html`, `datenbereinigung.js`
+**Ausgangsfassung:** Commit `07fa69e`
+**Ergebnis:** 3 geänderte Zeilen, 1 gelöschte Zeile — keine Logikänderung
+
+Arbeitet zwei Punkte einer „später"-Liste ab: das NUL-Byte in
+`datenbereinigung.js` (Punkt A) und die vermutete ungenutzte d3-Abhängigkeit
+(Punkt B, als offener Folgebefund in
+[Schritt 11](#schritt-11--vier-sicher-tote-codestellen-aus-der-gesamtsuche-entfernt)
+vermerkt).
+
+### A) NUL-Byte — nachverifiziert, kein Fix nötig
+
+Das Byte **existiert nicht mehr**; die Prüfung bestätigt nur, was
+[Schritt 6](#schritt-6--nie-aktive-paris-sonderbehandlung-in-bauespinedaten-entfernt)
+als Nebeneffekt bewirkt hat. Es sass im String-Literal
+`'\x00PARIS_ALLGEMEIN'`, dem Pseudo-Schlüssel der nie erreichbaren
+Paris-Sonderbehandlung; mit deren Entfernung fiel die ganze Zeile weg.
+
+Belege der heutigen Nachprüfung:
+
+- **Zeile 427 lautet heute** `  return eintraege;` — 19 Bytes reines ASCII,
+  kein 0x00.
+- **Kein NUL-Byte in irgendeiner versionierten Textdatei** (230 Dateien
+  geprüft). Treffer gibt es nur in den 20 PNG-Dateien, wo Nullbytes normaler
+  Bildinhalt sind.
+- **Commit-genaue Zuordnung:** `46bd12c` enthielt noch 1 NUL-Byte, `8ccc9ad`
+  (Schritt 6) und alle folgenden enthalten 0.
+- **`grep` behandelt `datenbereinigung.js` wieder als Textdatei** — die
+  binärsichere Sonderbehandlung aus dem Nachtrag zu Schritt 2 ist endgültig
+  hinfällig.
+
+**Kein neuer Fix.** Der Punkt gilt als geschlossen.
+
+### B) d3 — bestätigt ungenutzt und entfernt
+
+**Statische Suche.** Vier wörtliche `d3`-Vorkommen in JS/HTML, keines davon ein
+Aufruf: das Script-Tag, zwei Kopfzeilen und der Kommentar bei Zeile 336. Keine
+Destrukturierung, keine Umbenennung, kein `window.d3`/`globalThis.d3`, kein
+Klammerzugriff `['d3']`, kein `import`/`require`. Die `d3`-Treffer in
+`fotomarker.json` sind Zufallsfolgen in NAKALA-URLs (`…12d3cf…`, `…32d3dea…`),
+keine Verwendung.
+
+**Laufzeit-Beweis (Proxy-Test).** Statt sich auf die Textsuche zu verlassen,
+wurde `d3` durch einen Proxy ersetzt, der bei **jedem** Property-Zugriff eine
+Exception wirft und den Zugriff protokolliert:
+
+```js
+var d3 = new Proxy({}, { get: function (t, k) {
+  _d3Zugriffe.push(String(k));
+  throw new Error("d3." + String(k) + " wurde aufgerufen!");
+} });
+```
+
+Damit lief die vollständige Anwendung in JavaScriptCore durch — 300
+Scrollpositionen, alle 18 Kapitel in Karten- und Graph-Ansicht,
+Play-Animation, vier Fensterbreiten:
+
+```
+15 von 15 Prüfungen fehlerfrei
+3 von 3 Härtetests fehlerfrei
+d3-Zugriffe während des gesamten Laufs: KEINE
+```
+
+Ein blosser Textfund hätte eine dynamische Verwendung übersehen können; der
+Proxy schliesst sie aus.
+
+**Historie.** `d3.group()` in `versetzeKollidierendePunkte()` war vom Initial
+Commit `fa1212e` bis `d205887` (Schritt 11) der **einzige** d3-Aufruf im
+Projekt. Mit dem Entfernen dieser Funktion verlor die Bibliothek ihren letzten
+Nutzer.
+
+### Was wurde geändert
+
+| Datei | Zeile (vorher) | Änderung |
+|---|---|---|
+| `index.html` | 10 | `<script src="https://d3js.org/d3.v6.min.js">` **entfernt** |
+| `datenbereinigung.js` | 336 | „Zählt (per d3.rollup), wie viele…" → „Zählt, wie viele…" |
+| `datenbereinigung.js` | 2 | „Datenbereinigung (D3)" → „Datenbereinigung (reines JS)" |
+| `datenbereinigung.js` | 4 | „→ Datenbereinigung (hier, D3) →" → „→ Datenbereinigung (hier, reines JS) →" |
+
+Der Kommentar bei Zeile 336 war **schon vor heute falsch**: die Funktion, die er
+beschreibt (`zaehleAnnotationenLiveNachOrtBasis`), zählt mit einem gewöhnlichen
+`forEach`, nicht mit `d3.rollup`. Die beiden Kopfzeilen benannten die
+Architekturstufe nach der Bibliothek und hätten nach deren Wegfall in die Irre
+geführt.
+
+Die Seite lädt jetzt zwei statt drei externe Bibliotheken (p5.js und Strudel);
+ein Fremd-Origin weniger, auf den der Seitenaufbau wartet.
+
+### Prüfungen
+
+- **Restreferenzen:** null Treffer für `d3` (case-insensitive) in allen `.js`-,
+  `.html`- und `.css`-Dateien.
+- **Ladereihenfolge:** `index.html` lädt unverändert zwölf lokale Skripte.
+- **Integrationslauf ohne jede d3-Attrappe:** alle zwölf Skripte laden ohne
+  Top-Level-Fehler; 15 von 15 Funktionsprüfungen und 3 von 3 Härtetests
+  fehlerfrei.
+- **Diff:** eine gelöschte Zeile in `index.html`, drei geänderte Kommentarzeilen
+  in `datenbereinigung.js` — keine Logikänderung.
+
+### Nicht angefasst
+
+Die Python-Pipeline in `data-prep/` ist von der Änderung unberührt; sie hat mit
+der JS-seitigen d3-Einbindung nichts zu tun.
