@@ -300,3 +300,88 @@ weiteren Arbeitsschritte:
 Ungeklärt bleibt, ob das Zeichen als Sentinel-Präfix beabsichtigt ist (ein
 Schlüssel, der garantiert mit keinem echten Ortsnamen kollidieren kann) oder ob
 es ein Kopierunfall ist.
+
+---
+
+## Schritt 3 — Duplikat `ovLeereBandCounts()` gegen `leereBandCounts()` zusammengeführt
+
+**Datum:** 20. August 2026
+**Datei:** `sketch.js`
+**Ausgangsfassung:** Stand nach dem Nachtrag zu Schritt 2 (3464 Zeilen)
+**Ergebnis:** 3456 Zeilen — 8 Zeilen entfernt, 2 Zeilen geändert
+
+### Was wurde geändert
+
+**Aufrufstellen umgestellt** (2 Stück, beide in `sketch.js`):
+
+| Zeile (vorher) | Umgebende Funktion | vorher → nachher |
+|---|---|---|
+| 2217 | `ovBaueDaten()` | `let summe = ovLeereBandCounts();` → `let summe = leereBandCounts();` |
+| 2237 | `ovStand()` | `let summe = ovLeereBandCounts();` → `let summe = leereBandCounts();` |
+
+**Definition entfernt** — `sketch.js`, Zeilen 2176–2183 (8 Zeilen):
+
+| Zeile (vorher) | Inhalt |
+|---|---|
+| 2176–2182 | `function ovLeereBandCounts() { … }` |
+| 2183 | trennende Leerzeile |
+
+Die Definition stand zwischen dem `ov*`-Variablenblock (bis Zeile 2174) und
+`ovAddiere()` (ab 2184) und liess sich ersatzlos streichen; der Abstand von
+einer Leerzeile blieb erhalten. Ein erklärender Kommentar existierte nicht.
+
+### Warum
+
+Siehe [code-analyse-sketch-js.md, Punkt 4d](code-analyse-sketch-js.md#4-toter-code--explizite-liste).
+
+`ovLeereBandCounts()` und `leereBandCounts()` (`sketch.js:1481`) waren exakte
+Dubletten: dieselben drei Kategorie-Schlüssel, dieselben vier Valenz-Zähler,
+identische Werte. Beide wurden benutzt, es gab also keinen toten Code im engeren
+Sinn — wohl aber zwei Namen für dieselbe Sache, mit dem üblichen Risiko, dass
+eine künftige Änderung an der Zählstruktur (etwa eine vierte Kategorie oder ein
+zusätzlicher Valenz-Zähler) nur in einer der beiden nachgezogen wird und die
+Kreisgrafik dann je nach Aufrufweg unterschiedlich zählt.
+
+Beibehalten wurde `leereBandCounts()`, weil sie die allgemeinere ist: sie liegt
+im Kreisgrafik-Abschnitt, auf den sich die Struktur inhaltlich bezieht, während
+das `ov`-Präfix sie fälschlich dem Schlussakt „Ortsveränderung" zuordnete.
+
+### Prüfung vor der Änderung
+
+Vor dem Ersetzen wurde maschinell verglichen, ob die beiden Funktionskörper
+tatsächlich identisch sind — nur dann ist die Umstellung verhaltensneutral:
+
+| | `leereBandCounts` | `ovLeereBandCounts` |
+|---|---|---|
+| Zeilen | 1481–1487 | 2176–2182 |
+| Umfang | 7 Zeilen | 7 Zeilen |
+| Körper ohne Signaturzeile | — zeichenweise **identisch** — ||
+
+Beide geben bei jedem Aufruf ein **frisch konstruiertes** Objektliteral zurück.
+Es gibt weder eine gemeinsam genutzte Referenz noch inneren Zustand, der
+zwischen den Aufrufwegen unterscheiden könnte — die Umstellung ist damit rein
+mechanisch und ohne Verhaltensänderung.
+
+Aufrufstellen von `ovLeereBandCounts()` im gesamten Projekt
+(`sketch.js`, `datenbereinigung.js`, `sonifikation.js`, `index.html`):
+genau die zwei oben genannten, beide in `sketch.js`. Keine weitere Datei
+betroffen.
+
+> **Hinweis zur Suche:** Ein Muster wie `\bleereBandCounts\b` findet auch
+> `ovLeereBandCounts` mit, da die Wortgrenze nach `ov` nicht greift. Die
+> Trennung der beiden Namen erfolgte über einen negativen Lookbehind
+> (`(?<!ov)\bleereBandCounts\b`); die Referenzsuche lief wie seit Schritt 2
+> NUL-sicher über Python statt über `grep`.
+
+### Prüfungen nach der Änderung
+
+- **Restreferenzen:** `ovLeereBandCounts` — null Treffer in allen vier
+  Projektdateien.
+- **`leereBandCounts` jetzt:** eine Definition (`sketch.js:1481`) und drei
+  Aufrufstellen (`1611` in `zeichneKreiseOrtRuns`, `2209` in `ovBaueDaten`,
+  `2229` in `ovStand`) — die beiden umgestellten Aufrufe sind angekommen.
+- **Hoisting:** unkritisch. `leereBandCounts` ist eine Funktionsdeklaration und
+  steht ohnehin rund 700 Zeilen vor den neuen Aufrufstellen.
+- **Syntax:** `sketch.js` parst fehlerfrei (JavaScriptCore, `new Function(quelltext)`).
+- **Diff:** drei Hunks — eine Löschung (die Definition) und zwei
+  Ein-Zeilen-Ersetzungen, sonst nichts.

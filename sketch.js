@@ -2173,14 +2173,6 @@ let ovRohradien = null;    // Endstand-Rohradius je Knoten (ohne Deckel)
 let ovErstesKapitel = null; // erste Kapitelnummer mit Inhalt, je Knoten
 let ovLayout = null;       // { breite, hoehe, tiefen, kreisSkala, bbox }
 
-function ovLeereBandCounts() {
-  return {
-    gold_dunkel: { neg: 0, pos: 0, neutral: 0, unrated: 0 },
-    gold_mittel: { neg: 0, pos: 0, neutral: 0, unrated: 0 },
-    gold_hell: { neg: 0, pos: 0, neutral: 0, unrated: 0 },
-  };
-}
-
 function ovAddiere(ziel, quelle) {
   ['gold_dunkel', 'gold_mittel', 'gold_hell'].forEach(cat => {
     ['neg', 'pos', 'neutral', 'unrated'].forEach(v => { ziel[cat][v] += quelle[cat][v]; });
@@ -2214,7 +2206,7 @@ function ovBaueDaten() {
     return proKapitel;
   });
   ovRohradien = ovProKapitel.map(proKapitel => {
-    let summe = ovLeereBandCounts();
+    let summe = leereBandCounts();
     Object.values(proKapitel).forEach(k => ovAddiere(summe, k.bandCounts));
     return ovRadiusAus(summe);
   });
@@ -2234,7 +2226,7 @@ function ovBaueDaten() {
 // die Nummer des letzten Kapitels, das überhaupt beigetragen hat — sie steht
 // im Schlussakt unter dem Kreis.
 function ovStand(index, maxNr) {
-  let summe = ovLeereBandCounts();
+  let summe = leereBandCounts();
   let fwerte = [];
   let letztes = null;
   Object.keys(ovProKapitel[index]).sort().forEach(nr => {
