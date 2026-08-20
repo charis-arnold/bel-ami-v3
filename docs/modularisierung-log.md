@@ -1243,3 +1243,178 @@ Alles Gebaute erscheint einmalig beim Laden — fehlt etwas, fehlt es vollständ
 5. Die Marker-Ebenen (`baueKartenMarkierungen`, `baueStationsMarker`,
    `baueZwischenMarker`) bauen DOM-Knoten, die `draw()` derzeit dauerhaft
    unsichtbar schaltet — sichtbar wird davon nichts, das ist unverändert.
+
+---
+
+## Modul 8 — `kreisgrafik.js`
+
+**Datum:** 20. August 2026
+**Neu:** `kreisgrafik.js` (488 Zeilen, davon 51 Kopfkommentar)
+**Aus:** `sketch.js` — 437 Zeilen entfernt (1816 → 1379)
+**Geändert:** `index.html` — ein `<script>`-Tag ergänzt
+
+Entspricht **Gruppe 4 („Kreisgrafik")** der Analyse — dem inhaltlichen Kern des
+Projekts. `sketch.js` verliert damit ein Viertel seines verbliebenen Umfangs.
+
+### Was wurde verschoben
+
+Zwei Blöcke, wobei der erste aus einer einzigen Zeile besteht:
+
+**Block A — `sketch.js` Zeile 6:** `const HATCH_SPACING = 3;`
+
+Stand seit jeher ganz oben, rund 870 Zeilen von seiner einzigen Nutzung in
+`drawHatchedCircle()` entfernt — ein Beispiel für die schlechte Lokalität, die
+die Ausgangsanalyse angemerkt hatte. Steht jetzt direkt bei seiner Funktion.
+
+**Block B — `sketch.js` Zeilen 873–1306** (434 Zeilen), geschlossen und ohne
+Fremdcode dazwischen:
+
+| Zeilen (vorher) | Element |
+|---|---|
+| 873–875 | Abschnittskopf „Kreise" |
+| 877–894 | `drawHatchedCircle()` — Schraffur über Clip-Pfad |
+| 896–908 | Kommentar + `SAMMELPUNKT_KATEGORIEN` |
+| 915–919 | `sammelpunktKategorie()` |
+| 921–927 | `leereBandCounts()` |
+| 929–1005 | `zeichneKreiseOrtRuns()` — alle Ortskreise eines Kapitels |
+| 1007–1044 | Kommentar + `zeichneOrteOhneAdresse()` |
+| 1046–1107 | Kommentar + `zeichneKreisLabels()` — Kollisionsauflösung |
+| 1109–1133 | Kommentar + `zeichneHalbkreis()` |
+| 1135–1147 | Kommentar + `zeichneVollkreis()` |
+| 1149–1221 | Kommentar + `zeichneKreiseFuerRun()` — die zentrale Funktion |
+| 1223–1228 | `FWERT_PUNKT_DURCHMESSER`, `FWERT_PUNKT_FARBE_RGB`, `FWERT_PUNKT_RAND_ABSTAND`, `FWERT_PUNKT_RING_ABSTAND` |
+| 1230–1306 | Kommentar + `zeichneFwertPunkte()` |
+
+### Die zweite gemeinsame Grundlage
+
+Nach `geo-projektion.js` ist dies das am breitesten genutzte Modul — **vier der
+sieben bereits ausgelagerten Dateien greifen darauf zu**:
+
+| Modul | nutzt |
+|---|---|
+| `ortsveraenderung.js` | `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `leereBandCounts` |
+| `spine-horizontal.js` | `zeichneKreiseFuerRun`, `zeichneFwertPunkte` |
+| `annotationsbox.js` | `sammelpunktKategorie` |
+| `dom-aufbau.js` | `FWERT_PUNKT_DURCHMESSER` (baut die Legende daraus) |
+| `sketch.js` | `zeichneKreiseOrtRuns` (Kapitel-1-Route und Kapitel-Zoom) |
+
+Das ist kein Zufall: Dieselbe Kreisgrafik erscheint an vier Orten der
+Anwendung — auf der Karte, in der horizontalen Spine, im Schlussakt an den
+sieben Knoten, und als Farbmuster in der Legende. Genau deshalb war die
+Funktion von Anfang an parametrisiert (`winkel`, `radiusSkala`, `maxRadius`).
+
+Die Datei steht in `index.html` entsprechend weit vorne, direkt hinter
+`geo-projektion.js`.
+
+### Auswertung beim Laden — hier zum zweiten Mal relevant
+
+Zeile 1226 (jetzt `kreisgrafik.js:408`) lautet:
+
+```js
+const FWERT_PUNKT_FARBE_RGB = hexZuRgb(FWERT_PUNKT_FARBE);
+```
+
+Sie ruft `hexZuRgb()` auf und liest `FWERT_PUNKT_FARBE` — **beide aus
+`datenbereinigung.js`, beim Laden**. Die Datei muss deshalb zwingend nach
+`datenbereinigung.js` stehen; das ist erfüllt, weil diese als erste lädt.
+
+Es ist derselbe Mechanismus, der in Modul 4 dazu führte, dass
+`letzterFotoOffsetX/Y` in `sketch.js` bleiben mussten — dort zeigte er nach
+„oben" in eine später geladene Datei und blockierte, hier zeigt er nach „unten"
+und trägt. Im Kopfkommentar ausdrücklich als Warnung vermerkt.
+
+### Abhängigkeiten nach aussen
+
+Die stärkste Bindung an `datenbereinigung.js` von allen Modulen — 15 Namen:
+`KREIS_KATEGORIEN`, `kreisRadius`, `FWERT_PUNKTGROESSE`, `FWERT_PUNKT_FARBE`,
+`hexZuRgb`, `PARIS_ALLGEMEIN`, `zaehleAnnotationenLiveNachOrtBasis`,
+`sammleAnnotationenNachOrtBasis`, `wohnungFilterFuerOrt`, `wohnungSplitAi`,
+`istVorzeitigeErwaehnung`, `WOHNUNG_SAMMELPUNKT_ANKER`,
+`WOHNUNG_SAMMELPUNKT_ABSORBIERTE_ORTRUNS`, `GEDANKEN_ORTRUN_UNTERDRUECKT`,
+`RUE_NOTRE_DAME_DE_LORETTE_ORT`.
+
+Dazu **drei aus `geo-projektion.js`** — wie vermutet: `lonLatToScreen`,
+`mapOffsetX`, `mapOffsetY`.
+
+Und nur **drei aus `sketch.js`**: `stationenData`, `orteOhneAdresse` (die
+Platzhalter-Box unter dem Kapitelregister, die die Bildschirmposition der
+Sammelkreise liefert) und `kapitel1ZoomAmount` (blendet das Label des
+Routen-Startpunkts erst mit dem Kapitel ein).
+
+Keine Zugriffe auf `kartendekor.js`, `ortsveraenderung.js`,
+`spine-horizontal.js`, `fotomarker.js`, `annotationsbox.js`, `dom-aufbau.js`
+oder `sonifikation.js` — die Nutzung läuft ausschliesslich in die andere
+Richtung.
+
+### Ladereihenfolge in `index.html`
+
+```diff
+   <script src="datenbereinigung.js"></script>
+   <script src="geo-projektion.js"></script>
++  <script src="kreisgrafik.js"></script>
+   <script src="kartendekor.js"></script>
+   …
+```
+
+Die Reihenfolge bildet die Schichtung jetzt deutlich ab: **Daten → Geometrie →
+Kreisgrafik → Fachmodule → Orchestrierung → Ton.**
+
+### Nachweis: keine Logikänderung
+
+| Block | Zeilen | Vergleich |
+|---|---|---|
+| A (`HATCH_SPACING`) | 1 | identisch |
+| B (Kreisgrafik) | 434 | **zeichenweise identisch** |
+
+Neu hinzugekommen ist eine Kommentarzeile über `HATCH_SPACING`, die erklärt,
+wozu der Wert dient — er stand vorher unkommentiert am Dateianfang.
+
+### Weitere Prüfungen
+
+- **Syntax:** alle elf JS-Dateien parsen fehlerfrei.
+- **Ladereihenfolge ausgeführt:** alle elf laden in `index.html`-Reihenfolge
+  fehlerfrei (JavaScriptCore, mit Stubs) — insbesondere die
+  `hexZuRgb()`-Auswertung beim Laden.
+- **Namenskollisionen:** keine (244 Top-Level-Namen).
+- **Nahtstellen:** der Dateikopf grenzt direkt an die Zustandsvariablen, und
+  `zeichneOrtsveraenderung`s Vorgänger-Kommentar an den Kommentar zum
+  entfallenen Kreisvergleich.
+
+### Zwischenstand der Modularisierung
+
+| Datei | Zeilen |
+|---|---|
+| `sketch.js` | **1379** (von ursprünglich 3497) |
+| `ortsveraenderung.js` | 659 |
+| `kreisgrafik.js` | 488 |
+| `datenbereinigung.js` | 474 |
+| `spine-horizontal.js` | 441 |
+| `sonifikation.js` | 309 |
+| `dom-aufbau.js` | 279 |
+| `kartendekor.js` | 187 |
+| `annotationsbox.js` | 129 |
+| `geo-projektion.js` | 116 |
+| `fotomarker.js` | 112 |
+
+`sketch.js` hat damit rund **61 %** seines ursprünglichen Umfangs abgegeben.
+Was bleibt, ist im Kern `preload`/`setup`/`draw`/`mousePressed`, die Route, die
+Übersichtsrouten und die Kapitel-Navigation.
+
+### Manueller Test
+
+Die Kreisgrafik erscheint an vier Stellen — alle vier prüfen, weil sie
+unterschiedliche Parameter durchreichen:
+
+1. **Kapitel-1-Ansicht:** Kreise wachsen an den Orten mit, während man scrollt.
+   Negativ links, positiv rechts, neutral als voller Kreis; F-Wert-Punkte
+   aussen in drei Gruppen.
+2. **Kapitel-Zoom (02–18):** dasselbe mit den Daten des jeweiligen Kapitels,
+   plus die Sammelkreise unter dem Kapitelregister
+   (`zeichneOrteOhneAdresse` — Erinnerung, Phantasie, Wunsch, Gedanken,
+   Unbestimmt).
+3. **Graph-Ansicht:** dieselben Kreise auf der waagrechten Spine, hier positiv
+   **oben** und negativ unten (Winkel `PI`).
+4. **Schlussakt:** die sieben Knoten, mit gemeinsamer `kreisSkala` und ohne
+   Radius-Deckel.
+5. **Legende** rechts: die drei Kategoriefarben und die drei F-Wert-Punktgrössen
+   müssen zu dem passen, was auf der Karte steht.
