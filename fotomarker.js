@@ -29,9 +29,11 @@
 
    NICHT hier: letzterFotoOffsetX / letzterFotoOffsetY. Sie gehören inhaltlich
    dazu, ihre Deklaration initialisiert sich aber aus mapOffsetX/mapOffsetY —
-   also BEIM LADEN. In einer Datei, die vor sketch.js geladen wird, läge das
-   vor deren Deklaration und wirft ReferenceError. Sie stehen deshalb weiter
-   in sketch.js, direkt bei mapOffsetX/mapOffsetY.
+   also BEIM LADEN. Als diese beiden noch in sketch.js standen, hätte das hier
+   einen ReferenceError geworfen; sie blieben deshalb dort.
+   Seit Modul 6 führt geo-projektion.js mapOffsetX/mapOffsetY und wird vor
+   dieser Datei geladen — der Umzug wäre jetzt möglich, ist aber noch nicht
+   erfolgt (siehe docs/modularisierung-log.md, Modul 6).
 
    Der Foto-Teil von mousePressed() ist ebenfalls in sketch.js geblieben:
    mousePressed ist eine p5-Lifecycle-Funktion und behandelt zuerst die

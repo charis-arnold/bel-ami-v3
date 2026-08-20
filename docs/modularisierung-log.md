@@ -910,3 +910,181 @@ anderen Platz wählt — auffallen würde erst ihr Fehlen oder ein Springen.
 3. Fenstergrösse ändern und dasselbe Kapitel erneut öffnen: die Box darf einen
    anderen Platz wählen (der seitliche Beschnitt der Karte hängt am
    Fensterformat), aber innerhalb dieser Grösse wieder stabil bleiben.
+
+---
+
+## Modul 6 — `geo-projektion.js`
+
+**Datum:** 20. August 2026
+**Neu:** `geo-projektion.js` (108 Zeilen, davon 38 Kopfkommentar)
+**Aus:** `sketch.js` — 71 Zeilen entfernt (2138 → 2067)
+**Geändert:** `index.html` (Script-Tag), `sketch.js` und `fotomarker.js` (je ein überholter Kommentar)
+
+Entspricht **Gruppe 1 („Geo & Projektion")** der Analyse — abzüglich
+`haversineMeter()`, das bereits mit Modul 1 nach `kartendekor.js` ging
+(dort ist `zeichneMassstabsleiste()` sein einziger Aufrufer).
+
+Dieses Modul ist die **unterste Schicht** der Anwendung und steht in
+`index.html` deshalb ganz vorne, direkt hinter `datenbereinigung.js`.
+
+### Was wurde verschoben
+
+Zwei getrennte Blöcke:
+
+**Block A — Georeferenz und Kartenoffset, `sketch.js` Zeilen 91–117** (27 Zeilen):
+
+| Zeilen (vorher) | Element |
+|---|---|
+| 91–110 | Kommentarkopf zur Georeferenz beider Übersichtskarten, inkl. der Gegenprobe mit den verworfenen QGIS-Werten |
+| 111 | `let startBbox` — `paris-startkarte-web.png` |
+| 112–113 | `let uebersichtBbox` — `paris-ueberblickkarte-web.png` |
+| 114 | `let ch1ImgBbox` — Kapitel-1-Ausschnitt |
+| 116–117 | `let mapOffsetX = -250;`, `let mapOffsetY = 0;` |
+
+**Block B — Projektionsfunktionen, `sketch.js` Zeilen 314–355** (42 Zeilen):
+
+| Zeilen (vorher) | Element |
+|---|---|
+| 314–330 | `coverCrop()` |
+| 332–336 | `lonLatToScreen()` |
+| 338–346 | `bboxToImgCrop()` |
+| 348–355 | `cropToBbox()` |
+
+### Die `mapOffsetX`-Frage: der Grund von Modul 4 kehrt sich um
+
+In Modul 4 blieben `letzterFotoOffsetX`/`letzterFotoOffsetY` in `sketch.js`,
+weil ihre Deklaration
+
+```js
+let letzterFotoOffsetX = mapOffsetX, letzterFotoOffsetY = mapOffsetY;
+```
+
+`mapOffsetX` **beim Laden** liest — in einer vor `sketch.js` geladenen Datei
+hätte das einen `ReferenceError` geworfen.
+
+Vor diesem Schritt wurde geprüft, ob dieselbe Falle erneut zuschnappt.
+**Ergebnis: nein — sie löst sich auf.** Die genannte Zeile ist die **einzige**
+Top-Level-Auswertung von `mapOffsetX`/`mapOffsetY` im gesamten Projekt (die
+beiden Deklarationen selbst ausgenommen). Seit `geo-projektion.js` sie führt
+und **vor** `sketch.js` geladen wird, sind sie beim Laden von `sketch.js`
+bereits initialisiert — die Zeile trägt.
+
+Alle übrigen fünf Nutzungen sind **Default-Parameter**
+(`function … (…, offsetX = mapOffsetX, …)`) in `coverCrop`, `lonLatToScreen`,
+`zeichneKreiseOrtRuns`, `zeichneRoute` und `zeichneFotoMarker`. Die werden erst
+beim Aufruf ausgewertet und sind für die Ladereihenfolge belanglos.
+
+**Folge für später:** `letzterFotoOffsetX`/`letzterFotoOffsetY` könnten jetzt
+doch nach `fotomarker.js` umziehen — `geo-projektion.js` steht vor beiden
+Dateien. Dieser Umzug ist **nicht** Teil dieses Schritts (er war nicht
+beauftragt und gehört sachlich zu Modul 4), aber die Blockade ist weg.
+
+### Zwei Kommentare wurden dadurch falsch — und korrigiert
+
+Die Verschiebung machte zwei bestehende Kommentare sachlich unrichtig. Beide
+wurden angepasst, weil ein veralteter Kommentar aktiv in die Irre führt:
+
+- **`sketch.js`** (bei `letzterFotoOffsetX`): sprach von
+  „mapOffsetX/mapOffsetY **(oben)**" — die stehen nun in einer anderen Datei.
+  Der Text erklärt jetzt, warum die Merker hier stehen, dass die Blockade seit
+  Modul 6 aufgehoben ist und wo das nachzulesen ist.
+- **`fotomarker.js`** (Dateikopf): behauptete, ein Umzug der beiden Merker
+  würde einen `ReferenceError` werfen. Das galt bis Modul 5; der Absatz nennt
+  jetzt beide Zustände.
+
+Es sind ausschliesslich Kommentare — kein ausführbares Zeichen wurde geändert.
+
+### Abhängigkeiten in beide Richtungen
+
+**Nach aussen: keine.** Der Block braucht ausser p5 (`width`, `height`, `map`,
+`constrain`) nichts — kein Zugriff auf `sketch.js`, `datenbereinigung.js` oder
+eines der fünf anderen Module. Nach `kartendekor.js` das **zweite vollständig
+autarke Modul**, und das einzige, das keinerlei Projektdaten kennt.
+
+**Von aussen hierher** — das am breitesten genutzte Modul bisher:
+
+| Name | genutzt von |
+|---|---|
+| `lonLatToScreen()` | `sketch.js` (11×), `ortsveraenderung.js` (3×), `annotationsbox.js` (3×), `fotomarker.js` (2×) |
+| `mapOffsetX` | `sketch.js` (17×), `fotomarker.js` (4×), `annotationsbox.js` (3×) |
+| `mapOffsetY` | `sketch.js` (11×), `fotomarker.js` (4×), `annotationsbox.js` (3×) |
+| `coverCrop()`, `bboxToImgCrop()`, `cropToBbox()` | nur `sketch.js` |
+| `startBbox`, `uebersichtBbox`, `ch1ImgBbox` | nur `sketch.js` |
+
+Erstmals greifen mehrere ausgelagerte Module auf ein anderes ausgelagertes
+Modul zu. Bis Modul 5 kannten die Module einander nicht und kommunizierten nur
+über `sketch.js` und `datenbereinigung.js`; `geo-projektion.js` ist die erste
+gemeinsame Basis.
+
+### Ladereihenfolge in `index.html`
+
+```diff
+   <script src="datenbereinigung.js"></script>
++  <script src="geo-projektion.js"></script>
+   <script src="kartendekor.js"></script>
+   <script src="ortsveraenderung.js"></script>
+   <script src="spine-horizontal.js"></script>
+   <script src="fotomarker.js"></script>
+   <script src="annotationsbox.js"></script>
+   <script src="sketch.js"></script>
+   <script src="sonifikation.js"></script>
+```
+
+Bewusst an den Anfang gesetzt, nicht bloss irgendwo vor `sketch.js`: Die Datei
+ist die Basis, auf die vier andere zugreifen, und `sketch.js` wertet
+`mapOffsetX` beim Laden aus. Die Reihenfolge bildet die Schichtung jetzt ab —
+Daten, Geometrie, Fachmodule, Orchestrierung, Ton.
+
+### Nachweis: keine Logikänderung
+
+| Block | Zeilen | Vergleich |
+|---|---|---|
+| A (Bboxen, Offsets) | 27 | **zeichenweise identisch** |
+| B (Projektionsfunktionen) | 42 | **zeichenweise identisch** |
+
+### Weitere Prüfungen
+
+- **Syntax:** alle neun JS-Dateien parsen fehlerfrei.
+- **Ladereihenfolge ausgeführt:** alle neun laden in `index.html`-Reihenfolge
+  fehlerfrei (JavaScriptCore, mit Stubs) — insbesondere `sketch.js:98`, das
+  `mapOffsetX` beim Laden liest.
+- **Namenskollisionen:** keine (245 Top-Level-Namen).
+- **`haversineMeter`** liegt weiterhin in `kartendekor.js:25` und wurde nicht
+  angefasst.
+- **Nahtstellen:** in Block A grenzen `grafikPlayButton` und der
+  Foto-Merker-Kommentar aneinander, in Block B `getScrollProgress()` und
+  `baueGedankenColumn()`.
+
+### Zwischenstand der Modularisierung
+
+| Datei | Zeilen |
+|---|---|
+| `sketch.js` | **2067** (von ursprünglich 3497) |
+| `ortsveraenderung.js` | 659 |
+| `datenbereinigung.js` | 474 |
+| `spine-horizontal.js` | 441 |
+| `sonifikation.js` | 309 |
+| `kartendekor.js` | 187 |
+| `annotationsbox.js` | 129 |
+| `fotomarker.js` | 112 |
+| `geo-projektion.js` | 108 |
+
+`sketch.js` hat damit rund **41 %** seines ursprünglichen Umfangs abgegeben.
+
+### Manueller Test
+
+Dieses Modul trägt alles, was auf der Karte liegt — ein Fehler wäre sofort und
+überall sichtbar, nicht subtil.
+
+1. Startseite: die Karte füllt das Fenster, der Routen-Startpunkt liegt auf dem
+   richtigen Strassenzug.
+2. In Kapitel 1 zoomen: der Ausschnitt wechselt sauber, Route und Kreise
+   bleiben deckungsgleich mit den Strassen.
+3. Ein Kapitel 02–18 öffnen: die Route folgt den Strassen, nicht der Luftlinie
+   — das ist der empfindlichste Test für `lonLatToScreen` und `coverCrop`.
+4. Foto-Marker und Kapitel-Badges müssen an ihren Orten sitzen, nicht seitlich
+   versetzt (dafür sorgen die Offset-Parameter).
+5. Schlussakt: der Zoom auf die sieben Orte trifft den richtigen Ausschnitt.
+
+Ein Versatz der ganzen Ebene gegenüber der Karte deutet auf
+`mapOffsetX/mapOffsetY`, eine Verzerrung auf `coverCrop`/`cropToBbox`.
