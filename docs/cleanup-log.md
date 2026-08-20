@@ -99,3 +99,204 @@ Klassen jetzt von keiner Stelle mehr vergeben werden:
 In `index.html` gibt es kein passendes Element mehr. Diese Regeln sind
 Kandidaten für einen eigenen Bereinigungsschritt; `style.css` wurde in
 Schritt 1 bewusst nicht angefasst.
+
+---
+
+## Schritt 2 — Ladevorgang und Bereinigung von `kreisVergleichOrte` entfernt
+
+**Datum:** 20. August 2026
+**Datei:** `sketch.js`
+**Ausgangsfassung:** Stand nach Schritt 1 (3472 Zeilen)
+**Ergebnis:** 3470 Zeilen — 2 Zeilen entfernt
+
+### Was wurde entfernt
+
+| Zeile (vorher) | Kontext | Inhalt |
+|---|---|---|
+| 224 | `preload()` | `kreisVergleichOrte = loadJSON('kreisvergleich-orte.json');` |
+| 245 | `bereinigeEingangsdaten()` | `kreisVergleichOrte = bereinigeKreisVergleichOrte(kreisVergleichOrte);` |
+
+Beide Zeilen standen isoliert am Ende eines Blocks gleichartiger Zuweisungen
+(neben `fotoMarkerListe` und `uebersichtsRouten`) und liessen sich ersatzlos
+streichen. Es blieben keine Lücken oder verwaisten Kommentare zurück.
+
+### Was ausdrücklich NICHT entfernt wurde
+
+- **Die Variablendeklaration `let kreisVergleichOrte = [];` (Zeile 143)** samt
+  ihres erklärenden Kommentarblocks (Zeilen 139–142) steht unverändert.
+  Siehe Prüfergebnis unten — sie ist damit referenzlos geworden und wäre ein
+  Kandidat für einen Folgeschritt, wurde aber auftragsgemäss stehengelassen.
+- **`kreisvergleich-orte.json`** bleibt unangetastet im Projektstamm
+  (19 472 Bytes, Zeitstempel unverändert, `git status` meldet keine Änderung).
+  Die Datei wird weiterhin von der Python-Pipeline gebraucht:
+  `baue-sammelpunkte-handkuriert.py` prüft bei jedem Kapitel-Neubau dagegen,
+  ob sich die kapitelübergreifenden Summen geändert haben.
+
+### Warum
+
+Siehe [code-analyse-sketch-js.md, Punkt 4c](code-analyse-sketch-js.md#4-toter-code--explizite-liste).
+
+`kreisVergleichOrte` war **write-only**: die Variable wurde geladen und
+bereinigt, ihr Wert danach aber an keiner einzigen Stelle gelesen. Der Grund
+steht im Kommentar bei `sketch.js:1971` (Zeilennummer vor diesem Schritt): Das
+frühere 4er-Raster des Kreisvergleichs (`zeichneKreisVergleich`) ist entfallen —
+dieselbe Information steht heute an den echten Orten auf der Karte, gezeichnet
+von `zeichneOrtsveraenderung` aus den `VERGLEICHS_KNOTEN` und den daraus
+vorberechneten `ovProKapitel`-Daten. Die JSON-Datei blieb als Datenartefakt
+bestehen, ihr Laden im Browser hatte aber keine Wirkung mehr.
+
+Konkret entfielen damit pro Seitenaufruf ein überflüssiger HTTP-Request über
+`loadJSON` (19 KB, blockierend in `preload()`) und ein Durchlauf durch
+`bereinigeKreisVergleichOrte()`.
+
+### Prüfung vor der Änderung
+
+Auftragsgemäss wurde vorab geprüft, ob die Variable noch anderswo referenziert
+wird. Alle Fundstellen von `kreisVergleichOrte` im Projekt
+(`sketch.js`, `datenbereinigung.js`, `sonifikation.js`, `index.html`):
+
+| Fundstelle | Art |
+|---|---|
+| `sketch.js:143` | Deklaration (Schreibzugriff) |
+| `sketch.js:224` | Zuweisung — **entfernt** |
+| `sketch.js:245` | Zuweisung — **entfernt** |
+
+**Kein einziger Lesezugriff.** Die Variable wird damit nach diesem Schritt
+nirgends mehr referenziert; ihre Deklaration bleibt gemäss Auftrag dennoch
+erhalten.
+
+> **Methodischer Hinweis:** `datenbereinigung.js` enthält an Zeile 438 ein
+> NUL-Byte (im String-Literal `'\x00PARIS_ALLGEMEIN'`). `grep` stuft die Datei
+> dadurch als Binärdatei ein und überspringt sie **stillschweigend**, statt eine
+> Meldung auszugeben — Suchen über `grep` erfassen sie also nicht. Alle
+> Referenzprüfungen ab Schritt 2 laufen deshalb über Python mit explizitem
+> Encoding. Die Prüfung aus Schritt 1 wurde auf diesem Weg nachgeholt; ihr
+> Ergebnis (null Restreferenzen) bestätigte sich unverändert.
+
+### Prüfungen nach der Änderung
+
+- **Verbleibende Referenzen:** nur noch `sketch.js:143` (die stehengelassene
+  Deklaration) und `datenbereinigung.js:290` (die Funktionsdefinition).
+- **Syntax:** `sketch.js` parst fehlerfrei (JavaScriptCore, `new Function(quelltext)`).
+- **Diff:** ausschliesslich Löschungen (`1 file changed, 2 deletions(-)`).
+- **`kreisvergleich-orte.json`:** unverändert, von `git status` nicht gemeldet.
+
+### Offene Folgebefunde (nicht Teil dieses Schritts)
+
+1. ~~**`let kreisVergleichOrte = [];` (`sketch.js:143`)** ist jetzt vollständig
+   referenzlos — zusammen mit dem Kommentarblock 139–142 rund 5 Zeilen. Nur auf
+   ausdrückliche Freigabe zu entfernen.~~
+   → **erledigt im [Nachtrag zu Schritt 2](#nachtrag-zu-schritt-2--verwaiste-deklaration-und-funktion-entfernt).**
+2. ~~**`bereinigeKreisVergleichOrte()` (`datenbereinigung.js:290`)** hat mit
+   Zeile 245 ihre einzige Aufrufstelle verloren und ist damit toter Code
+   geworden. `datenbereinigung.js` lag ausserhalb dieses Schritts und wurde
+   nicht angefasst.~~
+   → **erledigt im [Nachtrag zu Schritt 2](#nachtrag-zu-schritt-2--verwaiste-deklaration-und-funktion-entfernt).**
+3. **NUL-Byte in `datenbereinigung.js:438`** (siehe methodischer Hinweis oben).
+   Ob das Zeichen im Sentinel-Präfix `'\x00PARIS_ALLGEMEIN'` beabsichtigt ist
+   oder ein Kopierunfall, ist ungeklärt. Es stört Werkzeuge, die die Datei als
+   Text behandeln (grep, teilweise Editoren und Diff-Ansichten).
+
+---
+
+## Nachtrag zu Schritt 2 — verwaiste Deklaration und Funktion entfernt
+
+**Datum:** 20. August 2026
+**Dateien:** `sketch.js`, `datenbereinigung.js`
+**Ausgangsfassung:** Stand nach Schritt 2 (Commit `eff2b4d` + 2 gelöschte Zeilen)
+**Ergebnis:** `sketch.js` 3470 → 3464 Zeilen, `datenbereinigung.js` 486 → 475 Zeilen — 17 Zeilen entfernt
+
+Arbeitet die Folgebefunde 1 und 2 aus Schritt 2 ab. Beide Elemente waren vor
+Schritt 2 noch in Gebrauch und sind erst durch das Entfernen der Zeilen 224 und
+245 tot geworden — sie gehören deshalb sachlich zu Schritt 2 und werden hier
+als dessen Nachtrag geführt statt als eigener Schritt.
+
+### Was wurde entfernt
+
+**`sketch.js`, Zeilen 139–144** (6 Zeilen):
+
+| Zeile (vorher) | Inhalt |
+|---|---|
+| 139–142 | Kommentarblock `// --- Kreisvergleich (letzter Akt): 8 handverlesene, …` |
+| 143 | `let kreisVergleichOrte = [];` |
+| 144 | trennende Leerzeile |
+
+**`datenbereinigung.js`, Zeilen 286–296** (11 Zeilen):
+
+| Zeile (vorher) | Inhalt |
+|---|---|
+| 286–289 | Kommentarblock `// kreisvergleich-orte.json (siehe baue-kreisvergleich.py) — wie bei …` |
+| 290–295 | `function bereinigeKreisVergleichOrte(rohdaten) { … }` |
+| 296 | trennende Leerzeile |
+
+In beiden Dateien lag der Block zwischen zwei unabhängigen Abschnitten und
+liess sich ersatzlos streichen; der Abstand von einer Leerzeile zum jeweils
+folgenden Abschnitt blieb erhalten.
+
+### Warum
+
+Beide Elemente waren nach Schritt 2 vollständig referenzlos:
+
+- **`kreisVergleichOrte`** hatte mit den Zeilen 224 und 245 seine beiden einzigen
+  Zuweisungen verloren. Gelesen wurde die Variable ohnehin nie (siehe
+  Prüftabelle in Schritt 2), sie war damit eine leere Deklaration ohne jeden
+  Zugriff.
+- **`bereinigeKreisVergleichOrte()`** hatte mit Zeile 245 ihre einzige
+  Aufrufstelle im gesamten Projekt verloren.
+
+Der zugehörige Kommentar in `sketch.js` beschrieb ausschliesslich die entfernte
+Variable, der in `datenbereinigung.js` ausschliesslich die entfernte Funktion —
+beide sind mit ihrem Bezugsobjekt weggefallen.
+
+`kreisvergleich-orte.json` bleibt wie in Schritt 2 unangetastet im Projektstamm;
+die Python-Pipeline (`baue-sammelpunkte-handkuriert.py`) prüft weiterhin dagegen.
+
+### Besonderheit: binärsichere Bearbeitung von `datenbereinigung.js`
+
+Wegen des NUL-Bytes in der Datei (siehe offener Punkt unten) wurde
+`datenbereinigung.js` **nicht** mit `sed` oder im Text-Modus bearbeitet, sondern
+byte-genau über Python im Binärmodus (`open(..., 'rb')` / `'wb'`, Split an
+`b'\n'`). Der zu löschende Block wurde vorher gegen seinen erwarteten Inhalt
+geprüft und zusätzlich darauf, dass das NUL-Byte nicht darin liegt.
+
+Nachweis der Unversehrtheit:
+
+| | vorher | nachher |
+|---|---|---|
+| Dateigrösse | 25 431 Bytes | 24 924 Bytes |
+| Anzahl NUL-Bytes | 1 | 1 |
+| Byte-Offset des NUL | 23 327 | 22 820 |
+| Zeile des NUL | 438 | 427 |
+
+Die Verschiebung um 507 Bytes bzw. 11 Zeilen entspricht exakt dem entfernten
+Block. Das Byte selbst ist unverändert erhalten, sein String-Literal
+(`'\x00PARIS_ALLGEMEIN'`) wurde nicht angefasst.
+
+### Prüfungen nach der Änderung
+
+- **Restreferenzen:** `kreisVergleichOrte` und `bereinigeKreisVergleichOrte` —
+  jeweils null Treffer in `sketch.js`, `datenbereinigung.js`, `sonifikation.js`,
+  `index.html` (Prüfung NUL-sicher über Python).
+- **Syntax:** `sketch.js` **und** `datenbereinigung.js` parsen fehlerfrei
+  (JavaScriptCore, `new Function(quelltext)`).
+- **Diff:** ausschliesslich Löschungen — `sketch.js` −6, `datenbereinigung.js` −11.
+- **`kreisvergleich-orte.json`:** unverändert, von `git status` nicht gemeldet.
+
+### Weiterhin offen
+
+**NUL-Byte in `datenbereinigung.js`, jetzt Zeile 427** (vor diesem Nachtrag
+Zeile 438) — im String-Literal `'\x00PARIS_ALLGEMEIN'` innerhalb von
+`zaehleAnnotationenLiveNachOrtBasis()`.
+
+Bewusst **nicht** angefasst; wird separat betrachtet. Bis dahin gilt für alle
+weiteren Arbeitsschritte:
+
+- Referenzsuchen über `grep` erfassen `datenbereinigung.js` **nicht** — die
+  Datei wird als binär eingestuft und stillschweigend übersprungen (exit 1 ohne
+  Meldung). Suchen deshalb über Python mit explizitem Encoding, oder `grep -a`.
+- Schreibende Zugriffe auf die Datei binärsicher ausführen, damit das Byte nicht
+  unbeabsichtigt verlorengeht oder ersetzt wird.
+
+Ungeklärt bleibt, ob das Zeichen als Sentinel-Präfix beabsichtigt ist (ein
+Schlüssel, der garantiert mit keinem echten Ortsnamen kollidieren kann) oder ob
+es ein Kopierunfall ist.

@@ -283,17 +283,6 @@ function bereinigeFotoMarker(rohdaten) {
   return Array.isArray(rohdaten) ? rohdaten : Object.values(rohdaten || {});
 }
 
-// kreisvergleich-orte.json (siehe baue-kreisvergleich.py) — wie bei
-// fotomarker.json kann p5s loadJSON ein Root-Array als Objekt mit
-// numerischen Keys statt als echtes Array zurückgeben; ebenso für das
-// verschachtelte "kapitel"-Array pro Ort.
-function bereinigeKreisVergleichOrte(rohdaten) {
-  return (Array.isArray(rohdaten) ? rohdaten : Object.values(rohdaten || {})).map(ort => ({
-    ...ort,
-    kapitel: Array.isArray(ort.kapitel) ? ort.kapitel : Object.values(ort.kapitel || {}),
-  }));
-}
-
 // Übersichtsrouten (Kapitel 02–18, echte Strassenrouten via OSMnx aus den
 // GeoJSONs berechnet, siehe data-prep/05 bereinigen/baue-uebersichtsrouten.py).
 // Kapitel ohne verwertbare Route (z.B. 15 — Empfang bei den Walters, ein

@@ -136,12 +136,6 @@ const FOTO_MARKER_TREFFER_RADIUS = 12;
 // --- Übersichtsrouten (Kapitel 02–18, nur in der letzten, rausgezoomten Ansicht) ---
 let uebersichtsRouten = {};
 
-// --- Kreisvergleich (letzter Akt): 8 handverlesene, kapitelübergreifende
-// Orte, siehe data-prep/05 bereinigen/baue-kreisvergleich.py. Jeder Eintrag:
-// { name, kapitel: [{nr, bandCounts}, ...] } — kapitel ist chronologisch
-// sortiert und enthält nur Kapitel, in denen der Ort tatsächlich vorkommt.
-let kreisVergleichOrte = [];
-
 // --- Kapitelausschnitte: Startpunkt/Nummer einer Übersichtsroute wird zum
 // Link, der auf den eigenen Kartenausschnitt dieses Kapitels zoomt. Nur
 // Kapitel, die hier einen Eintrag haben, sind klickbar — das sind exakt die
@@ -221,7 +215,6 @@ function preload() {
 
   fotoMarkerListe = loadJSON('fotomarker.json');
   uebersichtsRouten = loadJSON('kapitel-routen-uebersicht.json');
-  kreisVergleichOrte = loadJSON('kreisvergleich-orte.json');
 
   Object.keys(kapitelKarten).forEach(nr => {
     if (OHNE_EIGENEN_KARTENAUSSCHNITT.includes(nr)) return;
@@ -242,7 +235,6 @@ function bereinigeEingangsdaten() {
 
   fotoMarkerListe = bereinigeFotoMarker(fotoMarkerListe);
   uebersichtsRouten = bereinigeUebersichtsrouten(uebersichtsRouten);
-  kreisVergleichOrte = bereinigeKreisVergleichOrte(kreisVergleichOrte);
 }
 
 // Öffnet EIN Register (Legende ODER Prolog) exklusiv (Akkordeon: das jeweils
