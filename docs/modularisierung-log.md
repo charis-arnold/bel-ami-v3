@@ -1418,3 +1418,183 @@ unterschiedliche Parameter durchreichen:
    Radius-Deckel.
 5. **Legende** rechts: die drei Kategoriefarben und die drei F-Wert-Punktgrössen
    müssen zu dem passen, was auf der Karte steht.
+
+---
+
+## Modul 9 — `uebersichtsrouten.js`
+
+**Datum:** 20. August 2026
+**Neu:** `uebersichtsrouten.js` (556 Zeilen, davon 62 Kopfkommentar)
+**Aus:** `sketch.js` — 490 Zeilen entfernt (1379 → 889)
+**Geändert:** `index.html` — ein `<script>`-Tag ergänzt
+
+Entspricht **Gruppe 7 („Übersichtsrouten & Kapitel-Navigation")** der Analyse —
+dem Bereich, den die Ausgangsanalyse als am engsten mit `draw()` verwoben
+eingeschätzt hatte. `sketch.js` fällt damit unter 900 Zeilen.
+
+### Vorab geklärt: Ist eine Trennung ohne Logikänderung möglich?
+
+**Ja, vollständig.** Die Sorge war, dass `zeichneUebersichtsrouten()` auf lokale
+Variablen von `draw()` zugreift — das hätte eine Umstrukturierung erzwungen, wie
+sie beim `mousePressed()`-Fototeil in Modul 4 vermieden wurde. Die Prüfung
+ergibt das Gegenteil:
+
+- **`zeichneUebersichtsrouten(bbox, alpha, fortschritt)` nimmt alle
+  draw()-Werte als Parameter** und gibt ihr Ergebnis (`aktuelleAnnotationZoom`)
+  per `return` zurück. Kein einziger Zugriff auf eine draw()-lokale Variable.
+- **`kapitelZoomAmount` wird ausschliesslich in `draw()` geschrieben** — eine
+  einzige `lerp()`-Zeile je Frame. Die Deklaration wandert, die Schreibstelle
+  bleibt; im globalen Scope trägt das.
+- Die sechs Navigationsfunktionen arbeiten nur auf `window.scrollTo` und dem
+  eigenen Zustand.
+
+Es musste daher **nichts zurückgelassen werden** — mit einer bewussten
+Ausnahme, siehe unten.
+
+### Was wurde verschoben
+
+Drei Blöcke:
+
+**Block A — Zustand, `sketch.js` Zeilen 158–160** (3 Zeilen):
+`zoomedKapitel`, `kapitelZoomAmount`, `kapitelHover`.
+
+**Block B — Zeichnen, Zeilen 893–1290** (398 Zeilen):
+
+| Zeilen (vorher) | Element |
+|---|---|
+| 893–909 | Kommentarkopf zum Übersichtsakt und zur Scheibenaufteilung |
+| 910–911 | `OV_SCHEIBE_GRUNDANTEIL`, `ovScheiben` |
+| 913–937 | `kapitelScheiben()` — Scrollstrecke nach Routenlänge gewichtet |
+| 939–952 | Kommentar + `OV_NACHGLUEHEN` + `kapitelHitze()` |
+| 954–1290 | `zeichneUebersichtsrouten()` — 337 Zeilen, die zweitgrösste Funktion des Projekts |
+
+**Block C — Navigation, Zeilen 1292–1379** (88 Zeilen, bis zum Dateiende):
+`scrolleZuKapitel1()`, `setzeKapitelAnsichtZurueck()`, `oeffneKapitelZoom()`,
+`schliesseKapitelZoom()`, `springeZuKapitelZoom()`, `springeZurUebersicht()`
+samt ihrer ausführlichen Kommentarköpfe.
+
+### Die drei `OV_`-Namen sind angekommen
+
+`OV_SCHEIBE_GRUNDANTEIL`, `ovScheiben` und `OV_NACHGLUEHEN` waren in **Modul 2**
+bewusst in `sketch.js` geblieben: Sie tragen das Präfix des Schlussakts, gehören
+aber zu `kapitelScheiben()`/`kapitelHitze()`. Mit diesem Schritt sind sie bei
+ihren einzigen Nutzern angekommen — die damalige Entscheidung war richtig, sonst
+lägen sie jetzt in der falschen Datei.
+
+Das irreführende Präfix bleibt bestehen; eine Umbenennung wäre keine reine
+Verschiebung mehr.
+
+### Ein Name blieb zurück
+
+**`letzterZoomKapitel` (`sketch.js:158`)** steht direkt neben den drei
+verschobenen Zustandsvariablen und gehört dem Namen nach dazu. Die Variable
+dient aber allein dem **Spine-Panel-Cache in `draw()`**: Sie bleibt gesetzt,
+während ein Kapitel ausblendet, damit das Panel weiter die richtigen Daten
+zeigt, statt abrupt zu verschwinden. Weder `zeichneUebersichtsrouten()` noch
+eine der Navigationsfunktionen fasst sie an. Sie bleibt deshalb in `sketch.js` —
+dieselbe Begründung wie bei `grafikPlayButton` (Modul 3) und
+`OV_SCHEIBE_GRUNDANTEIL` (Modul 2): Namensähnlichkeit ist kein
+Zugehörigkeitsbeweis.
+
+### Geteilter Zustand — der ausgeprägteste Fall
+
+`zoomedKapitel` ist die meistgelesene Variable des Projekts: **rund 40 Stellen
+in `sketch.js`** und vier in `spine-horizontal.js`. Geschrieben wird sie nur
+hier (`oeffneKapitelZoom`/`schliesseKapitelZoom`).
+
+| Variable | geschrieben in | gelesen in |
+|---|---|---|
+| `zoomedKapitel` | nur diesem Modul | `sketch.js` (~40×), `spine-horizontal.js` (4×) |
+| `kapitelZoomAmount` | **nur `draw()`** | dieses Modul, `sketch.js` |
+| `kapitelHover` | diesem Modul und `draw()` | `mousePressed()` |
+
+Für eine ES-Modul-Umstellung ist das der schwierigste Punkt des ganzen
+Projekts: Diese drei Variablen wären eher Kandidaten für eine eigene
+Zustandsdatei als für einen Export aus diesem Modul.
+
+### Abhängigkeiten nach aussen
+
+Das Modul mit den meisten Nachbarn — es greift auf **sechs** andere Dateien zu:
+
+| Quelle | Namen |
+|---|---|
+| `sketch.js` (8) | `uebersichtsRouten`, `kapitelKarten`, `stationenData`, `datenFuerKapitel`, `zeichneRoute`, `kapitelAnsichtsModus`, `kapitelEinstiegsStartMillis`, `KAPITEL_EINSTIEG_SCROLL_ENDE` |
+| `datenbereinigung.js` (4) | `SCROLL_MEILENSTEINE`, `KAPITEL_MIT_SPINE_PANEL`, `ROUTE_COLOR_RGB`, `FWERT_COLOR_RGB` |
+| `geo-projektion.js` (3) | `lonLatToScreen`, `mapOffsetX`, `mapOffsetY` |
+| `spine-horizontal.js` (3) | `grafikSpielt`, `grafikFortschritt`, `grafikPlayAusblendStart` — `setzeKapitelAnsichtZurueck()` stellt sie zurück |
+| `sonifikation.js` (2) | `sonifikationSpieltGerade`, `beendeSonifikationAudio` |
+| `kreisgrafik.js` (1) | `zeichneKreiseOrtRuns` |
+| `fotomarker.js` (1) | `FOTO_MARKER_TREFFER_RADIUS` — der Hover-Radius der Kapitel-Badges, bewusst dieselbe Distanz wie bei den Foto-Markern |
+
+Bemerkenswert: `zeichneRoute` bleibt in `sketch.js` (Gruppe 5 der Analyse, als
+„zu klein für ein eigenes Modul" eingestuft) und wird von hier aus gerufen.
+
+### Ladereihenfolge in `index.html`
+
+```diff
+   <script src="dom-aufbau.js"></script>
++  <script src="uebersichtsrouten.js"></script>
+   <script src="sketch.js"></script>
+```
+
+Direkt vor `sketch.js`, als letztes Fachmodul. Kein
+Top-Level-Initialisierer wertet etwas aus — die Position ist unkritisch.
+
+### Nachweis: keine Logikänderung
+
+| Block | Zeilen | Vergleich |
+|---|---|---|
+| A (Zustand) | 3 | **zeichenweise identisch** |
+| B (Zeichnen) | 398 | **zeichenweise identisch** |
+| C (Navigation) | 88 | **zeichenweise identisch** |
+
+### Weitere Prüfungen
+
+- **Syntax:** alle zwölf JS-Dateien parsen fehlerfrei.
+- **Ladereihenfolge ausgeführt:** alle zwölf laden in `index.html`-Reihenfolge
+  fehlerfrei.
+- **Namenskollisionen:** keine (244 Top-Level-Namen).
+- **Nahtstellen:** `kapitelKarten` grenzt jetzt direkt an `letzterZoomKapitel`,
+  und `sketch.js` endet mit `zeichneRoute()`.
+
+### Zwischenstand der Modularisierung
+
+| Datei | Zeilen |
+|---|---|
+| `sketch.js` | **889** (von ursprünglich 3497) |
+| `ortsveraenderung.js` | 659 |
+| `uebersichtsrouten.js` | 556 |
+| `kreisgrafik.js` | 488 |
+| `datenbereinigung.js` | 474 |
+| `spine-horizontal.js` | 441 |
+| `sonifikation.js` | 309 |
+| `dom-aufbau.js` | 279 |
+| `kartendekor.js` | 187 |
+| `annotationsbox.js` | 129 |
+| `geo-projektion.js` | 116 |
+| `fotomarker.js` | 112 |
+
+`sketch.js` hat damit rund **75 %** seines ursprünglichen Umfangs abgegeben.
+Zurück bleiben im Wesentlichen die vier p5-Lifecycle-Funktionen
+(`preload`, `setup`, `draw`, `mousePressed`, `windowResized`), die
+Zustandsvariablen, `zeichneRoute()` und `datenFuerKapitel()` — also Gruppe 11
+der Analyse plus Reste.
+
+### Manueller Test
+
+Dieser Bereich trägt die gesamte Kapitel-Navigation; ein Fehler wäre sofort
+spürbar.
+
+1. **Übersichtsakt:** Die Routen der Kapitel 02–18 zeichnen sich nacheinander,
+   jede glüht während ihrer Scheibe orange und kühlt danach auf Gold ab.
+2. **Badges:** Alle 18 Nummern sind von Anfang an sichtbar und anklickbar;
+   Hover färbt Punkt und Nummer orange und zeigt den Handcursor.
+3. **Klick auf ein Badge** öffnet das Kapitel am Aktanfang — Einstiegstext,
+   dann Route, Kreise und Annotationen.
+4. **Kapitelregister links:** „Alle" führt zurück in die Übersicht, „Kapitel 1"
+   scrollt in dessen eigene Ansicht, die übrigen springen in den Zoom.
+5. **Verlassen:** Escape, Hochscrollen über den Aktanfang und „Alle" müssen alle
+   drei funktionieren.
+6. **Doppelte Startpunkte:** Kapitel 07/10/11 teilen sich die Redaktion,
+   08/09/18 die Rue Constantinople — die Badges müssen kreisförmig versetzt
+   stehen, mit Verbindungsstrich zum echten Routenanfang.
