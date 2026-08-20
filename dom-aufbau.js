@@ -14,13 +14,12 @@
 
    --- Abhängigkeiten NACH AUSSEN (alle erst zur Laufzeit) -------------------
    aus sketch.js (26):
-     DOM-Wurzeln       gedankenColumn, kartenMarkierungenEl, kapitelRegister,
+     DOM-Wurzeln       kartenMarkierungenEl, kapitelRegister,
                        legendeInhalt, registerTabs
      erzeugte Knoten   modusZeile, planEintrag, graphEintrag, leerzeile,
                        alleEintrag, kapitelRegisterEintraege, legendeValenzText,
                        legendeValenzKreis, legendeFwertHinweis
-     gefüllte Listen   gedankenEintraege, markierungsEintraege, stationsMarker,
-                       zwischenMarker
+     gefüllte Listen   markierungsEintraege, stationsMarker, zwischenMarker
      Konstanten        WEITERE_KAPITEL_NUMMERN, LEGENDE_VALENZ_KARTE,
                        LEGENDE_FWERT_KARTE, FWERT_PUNKT_DURCHMESSER
      Navigation        scrolleZuKapitel1, springeZuKapitelZoom,
@@ -33,7 +32,7 @@
    fotomarker.js, annotationsbox.js oder sonifikation.js.
 
    --- Wer von aussen hierher greift ----------------------------------------
-   setup()  ruft die sechs baue*-Funktionen und hängt oeffneRegister an die
+   setup()  ruft die fünf baue*-Funktionen und hängt oeffneRegister an die
             Klick-Listener der beiden Registertabs
 
    Der Zustand ist geteilt, nicht gekapselt: Die hier gefüllten Listen und
@@ -58,21 +57,6 @@ function oeffneRegister(box, andererBox, eigeneKlasse, andereKlasse) {
   andererBox.classList.remove('offen');
   registerTabs.classList.toggle(eigeneKlasse, !warOffen);
   registerTabs.classList.remove(andereKlasse);
-}
-
-function baueGedankenColumn() {
-  stationenData.gedanken.forEach(g => {
-    let el = document.createElement('div');
-    el.className = 'gedanken-entry';
-    let dot = document.createElement('div');
-    dot.className = 'ortspunkt';
-    let label = document.createElement('span');
-    label.textContent = g.ort;
-    el.appendChild(dot);
-    el.appendChild(label);
-    gedankenColumn.appendChild(el);
-    gedankenEintraege.push({ el, dot, ort: g.ort, nachStation: g.nachStation });
-  });
 }
 
 // Kapitelregister (linker Rand). Oben drei feste Einträge (ersetzen den

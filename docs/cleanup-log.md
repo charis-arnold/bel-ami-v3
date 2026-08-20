@@ -385,3 +385,117 @@ betroffen.
 - **Syntax:** `sketch.js` parst fehlerfrei (JavaScriptCore, `new Function(quelltext)`).
 - **Diff:** drei Hunks — eine Löschung (die Definition) und zwei
   Ein-Zeilen-Ersetzungen, sonst nichts.
+
+---
+
+## Schritt 4 — Gedanken-Spalte vollständig entfernt
+
+**Datum:** 20. August 2026
+**Dateien:** `sketch.js`, `dom-aufbau.js`, `index.html`, `style.css`
+**Ergebnis:** 76 Zeilen entfernt, 4 geändert
+
+Erste Bereinigung, die über JavaScript hinausgeht — betroffen sind auch Markup
+und Stylesheet.
+
+### Was war die Gedanken-Spalte
+
+Eine schmale Textspalte am linken Kartenrand (100 px vom Rand, vertikal
+zentriert, max. 220 px breit) mit fünf Einträgen aus `stationenData.gedanken` —
+Orte, die in Kapitel 1 nicht betreten, sondern nur gedacht, erinnert oder
+erträumt werden: Champs-Élysées, „Afrika (Erinnerung, Militärdienst)", Bois de
+Boulogne, Parc Monceau, „imaginierter Sommergarten". Jede Zeile bestand aus
+einem Punkt und dem Ortsnamen; daneben zeichnete `draw()` eine Kreisgrafik an
+der Bildschirmposition des Punkts.
+
+### Warum entfernt
+
+Die Spalte war über eine fest verdrahtete Zeile in `draw()` **dauerhaft
+unsichtbar**:
+
+```js
+let sichtbar = false;   // Gedanken-Spalte (Kapitel-1-Ansicht) für den Moment komplett ausgeblendet.
+g.el.classList.toggle('sichtbar', sichtbar);
+if (!sichtbar) return;
+```
+
+`.gedanken-entry` hat per CSS `opacity: 0` und wird nur über die Klasse
+`sichtbar` eingeblendet — die hier nie gesetzt wurde. Die Funktion baute also
+bei jedem Start fünf DOM-Zeilen, die `draw()` in jedem Frame wieder ausschaltete;
+das `return` übersprang zugleich die Kreisgrafik. Auf Nachfrage bestätigt: wird
+nicht mehr gebraucht, soll weg statt versteckt zu bleiben.
+
+### Was wurde entfernt
+
+**`dom-aufbau.js`** — `function baueGedankenColumn()` (14 Zeilen), dazu drei
+Stellen im Kopfkommentar nachgezogen (`gedankenColumn`/`gedankenEintraege` aus
+den Abhängigkeitslisten, „sechs baue*-Funktionen" → „fünf").
+
+**`sketch.js`** — der Block in `draw()` (13 Zeilen) plus vier Reste:
+
+| Zeile (vorher) | Element |
+|---|---|
+| 702 | `let stageRect = stage.getBoundingClientRect();` |
+| 704–716 | `gedankenEintraege.forEach(…)` mit `rv`, `sichtbar`, `return`, Kreisgrafik |
+| 43 | `gedankenColumn` aus `let gedankenColumn, kartenMarkierungenEl;` |
+| 53 | `let gedankenEintraege = [];` |
+| 212 | `gedankenColumn = document.getElementById('gedankenColumn');` |
+| 257 | `baueGedankenColumn();` |
+
+**`index.html`** — `<div class="gedanken-column" id="gedankenColumn"></div>`.
+
+**`style.css`** — der ganze Abschnitt „5) Gedanken-Spalte" (`.gedanken-column`,
+`.gedanken-entry`, `.gedanken-entry.sichtbar`, 34 Zeilen) sowie die Zeile
+`.scrolly-stage.grafik-ansicht #gedankenColumn,` aus der Selektorliste in
+Zeile 54.
+
+### Prüfung vor dem Löschen
+
+Vier Namen mussten einzeln geklärt werden, drei davon führten zu Einschränkungen:
+
+| Name | Befund | Konsequenz |
+|---|---|---|
+| `revealIndex` | 14 Fundstellen im Projekt; die Berechnung in Zeile 705 landete in `rv`, das **nirgends gelesen** wurde. Die übrigen Nutzungen sind unabhängig. | löschbar |
+| `stageRect` | nur in den Zeilen 712/713 gebraucht — beide im Löschbereich | mit entfernt |
+| `GEDANKEN_FILTER` | nach dem Löschen von Zeile 714 weiterhin in `datenbereinigung.js:149` gebraucht (baut `GEDANKEN_ORTRUN_UNTERDRUECKT`) | **bleibt** |
+| `.ortspunkt` | dieselbe CSS-Klasse nutzen `baueKartenMarkierungen`, `baueStationsMarker` und `baueZwischenMarker` | **bleibt** |
+
+Zusätzlich zwei Korrekturen an der Auftragsbeschreibung:
+
+- **`style.css:337` ist `.gedanken-column`, nicht `.gedanken-entry`.** Es waren
+  drei Regeln plus Abschnittskopf, nicht eine.
+- **`style.css:54`** enthält `#gedankenColumn` als eines von vier Elementen
+  einer Selektorliste. Dort wurde nur die eine Zeile entfernt — die Regel gilt
+  weiterhin für `#naechstesKapitel`, `#kartenMarkierungen` und `#annotationBox`.
+
+### Prüfungen nach der Änderung
+
+- **Restreferenzen:** `baueGedankenColumn`, `gedankenColumn`, `gedankenEintraege`,
+  `gedanken-column`, `gedanken-entry` — null Treffer über alle zwölf Projektdateien
+  (zehn JS, `index.html`, `style.css`).
+- **Syntax:** alle zehn JS-Dateien parsen fehlerfrei.
+- **CSS:** Klammerbilanz ausgeglichen (108 / 108).
+- **Ladereihenfolge:** alle zehn Dateien laden in `index.html`-Reihenfolge
+  fehlerfrei.
+- **Diff:** 76 Löschungen, 4 geänderte Zeilen (Kopfkommentar und die
+  Mehrfachdeklaration in Zeile 43).
+
+| Datei | vorher | nachher |
+|---|---|---|
+| `sketch.js` | 1821 | 1803 |
+| `dom-aufbau.js` | 295 | 279 |
+| `style.css` | 1125 | 1089 |
+| `index.html` | 109 | 107 |
+
+### Offener Folgebefund
+
+**`stationenData.gedanken` hat keinen Leser mehr.** Das Feld wird in
+`kapitel01-stationen.json` weiterhin geführt und in
+`datenbereinigung.js:273` normalisiert (`rohdaten.gedanken = arrayFuer(rohdaten.gedanken)`),
+aber von keiner Stelle mehr ausgewertet. Die Normalisierung ist harmlos und
+generisch; ob das JSON-Feld bleiben soll, ist eine Datenfrage und wurde hier
+nicht entschieden — die Python-Pipeline erzeugt es weiterhin.
+
+Verwandt: `GEDANKEN_ZIEL_ORT` und `GEDANKEN_ORTRUN_UNTERDRUECKT` in
+`datenbereinigung.js` bleiben in Gebrauch. Sie steuern, wie gedachte Orte in die
+Kreisgrafik der *echten* Orte einfliessen, und sind von der entfernten Spalte
+unabhängig.

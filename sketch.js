@@ -40,7 +40,7 @@ const KAPITEL_EINSTIEG_SCROLL_ENDE = 0.06;
 // Bbox (uebersichtBbox) und Crop-Rechenweg — es wechselt nur, welches Bild
 // gezeichnet wird (siehe currentBgImage in draw()).
 let bgImage, bgImage2, ch1Image;
-let gedankenColumn, kartenMarkierungenEl;
+let kartenMarkierungenEl;
 let stationenData;
 let kapitel03Data; // eigenes Datenset fürs Kapitel-3-Spine-Panel (Kartenausschnitt-Zoom)
 
@@ -50,7 +50,6 @@ let kapitel03Data; // eigenes Datenset fürs Kapitel-3-Spine-Panel (Kartenaussch
 // pro Kapitel (wie bisher nur für Kapitel 3) folgt in einem Folgeschritt.
 const WEITERE_KAPITEL_NUMMERN = ['02', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18'];
 let weitereKapitelDaten = {}; // z.B. weitereKapitelDaten['04'].ortRuns
-let gedankenEintraege = [];
 let markierungsEintraege = [];
 let stationsMarker = [];
 let zwischenMarker = [];
@@ -209,7 +208,6 @@ function setup() {
   begleitTexte = document.querySelectorAll('.begleittext');
   kapitelEinstiegsTexte = document.querySelectorAll('.kapitel-einstiegstext');
 
-  gedankenColumn = document.getElementById('gedankenColumn');
   kartenMarkierungenEl = document.getElementById('kartenMarkierungen');
   naechstesKapitelEl = document.getElementById('naechstesKapitel');
   naechstesKapitelEl.addEventListener('click', (ev) => {
@@ -254,7 +252,6 @@ function setup() {
   let cnv = createCanvas(stage.offsetWidth, stage.offsetHeight);
   cnv.parent('scrollyStage');
 
-  baueGedankenColumn();
   baueKartenMarkierungen();
   baueKapitelRegister();
   baueLegende();
@@ -699,21 +696,6 @@ function draw() {
   }
 
   // DOM-Marker
-  let stageRect = stage.getBoundingClientRect();
-
-  gedankenEintraege.forEach(g => {
-    let rv = stationenData.route[g.nachStation].revealIndex;
-    // Gedanken-Spalte (Kapitel-1-Ansicht) für den Moment komplett ausgeblendet.
-    let sichtbar = false;
-    g.el.classList.toggle('sichtbar', sichtbar);
-    if (!sichtbar) return;
-
-    let dotRect = g.dot.getBoundingClientRect();
-    let cx = dotRect.left + dotRect.width / 2 - stageRect.left;
-    let cy = dotRect.top + dotRect.height / 2 - stageRect.top;
-    let bc = zaehleAnnotationenLiveNachOrtBasis(GEDANKEN_FILTER[g.ort] || g.ort, annIndex);
-    zeichneKreiseFuerRun(cx, cy, bc);
-  });
   // Ortspunkte/Labels auf der Karte (Kapitel-1-Ansicht) für den Moment
   // ausgeblendet — Route/Kreisgrafik/Spine bleiben davon unberührt sichtbar.
   markierungsEintraege.forEach(m => {

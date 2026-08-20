@@ -51,7 +51,6 @@ body {
    passen thematisch nicht mehr dazu und würden ohne Bezugspunkt frei über
    der Grafik schweben, daher hier ausgeblendet. */
 .scrolly-stage.grafik-ansicht #naechstesKapitel,
-.scrolly-stage.grafik-ansicht #gedankenColumn,
 .scrolly-stage.grafik-ansicht #kartenMarkierungen,
 .scrolly-stage.grafik-ansicht #annotationBox {
   display: none;
@@ -327,41 +326,6 @@ h2 {
 
 .karten-markierung .label {
   display: none;
-}
-
-
-/* =========================
-   5) Gedanken-Spalte (linker Kartenrand, Spalte 2)
-   ========================= */
-
-.gedanken-column {
-  position: absolute;
-  left: 100px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 4;
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-  max-width: 220px;
-  pointer-events: none;
-}
-
-.gedanken-entry {
-  font-family: var(--sans);
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: rgb(26, 26, 26);
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  display: flex;
-  align-items: center;
-  gap: 40px;
-}
-
-.gedanken-entry.sichtbar {
-  opacity: 1;
 }
 
 
