@@ -17,6 +17,37 @@ werden über `<script>`-Tags in `index.html` geladen; die Ladereihenfolge dort
 ist damit Teil der Architektur. Neue Module müssen VOR ihren Nutzern stehen,
 soweit beim Laden bereits etwas ausgewertet wird.
 
+### Diagnose: „Karte da, alles andere weg"
+
+Ein Symptommuster, das mit jedem Extraktionsschritt wahrscheinlicher wird und
+**kein Code-Fehler** ist. In `draw()` steht die Kartenzeichnung vor den
+Aufrufen in die ausgelagerten Module:
+
+| Zeile | Aufruf | Modul |
+|---|---|---|
+| 692 | `ovPhase(…)` | `ortsveraenderung.js` |
+| 776 | `image(currentBgImage, …)` | — Karte erscheint |
+| 789/790 | `zeichneMassstabsleiste()`, `zeichneWindrose()` | `kartendekor.js` |
+| 820 | `zeichneUebersichtsrouten()` | — Kapitel-Badges |
+| 1160 | `zeichneFotoMarker()` | `fotomarker.js` |
+
+Lädt eine Moduldatei nicht, wirft der erste Zugriff darauf einen
+`ReferenceError`, und `draw()` bricht an dieser Stelle ab — alles davor ist
+gezeichnet, alles danach fehlt. Je nachdem, welche Datei fehlt, sieht man ein
+anderes Teilbild; fällt `kartendekor.js` aus, bleibt genau die Karte ohne
+Massstab, Windrose, Badges und Foto-Marker stehen.
+
+Die häufigste Ursache ist der Browser-Cache: jede Extraktion fügt eine Datei
+hinzu, die separat gecacht wird, und eine veraltete `index.html` kennt die
+neuen `<script>`-Tags noch nicht. Ein solcher Fall trat nach Modul 3 einmal auf
+und verschwand mit einem Neuladen.
+
+**Faustregel:** Fehlen Overlays, während die Karte steht, zuerst Hard-Reload
+(Cmd+Shift+R) und im Netzwerk-Tab prüfen, ob alle `.js`-Dateien mit Status 200
+kommen — erst danach Code lesen. Der zugehörige Konsolenfehler ist leicht zu
+übersehen, weil Chrome die bei 60 fps millionenfach identische Meldung zu einer
+einzigen Zeile mit Zähler zusammenfasst.
+
 ---
 
 ## Modul 1 — `kartendekor.js`
@@ -741,3 +772,141 @@ geändert.
    Hintergrund, Escape.
 5. In der Graph-Ansicht dürfen **keine** Marker zu sehen sein.
 6. Im Schlussakt blenden sie mit der Karte aus.
+
+---
+
+## Modul 5 — `annotationsbox.js`
+
+**Datum:** 20. August 2026
+**Neu:** `annotationsbox.js` (129 Zeilen, davon 37 Kopfkommentar)
+**Aus:** `sketch.js` — 93 Zeilen entfernt (2231 → 2138)
+**Geändert:** `index.html` — ein `<script>`-Tag ergänzt
+
+Entspricht **Gruppe 10 („Annotationsbox-Platzierung")** der Analyse. Der
+glatteste Schnitt bisher: ein zusammenhängender Block, eine aufrufende
+Funktion, kein Sonderfall.
+
+### Was wurde verschoben
+
+Ein einziger zusammenhängender Block, `sketch.js` Zeilen **1251–1342** (plus
+die nachfolgende Leerzeile 1343):
+
+| Zeilen (vorher) | Element |
+|---|---|
+| 1251–1265 | Abschnittskopf mit der Begründung, warum die Box ausweicht statt der Karte |
+| 1266 | `const ANNOTATION_BOX_PLAETZE` — die vier Plätze in Bevorzugungsreihenfolge |
+| 1267–1269 | Kommentar + `const ANNOTATION_BOX_PLATZ_FEST` (manuelle Übersteuerung je Kapitel) |
+| 1270–1273 | `ANNOTATION_BOX_BREITE`, `ANNOTATION_BOX_RAND_X`, `ANNOTATION_BOX_RAND_OBEN`, `ANNOTATION_BOX_RAND_UNTEN` |
+| 1274 | `const annotationBoxPlatzCache = new Map();` |
+| 1276–1342 | `function annotationBoxPlatz(kapitelNr, daten, bbox)` |
+
+Der Block lag geschlossen zwischen `leereBandCounts()` (endet Zeile 1249) und
+`zeichneKreiseOrtRuns()` (begann 1344); beide grenzen jetzt mit einer Leerzeile
+aneinander.
+
+### Keine Sonderfälle
+
+Anders als bei den vorherigen vier Modulen gab es nichts zurückzulassen und
+nichts zu klären:
+
+- **Kein Element mit geteilter Zuständigkeit** (wie `OV_SCHEIBE_GRUNDANTEIL`
+  in Modul 2 oder `FOTO_MARKER_TREFFER_RADIUS` in Modul 4).
+- **Kein Element mit irreführendem Präfix** (wie `grafikPlayButton` in Modul 3).
+- **Kein Ladezeit-Problem** (wie `letzterFotoOffsetX` in Modul 4): einziger
+  Top-Level-Initialisierer ist `new Map()` — ein eingebauter Konstruktor ohne
+  Zugriff auf fremde Variablen.
+- **Kein zerrissener Bereich** — alles lag an einem Stück beisammen.
+
+### Abhängigkeiten in beide Richtungen
+
+**Wer von aussen hierher greift** — ausschliesslich `draw()`, an zwei
+unmittelbar benachbarten Zeilen:
+
+| `sketch.js` | Zugriff |
+|---|---|
+| 887 | `let platz = annotationBoxPlatz(platzKapitel, platzDaten, platzBbox);` |
+| 888 | `ANNOTATION_BOX_PLAETZE.forEach(p => annotationBoxEl.classList.toggle('pos-' + p, p === platz));` |
+
+**Worauf das Modul zugreift** — neun Namen:
+
+| aus `sketch.js` (5) | aus `datenbereinigung.js` (4) |
+|---|---|
+| `annotationText` (nur für `getComputedStyle` — die Boxhöhe wird aus der echten Schriftgrösse geschätzt) | `KREIS_KATEGORIEN` |
+| `lonLatToScreen` | `kreisRadius` |
+| `mapOffsetX`, `mapOffsetY` | `wohnungFilterFuerOrt` |
+| `sammelpunktKategorie` | `zaehleAnnotationenLiveNachOrtBasis` |
+
+**Ausdrücklich geprüft, weil danach gefragt war:** Es besteht **keine
+Verbindung in beide Richtungen** zu `kartendekor.js`, `ortsveraenderung.js`,
+`spine-horizontal.js` oder `fotomarker.js`. Weder greift das Modul dorthin,
+noch greift eines von ihnen hierher. Die inzwischen sechs ausgelagerten
+Bereiche kennen einander weiterhin nicht — jede Kommunikation läuft über
+`sketch.js` und `datenbereinigung.js`.
+
+Der Zustand ist hier **gekapselt**, nicht geteilt: `annotationBoxPlatzCache`
+wird nur innerhalb des Moduls gelesen und geschrieben. Damit ist es nach
+`kartendekor.js` das zweite Modul, das einer späteren ES-Modul-Umstellung
+nichts entgegensetzt — bei Modul 3 und 4 schreibt `sketch.js` dagegen in den
+Modulzustand hinein.
+
+`annotationBoxEl` (das DOM-Element, das die Klasse trägt) bleibt in
+`sketch.js`: Es wird nur dort gesetzt und benutzt, das Modul liefert lediglich
+den Platznamen und fasst das Element nie an.
+
+### Ladereihenfolge in `index.html`
+
+```diff
+   <script src="spine-horizontal.js"></script>
+   <script src="fotomarker.js"></script>
++  <script src="annotationsbox.js"></script>
+   <script src="sketch.js"></script>
+   <script src="sonifikation.js"></script>
+```
+
+### Nachweis: keine Logikänderung
+
+| | |
+|---|---|
+| Original aus `HEAD:sketch.js` ab Zeile 1251 | 92 Zeilen |
+| Korpus in `annotationsbox.js` (ohne Kopf) | 92 Zeilen |
+| Vergleich | **zeichenweise identisch** |
+
+### Weitere Prüfungen
+
+- **Syntax:** alle acht JS-Dateien parsen fehlerfrei.
+- **Ladereihenfolge ausgeführt:** alle acht Dateien laden in
+  `index.html`-Reihenfolge fehlerfrei (JavaScriptCore, mit Stubs).
+- **Namenskollisionen:** keine (245 Top-Level-Namen über alle Dateien).
+- **Restnutzungen:** in `sketch.js` stehen nur noch die beiden Zugriffe aus
+  `draw()` (Zeilen 887/888) sowie die Deklaration von `annotationBoxEl`.
+- **Nahtstelle:** `leereBandCounts()` und `zeichneKreiseOrtRuns()` grenzen mit
+  einer Leerzeile aneinander.
+
+### Zwischenstand der Modularisierung
+
+| Datei | Zeilen |
+|---|---|
+| `sketch.js` | **2138** (von ursprünglich 3497) |
+| `ortsveraenderung.js` | 659 |
+| `datenbereinigung.js` | 475 |
+| `spine-horizontal.js` | 441 |
+| `kartendekor.js` | 187 |
+| `annotationsbox.js` | 129 |
+| `fotomarker.js` | 110 |
+| `sonifikation.js` | unverändert |
+
+`sketch.js` hat damit rund **39 %** seines ursprünglichen Umfangs abgegeben.
+
+### Manueller Test
+
+Die Wirkung ist subtil, weil die Box je nach Kapitel und Fenstergrösse einen
+anderen Platz wählt — auffallen würde erst ihr Fehlen oder ein Springen.
+
+1. Mehrere Kapitel nacheinander öffnen (etwa 3, 8, 13) und prüfen, dass die
+   Annotationsbox **nicht** über den grossen Ortskreisen liegt. Je nach Kapitel
+   sitzt sie oben links, unten links, oben rechts oder unten rechts.
+2. Innerhalb eines Kapitels durchscrollen: die Box muss **an ihrem Platz
+   stehen bleiben**, während die Kreise wachsen — genau dafür gibt es den Cache.
+3. Fenstergrösse ändern und dasselbe Kapitel erneut öffnen: die Box darf einen
+   anderen Platz wählen (der seitliche Beschnitt der Karte hängt am
+   Fensterformat), aber innerhalb dieser Grösse wieder stabil bleiben.
