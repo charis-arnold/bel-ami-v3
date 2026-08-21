@@ -18,6 +18,22 @@
 // gezeichnet. Das lässt p5s Farb-Zwischenspeicher veralten; nur pop()
 // gleicht ihn wieder ab, ctx.restore() nicht. Jede Zeichenfunktion klammert.
 
+// EIN/AUS für alle neutralen Teile: F-Wert-Punkte und Vollkreise. Rein
+// visuell — Daten, Zählungen und Kreisgrösse bleiben unberührt.
+const ZEIGE_NEUTRALE_WERTE = true;
+
+// Neutral meint die dritte F-Wert-Gruppe als Ganzes: valenz 0 und unbewertet.
+// Über !== 1 && !== -1, damit auch ein unerwarteter Wert neutral zählt.
+function istNeutraleValenz(valenz) {
+  return valenz !== 1 && valenz !== -1;
+}
+
+// Liefert eine gefilterte Kopie; die Liste des Aufrufers bleibt vollständig.
+function sichtbareFwertAnnotationen(annotationen) {
+  if (ZEIGE_NEUTRALE_WERTE) return annotationen;
+  return annotationen.filter(a => !istNeutraleValenz(a.valenz));
+}
+
 // Zeilenabstand der Schraffur in den Gesamtkreisen.
 const HATCH_SPACING = 3;
 
@@ -204,7 +220,7 @@ function zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF
     let neutralR = kreisRadius(bc.neutral || 0, maxRadius) * radiusSkala;
     if (negR > 0) flaechenFormen.push({ r: negR, zeichne: () => zeichneHalbkreis(cx, cy, negR, winkel - HALF_PI, k.farbe, alphaSkala, blend) });
     if (posR > 0) flaechenFormen.push({ r: posR, zeichne: () => zeichneHalbkreis(cx, cy, posR, winkel + HALF_PI, k.farbe, alphaSkala, blend) });
-    if (neutralR > 0) flaechenFormen.push({ r: neutralR, zeichne: () => zeichneVollkreis(cx, cy, neutralR, k.farbe, alphaSkala, blend) });
+    if (ZEIGE_NEUTRALE_WERTE && neutralR > 0) flaechenFormen.push({ r: neutralR, zeichne: () => zeichneVollkreis(cx, cy, neutralR, k.farbe, alphaSkala, blend) });
   });
 
   hatchFormen.sort((a, b) => b.r - a.r).forEach(f => f.zeichne());
@@ -229,6 +245,8 @@ const FWERT_PUNKT_RING_ABSTAND = 8; // Abstand zwischen zwei Punkte-Ringen, fall
 // Ein Punkt je Annotation mit F-Wert, Grösse nach Typ, Lage im 120°-Drittel
 // der eigenen Valenz. Bei Andrang wachsen weitere Ringe nach aussen.
 function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1, anordnung = 'seitlich') {
+  // Schalter am gemeinsamen Eingang aller drei Aufrufer, nicht in den Aufrufern.
+  fwertAnnotationen = sichtbareFwertAnnotationen(fwertAnnotationen);
   if (!fwertAnnotationen.length || radius <= 0) return;
 
   push(); // noStroke() plus direkte fillStyle-Schreibzugriffe
