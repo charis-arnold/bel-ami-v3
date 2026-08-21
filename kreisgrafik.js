@@ -15,6 +15,10 @@
    gruppiert in 120°-Dritteln auf der Seite seiner Valenz, bei Bedarf in
    mehreren Ringen.
 
+   Ganz oben in dieser Datei steht ZEIGE_NEUTRALE_WERTE — der EIN/AUS-Schalter,
+   der neutrale F-Wert-Punkte und neutrale Vollkreise in allen Ansichten
+   ausblendet, ohne Daten oder Zählungen anzufassen.
+
    Die Winkel-Konvention ist bewusst NICHT an die Laufrichtung der Route
    gebunden: In Karten- ("Plan") wie Graph-Ansicht teilt dieselbe waagrechte
    Linie positiv (oben) von negativ (unten) — beide Ansichten zeigen
@@ -41,6 +45,9 @@
    Diese Zeile ruft eine fremde Funktion beim Laden auf. Diese Datei MUSS
    deshalb nach datenbereinigung.js stehen — sonst ReferenceError. Sie ist der
    einzige nicht-literale Top-Level-Initialisierer hier.
+   Umgekehrt liest sketch.js ZEIGE_NEUTRALE_WERTE (s.u.) schon beim Laden, für
+   die Legendentexte — diese Datei muss also auch VOR sketch.js stehen. In
+   index.html ist beides erfüllt (datenbereinigung → kreisgrafik → … → sketch).
 
    --- Wer von aussen hierher greift ----------------------------------------
    sketch.js              zeichneKreiseOrtRuns (Kapitel-1-Route und Kapitel-Zoom)
@@ -51,6 +58,48 @@
    Damit ist dies nach geo-projektion.js die zweite gemeinsame Grundlage
    mehrerer Module — es steht in index.html entsprechend weit vorne.
 ============================================================================= */
+
+// ---------------------------------------------------------------------------
+// EIN/AUS: neutrale Werte — HIER umschalten
+// ---------------------------------------------------------------------------
+
+// Zentraler Schalter für alle neutral bewerteten Teile der Kreisgrafik.
+//   true  — Normalzustand, alles wird gezeichnet
+//   false — neutrale F-Wert-Punkte UND neutrale Vollkreise werden übersprungen
+//
+// Wirkt in BEIDEN Ansichten (Karte/"Plan" und Graph/Spine) sowie im Schlussakt
+// Ortsveränderung, weil alle drei ihre Kreise über zeichneKreiseFuerRun() und
+// zeichneFwertPunkte() in DIESER Datei zeichnen — es gibt keinen zweiten
+// Renderer, der umgangen werden könnte.
+//
+// REIN VISUELL. Unberührt bleiben: die JSON-Daten (kapitelXX-stationen.json),
+// das Annotationsschema, die bandCounts/Zählungen (zaehleAnnotationenLive-
+// NachOrtBasis) und die Kreisgrösse. Ein Kreis behält also seinen Durchmesser,
+// auch wenn seine neutralen Anteile ausgeblendet sind: der schraffierte
+// Gesamtkreis zählt weiterhin neg+pos+neutral+unrated (siehe
+// zeichneKreiseFuerRun). Ausgeblendet wird nur, was gezeichnet wird.
+const ZEIGE_NEUTRALE_WERTE = true;
+
+// Gemeinsames Prädikat beider Renderer. "Neutral" meint hier die dritte
+// F-Wert-Gruppe ALS GANZES: echte Neutral-Annotationen (valenz === 0) und
+// unbewertete (valenz fehlt/null). Beide landen in zeichneFwertPunkte ohnehin
+// in derselben Gruppe und stehen in der Legende zusammen als
+// "neutral/unbewertet" — anders als valenzBucket() (datenbereinigung.js), das
+// sie für die bandCounts in zwei Buckets trennt.
+// Absichtlich über !== 1 && !== -1 formuliert statt über eine Aufzählung von
+// 0/null/undefined: so fällt auch ein unerwarteter Wert auf die neutrale Seite,
+// statt stillschweigend als bewertet durchzurutschen.
+function istNeutraleValenz(valenz) {
+  return valenz !== 1 && valenz !== -1;
+}
+
+// Filter für rohe Annotationslisten (F-Wert-Punkte). Liefert eine gefilterte
+// KOPIE — das übergebene Array bleibt unangetastet, damit Aufrufer, die
+// dieselbe Liste noch für Zählungen o.ä. brauchen, nichts davon merken.
+function sichtbareFwertAnnotationen(annotationen) {
+  if (ZEIGE_NEUTRALE_WERTE) return annotationen;
+  return annotationen.filter(a => !istNeutraleValenz(a.valenz));
+}
 
 // Zeilenabstand der Schraffur in den Gesamtkreisen (siehe drawHatchedCircle).
 const HATCH_SPACING = 3;
@@ -306,8 +355,12 @@ function zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF
     if (negR > 0) flaechenFormen.push({ r: negR, zeichne: () => zeichneHalbkreis(cx, cy, negR, winkel - HALF_PI, k.farbe, alphaSkala, blend) });
     if (posR > 0) flaechenFormen.push({ r: posR, zeichne: () => zeichneHalbkreis(cx, cy, posR, winkel + HALF_PI, k.farbe, alphaSkala, blend) });
     // Neutrale Valenz: ganzer flächiger Kreis statt Halbkreis — hat keine
-    // Links/Rechts- bzw. Oben/Unten-Seite wie neg/pos.
-    if (neutralR > 0) flaechenFormen.push({ r: neutralR, zeichne: () => zeichneVollkreis(cx, cy, neutralR, k.farbe, alphaSkala, blend) });
+    // Links/Rechts- bzw. Oben/Unten-Seite wie neg/pos. Bei
+    // ZEIGE_NEUTRALE_WERTE = false wird nur das ZEICHNEN übersprungen —
+    // neutralR wird oben trotzdem berechnet und bc.neutral zählt weiterhin in
+    // den schraffierten Gesamtkreis, der Kreis bleibt also gleich gross.
+    // Unbewertete (bc.unrated) haben ohnehin nie eine eigene Fläche.
+    if (ZEIGE_NEUTRALE_WERTE && neutralR > 0) flaechenFormen.push({ r: neutralR, zeichne: () => zeichneVollkreis(cx, cy, neutralR, k.farbe, alphaSkala, blend) });
   });
 
   hatchFormen.sort((a, b) => b.r - a.r).forEach(f => f.zeichne());
@@ -343,6 +396,11 @@ const FWERT_PUNKT_RING_ABSTAND = 8; // Abstand zwischen zwei Punkte-Ringen, fall
 // weitere, weiter aussen liegende Ringe nach (z.B. "Cannes", Kapitel 8, mit
 // 87 F-Wert-Annotationen an einem einzigen Ort).
 function zeichneFwertPunkte(cx, cy, kreisRadius, fwertAnnotationen, alphaSkala = 1, anordnung = 'seitlich') {
+  // Der EIN/AUS-Schalter greift hier, am gemeinsamen Eingang aller drei
+  // Aufrufer (Karte, Graph, Ortsveränderung) — nicht in den Aufrufern selbst,
+  // damit keiner von ihnen vergessen werden kann. Gefiltert wird eine Kopie;
+  // die Liste des Aufrufers bleibt vollständig.
+  fwertAnnotationen = sichtbareFwertAnnotationen(fwertAnnotationen);
   if (!fwertAnnotationen.length || kreisRadius <= 0) return;
 
   const DRITTEL = TWO_PI / 3;

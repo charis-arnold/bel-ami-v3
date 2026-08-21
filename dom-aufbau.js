@@ -178,20 +178,25 @@ function baueLegende() {
 
   legendeInhalt.appendChild(valenzZeile);
 
-  let neutralZeile = document.createElement('div');
-  neutralZeile.className = 'legende-valenz legende-valenz-mehr';
+  // Die Zeile zum neutralen Vollkreis entfällt ganz, wenn dieser gar nicht
+  // gezeichnet wird (siehe ZEIGE_NEUTRALE_WERTE in kreisgrafik.js) — eine
+  // Legende soll nichts erklären, was im Bild nicht vorkommt.
+  if (ZEIGE_NEUTRALE_WERTE) {
+    let neutralZeile = document.createElement('div');
+    neutralZeile.className = 'legende-valenz legende-valenz-mehr';
 
-  let neutralKreis = document.createElement('span');
-  neutralKreis.className = 'legende-valenz-kreis-voll';
-  neutralKreis.style.setProperty('--legende-farbe', `rgb(${beispielFarbe.farbe.join(', ')})`);
-  neutralZeile.appendChild(neutralKreis);
+    let neutralKreis = document.createElement('span');
+    neutralKreis.className = 'legende-valenz-kreis-voll';
+    neutralKreis.style.setProperty('--legende-farbe', `rgb(${beispielFarbe.farbe.join(', ')})`);
+    neutralZeile.appendChild(neutralKreis);
 
-  let neutralText = document.createElement('span');
-  neutralText.className = 'legende-valenz-text';
-  neutralText.textContent = 'Ganzer Kreis: neutral bewertet';
-  neutralZeile.appendChild(neutralText);
+    let neutralText = document.createElement('span');
+    neutralText.className = 'legende-valenz-text';
+    neutralText.textContent = 'Ganzer Kreis: neutral bewertet';
+    neutralZeile.appendChild(neutralText);
 
-  legendeInhalt.appendChild(neutralZeile);
+    legendeInhalt.appendChild(neutralZeile);
+  }
 
   let fwertTitel = document.createElement('div');
   fwertTitel.className = 'legende-fwert-titel';
