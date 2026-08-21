@@ -16,9 +16,13 @@
    mehreren Ringen.
 
    Die Winkel-Konvention ist bewusst NICHT an die Laufrichtung der Route
-   gebunden: Auf der Karte teilt eine senkrechte Linie negativ (links) von
-   positiv (rechts), in der Graph-Ansicht eine waagrechte (positiv oben).
-   Steuerung über den winkel-Parameter von zeichneKreiseFuerRun().
+   gebunden: In Karten- ("Plan") wie Graph-Ansicht teilt dieselbe waagrechte
+   Linie positiv (oben) von negativ (unten) — beide Ansichten zeigen
+   dieselben Kreise und sollen sich gleich lesen lassen. Nur der Schlussakt
+   Ortsveränderung (ortsveraenderung.js) teilt weiterhin senkrecht (negativ
+   links, positiv rechts), weil dort unter jedem Kreis Beschriftung und
+   Kapitelzeile stehen. Steuerung über den winkel-Parameter von
+   zeichneKreiseFuerRun() bzw. anordnung von zeichneFwertPunkte().
 
    --- Abhängigkeiten NACH AUSSEN (Laufzeit) --------------------------------
    aus datenbereinigung.js (14): KREIS_KATEGORIEN, kreisRadius, FWERT_PUNKTGROESSE,
@@ -112,9 +116,15 @@ function zeichneKreiseOrtRuns(punktIndex, annIndex, activeBbox, offsetX = mapOff
     let pos = lonLatToScreen(r.lon, r.lat, activeBbox, offsetX, offsetY);
     let filter = wohnungFilterFuerOrt(r.ort);
     let bandCounts = zaehleAnnotationenLiveNachOrtBasis(filter, annIndex, daten);
-    let radius = zeichneKreiseFuerRun(pos.x, pos.y, bandCounts, 1);
+    // Winkel PI und Anordnung 'obenUnten' — dieselbe Aufteilung wie in der
+    // Graph-Ansicht (siehe zeichneSpineHorizontal): positiv oben, negativ
+    // unten, F-Wert-Punkte entsprechend. Die Kartenansicht ("Plan") und die
+    // Graph-Ansicht zeigen dieselben Kreise; stünden die Halbkreise hier
+    // links/rechts und dort oben/unten, müsste man beim Umschalten die
+    // Bildsprache neu lesen.
+    let radius = zeichneKreiseFuerRun(pos.x, pos.y, bandCounts, 1, PI);
     let fwertAnnotationen = sammleAnnotationenNachOrtBasis(filter, annIndex, daten).filter(a => a.hasFwert);
-    zeichneFwertPunkte(pos.x, pos.y, radius, fwertAnnotationen, 1);
+    zeichneFwertPunkte(pos.x, pos.y, radius, fwertAnnotationen, 1, 'obenUnten');
     if (radius > 0) {
       // Label mit demselben Begriff wie in der Spine (r.ort) — erst
       // sammeln, Kollisionen erst nach der Schleife auflösen (siehe
@@ -244,17 +254,16 @@ function zeichneVollkreis(cx, cy, r, farbeRgb, alphaSkala = 1, blend = false) {
 }
 
 // winkel: feste (NICHT von der Routenrichtung abgeleitete) Basis für die
-// Links/Rechts-Aufteilung der Valenz-Halbkreise, siehe unten — Default
-// -HALF_PI ("nach oben ausgerichtet") ergibt neg=links/pos=rechts, die
-// senkrechte Trennlinie für alle geografisch verstreuten Kreise (Karte,
-// Orte-ohne-Adresse, Kreisvergleich). Die horizontale Spine
-// (zeichneSpineHorizontal) übergibt stattdessen 0 ("nach rechts
-// ausgerichtet") für neg=oben/pos=unten — bei einer Reihe nebeneinander
-// liegender Kreise würde eine links/rechts-Teilung benachbarte Kreise
-// gegenseitig überlappen/verdecken, eine oben/unten-Teilung bleibt dagegen
-// innerhalb der eigenen Spalte.
-// radiusSkala/maxRadius: nur die Übersichtskarten-Knoten nutzen sie (siehe
-// zeichneVergleichsKnoten) — dort werden die Radien ohne Deckel berechnet und
+// Aufteilung der Valenz-Halbkreise, siehe unten. Karten- ("Plan", siehe
+// zeichneKreiseOrtRuns) und Graph-Ansicht (zeichneSpineHorizontal) übergeben
+// beide PI ("nach links ausgerichtet") für pos=oben/neg=unten — dieselben
+// Kreise sollen sich in beiden Ansichten gleich lesen lassen, und bei einer
+// Reihe nebeneinander liegender Spine-Kreise würde eine Links/Rechts-Teilung
+// benachbarte Kreise gegenseitig überlappen. Der Default -HALF_PI ("nach oben
+// ausgerichtet", neg=links/pos=rechts) bleibt für den Schlussakt
+// Ortsveränderung, wo unter jedem Kreis Beschriftung und Kapitelzeile stehen.
+// radiusSkala/maxRadius: nur die Ortsveränderung nutzt sie (siehe
+// zeichneOrtsveraenderung) — dort werden die Radien ohne Deckel berechnet und
 // danach gemeinsam so weit verkleinert, dass die senkrecht gestaffelten Kreise
 // ins Fenster passen. Die Skalierung greift am fertigen Radius, nicht über
 // eine Canvas-Transformation: so behalten Schraffur-Abstand und Strichstärken
@@ -286,11 +295,10 @@ function zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF
     // deckende Fläche) für gold_mittel — wie im alten Entwurf
     // (kapitel01-embed.js/addBand). winkel bewusst NICHT an die lokale
     // Laufrichtung der Route angelehnt, sondern fest: die Trennlinie
-    // zwischen neg/pos dreht sich nie mit der Route mit. Kartenansicht
-    // (Default -HALF_PI): negativ links, positiv rechts. Graph-Ansicht
-    // (winkel PI, siehe zeichneSpineHorizontal): positiv oben, negativ
-    // unten — dort liegen die Kreise auf einer waagrechten Linie, eine
-    // Links/Rechts-Teilung liefe mit der Leserichtung mit statt quer dazu.
+    // zwischen neg/pos dreht sich nie mit der Route mit. Karten- wie
+    // Graph-Ansicht (winkel PI): positiv oben, negativ unten. Nur die
+    // Ortsveränderung nutzt den Default -HALF_PI: negativ links, positiv
+    // rechts.
     let blend = k.key !== 'gold_mittel';
     let negR = kreisRadius(bc.neg || 0, maxRadius) * radiusSkala;
     let posR = kreisRadius(bc.pos || 0, maxRadius) * radiusSkala;
@@ -341,10 +349,10 @@ function zeichneFwertPunkte(cx, cy, kreisRadius, fwertAnnotationen, alphaSkala =
   // Gruppenmitten [negativ, positiv, neutral/unbewertet] je Anordnung. Sie
   // folgen der Teilung der Halbkreise in zeichneKreiseFuerRun, damit die
   // Punkte einer Valenz auf DERSELBEN Seite liegen wie ihre Fläche:
-  //   'seitlich' (Karte, Halbkreise links/rechts): negativ oben-links,
-  //     positiv oben-rechts, neutral unten — die beiden Valenz-Gruppen
-  //     liegen als Drittel-Paar symmetrisch um die Senkrechte.
-  //   'obenUnten' (Graph, Halbkreise oben/unten): positiv GENAU oben,
+  //   'seitlich' (Ortsveränderung, Halbkreise links/rechts): negativ
+  //     oben-links, positiv oben-rechts, neutral unten — die beiden
+  //     Valenz-Gruppen liegen als Drittel-Paar symmetrisch um die Senkrechte.
+  //   'obenUnten' (Karte UND Graph, Halbkreise oben/unten): positiv GENAU oben,
   //     negativ GENAU unten, neutral rechts daneben. Hier lassen sich die
   //     Mitten nicht aus einer gemeinsamen Drehung ableiten — oben und unten
   //     liegen 180° auseinander, drei gleiche Drittel aber nur 120°. Darum

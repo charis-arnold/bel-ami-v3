@@ -20,8 +20,8 @@
                        alleEintrag, kapitelRegisterEintraege, legendeValenzText,
                        legendeValenzKreis, legendeFwertHinweis
      gefüllte Listen   markierungsEintraege, stationsMarker, zwischenMarker
-     Konstanten        WEITERE_KAPITEL_NUMMERN, LEGENDE_VALENZ_KARTE,
-                       LEGENDE_FWERT_KARTE, FWERT_PUNKT_DURCHMESSER
+     Konstanten        WEITERE_KAPITEL_NUMMERN, LEGENDE_VALENZ_OBEN_UNTEN,
+                       LEGENDE_FWERT_OBEN_UNTEN, FWERT_PUNKT_DURCHMESSER
      Navigation        scrolleZuKapitel1, springeZuKapitelZoom,
                        springeZurUebersicht
      Daten             stationenData
@@ -123,9 +123,11 @@ function baueKapitelRegister() {
 // codiert, damit Legende und tatsächliche Kreisfarben nie auseinanderlaufen.
 // Erklärt beide Bild-Ebenen einzeln: die schraffierte Gesamtfläche (alle
 // Erwähnungen der Kategorie, auch neutrale/unbewertete) und die vollflächigen
-// Halbkreise (nur negativ/positiv bewertete, per fester Position links/rechts
+// Halbkreise (nur negativ/positiv bewertete, per fester Position oben/unten
 // unterschieden — NICHT per Farbe, siehe "Kreise"-Kommentar bei
-// zeichneKreiseFuerRun).
+// zeichneKreiseFuerRun). Valenz- und F-Wert-Zeile werden hier mit der
+// oben/unten-Fassung gebaut (Plan und Graph, der Normalfall) und von draw()
+// auf links/rechts umgestellt, sobald der Schlussakt Ortsveränderung läuft.
 function baueLegende() {
   let titel = document.createElement('div');
   titel.className = 'legende-titel';
@@ -165,12 +167,12 @@ function baueLegende() {
 
   let valenzText = document.createElement('span');
   valenzText.className = 'legende-valenz-text';
-  valenzText.textContent = LEGENDE_VALENZ_KARTE;
+  valenzText.textContent = LEGENDE_VALENZ_OBEN_UNTEN;
   valenzZeile.appendChild(valenzText);
-  // Für die Umschaltung Plan/Graph merken: die Halbkreise stehen in der
-  // Graph-Ansicht oben/unten statt links/rechts (siehe
-  // zeichneSpineHorizontal), die Legende muss das mitmachen — sie ist in
-  // BEIDEN Ansichten sichtbar.
+  // Für die Umschaltung merken: die Halbkreise stehen in Plan- wie
+  // Graph-Ansicht oben/unten, im Schlussakt Ortsveränderung dagegen
+  // links/rechts (siehe zeichneOrtsveraenderung) — die Legende ist in allen
+  // dreien sichtbar und muss das mitmachen.
   legendeValenzText = valenzText;
   legendeValenzKreis = valenzKreis;
 
@@ -223,7 +225,7 @@ function baueLegende() {
 
   let fwertHinweis = document.createElement('p');
   fwertHinweis.className = 'legende-hinweis';
-  fwertHinweis.textContent = LEGENDE_FWERT_KARTE;
+  fwertHinweis.textContent = LEGENDE_FWERT_OBEN_UNTEN;
   legendeInhalt.appendChild(fwertHinweis);
   legendeFwertHinweis = fwertHinweis; // wechselt mit der Ansicht, siehe draw()
 }

@@ -75,11 +75,15 @@ let planEintrag, graphEintrag; // "Plan"/"Graph"-Hälften oben im Register, für
 let modusZeile, leerzeile, alleEintrag; // Plan/Graph-Zeile + Abstandshalter + "Alle" — in der Übersicht (kein Kapitel gezoomt) blendet draw() modusZeile/leerzeile aus und markiert alleEintrag als aktiv
 let legendeBox; // Register-Container (Tab+Inhalt), mitte rechts — sichtbar wie kapitelRegister (Plan UND Graph)
 let legendeValenzText, legendeValenzKreis; // Valenz-Zeile der Legende — Text/Symbol wechseln je Ansicht (siehe draw())
-const LEGENDE_VALENZ_KARTE = 'Volltonfarbe: links negativ, rechts positiv bewertet';
-const LEGENDE_VALENZ_GRAPH = 'Volltonfarbe: oben positiv, unten negativ bewertet';
+// Benannt nach der TEILUNG, nicht nach der Ansicht: Plan- und Graph-Ansicht
+// teilen inzwischen beide oben/unten (siehe zeichneKreiseOrtRuns und
+// zeichneSpineHorizontal), links/rechts bleibt nur im Schlussakt
+// Ortsveränderung übrig.
+const LEGENDE_VALENZ_LINKS_RECHTS = 'Volltonfarbe: links negativ, rechts positiv bewertet';
+const LEGENDE_VALENZ_OBEN_UNTEN = 'Volltonfarbe: oben positiv, unten negativ bewertet';
 let legendeFwertHinweis; // Positions-Hinweis der F-Wert-Punkte — ebenfalls ansichtsabhängig
-const LEGENDE_FWERT_KARTE = 'Position ausserhalb des Kreises: negativ oben links, positiv oben rechts, neutral/unbewertet unten.';
-const LEGENDE_FWERT_GRAPH = 'Position ausserhalb des Kreises: positiv oben, negativ unten, neutral/unbewertet rechts.';
+const LEGENDE_FWERT_LINKS_RECHTS = 'Position ausserhalb des Kreises: negativ oben links, positiv oben rechts, neutral/unbewertet unten.';
+const LEGENDE_FWERT_OBEN_UNTEN = 'Position ausserhalb des Kreises: positiv oben, negativ unten, neutral/unbewertet rechts.';
 let legendeTab, legendeInhalt; // Tab (vertikal beschriftet, immer sichtbar solang legendeBox.sichtbar) + ausfahrender Inhalt (Farberklärung der Kreisgrafik)
 let prologBox, prologTab; // Zweites Register direkt unter Legende (siehe #registerTabs in index.html) — gleiches Verhalten wie Legende, eigener (statischer, hart codierter) Inhalt Projekt-Hintergrund
 let registerTabs; // gemeinsamer Fixed-Container beider Register (siehe #registerTabs in index.html) — trägt die legende-offen/prolog-offen-Klasse, an der sich der jeweils GESCHLOSSENE Tab orientiert, um mit ausrücken zu können (siehe CSS)
@@ -672,12 +676,14 @@ function draw() {
   // per CSS aus (siehe .scrolly-stage.grafik-ansicht in style.css).
   stage.classList.toggle('grafik-ansicht', inKapitelGrafikAnsicht);
 
-  // Legende an die Ansicht anpassen: in der Graph-Ansicht sind die
-  // Valenz-Halbkreise oben/unten geteilt, auf der Karte links/rechts.
+  // Legende an die Ansicht anpassen: in JEDER Kapitel-Ansicht — Plan wie
+  // Graph — sind die Valenz-Halbkreise oben/unten geteilt. Links/rechts gilt
+  // nur noch ausserhalb davon, im Schlussakt Ortsveränderung (siehe
+  // zeichneOrtsveraenderung), wo die Legende ebenfalls noch sichtbar ist.
   if (legendeValenzText) {
-    legendeValenzText.textContent = inKapitelGrafikAnsicht ? LEGENDE_VALENZ_GRAPH : LEGENDE_VALENZ_KARTE;
-    legendeValenzKreis.classList.toggle('valenz-oben-unten', inKapitelGrafikAnsicht);
-    legendeFwertHinweis.textContent = inKapitelGrafikAnsicht ? LEGENDE_FWERT_GRAPH : LEGENDE_FWERT_KARTE;
+    legendeValenzText.textContent = inKapitelAnsicht ? LEGENDE_VALENZ_OBEN_UNTEN : LEGENDE_VALENZ_LINKS_RECHTS;
+    legendeValenzKreis.classList.toggle('valenz-oben-unten', inKapitelAnsicht);
+    legendeFwertHinweis.textContent = inKapitelAnsicht ? LEGENDE_FWERT_OBEN_UNTEN : LEGENDE_FWERT_LINKS_RECHTS;
   }
 
   // DOM-Marker — Ortspunkte/Labels auf der Karte (Kapitel-1-Ansicht). Derzeit
