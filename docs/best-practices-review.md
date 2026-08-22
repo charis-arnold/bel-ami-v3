@@ -1,0 +1,387 @@
+# Best-Practice-Review
+
+Prüfung des Codes gegen fünf Kriterien: globale Variablen, Single
+Responsibility, toter Code, DRY und der `draw()`-Loop. Geprüft wurde der Stand
+vom 22. August 2026 über alle zwölf Module (4532 Zeilen) plus `index.html`.
+
+**Stand der Umsetzung.** Der Befund wurde am 22. August 2026 erhoben. Seither
+umgesetzt: die Konsolidierung der Radius-Formel samt der beiden daran
+hängenden Befunde (Rückgabewert von `zeichneKreiseFuerRun()`, Namensverdeckung
+in `zeichneFwertPunkte()`). Die betroffenen Zeilen unten sind als **erledigt**
+markiert und tragen die Fundstelle im heutigen Code. Alles Übrige steht
+unverändert offen.
+
+**Randbedingung, die jede Bewertung hier färbt:** Das Projekt nutzt keine
+ES-Module (siehe [architektur.md](architektur.md)). Jeder Name landet im
+globalen Scope. „Modulintern" heisst deshalb nirgends *technisch* gekapselt,
+sondern nur: faktisch greift kein anderes Modul darauf zu.
+
+---
+
+## Priorisierte Gesamtliste
+
+| Nutzen | Befund | Kriterium |
+|---|---|---|
+| **hoch** | ~~Dieselbe Radius-Formel liegt fünfmal im Code, an vier Stellen als Kopie~~ — **erledigt**, jetzt `groessterKreisRadius()` in `datenbereinigung.js:340` | DRY |
+| **hoch** | Pro Frame und Ortskreis wird `daten.annotationen` zweimal vollständig durchlaufen — mit identischen Argumenten | DRY |
+| **hoch** | ~~`zeichneKreiseFuerRun()` liefert den Radius nur als Nebenprodukt des Zeichnens~~ — **erledigt**, die Funktion gibt nichts mehr zurück | Single Responsibility |
+| **hoch** | ~~Parameter `kreisRadius` verdeckt die gleichnamige globale Funktion~~ — **erledigt**, heisst jetzt `radius` | Globale Variablen |
+| **mittel** | `draw()` schreibt in Variablen von drei fremden Modulen | Globale Variablen |
+| **mittel** | `zeichneKreisLabels()` setzt sechs p5-Zeichenzustände und stellt keinen zurück | Single Responsibility |
+| **mittel** | `zeichneUebersichtsrouten()` zeichnet und setzt dabei `kapitelHover` | Single Responsibility |
+| **mittel** | 110 der 254 globalen Namen werden nur in ihrem eigenen Modul gebraucht | Globale Variablen |
+| **mittel** | Kapitel-1-Datenregeln stehen im Zeichenmodul `kreisgrafik.js` | Single Responsibility |
+| **mittel** | `zeichneHalbkreis`/`zeichneVollkreis` setzen `globalCompositeOperation` hart zurück statt wiederherzustellen | Single Responsibility |
+| **niedrig** | `draw()` läuft mit 557 Zeilen als eine Funktion | Single Responsibility |
+| **niedrig** | `noLoop()`/`redraw()` wäre möglich, aber der Umbau ist gross und der Gewinn klein | draw()-Loop |
+| **niedrig** | Farbwerte aus `KREIS_KATEGORIEN` werden an drei Stellen in drei Formate übersetzt | DRY |
+| **niedrig** | Das Font-Literal `'Source Sans 3', sans-serif` steht zwölfmal im Code | DRY |
+| **niedrig** | `wohnungFilterFuerOrt()` wird zweimal mit demselben Argument aufgerufen | DRY |
+| — | **Toter Code: nichts gefunden.** Alle 82 Funktionen sind erreichbar | Toter Code |
+
+---
+
+## Globale Variablen
+
+Alle zwölf Module deklarieren zusammen **254 Namen im globalen Scope**: 82
+Funktionen und 172 Variablen/Konstanten. Davon werden **115 nur im eigenen
+Modul gebraucht**. Fünf davon sind p5-Lebenszyklus-Hooks (`preload`, `setup`,
+`draw`, `mousePressed`, `windowResized`), die global bleiben *müssen*, weil p5
+sie am `window` sucht — bleiben **110 echte Kandidaten** für Modul-Scope.
+
+### Wie viel jedes Modul nach aussen gibt
+
+| Modul | Namen gesamt | nur modulintern | extern genutzt | Anteil intern |
+|---|---|---|---|---|
+| `ortsveraenderung.js` | 44 | 36 | 8 | 81 % |
+| `sonifikation.js` | 20 | 15 | 5 | 75 % |
+| `annotationsbox.js` | 7 | 5 | 2 | 71 % |
+| `kreisgrafik.js` | 13 | 8 | 5 | 61 % |
+| `spine-horizontal.js` | 22 | 12 | 10 | 54 % |
+| `kartendekor.js` | 4 | 2 | 2 | 50 % |
+| `uebersichtsrouten.js` | 15 | 6 | 9 | 40 % |
+| `sketch.js` | 66 | 25 | 41 | 37 % |
+| `datenbereinigung.js` | 35 | 6 | 29 | 17 % |
+| `geo-projektion.js` | 9 | 0 | 9 | 0 % |
+| `fotomarker.js` | 13 | 0 | 13 | 0 % |
+| `dom-aufbau.js` | 6 | 0 | 6 | 0 % |
+
+`geo-projektion.js`, `fotomarker.js` und `dom-aufbau.js` geben alles nach
+aussen — bei ihnen ist nichts zu kapseln. Sie sind reine Werkzeugkästen.
+
+### Kandidaten für Modul-Scope
+
+| Fundstelle | Befund | Priorität | Begründung |
+|---|---|---|---|
+| `ortsveraenderung.js:42-302` | 37 von 45 Namen sind modulintern: `VERGLEICHS_KNOTEN`, 24 `OV_*`-Konstanten, `ovProKapitel`, `ovRohradien`, `ovErstesKapitel`, `ovLayout` und sieben `ov*`-Funktionen | mittel | Grösster Einzelposten. Nach aussen braucht das Modul nur acht Namen: `ovPhase`, `ovZoomBbox`, `zeichneOrtsveraenderung` und die fünf Phasenfenster `OV_KARTE_AUS`, `OV_ZOOM`, `SK_EINBLENDEN`, `SK_RAUSZOOM`, `SK_TEXT`. Eine IIFE mit acht Rückgaben würde 36 Namen aus dem globalen Scope nehmen. Auch `ovBerechneLayout` bleibt modulintern, obwohl [architektur.md](architektur.md) es als Hauptfunktion führt |
+| `sonifikation.js:44-184` | 15 von 20 Namen modulintern, darunter der gesamte Zustand (`sonifikationDaten`, `sonifikationBereit`, `sonifikationSpielplan`, `sonifikationTimeoutId`) | mittel | Das Modul ist bereits sauber geschnitten — es lädt zuletzt und niemand greift auf seine Interna zu. Kapselung ist hier reine Formsache und entsprechend risikoarm |
+| `spine-horizontal.js:150-178` | Die neun `SPINE_*`-Layoutkonstanten, `spineLayoutCache`, `spineLayout()` und `grafikStartZeit` sind modulintern | mittel | `SPINE_RAND_LINKS` und Konsorten sind Layout-Details, die im globalen Namensraum nichts verloren haben |
+| `kreisgrafik.js:56-333` | `HATCH_SPACING`, `drawHatchedCircle`, `zeichneKreisLabels`, `zeichneHalbkreis`, `zeichneVollkreis` sowie `FWERT_PUNKT_FARBE_RGB` und die beiden `FWERT_PUNKT_*_ABSTAND`-Konstanten sind modulintern | mittel | Vier davon sind Zeichen-Primitive, die nur `zeichneKreiseFuerRun` und `zeichneKreiseOrtRuns` aufrufen. `FWERT_PUNKT_DURCHMESSER` muss dagegen global bleiben — `dom-aufbau.js:212` baut die Legende daraus |
+| `sketch.js:6-158` | 25 Namen modulintern, u. a. `bgImage`, `bgImage2`, `ch1Image`, `kapitel03Data`, `weitereKapitelDaten`, `letzterZoomKapitel` und sechs DOM-Handles (`heroText`, `begleitTexte`, `kapitelEinstiegsTexte`, `annotationBoxEl`, `schlusstextEl`, `naechstesKapitelEl`) | niedrig | Hier ist der Nutzen am kleinsten: `sketch.js` muss die fünf p5-Hooks global lassen, eine IIFE ginge also nur um sie herum. Der Aufwand steht in schlechtem Verhältnis zum Gewinn |
+| `uebersichtsrouten.js:87-513` | `KAPITEL_SCHEIBE_GRUNDANTEIL`, `KAPITEL_NACHGLUEHEN`, `scheibenCache`, `kapitelHitze`, `setzeKapitelAnsichtZurueck`, `oeffneKapitelZoom` | niedrig | Kleiner Posten, und `oeffneKapitelZoom` ist trotz nur interner Nutzung ein Name, den man beim Lesen erwartet |
+| `datenbereinigung.js:92-352` | `WOHNUNG_SPLIT_ANNOTATION_ID`, `WOHNUNG_VOR_SPLIT_FILTER`, `RUE_NOTRE_DAME_FILTER`, `GEDANKEN_FILTER`, `GEDANKEN_ZIEL_ORT`, `valenzBucket` | niedrig | Sechs von 34 — das Modul ist als gemeinsame Grundlage gedacht und gibt zu Recht fast alles heraus |
+| `annotationsbox.js:54-58` | Die vier Mass-Konstanten und `annotationBoxPositionCache` | niedrig | Nur fünf Namen; das Modul ist ohnehin das kleinste |
+| `kartendekor.js:25-36` | `haversineMeter`, `MASSSTAB_SCHRITTE` | niedrig | Zwei Namen. `geo-projektion.js:34` verweist ausdrücklich auf `haversineMeter` — beim Kapseln müsste dieser Kommentar mit |
+
+### Zwei Befunde, die nicht nur Kosmetik sind
+
+| Fundstelle | Befund | Priorität | Begründung |
+|---|---|---|---|
+| ~~`kreisgrafik.js:345`~~ → `kreisgrafik.js:353` | **Erledigt.** Der dritte Parameter von `zeichneFwertPunkte()` hiess `kreisRadius` und verdeckte die gleichnamige globale Funktion aus `datenbereinigung.js:320`, die vier Module benutzen. Er heisst jetzt `radius` | **hoch** | Im Rumpf war `kreisRadius` die Zahl, nicht die Funktion. Unschädlich nur, solange dort niemand die Funktion braucht — mit `groessterKreisRadius` daneben wäre die Stelle zusätzlich verwirrend geworden |
+| `sketch.js:281, 386, 505, 812-814` | `draw()` schreibt in Variablen dreier fremder Module: `spineEintraegep5` (spine-horizontal), `kapitelZoomAmount` und `kapitelHover` (uebersichtsrouten), `letzteActiveBbox` und `letzterFotoOffsetX/Y` (fotomarker) | mittel | Der Zustand dieser Module wird nicht von ihnen selbst gepflegt, sondern von aussen fortgeschrieben. Wer `kapitelZoomAmount` verstehen will, muss ihn in `sketch.js` suchen. Das ist die eigentliche Hürde vor jeder Kapselung — sie muss vor den IIFEs weg, nicht danach |
+
+### Wer in wessen Zustand schreibt
+
+Das Abhängigkeitsdiagramm in [architektur.md](architektur.md#abhängigkeitsdiagramm)
+zeigt *Lesezugriffe*. Für die Frage nach kapselbarem Zustand zählt die
+Gegenrichtung — sie sieht anders aus:
+
+```mermaid
+graph LR
+    SK["sketch.js<br/>preload / setup / draw"]
+    DOM["dom-aufbau.js"]
+    UR["uebersichtsrouten.js"]
+    SH["spine-horizontal.js"]
+    FM["fotomarker.js"]
+
+    SK -->|"spineEintraegep5"| SH
+    SK -->|"kapitelZoomAmount<br/>kapitelHover"| UR
+    SK -->|"letzteActiveBbox<br/>letzterFotoOffsetX/Y<br/>fotoPopup*"| FM
+    UR -->|"kapitelAnsichtsModus<br/>kapitelEinstiegsStartMillis"| SK
+    UR -->|"grafikSpielt<br/>grafikFortschritt<br/>grafikPlayAusblendStart"| SH
+    SH -->|"kapitelAnsichtsModus"| SK
+    DOM -->|"9 DOM-Handles"| SK
+
+    KG["kreisgrafik.js"]
+    KD["kartendekor.js"]
+    GEO["geo-projektion.js"]
+    AB["annotationsbox.js"]
+
+    classDef schreibfrei stroke-dasharray: 5 5,stroke-width:2px
+    class KG,KD,GEO,AB schreibfrei
+```
+
+Gestrichelt: **`kreisgrafik.js`, `kartendekor.js`, `geo-projektion.js` und
+`annotationsbox.js` schreiben in keinen fremden Zustand** — und, ausser dem
+Cache in `annotationsbox.js:122`, auch in keinen eigenen. Sie sind reine
+Funktionen über ihren Argumenten und liessen sich als erste kapseln.
+
+`spine-horizontal.js` und `uebersichtsrouten.js` schreiben gegenseitig und in
+`sketch.js` hinein — dieses Dreieck müsste vor einer Kapselung aufgelöst werden.
+
+---
+
+## Single Responsibility
+
+Geprüft wurde `kreisgrafik.js` im Detail, ergänzt um die Gegenprobe über alle
+Module: Welche Funktion verändert modulweiten Zustand, und zeichnet sie
+gleichzeitig?
+
+### Vorab: zwei Annahmen aus der Fragestellung stimmen nicht
+
+**Einen Toggle für neutrale F-Werte gibt es im Code nicht.** Neutrale und
+unbewertete F-Wert-Annotationen werden nicht geschaltet, sondern fest in das
+dritte 120°-Drittel einsortiert (`kreisgrafik.js:361-372`). Die einzigen
+Umschalter im Projekt sind `setzeKapitelAnsichtModus()` (Karte/Graph) und
+`toggleGrafikPlay()`, beide in `spine-horizontal.js` — und beide sind
+Event-Handler ohne Zeichenaufruf, also gerade *keine* Vermischung.
+
+**`kreisgrafik.js` verändert überhaupt keinen Modul-Zustand.** Die Datei hat
+kein einziges `let` auf oberster Ebene; alle fünf Top-Level-Namen sind `const`
+(`kreisgrafik.js:56`, `:330-333`), vier davon Literale, einer ein
+`hexZuRgb()`-Aufruf. Die gesuchte Vermischung
+„zeichnet UND verändert State" gibt es dort in dieser Form nicht.
+
+Was es stattdessen gibt, sind zwei andere Vermischungen — geteilter
+Canvas-Zustand und Zeichnen-plus-Messen:
+
+| Fundstelle | Befund | Priorität | Begründung |
+|---|---|---|---|
+| ~~`kreisgrafik.js:271-326`~~ → `kreisgrafik.js:279` | **Erledigt.** `zeichneKreiseFuerRun()` zeichnete und gab zugleich `groessterHatchRadius` zurück — ein Nebenprodukt der Zeichenschleife. Die Funktion gibt jetzt nichts mehr zurück und holt den Wert vorab über `groessterKreisRadius()` (`:293`); die drei Aufrufer tun dasselbe | **hoch** | Das war die Ursache der fünf Formel-Kopien: Wer die Grösse VOR dem Zeichnen brauchte, musste sie nachbauen. In `spine-horizontal.js` wurde die Zeichenschleife dabei einfacher — der Wert lag dort als `k.radius` längst bereit |
+| `kreisgrafik.js:166-171` | `zeichneKreisLabels()` setzt `noStroke()`, `fill()`, `textFont()`, `textSize()`, `textStyle(BOLD)`, `textAlign()` — und stellt keinen davon zurück. Kein `push()`/`pop()` | mittel | Der Zustand leckt in alles, was danach zeichnet. Die anderen Module räumen auf: `ortsveraenderung.js:654` tut es mit dem ausdrücklichen Kommentar „zurücksetzen — andere Zeichenfunktionen erwarten das", ebenso `uebersichtsrouten.js:459`, `fotomarker.js:101`, `spine-horizontal.js:440`. `kreisgrafik.js` ist die Ausnahme von einer Konvention, die sonst gilt |
+| `kreisgrafik.js:200-212` | Der Kommentar erklärt, dass p5s Füllfarben-Zwischenspeicher von den direkten `fillStyle`-Zuweisungen in `zeichneKreiseFuerRun`/`zeichneFwertPunkte` umgangen wird — und umgeht ihn deshalb hier ebenfalls | mittel | Die Umgehung sitzt beim Opfer, nicht bei der Ursache. `zeichneKreiseFuerRun:319` und `zeichneFwertPunkte:402` setzen `drawingContext.fillStyle` ohne `save()`/`restore()`; ein Paar davon an der Quelle würde den Workaround an allen Folgestellen erübrigen |
+| `kreisgrafik.js:229-240`, `245-254` | `zeichneHalbkreis()` und `zeichneVollkreis()` setzen `ctx.globalCompositeOperation = 'multiply'` und setzen es danach hart auf `'source-over'` zurück, statt den vorherigen Wert wiederherzustellen | mittel | Sie stellen nicht wieder her, sondern *nehmen an*, dass vorher `'source-over'` galt. `drawHatchedCircle:65/78` in derselben Datei macht es mit `save()`/`restore()` richtig — die Datei ist in sich uneinheitlich |
+| `kreisgrafik.js:98-111` | `zeichneKreiseOrtRuns()` wendet Kapitel-1-Datenregeln an: `WOHNUNG_SAMMELPUNKT_ABSORBIERTE_ORTRUNS`, `GEDANKEN_ORTRUN_UNTERDRUECKT` und die `RUE_NOTRE_DAME_DE_LORETTE_ORT`-Sonderbehandlung, abgesichert über `daten === stationenData` | mittel | Das sind Regeln über die Daten, keine Zeichenentscheidungen. Sie gehören zu ihren Geschwistern in `datenbereinigung.js:90-157`. Der eigene Kommentar (`:100-106`) erklärt, wie fragil die Absicherung ist: die Sets sind reine Namenslisten ohne Kapitelbezug, und ohne den `daten === stationenData`-Test würde etwa Kapitel 3 seinen „Parc Monceau" verlieren |
+| `kreisgrafik.js:93-151` | `zeichneKreiseOrtRuns()` filtert, projiziert, zählt, zeichnet und sammelt zugleich Label-Kandidaten für die anschliessende Kollisionsauflösung | mittel | Fünf Aufgaben in 58 Zeilen. Der Schnitt zwischen Sammeln und Zeichnen ist bereits angelegt (`labelKandidaten` → `zeichneKreisLabels`) — er müsste nur konsequent bis zur Auswahl der Orte durchgezogen werden |
+
+### Gegenprobe über alle Module
+
+Über alle zwölf Module gibt es **genau eine** Funktion, die zeichnet und dabei
+modulweiten Zustand setzt:
+
+| Fundstelle | Befund | Priorität | Begründung |
+|---|---|---|---|
+| `uebersichtsrouten.js:291, 390, 452` | `zeichneUebersichtsrouten()` setzt beim Zeichnen `kapitelHover` — erst auf `null` (`:291`), dann in zwei Trefferprüfungen auf eine Kapitelnummer | mittel | Das ist die Vermischung, nach der die Fragestellung suchte, nur in einem anderen Modul. Die Folge steht in `sketch.js:505`: dort muss `kapitelHover = null` von Hand nachgezogen werden, wenn die Routen gerade *nicht* gezeichnet werden — der Zustand hängt daran, ob eine Zeichenfunktion lief. Trennen liesse sich das über ein `hoverZielUnterMaus(...)` vor dem Zeichnen |
+| `sketch.js:277-833` | `draw()` ist 557 Zeilen lang und deckt Scroll-Akte, Kapitel-Zoom, Annotationsbox, Legende, Kapitelregister, Foto-Marker und Schlussakt ab | niedrig | Ein echter Befund, aber kein lohnender: Die Abschnitte teilen sich durchgehend Zwischenwerte (`activeBbox`, `zoomAmount`, `scrollFortschritt`), ein Aufteilen erzeugt vor allem lange Parameterlisten. Der Nutzen wäre Lesbarkeit, das Risiko real |
+
+`ovBaueDaten()` und `ovBerechneLayout()` (`ortsveraenderung.js:244`, `:302`)
+schreiben zwar Modulzustand, zeichnen aber nicht — sie sind memoisierte
+Vorberechnungen und damit sauber getrennt. Dasselbe gilt für
+`kapitelScheiben()` (`uebersichtsrouten.js:90`), `spineLayout()`
+(`spine-horizontal.js:178`) und `annotationBoxPosition()`
+(`annotationsbox.js:60`) — alle drei schreiben ausschliesslich in ihren
+eigenen Cache.
+
+---
+
+## Toter Code
+
+**Gefunden: nichts.** Alle 82 Funktionen des Projekts sind erreichbar.
+
+| Fundstelle | Befund | Priorität | Begründung |
+|---|---|---|---|
+| alle 12 Module | 82 von 82 Funktionen erreichbar, keine ungenutzte Funktion | — | Über einen Aufruf-Graphen aller Module ermittelt, nicht dateiweise geraten. Ausgangspunkte: die fünf p5-Hooks plus die beiden Ladezeit-Aufrufe `hexZuRgb` und `wohnungSplitAi` |
+| `sketch.js:167, 206, 264, 277, 834` | `preload`, `setup`, `windowResized`, `draw`, `mousePressed` werden nirgends im Projekt aufgerufen | — | **Kein toter Code.** p5 sucht diese Namen am `window` und ruft sie selbst. Eine reine Textsuche meldet sie fälschlich als ungenutzt |
+| `sketch.js:15` | `naechstesKapitel()` — Textsuche findet einen Treffer in `index.html:43` | — | **Falscher Treffer:** Das ist das `id`-Attribut `naechstesKapitel`, kein Aufruf. Die Funktion ist trotzdem lebendig, aufgerufen aus `sketch.js:220` (Klick-Handler) und `sketch.js:593` (`draw`) |
+| `sketch.js:54` | `WEITERE_KAPITEL_NUMMERN` erscheint bei naiver Suche ungenutzt | — | **Falscher Treffer:** Alle drei Nutzungen stehen hinter einem Spread — `...WEITERE_KAPITEL_NUMMERN` in `sketch.js:175`, `sketch.js:196` und `dom-aufbau.js:107`. Ein Muster, das Punkt-Zugriffe ausschliesst, verwirft sie mit |
+
+Die letzten drei Zeilen stehen hier, weil sie bei jeder Wiederholung dieser
+Prüfung erneut auffallen werden: Eine reine Textsuche meldet fünf Funktionen
+und eine Konstante als ungenutzt — keine davon ist es.
+
+Nicht geprüft wurde toter Code *innerhalb* lebender Funktionen — unerreichbare
+Zweige, Bedingungen, die nie greifen. Das braucht Laufzeitmessung, keine
+statische Suche.
+
+---
+
+## DRY
+
+### Die Radius-Formel lag fünfmal im Code — erledigt
+
+Fünf Stellen berechneten „grösster Kreisradius über alle Kategorien" aus
+denselben `bandCounts`, nach derselben Formel
+`max(kreisRadius(neg + pos + neutral + unrated))` über `KREIS_KATEGORIEN`.
+Sie sind zu **`groessterKreisRadius(bandCounts, maxRadius = 100, radiusSkala = 1)`**
+in `datenbereinigung.js:340` zusammengelegt — dort, weil die Funktion
+`KREIS_KATEGORIEN` und `kreisRadius` direkt nebenan vorfindet und weil alle
+vier Aufrufer ohnehin an `datenbereinigung.js` hängen: der Umzug hat **keine
+einzige neue Modul-Abhängigkeit** erzeugt.
+
+| vorher | jetzt | Argumente |
+|---|---|---|
+| `kreisgrafik.js:284-288` (in der Zeichenschleife) | `kreisgrafik.js:293` | `maxRadius`, `radiusSkala` durchgereicht |
+| `spine-horizontal.js:359-366` | `spine-horizontal.js:355` | Vorgaben |
+| `spine-horizontal.js:191-196` | `spine-horizontal.js:191` | Vorgaben |
+| `annotationsbox.js:83-87` | `annotationsbox.js:86` | Vorgaben |
+| `ortsveraenderung.js:235-243` (`ovRadiusAus()`) | `ortsveraenderung.js:258`, `:265`, `:526` | `Infinity`, teils mit `kreisSkala` |
+
+**Nebeneffekt:** `spine-horizontal.js`, `annotationsbox.js` und
+`ortsveraenderung.js` nutzten `KREIS_KATEGORIEN` und `kreisRadius`
+ausschliesslich an diesen Stellen. Alle drei Module haben dadurch zwei externe
+Abhängigkeiten verloren und eine gewonnen; ihre Header-Blöcke sind
+entsprechend nachgeführt.
+
+**Ein Stolperstein bleibt und ist an beiden Stellen vermerkt:**
+`groessterKreisRadius(…, maxRadius, radiusSkala)` und
+`zeichneKreiseFuerRun(…, radiusSkala, maxRadius)` nehmen die beiden Parameter
+in umgekehrter Reihenfolge. Der Vorrang lag auf der Ergonomie — `maxRadius`
+wird überschrieben (`Infinity` im Schlussakt), `radiusSkala` fast nie.
+
+**Bilanz:** In den fünf berührten Dateien sind **15 Code-Zeilen netto
+verschwunden** (1020 → 1005, kommentarbereinigt gezählt). Die Dateien sind
+trotzdem um 18 Zeilen *länger* geworden — die neue Funktion trägt 33 Zeilen
+Kommentar, der erklärt, warum sie in `datenbereinigung.js` steht, was
+`maxRadius`/`radiusSkala` bedeuten und dass ihre Parameterreihenfolge zu
+`zeichneKreiseFuerRun()` umgekehrt ist. Der Gewinn liegt nicht in der
+Zeilenzahl, sondern darin, dass die Formel nur noch einmal existiert.
+
+**Nachgewiesen gleichwertig:** alle fünf alten Implementierungen wurden gegen
+die neue Funktion laufen gelassen, über 584 echte `bandCounts` aus allen 18
+Kapiteln (Zwischen- und Endstände) plus Randfälle — leer, Teilkategorien,
+Werte über dem 100px-Deckel — in vier Skalierungsstufen. 7592 Vergleiche,
+0 Abweichungen.
+
+### Pro Frame wird jeder Ortskreis zweimal durchgezählt
+
+`zaehleAnnotationenLiveNachOrtBasis()` ruft intern
+`sammleAnnotationenNachOrtBasis()` auf. Die Aufrufer brauchen aber beides —
+die Zählung *und* die Rohliste für die F-Wert-Punkte — und rufen `sammle…`
+deshalb gleich noch einmal auf, mit identischen Argumenten:
+
+```mermaid
+graph TD
+    ZK["zeichneKreiseOrtRuns()<br/>kreisgrafik.js:118 und :126"]
+    ZS["zeichneSpineHorizontal()<br/>spine-horizontal.js:350 und :351"]
+
+    ZK -->|"1 · zaehlen"| ZAEHL
+    ZS -->|"1 · zaehlen"| ZAEHL
+    ZAEHL["zaehleAnnotationenLiveNachOrtBasis()<br/>datenbereinigung.js:377"]
+    ZAEHL --> SCAN1["daten.annotationen.filter(…)<br/>voller Linearscan, neues Array"]
+
+    ZK -->|"2 · dieselben Argumente"| SAMM
+    ZS -->|"2 · dieselben Argumente"| SAMM
+    SAMM["sammleAnnotationenNachOrtBasis()<br/>datenbereinigung.js:366"]
+    SAMM --> SCAN2["daten.annotationen.filter(…)<br/>derselbe Scan noch einmal"]
+
+    ZAEHL -.->|"ruft intern auf"| SAMM
+```
+
+| Fundstelle | Befund | Priorität | Begründung |
+|---|---|---|---|
+| `kreisgrafik.js:118` + `:126` | Beide Aufrufe mit identischem `filter`, `annIndex` und `daten` — der zweite wiederholt die Arbeit des ersten vollständig | **hoch** | Für jeden Ortskreis, in jedem Frame. Bei Kapitel 5 (321 Annotationen, 16 ortRuns) sind das rund 10 000 Elementbesuche und 32 neue Arrays pro Frame, bei 60 fps also etwa 600 000 Besuche pro Sekunde — für ein Ergebnis, das sich nur beim Scrollen ändert. `sammleAnnotationenNachOrtBasis` einmal aufrufen und die Zählung daraus ableiten halbiert es sofort; ein Cache über `annIndex` beseitigt es fast ganz |
+| `spine-horizontal.js:350` + `:351` | Dieselbe Doppelung in der Graph-Ansicht | **hoch** | Gleiche Begründung. Zusätzlich wird hier `wohnungFilterFuerOrt(e.ortBasis)` in beiden Zeilen separat aufgerufen |
+| `spine-horizontal.js:350-351` | `wohnungFilterFuerOrt(e.ortBasis)` zweimal mit demselben Argument | niedrig | Einzeiler: in eine Variable ziehen. Fällt beim Beheben des Punkts darüber ohnehin mit an |
+
+`ortsveraenderung.js:255-256` und `annotationsbox.js:82` enthalten dieselbe
+Doppelung, laufen aber nur einmal und landen im Cache (`ovProKapitel` bzw.
+`annotationBoxPositionCache`) — dort ist sie folgenlos.
+
+### Kleinere Wiederholungen
+
+| Fundstelle | Befund | Priorität | Begründung |
+|---|---|---|---|
+| `kreisgrafik.js:290`, `:233`/`:249`, `dom-aufbau.js:143`/`:165`/`:186` | Dasselbe `k.farbe`-Zahlentripel aus `KREIS_KATEGORIEN` wird in drei Formate übersetzt: `#rrggbb` per `toString(16)`, `rgba(…)` per Template-String, `rgb(…)` per `join(', ')` | niedrig | Drei Schreibweisen für eine Farbe. Zwei Helfer neben `hexZuRgb()` in `datenbereinigung.js` würden es vereinheitlichen — aber es funktioniert, und keiner der drei Orte ist fehleranfällig |
+| 6 Module, 12 Vorkommen | Das Literal `"'Source Sans 3', sans-serif"` steht zwölfmal im Code (`ortsveraenderung.js` allein fünfmal) | niedrig | Eine Konstante `SANS_FONT` neben den übrigen Stilkonstanten. Rein kosmetisch, aber billig — und die Schriftwahl liegt ohnehin schon doppelt vor, hier und als `var(--sans)` in `style.css` |
+
+### Ausdrücklich kein Befund: Winkelberechnung
+
+Die Winkel-Logik ist **nicht** dupliziert, sondern sauber zentralisiert. Die
+Aufteilung Halbkreis/F-Wert-Punkte liegt vollständig in `kreisgrafik.js`
+(`:271` Parameter `winkel`, `:345` Parameter `anordnung`, Gruppenmitten
+`:361-363`). Alle Aufrufer übergeben nur noch Werte: `PI` und `'obenUnten'`
+aus Karte und Graph, der Default `-HALF_PI` und `'seitlich'` aus dem
+Schlussakt. Eigene Trigonometrie ausserhalb von `kreisgrafik.js` gibt es nur
+in `kartendekor.js:98-101` (Windrosen-Zacken) und
+`uebersichtsrouten.js:370` (Streuung deckungsgleicher Startpunkte) — beides
+inhaltlich unabhängig.
+
+---
+
+## draw()-Loop
+
+`noLoop()`, `redraw()` und `frameRate()` kommen im gesamten Projekt **nicht
+vor**. p5 zeichnet durchgehend mit der Standard-Bildrate, auch wenn sich nichts
+bewegt.
+
+### Was den Loop tatsächlich braucht
+
+| Treiber | Fundstelle | braucht durchgehende Frames? |
+|---|---|---|
+| Weiche Zoom-Nachführung | `sketch.js:386` — `kapitelZoomAmount = lerp(…, 0.08)` je Frame | ja, solange sie läuft — und sie „läuft" formal ewig weiter |
+| Zeitbasierte Blenden | `sketch.js:751`, `:788`, `:796` über `millis()` | ja, für die Dauer der Blende |
+| Graph-Animation „Play" | `spine-horizontal.js:135` — `grafikFortschritt` aus `millis()` | ja, während des Abspielens |
+| Hover über Kapitelpunkte | `uebersichtsrouten.js:389`, `:451` über `mouseX/mouseY`, `cursor()` `:460` | nein — `mousemove` würde reichen |
+| Scroll-Fortschritt | `sketch.js:268` `getScrollProgress()` liest `window.scrollY`; `kapitel1ZoomAmount` (`:335-337`) leitet sich direkt daraus ab, ohne Glättung | nein — `scroll` würde reichen |
+
+| Fundstelle | Befund | Priorität | Begründung |
+|---|---|---|---|
+| `sketch.js:277` | Ein Umbau auf `noLoop()`/`redraw()` ist möglich, lohnt aber nicht als eigenständige Aufgabe | niedrig | Er bräuchte vier Auslöser (`scroll`, `mousemove`, `click`, `resize`) **und** ein „läuft gerade etwas?"-Prädikat. Genau das ist der teure Teil: `kapitelZoomAmount` nähert sich seinem Ziel per `lerp` nur asymptotisch — `uebersichtsrouten.js:329-334` hält das ausdrücklich fest („läuft nur asymptotisch gegen 1") und beschreibt gleich den Fehler, den ein zu naiver Nulltest an dieser Stelle schon einmal verursacht hat. Ein „fertig" gibt es nicht, man müsste eine Epsilon-Schwelle einführen. Falsch gewählt, bleibt die Animation sichtbar hängen — ein Fehlerbild, das nur auf langsamen Geräten auftritt und schwer zu reproduzieren ist |
+| `sketch.js:277` | Die durchgehende Bildrate ist die *Sichtbarkeit* des Problems, nicht seine Ursache | mittel | Was der Loop 60-mal pro Sekunde wiederholt, ist die Doppelzählung aus dem [DRY-Abschnitt](#dry). Ein Cache über `annIndex` senkt die Kosten pro Frame um etwa den Faktor zwei bis fünf, mit lokal begrenztem Risiko und ohne den Lebenszyklus anzufassen. Danach ist die Frage, ob der Loop überhaupt noch stört, neu zu stellen — vermutlich lautet die Antwort nein |
+
+**Empfehlung:** Loop lassen, Rechenaufwand pro Frame senken. Die durchgehende
+Bildrate ist für ein scroll- und animationsgetriebenes Stück wie dieses
+vertretbar; sie ist nur deshalb spürbar, weil in jedem Frame Ergebnisse neu
+berechnet werden, die sich zwischen zwei Scroll-Schritten gar nicht ändern.
+
+---
+
+## Wie diese Übersicht entstanden ist
+
+Alle Zahlen sind aus dem Code erhoben, keine aus den Kommentaren übernommen.
+Geprüft wurden die zwölf Module aus `index.html` plus `index.html` selbst;
+`style.css` und `docs/` nur, wo sie Verweise auf Code enthalten.
+
+- **Deklarationen (254 Namen):** Quelltext zuerst kommentar- und
+  stringbereinigt, dann Top-Level-`function`/`let`/`const`/`var` je Datei
+  gezählt — Klammertiefe mitgeführt, damit Deklarationen *innerhalb* von
+  Funktionen nicht mitzählen. Mehrfachdeklarationen auf einer Zeile
+  (`let a, b, c;`) aufgelöst.
+- **Modulintern vs. extern:** für jeden der 254 Namen über alle Dateien
+  gesucht, mit Wortgrenzen und ohne Punkt-Zugriffe (`obj.name` zählt nicht).
+  Zeilen wurden gezählt, nicht nur Dateien, damit „einmal erwähnt" von
+  „durchgehend benutzt" unterscheidbar bleibt.
+- **Toter Code — Aufruf-Suche über das gesamte Projekt, nicht dateiweise:**
+  Aus allen zwölf Modulen wurde ein Aufruf-Graph gebaut (Funktionsrumpf →
+  jeder darin vorkommende Funktionsname), anschliessend von den
+  Ausgangspunkten aus die Erreichbarkeit berechnet. Ausgangspunkte sind die
+  fünf p5-Hooks (`preload`, `setup`, `draw`, `mousePressed`, `windowResized`),
+  echte Aufrufe aus `index.html` und alles, was auf Modulebene beim Laden
+  ausgeführt wird. Ergebnis: 82 von 82 Funktionen erreichbar. Das Verfahren
+  ist bewusst konservativ — eine Erwähnung im Rumpf gilt als Aufruf, damit
+  Laufzeit-Zugriffe zwischen Modulen (die es hier überall gibt) nicht
+  fälschlich als tot gelten.
+- **Zwei Fallen, in die eine reine Textsuche läuft** und die deshalb
+  gegengeprüft wurden: der Spread-Operator (`...NAME` sieht aus wie ein
+  Punkt-Zugriff und fällt aus dem Muster) und gleichnamige HTML-`id`-Attribute
+  (`id="naechstesKapitel"` ist kein Funktionsaufruf). Beide erzeugten zunächst
+  falsche „ungenutzt"-Meldungen; beide sind im Abschnitt
+  [Toter Code](#toter-code) festgehalten.
+- **Zustandsänderungen:** je Funktionsrumpf nach Zuweisungen an modulweite
+  `let`/`var` gesucht (`=`, `+=`, `++`, sowie `.set`/`.push`/`.delete` auf
+  Cache-Objekten) und danach unterschieden, ob die Funktion auch zeichnet.
+  Ergebnis: eine einzige Funktion tut beides.
+- **Aufwand pro Frame:** Annotationen und ortRuns je Kapitel direkt aus den
+  18 `kapitelXX-stationen.json` ausgezählt, Maximum ist Kapitel 5 mit
+  321 Annotationen und 16 ortRuns.
+- **Gleichwertigkeit der zusammengelegten Radius-Formel:** die fünf alten
+  Implementierungen wurden wörtlich erhalten und in JavaScriptCore gegen die
+  neue `groessterKreisRadius()` laufen gelassen — über 584 echte `bandCounts`
+  aus allen 18 Kapiteln (Zwischenstände beim Scrollen und Endstände) plus
+  Randfälle: leeres Objekt, fehlende Kategorien, Werte über dem 100px-Deckel,
+  `unrated` allein. Dazu vier Skalierungsstufen und beide `maxRadius`-Varianten
+  (100 und `Infinity`). 7592 Vergleiche, 0 Abweichungen.
+- **Zeichenzustand:** alle `push()`/`pop()`-, `save()`/`restore()`- und
+  `textStyle`/`textAlign`/`textFont`-Aufrufe über alle Module aufgelistet und
+  gegeneinander gehalten, um zu bestimmen, welche Module aufräumen und welche
+  nicht.

@@ -25,7 +25,8 @@
    zeichneKreiseFuerRun() bzw. anordnung von zeichneFwertPunkte().
 
    --- Abhängigkeiten NACH AUSSEN (Laufzeit) --------------------------------
-   aus datenbereinigung.js (14): KREIS_KATEGORIEN, kreisRadius, FWERT_PUNKTGROESSE,
+   aus datenbereinigung.js (15): KREIS_KATEGORIEN, kreisRadius,
+     groessterKreisRadius, FWERT_PUNKTGROESSE,
      FWERT_PUNKT_FARBE, hexZuRgb, zaehleAnnotationenLiveNachOrtBasis,
      sammleAnnotationenNachOrtBasis, wohnungFilterFuerOrt, wohnungSplitAi,
      istVorzeitigeErwaehnung, WOHNUNG_SAMMELPUNKT_ANKER,
@@ -122,7 +123,8 @@ function zeichneKreiseOrtRuns(punktIndex, annIndex, activeBbox, offsetX = mapOff
     // Graph-Ansicht zeigen dieselben Kreise; stünden die Halbkreise hier
     // links/rechts und dort oben/unten, müsste man beim Umschalten die
     // Bildsprache neu lesen.
-    let radius = zeichneKreiseFuerRun(pos.x, pos.y, bandCounts, 1, PI);
+    let radius = groessterKreisRadius(bandCounts);
+    zeichneKreiseFuerRun(pos.x, pos.y, bandCounts, 1, PI);
     let fwertAnnotationen = sammleAnnotationenNachOrtBasis(filter, annIndex, daten).filter(a => a.hasFwert);
     zeichneFwertPunkte(pos.x, pos.y, radius, fwertAnnotationen, 1, 'obenUnten');
     if (radius > 0) {
@@ -268,6 +270,12 @@ function zeichneVollkreis(cx, cy, r, farbeRgb, alphaSkala = 1, blend = false) {
 // ins Fenster passen. Die Skalierung greift am fertigen Radius, nicht über
 // eine Canvas-Transformation: so behalten Schraffur-Abstand und Strichstärken
 // ihre normale Grösse.
+// Rückgabewert: keiner. Wer die Grösse des Kreises braucht, holt sie mit
+// groessterKreisRadius(bandCounts, maxRadius, radiusSkala) — derselben
+// Funktion, die auch hier intern läuft. Deren beide letzte Parameter stehen
+// in UMGEKEHRTER Reihenfolge zu denen hier. Vorher gab zeichneKreiseFuerRun()
+// den Radius zurück; das machte ihn nur beim Zeichnen verfügbar und zwang
+// vier Stellen dazu, die Formel nachzubauen.
 function zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF_PI, radiusSkala = 1, maxRadius = 100) {
   // Zwei Ebenen, jede für sich nach Radius geordnet (kleinste zuoberst,
   // mittlere danach, grösste zuunterst): unten die schraffierten
@@ -279,13 +287,15 @@ function zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF
   // die Kreisgrafik wirkte dann unvollständig (schraffiert statt farbig).
   let hatchFormen = [];
   let flaechenFormen = [];
-  let groessterHatchRadius = 0;
+  // Aussenradius vorab, nicht mehr nebenbei in der Schleife: dieselbe
+  // Funktion, die auch die Aufrufer benutzen, wenn sie die Grösse VOR dem
+  // Zeichnen brauchen (groessterKreisRadius in datenbereinigung.js).
+  let aussenRadius = groessterKreisRadius(bandCounts, maxRadius, radiusSkala);
 
   KREIS_KATEGORIEN.forEach(k => {
     let bc = bandCounts[k.key] || {};
     let n = (bc.neg || 0) + (bc.pos || 0) + (bc.neutral || 0) + (bc.unrated || 0);
     let hatchR = kreisRadius(n, maxRadius) * radiusSkala;
-    if (hatchR > groessterHatchRadius) groessterHatchRadius = hatchR;
     if (hatchR > 0) {
       let hex = '#' + k.farbe.map(v => v.toString(16).padStart(2, '0')).join('');
       hatchFormen.push({ r: hatchR, zeichne: () => drawHatchedCircle(cx, cy, hatchR, hex, alphaSkala) });
@@ -313,7 +323,7 @@ function zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF
   hatchFormen.sort((a, b) => b.r - a.r).forEach(f => f.zeichne());
   flaechenFormen.sort((a, b) => b.r - a.r).forEach(f => f.zeichne());
 
-  if (groessterHatchRadius > 0) {
+  if (aussenRadius > 0) {
     // p5s ellipse() bleibt bei laufender Animation manchmal unsichtbar,
     // siehe zeichneHalbkreis — direkt über den Canvas-Context gezeichnet.
     drawingContext.fillStyle = `rgba(0, 0, 0, ${alphaSkala})`;
@@ -321,8 +331,6 @@ function zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF
     drawingContext.arc(cx, cy, 4, 0, TWO_PI);
     drawingContext.fill();
   }
-
-  return groessterHatchRadius; // fuer Label-Platzierung durch den Aufrufer
 }
 
 // Pixel-Durchmesser je F-Wert-Punktgrösse (1..3, siehe FWERT_PUNKTGROESSE in
@@ -342,8 +350,8 @@ const FWERT_PUNKT_RING_ABSTAND = 8; // Abstand zwischen zwei Punkte-Ringen, fall
 // Reichen die Punkte eines Drittels nicht auf einen Bogen, wachsen
 // weitere, weiter aussen liegende Ringe nach (z.B. "Cannes", Kapitel 8, mit
 // 87 F-Wert-Annotationen an einem einzigen Ort).
-function zeichneFwertPunkte(cx, cy, kreisRadius, fwertAnnotationen, alphaSkala = 1, anordnung = 'seitlich') {
-  if (!fwertAnnotationen.length || kreisRadius <= 0) return;
+function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1, anordnung = 'seitlich') {
+  if (!fwertAnnotationen.length || radius <= 0) return;
 
   const DRITTEL = TWO_PI / 3;
   // Gruppenmitten [negativ, positiv, neutral/unbewertet] je Anordnung. Sie
@@ -374,7 +382,7 @@ function zeichneFwertPunkte(cx, cy, kreisRadius, fwertAnnotationen, alphaSkala =
   noStroke();
   gruppen.forEach(({ mitte, formen }) => {
     if (!formen.length) return;
-    let ringRadius = kreisRadius + FWERT_PUNKT_RAND_ABSTAND;
+    let ringRadius = radius + FWERT_PUNKT_RAND_ABSTAND;
     let rest = formen;
     while (rest.length) {
       let bogenlaenge = ringRadius * DRITTEL;

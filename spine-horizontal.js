@@ -11,7 +11,7 @@
    --- Abhängigkeiten NACH AUSSEN (alle erst zur Laufzeit) -------------------
    aus sketch.js:           kapitelAnsichtsModus, zoomedKapitel, stationenData,
                             zeichneKreiseFuerRun, zeichneFwertPunkte
-   aus datenbereinigung.js: KREIS_KATEGORIEN, ROUTE_COLOR_RGB, kreisRadius,
+   aus datenbereinigung.js: ROUTE_COLOR_RGB, groessterKreisRadius,
                             wohnungFilterFuerOrt, sammleAnnotationenNachOrtBasis,
                             zaehleAnnotationenLiveNachOrtBasis
    aus sonifikation.js:     SONIFIKATION_GESAMTDAUER_SEK, sonifikationSpieltGerade,
@@ -188,11 +188,7 @@ function spineLayout(eintraege, daten, abstand, startX) {
   eintraege.forEach(e => {
     if (e.typ === 'rueckkehr') return; // zeichnet keinen eigenen Kreis
     let bc = zaehleAnnotationenLiveNachOrtBasis(wohnungFilterFuerOrt(e.ortBasis), letzterIndex, daten);
-    KREIS_KATEGORIEN.forEach(kat => {
-      let b = bc[kat.key] || {};
-      let anzahl = (b.neg || 0) + (b.pos || 0) + (b.neutral || 0) + (b.unrated || 0);
-      maxRadius = Math.max(maxRadius, kreisRadius(anzahl));
-    });
+    maxRadius = Math.max(maxRadius, groessterKreisRadius(bc));
   });
 
   // Höchster Rückkehr-Bogen: die Bögen sind Halbkreise ÜBER der Spine-Linie
@@ -352,18 +348,11 @@ function zeichneSpineHorizontal(eintraege, fortschritt, daten = stationenData) {
     kreisDaten.push({ i, x, bc, fwertAnnotationen, radius: 0 });
   });
 
-  // Groesse vorab bestimmen (groesster Hatch-Radius je bandCounts, ohne zu
-  // zeichnen — dieselbe Formel wie in zeichneKreiseFuerRun) und danach
-  // sortieren.
-  kreisDaten.forEach(k => {
-    let r = 0;
-    KREIS_KATEGORIEN.forEach(kat => {
-      let bc = k.bc[kat.key] || {};
-      let n = (bc.neg || 0) + (bc.pos || 0) + (bc.neutral || 0) + (bc.unrated || 0);
-      r = Math.max(r, kreisRadius(n));
-    });
-    k.radius = r;
-  });
+  // Groesse vorab bestimmen (Aussenradius je bandCounts, ohne zu zeichnen)
+  // und danach sortieren. groessterKreisRadius ist dieselbe Funktion, die
+  // zeichneKreiseFuerRun intern benutzt — der Wert unten stimmt deshalb mit
+  // dem gezeichneten Kreis überein.
+  kreisDaten.forEach(k => { k.radius = groessterKreisRadius(k.bc); });
   kreisDaten.sort((a, b) => b.radius - a.radius);
 
   let radiusNachIndex = new Map();
@@ -373,9 +362,9 @@ function zeichneSpineHorizontal(eintraege, fortschritt, daten = stationenData) {
     // bekommt winkel+HALF_PI für positiv, winkel-HALF_PI für negativ; im
     // Canvas zeigt -HALF_PI nach oben). Die F-Wert-Punkte bekommen denselben
     // Winkel, damit sie auf der Seite ihrer Valenz bleiben.
-    let radius = zeichneKreiseFuerRun(k.x, linieY, k.bc, 1, PI);
-    zeichneFwertPunkte(k.x, linieY, radius, k.fwertAnnotationen, 1, 'obenUnten');
-    radiusNachIndex.set(k.i, radius);
+    zeichneKreiseFuerRun(k.x, linieY, k.bc, 1, PI);
+    zeichneFwertPunkte(k.x, linieY, k.radius, k.fwertAnnotationen, 1, 'obenUnten');
+    radiusNachIndex.set(k.i, k.radius);
   });
 
   textFont("'Source Sans 3', sans-serif");

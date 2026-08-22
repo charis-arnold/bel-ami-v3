@@ -1,7 +1,9 @@
 # Architektur
 
 Aufbau der Browser-Anwendung: Ladereihenfolge der Skripte, Aufgabe jedes Moduls
-und die Abhängigkeiten zwischen ihnen.
+und die Abhängigkeiten zwischen ihnen. Was am aktuellen Stand
+verbesserungswürdig ist, steht getrennt davon in
+[best-practices-review.md](best-practices-review.md).
 
 **Randbedingung, aus der sich alles Weitere ergibt:** Das Projekt nutzt **keine
 ES-Module**. Jede Datei ist ein eigenes `<script>`-Tag, alle Funktionen und
@@ -26,7 +28,7 @@ zugreift, ist nirgends deklariert, sondern ergibt sich aus der Reihenfolge in
 | 5 | `ortsveraenderung.js` | Schlussakt „Ortsveränderung" |
 | 6 | `spine-horizontal.js` | Graph-Ansicht: waagrechte Zeitleiste + Play |
 | 7 | `fotomarker.js` | Foto-Marker und Bild-Popup |
-| 8 | `annotationsbox.js` | Platzwahl der Annotationsbox |
+| 8 | `annotationsbox.js` | Positionswahl der Annotationsbox |
 | 9 | `dom-aufbau.js` | Kapitelregister, Legende, Marker-Ebenen |
 | 10 | `uebersichtsrouten.js` | Übersichtsakt und Kapitel-Navigation |
 | 11 | `sketch.js` | Orchestrierung: `preload`/`setup`/`draw`/`mousePressed` |
@@ -122,14 +124,14 @@ eigenen Header-Abschnitt aus.
 
 | # | Modul | Zeilen | Hauptfunktionen | Wichtigste eigene Variablen |
 |---|---|---|---|---|
-| 1 | `datenbereinigung.js` | 429 | `bereinigeStationenDaten`, `baueSpineDaten`, `zaehleAnnotationenLiveNachOrtBasis`, `sammleAnnotationenNachOrtBasis`, `ortRunsFuerSpine`, `kreisRadius`, `hexZuRgb` | `KREIS_KATEGORIEN`, `SCROLL_MEILENSTEINE`, `ROUTE_COLOR_RGB`, `FWERT_*`, `GEDANKEN_*`, `WOHNUNG_*` |
+| 1 | `datenbereinigung.js` | 454 | `bereinigeStationenDaten`, `baueSpineDaten`, `zaehleAnnotationenLiveNachOrtBasis`, `sammleAnnotationenNachOrtBasis`, `ortRunsFuerSpine`, `kreisRadius`, `groessterKreisRadius`, `hexZuRgb` | `KREIS_KATEGORIEN`, `SCROLL_MEILENSTEINE`, `ROUTE_COLOR_RGB`, `FWERT_*`, `GEDANKEN_*`, `WOHNUNG_*` |
 | 2 | `geo-projektion.js` | 148 | `lonLatToScreen`, `coverCrop`, `cropToBbox`, `bboxToImgCrop` | `startBbox`, `uebersichtBbox`, `ch1ImgBbox`, `mapOffsetX`, `mapOffsetY` |
-| 3 | `kreisgrafik.js` | 404 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `zeichneKreisLabels`, `leereBandCounts` | `HATCH_SPACING`, `FWERT_PUNKT_DURCHMESSER`, `FWERT_PUNKT_FARBE_RGB` |
+| 3 | `kreisgrafik.js` | 420 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `zeichneKreisLabels`, `leereBandCounts` | `HATCH_SPACING`, `FWERT_PUNKT_DURCHMESSER`, `FWERT_PUNKT_FARBE_RGB` |
 | 4 | `kartendekor.js` | 188 | `zeichneMassstabsleiste`, `zeichneWindrose`, `haversineMeter` | `MASSSTAB_SCHRITTE` |
-| 5 | `ortsveraenderung.js` | 657 | `zeichneOrtsveraenderung`, `ovPhase`, `ovZoomBbox`, `ovBerechneLayout` | `VERGLEICHS_KNOTEN`, `OV_*`/`SK_*`-Phasenfenster, `ovLayout`, `ovProKapitel` |
-| 6 | `spine-horizontal.js` | 442 | `zeichneSpineHorizontal`, `toggleGrafikPlay`, `setzeKapitelAnsichtModus`, `spineLayout`, `aktualisiereGrafikFortschritt` | `spineEintraegep5`, `spineEintraegeKapitel`, `grafikSpielt`, `grafikFortschritt`, `SPINE_*` |
+| 5 | `ortsveraenderung.js` | 654 | `zeichneOrtsveraenderung`, `ovPhase`, `ovZoomBbox`, `ovBerechneLayout` | `VERGLEICHS_KNOTEN`, `OV_*`/`SK_*`-Phasenfenster, `ovLayout`, `ovProKapitel` |
+| 6 | `spine-horizontal.js` | 431 | `zeichneSpineHorizontal`, `toggleGrafikPlay`, `setzeKapitelAnsichtModus`, `spineLayout`, `aktualisiereGrafikFortschritt` | `spineEintraegep5`, `spineEintraegeKapitel`, `grafikSpielt`, `grafikFortschritt`, `SPINE_*` |
 | 7 | `fotomarker.js` | 116 | `zeichneFotoMarker`, `oeffneFotoPopup`, `schliesseFotoPopup` | `fotoMarkerListe`, `letzteActiveBbox`, `letzterFotoOffsetX/Y`, `FOTO_MARKER_TREFFER_RADIUS` |
-| 8 | `annotationsbox.js` | 124 | `annotationBoxPlatz` | `ANNOTATION_BOX_PLAETZE`, `annotationBoxPlatzCache` |
+| 8 | `annotationsbox.js` | 124 | `annotationBoxPosition` | `ANNOTATION_BOX_POSITIONEN`, `annotationBoxPositionCache` |
 | 9 | `dom-aufbau.js` | 280 | `baueKapitelRegister`, `baueLegende`, `baueKartenMarkierungen`, `oeffneRegister` | — (baut nur DOM, hält keinen Zustand) |
 | 10 | `uebersichtsrouten.js` | 557 | `zeichneUebersichtsrouten`, `kapitelScheiben`, `kapitelHitze`, `oeffneKapitelZoom`, `springeZuKapitelZoom` | `zoomedKapitel`, `kapitelZoomAmount`, `kapitelHover`, `scheibenCache` |
 | 11 | `sketch.js` | 869 | `preload`, `setup`, `draw`, `mousePressed`, `zeichneRoute`, `datenFuerKapitel` | `stationenData`, `kapitelKarten`, `bgImage`/`bgImage2`/`ch1Image`, 24 DOM-Handles |

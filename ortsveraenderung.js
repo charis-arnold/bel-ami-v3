@@ -16,7 +16,7 @@
    aus sketch.js:          stationenData, uebersichtsRouten, datenFuerKapitel,
                            leereBandCounts, lonLatToScreen, zeichneKreiseFuerRun,
                            zeichneFwertPunkte
-   aus datenbereinigung.js: KREIS_KATEGORIEN, ROUTE_COLOR_RGB, kreisRadius,
+   aus datenbereinigung.js: ROUTE_COLOR_RGB, groessterKreisRadius,
                            sammleAnnotationenNachOrtBasis,
                            zaehleAnnotationenLiveNachOrtBasis
    aus p5:                 width/height, Zeichen- und Text-API, drawingContext
@@ -232,15 +232,6 @@ function ovAddiere(ziel, quelle) {
   });
 }
 
-function ovRadiusAus(bandCounts) {
-  let r = 0;
-  KREIS_KATEGORIEN.forEach(kat => {
-    let b = bandCounts[kat.key] || {};
-    r = Math.max(r, kreisRadius((b.neg || 0) + (b.pos || 0) + (b.neutral || 0) + (b.unrated || 0), Infinity));
-  });
-  return r;
-}
-
 function ovBaueDaten() {
   if (ovProKapitel) return;
   ovProKapitel = VERGLEICHS_KNOTEN.map(k => {
@@ -261,14 +252,17 @@ function ovBaueDaten() {
   ovRohradien = ovProKapitel.map(proKapitel => {
     let summe = leereBandCounts();
     Object.values(proKapitel).forEach(k => ovAddiere(summe, k.bandCounts));
-    return ovRadiusAus(summe);
+    // Infinity statt des 100px-Deckels: hier summieren sich alle 18 Kapitel
+    // auf, mit Deckel wären fünf von sechs Orten am Ende gleich gross (siehe
+    // kreisRadius). Verkleinert wird stattdessen gemeinsam über kreisSkala.
+    return groessterKreisRadius(summe, Infinity);
   });
   // Erstes Kapitel, in dem der Ort überhaupt vorkommt — daran hängt das
   // Einblenden seiner Textbox (siehe zeichneOrtsveraenderung).
   ovErstesKapitel = ovProKapitel.map(proKapitel => {
     let erstes = 18;
     Object.keys(proKapitel).sort().forEach(nr => {
-      if (ovRadiusAus(proKapitel[nr].bandCounts) > 0) erstes = Math.min(erstes, parseInt(nr, 10));
+      if (groessterKreisRadius(proKapitel[nr].bandCounts, Infinity) > 0) erstes = Math.min(erstes, parseInt(nr, 10));
     });
     return erstes;
   });
@@ -527,7 +521,10 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
     let stand = null;
     if (kreisAlpha > 0) {
       stand = ovStand(i, maxKapitel);
-      radius = zeichneKreiseFuerRun(anker.x, cy, stand.bandCounts, (alpha / 255) * kreisAlpha,
+      // Innerhalb des Blocks: bei unsichtbarem Kreis muss radius 0 bleiben,
+      // daran hängt der Abstand der Beschriftung darunter.
+      radius = groessterKreisRadius(stand.bandCounts, Infinity, layout.kreisSkala);
+      zeichneKreiseFuerRun(anker.x, cy, stand.bandCounts, (alpha / 255) * kreisAlpha,
         -HALF_PI, layout.kreisSkala, Infinity);
       zeichneFwertPunkte(anker.x, cy, radius, stand.fwerte, (alpha / 255) * kreisAlpha);
     }

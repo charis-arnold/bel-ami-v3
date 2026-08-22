@@ -322,6 +322,31 @@ function kreisRadius(n, maxRadius = 100) {
   return n > 0 ? Math.min(maxRadius, BASIS + K * Math.sqrt(n)) : 0;
 }
 
+// Grösster Radius über alle drei Kategorien — der Aussenradius des ganzen
+// Kreisdiagramms. Die schraffierten Gesamtkreise (alle Erwähnungen einer
+// Kategorie, siehe zeichneKreiseFuerRun) sind die äussersten Formen; ihr
+// Maximum ist deshalb der Rand, an dem aussen die F-Wert-Punkte ansetzen.
+//
+// Bis hierher rechneten fünf Stellen diese Formel jede für sich nach: Der
+// Wert entstand nur als Rückgabe von zeichneKreiseFuerRun(), also als
+// Nebenprodukt des Zeichnens — wer ihn VORHER brauchte (Spine-Layout,
+// Annotationsbox, Ortsveränderung), musste ihn nachbauen. maxRadius und
+// radiusSkala bedeuten dasselbe wie dort.
+//
+// ACHTUNG, umgekehrte Reihenfolge: zeichneKreiseFuerRun() nimmt die beiden
+// als (…, radiusSkala, maxRadius), hier stehen sie als (…, maxRadius,
+// radiusSkala) — maxRadius wird häufiger überschrieben (Infinity im
+// Schlussakt), radiusSkala fast nie.
+function groessterKreisRadius(bandCounts, maxRadius = 100, radiusSkala = 1) {
+  let groesster = 0;
+  KREIS_KATEGORIEN.forEach(kat => {
+    let b = bandCounts[kat.key] || {};
+    let n = (b.neg || 0) + (b.pos || 0) + (b.neutral || 0) + (b.unrated || 0);
+    groesster = Math.max(groesster, kreisRadius(n, maxRadius) * radiusSkala);
+  });
+  return groesster;
+}
+
 // Manche ortRuns-Einträge tragen den Namen eines späteren Halteorts, werden
 // aber schon an einer früheren Stelle im Text (mit deren revealIndex/Koordinate)
 // nur erwähnt/vorausgedacht, nicht real besucht (z.B. "Folies Bergère" wird im

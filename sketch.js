@@ -4,9 +4,10 @@
 ============================================================================= */
 
 let stage, heroText, begleitTexte, kapitelEinstiegsTexte;
-let annotationBoxEl; // #annotationBox — trägt die Platz-Klasse, siehe annotationBoxPlatz()
+let annotationBoxEl; // #annotationBox — trägt die Positionsklasse (pos-oben-links etc.), siehe annotationBoxPosition()
 let schlusstextEl;   // #schlusstext — Gegenstück zum Einstiegstext, blendet im Schlussakt ein
 let naechstesKapitelEl; // #naechstesKapitel — Hinweis am Kapitelende, siehe draw()
+
 
 // Nummer des folgenden Kapitels, oder null wenn es keines gibt (Kapitel 18 ist
 // das letzte). Kapitel 1 hat seinen eigenen Scroll-Akt und ist hier nicht
@@ -22,6 +23,8 @@ function naechstesKapitel(nr) {
 // (kapitelEinstiegsStartMillis), siehe draw().
 let kapitelEinstiegsStartMillis = null;
 const KAPITEL_EINSTIEG_FADE_MS = 800;
+
+
 // Der Einstiegstext blendet von selbst EIN (zeitbasiert, ab Klick-Zeitpunkt),
 // danach übernimmt das Scrollen: zwischen diesen beiden Anteilen des
 // Kapitel-Akts (uebersichtRoutenStart..uebersichtRoutenEnd) blendet er aus,
@@ -420,8 +423,8 @@ function draw() {
   // Kapitel-Zoom (Klick auf «03» etc.) — zoomt von der Gesamtkarte weiter in
   // den eigenen Kartenausschnitt des Kapitels, genau wie oben bgImage→ch1Image.
   let kapitelCrop = null;
-  // Ausserhalb des Blocks, weil die Platzwahl der Annotationsbox weiter unten
-  // dieselbe (unanimierte) Ziel-Bbox braucht — mit der laufend
+  // Ausserhalb des Blocks, weil die Positionswahl der Annotationsbox weiter
+  // unten dieselbe (unanimierte) Ziel-Bbox braucht — mit der laufend
   // interpolierten activeBbox würde sie während des Reinzoomens wandern.
   let kapitelTargetBbox = null;
   if (zoomedKapitel && kapitelKarten[zoomedKapitel] && kapitelKarten[zoomedKapitel].bild
@@ -556,15 +559,15 @@ function draw() {
   let aktuelleAnnotation = !zoomedKapitel
     ? ((routeAmount > 0 && zoomOutAmount <= 0) ? annListe[annIndex] : null)
     : (kapitelZoomAmount > 0.5 ? aktuelleAnnotationZoom : null);
-  // Platz der Box je Kapitel bestimmen (siehe annotationBoxPlatz) — die
+  // Position der Box je Kapitel bestimmen (siehe annotationBoxPosition) — die
   // Ziel-Bbox des Kapitels, nicht die animierte activeBbox, sonst wanderte
   // die Wahl während des Reinzoomens.
-  let platzKapitel = zoomedKapitel || '01';
-  let platzBbox = zoomedKapitel ? kapitelTargetBbox : targetBbox;
-  let platzDaten = zoomedKapitel ? datenFuerKapitel(zoomedKapitel) : stationenData;
-  if (annotationBoxEl && platzBbox && platzDaten && platzDaten.ortRuns) {
-    let platz = annotationBoxPlatz(platzKapitel, platzDaten, platzBbox);
-    ANNOTATION_BOX_PLAETZE.forEach(p => annotationBoxEl.classList.toggle('pos-' + p, p === platz));
+  let positionKapitel = zoomedKapitel || '01';
+  let positionBbox = zoomedKapitel ? kapitelTargetBbox : targetBbox;
+  let positionDaten = zoomedKapitel ? datenFuerKapitel(zoomedKapitel) : stationenData;
+  if (annotationBoxEl && positionBbox && positionDaten && positionDaten.ortRuns) {
+    let position = annotationBoxPosition(positionKapitel, positionDaten, positionBbox);
+    ANNOTATION_BOX_POSITIONEN.forEach(p => annotationBoxEl.classList.toggle('pos-' + p, p === position));
   }
 
   // Hinweis "Nächstes Kapitel" am Ende eines Kapitels (02–18). Sichtbar,
