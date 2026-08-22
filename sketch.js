@@ -383,7 +383,7 @@ function draw() {
   // Kapitel-Zoom (Klick auf «04» etc., siehe oeffneKapitelZoom): öffnet sich
   // sofort mit voll sichtbarer Route, kein eigener Scroll-Akt — nur zeitlich
   // weich eingeblendet (wie zuvor).
-  kapitelZoomAmount = lerp(kapitelZoomAmount, zoomedKapitel ? 1 : 0, 0.08);
+  aktualisiereKapitelZoom();
 
   let activeBbox = {
     west: lerp(fullBbox.west, targetBbox.west, zoomAmount),

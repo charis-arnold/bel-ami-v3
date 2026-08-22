@@ -44,9 +44,11 @@
    aus sonifikation.js:     sonifikationSpieltGerade, beendeSonifikationAudio
 
    --- Wer von aussen hierher greift --------------------------------------
-   draw()           ruft zeichneUebersichtsrouten() und kapitelScheiben(),
-                    schreibt kapitelZoomAmount und kapitelHover, liest
-                    zoomedKapitel an rund vierzig Stellen
+   draw()           ruft zeichneUebersichtsrouten(), kapitelScheiben() und
+                    aktualisiereKapitelZoom(), liest zoomedKapitel an rund
+                    vierzig Stellen. Schreibt selbst nichts mehr hierher:
+                    kapitelZoomAmount und kapitelHover werden ausschliesslich
+                    in diesem Modul gesetzt.
    mousePressed()   liest kapitelHover, ruft springeZuKapitelZoom() und
                     scrolleZuKapitel1()
    setup()          hängt schliesseKapitelZoom an die Escape-Taste
@@ -508,6 +510,17 @@ function setzeKapitelAnsichtZurueck() {
   // (.kapitel-einstiegstext, siehe draw()) — bei jedem Kapitelwechsel neu,
   // auch beim Schliessen (dort harmlos, da dann kein zoomedKapitel matcht).
   kapitelEinstiegsStartMillis = millis();
+}
+
+// Weiches Ein-/Ausblenden des Kapitel-Zooms. Ein Integrator, der GENAU
+// EINMAL pro Frame ticken muss — deshalb ruft draw() ihn direkt auf und nicht
+// zeichneUebersichtsrouten(): die läuft nur, solange der Übersichtsakt aktiv
+// ist, und der Wert würde beim Ausblenden einfrieren. Gleiche Bauart wie
+// aktualisiereGrafikFortschritt() in spine-horizontal.js.
+// Läuft asymptotisch gegen sein Ziel, erreicht es also nie exakt (siehe den
+// Kommentar zu labelAlpha in zeichneUebersichtsrouten).
+function aktualisiereKapitelZoom() {
+  kapitelZoomAmount = lerp(kapitelZoomAmount, zoomedKapitel ? 1 : 0, 0.08);
 }
 
 function oeffneKapitelZoom(nr) {
