@@ -36,7 +36,7 @@ sondern nur: faktisch greift kein anderes Modul darauf zu.
 | **mittel** | ~~`draw()` schreibt in Variablen von drei fremden Modulen~~ — **erledigt**, alle fünf Zugriffe verlagert | Globale Variablen |
 | **mittel** | ~~`zeichneKreisLabels()` setzt sechs p5-Zeichenzustände und stellt keinen zurück~~ — **erledigt**, `push()`/`pop()` | Single Responsibility |
 | **mittel** | ~~`zeichneUebersichtsrouten()` zeichnet und setzt dabei `kapitelHover`~~ — **erledigt**, `draw()` zieht nichts mehr nach | Single Responsibility |
-| **mittel** | 116 der 260 globalen Namen werden nur in ihrem eigenen Modul gebraucht | Globale Variablen |
+| **mittel** | 119 der 262 globalen Namen werden nur in ihrem eigenen Modul gebraucht | Globale Variablen |
 | **mittel** | ~~Kapitel-1-Datenregeln stehen im Zeichenmodul `kreisgrafik.js`~~ — **erledigt**, jetzt `ortRunSichtbar()` in `datenbereinigung.js` | Single Responsibility |
 | **mittel** | ~~`zeichneHalbkreis`/`zeichneVollkreis` setzen `globalCompositeOperation` hart zurück~~ — **erledigt**, `push()`/`pop()` | Single Responsibility |
 | **niedrig** | `draw()` läuft mit 557 Zeilen als eine Funktion | Single Responsibility |
@@ -51,29 +51,35 @@ sondern nur: faktisch greift kein anderes Modul darauf zu.
 
 ## Globale Variablen
 
-Alle zwölf Module deklarieren zusammen **260 Namen im globalen Scope**: 88
-Funktionen und 172 Variablen/Konstanten. Davon werden **121 nur im eigenen
+Alle zwölf Module deklarieren zusammen **262 Namen im globalen Scope**: 90
+Funktionen und 172 Variablen/Konstanten. Davon werden **124 nur im eigenen
 Modul gebraucht**. Fünf davon sind p5-Lebenszyklus-Hooks (`preload`, `setup`,
 `draw`, `mousePressed`, `windowResized`), die global bleiben *müssen*, weil p5
-sie am `window` sucht — bleiben **116 echte Kandidaten** für Modul-Scope.
+sie am `window` sucht — bleiben **119 echte Kandidaten** für Modul-Scope.
 
 Die Zahl ist im Lauf der bisherigen Schritte *gestiegen*, nicht gefallen: Jede
 Konsolidierung hat Logik aus fremden Modulen in ihr Heimatmodul geholt und
-dort intern gemacht. Zuletzt `ortRunSichtbar()` — dadurch wurden fünf Namen in
-`datenbereinigung.js` von exportiert zu intern.
+dort intern gemacht. `ortRunSichtbar()` machte fünf Namen in
+`datenbereinigung.js` intern, `kapitelHatEigeneAnsicht()` das vielgelesene
+`kapitelKarten` in `sketch.js`, `spieleSonifikationFuer()` die beiden
+`spiele*SonifikationAudio` in `sonifikation.js`.
+
+**Die Vorarbeit ist damit abgeschlossen.** Die systematische Prüfung auf
+falsch platzierte Regeln (siehe Abschnitt unten) hat ausser diesen dreien
+nichts mehr gefunden, was die Zuordnung noch verschieben würde.
 
 ### Wie viel jedes Modul nach aussen gibt
 
 | Modul | Namen gesamt | nur modulintern | extern genutzt | Anteil intern |
 |---|---|---|---|---|
 | `ortsveraenderung.js` | 44 | 36 | 8 | 81 % |
-| `sonifikation.js` | 20 | 15 | 5 | 75 % |
+| `sonifikation.js` | 21 | 17 | 4 | 80 % |
 | `annotationsbox.js` | 7 | 5 | 2 | 71 % |
 | `kreisgrafik.js` | 13 | 8 | 5 | 61 % |
 | `spine-horizontal.js` | 23 | 12 | 11 | 52 % |
 | `kartendekor.js` | 4 | 2 | 2 | 50 % |
 | `uebersichtsrouten.js` | 16 | 6 | 10 | 37 % |
-| `sketch.js` | 66 | 25 | 41 | 37 % |
+| `sketch.js` | 67 | 26 | 41 | 38 % |
 | `datenbereinigung.js` | 38 | 12 | 26 | 31 % |
 | `geo-projektion.js` | 9 | 0 | 9 | 0 % |
 | `fotomarker.js` | 14 | 0 | 14 | 0 % |
@@ -128,6 +134,45 @@ Keine dieser sechs erreicht das Gewicht des behobenen Falls. Dort ging es um
 eine **Projektfunktion**, die vier Module benutzen und die drei Zeilen entfernt
 in derselben Datei aufgerufen wird — hier um p5-Namen, die das Projekt
 entweder gar nicht oder nur in anderen Dateien anfasst.
+
+### Vorabprüfung: liegt noch Logik im falschen Modul?
+
+Vor der Kapselung einmal systematisch gesucht, ob weitere Fälle wie
+`ortRunSichtbar()` die Namenszuordnung noch verschieben würden — also nicht
+ein Name am falschen Ort, sondern eine *Regel*, die ein Modul auf fremdem
+Gebiet anwendet.
+
+**Methode:** Für jede der 90 Funktionen erhoben, wie viele Namen sie aus
+fremden Modulen liest und aus welchen. Eine Häufung aus genau einem
+Fremdmodul ist die Signatur. Die Spitzenkandidaten dann gelesen und die
+Auffälligkeiten empirisch nachgeprüft.
+
+| Fundstelle | Befund | Status |
+|---|---|---|
+| `uebersichtsrouten.js:409`, `:546`, `:571`, `sketch.js:18` | „Hat Kapitel X eine eigene Ansicht?" — dieselbe Regel viermal, jedes Mal aus `kapitelKarten` (sketch.js) und `KAPITEL_MIT_SPINE_PANEL` (datenbereinigung.js) zusammengebaut; die vierte Stelle sogar nur zur Hälfte | **erledigt** → `kapitelHatEigeneAnsicht()` in `sketch.js` |
+| `spine-horizontal.js:155-156` | Sonifikations-Dispatch: „welcher Ton für welche Ansicht" im Grafikmodul entschieden | **erledigt** → `spieleSonifikationFuer()` in `sonifikation.js` |
+| `sonifikation.js:264` | Greift direkt in `spineEintraegeKapitel[nr]` statt über einen Accessor | offen — gehört in die Kapselungsarbeit selbst, nicht davor |
+| `ortsveraenderung.js:41` | `VERGLEICHS_KNOTEN.daten` trägt handgepflegte Kennzahlen (`'12 Kapitel'`, `'240 Annotationen'`, `'37 F-Werte'`), die `ovBaueDaten`/`ovStand` daneben live berechnen | offen — **Datenpflege, kein Modulschnitt** |
+
+Zum letzten Punkt nachgerechnet: Bei allen sieben Knoten stimmen Kapitelzahl,
+Annotationen und F-Werte **exakt** mit den berechneten Werten überein, bei
+vier von sieben auch die neg/pos-Zeile. Bei drei Knoten steht dort bewusst
+etwas anderes — eine Valenz-Entwicklung (`+0.12 → −1.00`), also eine
+redaktionelle Aussage. **Kein Drift heute**, aber nichts prüft es: Bei einem
+Daten-Neubau kann es lautlos auseinanderlaufen.
+
+**Ausdrücklich kein Befund**, obwohl in der Rangliste weit oben:
+
+- `ortsveraenderung.js` (36 interne Namen) — davon 24 `OV_*`-Layoutkonstanten,
+  genuin eigene. `VERGLEICHS_KNOTEN` sind aktspezifische Daten, die kein
+  anderes Modul braucht. Kein Umzug nötig; das Modul ist der **beste erste
+  IIFE-Kandidat**.
+- `sonifikation.js` — `baueSpielplan`/`baueGainFolge` rechnen aus
+  Stationsdaten Dauern und Lautstärken. Eigene Domäne, keine fremde Regel.
+- `sketch.js:draw()` liest 53× Namen aus `uebersichtsrouten.js` — der grösste
+  Zähler überhaupt, aber das ist Orchestrierung („was ist gerade sichtbar?"),
+  keine verlagerte Regel.
+- `dom-aufbau.js` → `sketch.js` — DOM-Handles, dokumentiertes Init-Muster.
 
 ### Wer in wessen Zustand schreibt
 

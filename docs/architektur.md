@@ -129,13 +129,13 @@ eigenen Header-Abschnitt aus.
 | 3 | `kreisgrafik.js` | 463 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `zeichneKreisLabels`, `leereBandCounts` | `HATCH_SPACING`, `FWERT_PUNKT_DURCHMESSER`, `FWERT_PUNKT_FARBE_RGB` |
 | 4 | `kartendekor.js` | 188 | `zeichneMassstabsleiste`, `zeichneWindrose`, `haversineMeter` | `MASSSTAB_SCHRITTE` |
 | 5 | `ortsveraenderung.js` | 657 | `zeichneOrtsveraenderung`, `ovPhase`, `ovZoomBbox`, `ovBerechneLayout` | `VERGLEICHS_KNOTEN`, `OV_*`/`SK_*`-Phasenfenster, `ovLayout`, `ovProKapitel` |
-| 6 | `spine-horizontal.js` | 464 | `zeichneSpineHorizontal`, `toggleGrafikPlay`, `setzeKapitelAnsichtModus`, `stelleSpineDatenBereit`, `spineLayout`, `aktualisiereGrafikFortschritt` | `spineEintraegep5`, `spineEintraegeKapitel`, `grafikSpielt`, `grafikFortschritt`, `SPINE_*` |
+| 6 | `spine-horizontal.js` | 462 | `zeichneSpineHorizontal`, `toggleGrafikPlay`, `setzeKapitelAnsichtModus`, `stelleSpineDatenBereit`, `spineLayout`, `aktualisiereGrafikFortschritt` | `spineEintraegep5`, `spineEintraegeKapitel`, `grafikSpielt`, `grafikFortschritt`, `SPINE_*` |
 | 7 | `fotomarker.js` | 133 | `zeichneFotoMarker`, `merkeKartenlage`, `oeffneFotoPopup`, `schliesseFotoPopup` | `fotoMarkerListe`, `letzteActiveBbox`, `letzterFotoOffsetX/Y`, `FOTO_MARKER_TREFFER_RADIUS` |
 | 8 | `annotationsbox.js` | 124 | `annotationBoxPosition` | `ANNOTATION_BOX_POSITIONEN`, `annotationBoxPositionCache` |
 | 9 | `dom-aufbau.js` | 280 | `baueKapitelRegister`, `baueLegende`, `baueKartenMarkierungen`, `oeffneRegister` | — (baut nur DOM, hält keinen Zustand) |
-| 10 | `uebersichtsrouten.js` | 589 | `zeichneUebersichtsrouten`, `kapitelScheiben`, `kapitelHitze`, `aktualisiereKapitelZoom`, `oeffneKapitelZoom`, `springeZuKapitelZoom` | `zoomedKapitel`, `kapitelZoomAmount`, `kapitelHover`, `scheibenCache` |
-| 11 | `sketch.js` | 864 | `preload`, `setup`, `draw`, `mousePressed`, `zeichneRoute`, `datenFuerKapitel` | `stationenData`, `kapitelKarten`, `bgImage`/`bgImage2`/`ch1Image`, 24 DOM-Handles |
-| 12 | `sonifikation.js` | 310 | `spieleKapitel1SonifikationAudio`, `spieleKapitelSonifikationAudio`, `beendeSonifikationAudio`, `baueSpielplan`, `baueGainFolge` | `SONIFIKATION_GESAMTDAUER_SEK`, `sonifikationSpieltGerade`, `sonifikationDaten` |
+| 10 | `uebersichtsrouten.js` | 591 | `zeichneUebersichtsrouten`, `kapitelScheiben`, `kapitelHitze`, `aktualisiereKapitelZoom`, `oeffneKapitelZoom`, `springeZuKapitelZoom` | `zoomedKapitel`, `kapitelZoomAmount`, `kapitelHover`, `scheibenCache` |
+| 11 | `sketch.js` | 887 | `preload`, `setup`, `draw`, `mousePressed`, `zeichneRoute`, `datenFuerKapitel`, `kapitelHatEigeneAnsicht` | `stationenData`, `kapitelKarten`, `bgImage`/`bgImage2`/`ch1Image`, 24 DOM-Handles |
+| 12 | `sonifikation.js` | 324 | `spieleSonifikationFuer`, `beendeSonifikationAudio`, `baueSpielplan`, `baueGainFolge` | `SONIFIKATION_GESAMTDAUER_SEK`, `sonifikationSpieltGerade`, `sonifikationDaten` |
 
 `dom-aufbau.js` ist das einzige Modul ohne eigene Top-Level-Variablen: es baut
 DOM-Knoten und schreibt sie in Handles, die `sketch.js` hält.
