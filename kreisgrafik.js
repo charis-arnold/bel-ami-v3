@@ -27,8 +27,8 @@
    --- Abhängigkeiten NACH AUSSEN (Laufzeit) --------------------------------
    aus datenbereinigung.js (15): KREIS_KATEGORIEN, kreisRadius,
      groessterKreisRadius, FWERT_PUNKTGROESSE,
-     FWERT_PUNKT_FARBE, hexZuRgb, zaehleAnnotationenLiveNachOrtBasis,
-     sammleAnnotationenNachOrtBasis, wohnungFilterFuerOrt, wohnungSplitAi,
+     FWERT_PUNKT_FARBE, hexZuRgb, sammleAnnotationenNachOrtBasis,
+     zaehleBandCounts, wohnungFilterFuerOrt, wohnungSplitAi,
      istVorzeitigeErwaehnung, WOHNUNG_SAMMELPUNKT_ANKER,
      WOHNUNG_SAMMELPUNKT_ABSORBIERTE_ORTRUNS, GEDANKEN_ORTRUN_UNTERDRUECKT,
      RUE_NOTRE_DAME_DE_LORETTE_ORT
@@ -116,7 +116,13 @@ function zeichneKreiseOrtRuns(punktIndex, annIndex, activeBbox, offsetX = mapOff
     // fest vorberechneter Kreis auf einmal aufploppen.
     let pos = lonLatToScreen(r.lon, r.lat, activeBbox, offsetX, offsetY);
     let filter = wohnungFilterFuerOrt(r.ort);
-    let bandCounts = zaehleAnnotationenLiveNachOrtBasis(filter, annIndex, daten);
+    // EIN Durchlauf über daten.annotationen für beides: die Zählung für die
+    // Kreisflächen und dieselbe Trefferliste für die F-Wert-Punkte weiter
+    // unten. Vorher lief hier zaehleAnnotationenLiveNachOrtBasis(), das die
+    // Liste intern schon hatte und wegwarf — sie wurde dann ein zweites Mal
+    // erhoben.
+    let treffer = sammleAnnotationenNachOrtBasis(filter, annIndex, daten);
+    let bandCounts = zaehleBandCounts(treffer);
     // Winkel PI und Anordnung 'obenUnten' — dieselbe Aufteilung wie in der
     // Graph-Ansicht (siehe zeichneSpineHorizontal): positiv oben, negativ
     // unten, F-Wert-Punkte entsprechend. Die Kartenansicht ("Plan") und die
@@ -125,7 +131,7 @@ function zeichneKreiseOrtRuns(punktIndex, annIndex, activeBbox, offsetX = mapOff
     // Bildsprache neu lesen.
     let radius = groessterKreisRadius(bandCounts);
     zeichneKreiseFuerRun(pos.x, pos.y, bandCounts, 1, PI);
-    let fwertAnnotationen = sammleAnnotationenNachOrtBasis(filter, annIndex, daten).filter(a => a.hasFwert);
+    let fwertAnnotationen = treffer.filter(a => a.hasFwert);
     zeichneFwertPunkte(pos.x, pos.y, radius, fwertAnnotationen, 1, 'obenUnten');
     if (radius > 0) {
       // Label mit demselben Begriff wie in der Spine (r.ort) — erst

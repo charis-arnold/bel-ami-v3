@@ -386,7 +386,7 @@ function valenzBucket(v) {
 // die bandCounts aufsummiert), aber als Liste statt als Zählung. Wird u.a.
 // für die F-Wert-Punkte gebraucht, die pro Annotation (nicht aggregiert)
 // ausserhalb des Kreisdiagramms sitzen (siehe zeichneFwertPunkte in
-// sketch.js) — jede Annotation dort braucht ihre eigene Valenz/ihren
+// kreisgrafik.js) — jede Annotation dort braucht ihre eigene Valenz/ihren
 // eigenen fWertType, den eine reine Zählung nicht mehr hergibt.
 function sammleAnnotationenNachOrtBasis(filter, annIndex, daten = stationenData) {
   let ortBasisWerte = filter instanceof Set ? filter : new Set([filter]);
@@ -399,17 +399,32 @@ function sammleAnnotationenNachOrtBasis(filter, annIndex, daten = stationenData)
   });
 }
 
-function zaehleAnnotationenLiveNachOrtBasis(filter, annIndex, daten = stationenData) {
-  let sichtbareTreffer = sammleAnnotationenNachOrtBasis(filter, annIndex, daten);
+// Zählt eine BEREITS gefilterte Trefferliste zu bandCounts zusammen.
+//
+// Aus zaehleAnnotationenLiveNachOrtBasis() herausgelöst, damit Aufrufer, die
+// beides brauchen — die Zählung für die Kreisflächen UND die rohe Liste für
+// die F-Wert-Punkte — nur einmal über daten.annotationen laufen: erst
+// sammeln, dann aus derselben Liste zählen. Vorher warf die Zählung ihre
+// Liste weg, und der Aufrufer holte sie sich mit einem zweiten, identischen
+// Scan zurück — pro Ortskreis und Frame (siehe zeichneKreiseOrtRuns in
+// kreisgrafik.js und zeichneSpineHorizontal in spine-horizontal.js).
+function zaehleBandCounts(annotationen) {
   let ergebnis = {
     gold_dunkel: { unrated: 0, neg: 0, pos: 0, neutral: 0 },
     gold_mittel: { unrated: 0, neg: 0, pos: 0, neutral: 0 },
     gold_hell: { unrated: 0, neg: 0, pos: 0, neutral: 0 },
   };
-  sichtbareTreffer.forEach(a => {
+  annotationen.forEach(a => {
     ergebnis[a.category][valenzBucket(a.valenz)]++;
   });
   return ergebnis;
+}
+
+// Sammeln und Zählen in einem Aufruf — für Stellen, die NUR die Zählung
+// brauchen und die Trefferliste nicht weiterverwenden (annotationBoxPosition,
+// spineLayout; beide gecacht, der eine Scan fällt dort nicht ins Gewicht).
+function zaehleAnnotationenLiveNachOrtBasis(filter, annIndex, daten = stationenData) {
+  return zaehleBandCounts(sammleAnnotationenNachOrtBasis(filter, annIndex, daten));
 }
 
 // ---------------------------------------------------------------------------

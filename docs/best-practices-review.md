@@ -7,7 +7,8 @@ vom 22. August 2026 über alle zwölf Module (4532 Zeilen) plus `index.html`.
 **Stand der Umsetzung.** Der Befund wurde am 22. August 2026 erhoben. Seither
 umgesetzt: die Konsolidierung der Radius-Formel samt der beiden daran
 hängenden Befunde (Rückgabewert von `zeichneKreiseFuerRun()`, Namensverdeckung
-in `zeichneFwertPunkte()`). Die betroffenen Zeilen unten sind als **erledigt**
+in `zeichneFwertPunkte()`) sowie der doppelte Vollscan pro Frame samt dem
+doppelten `wohnungFilterFuerOrt()`-Aufruf. Die betroffenen Zeilen unten sind als **erledigt**
 markiert und tragen die Fundstelle im heutigen Code. Alles Übrige steht
 unverändert offen. Die Namensverdeckung wurde bei dieser Gelegenheit erstmals
 systematisch über alle Module geprüft — Ergebnis unter
@@ -25,7 +26,7 @@ sondern nur: faktisch greift kein anderes Modul darauf zu.
 | Nutzen | Befund | Kriterium |
 |---|---|---|
 | **hoch** | ~~Dieselbe Radius-Formel liegt fünfmal im Code, an vier Stellen als Kopie~~ — **erledigt**, jetzt `groessterKreisRadius()` in `datenbereinigung.js:340` | DRY |
-| **hoch** | Pro Frame und Ortskreis wird `daten.annotationen` zweimal vollständig durchlaufen — mit identischen Argumenten | DRY |
+| **hoch** | ~~Pro Frame und Ortskreis wird `daten.annotationen` zweimal vollständig durchlaufen~~ — **erledigt**, jetzt ein Scan über `zaehleBandCounts()` | DRY |
 | **hoch** | ~~`zeichneKreiseFuerRun()` liefert den Radius nur als Nebenprodukt des Zeichnens~~ — **erledigt**, die Funktion gibt nichts mehr zurück | Single Responsibility |
 | **hoch** | ~~Parameter `kreisRadius` verdeckt die gleichnamige globale Funktion~~ — **erledigt**, heisst jetzt `radius` | Globale Variablen |
 | **mittel** | `draw()` schreibt in Variablen von drei fremden Modulen | Globale Variablen |
@@ -38,7 +39,7 @@ sondern nur: faktisch greift kein anderes Modul darauf zu.
 | **niedrig** | `noLoop()`/`redraw()` wäre möglich, aber der Umbau ist gross und der Gewinn klein | draw()-Loop |
 | **niedrig** | Farbwerte aus `KREIS_KATEGORIEN` werden an drei Stellen in drei Formate übersetzt | DRY |
 | **niedrig** | Das Font-Literal `'Source Sans 3', sans-serif` steht zwölfmal im Code | DRY |
-| **niedrig** | `wohnungFilterFuerOrt()` wird zweimal mit demselben Argument aufgerufen | DRY |
+| **niedrig** | ~~`wohnungFilterFuerOrt()` wird zweimal mit demselben Argument aufgerufen~~ — **erledigt** | DRY |
 | **niedrig** | Sechs Stellen verdecken p5-Globals (`color`, `text` ×3, `max`, `key`) — alle heute wirkungslos | Globale Variablen |
 | — | **Toter Code: nichts gefunden.** Alle 82 Funktionen sind erreichbar | Toter Code |
 
@@ -281,40 +282,70 @@ Kapiteln (Zwischen- und Endstände) plus Randfälle — leer, Teilkategorien,
 Werte über dem 100px-Deckel — in vier Skalierungsstufen. 7592 Vergleiche,
 0 Abweichungen.
 
-### Pro Frame wird jeder Ortskreis zweimal durchgezählt
+### Pro Frame wurde jeder Ortskreis zweimal durchgezählt — erledigt
 
-`zaehleAnnotationenLiveNachOrtBasis()` ruft intern
-`sammleAnnotationenNachOrtBasis()` auf. Die Aufrufer brauchen aber beides —
-die Zählung *und* die Rohliste für die F-Wert-Punkte — und rufen `sammle…`
-deshalb gleich noch einmal auf, mit identischen Argumenten:
+Die Doppelung war schwer zu sehen, weil sie über eine Verschachtelung lief:
+`zaehleAnnotationenLiveNachOrtBasis()` rief **intern** schon
+`sammleAnnotationenNachOrtBasis()` auf, warf dessen Liste aber weg und gab nur
+die Zählung zurück. Der Aufrufer brauchte auch die Liste — für die
+F-Wert-Punkte, die pro Annotation eine eigene Valenz und einen eigenen
+`fWertType` haben — und holte sie sich mit einem zweiten, identischen Scan.
+
+Der zweite Scan liess sich deshalb nicht streichen, sondern nur durch Umdrehen
+der Reihenfolge beseitigen: erst sammeln, dann aus derselben Liste zählen.
 
 ```mermaid
 graph TD
-    ZK["zeichneKreiseOrtRuns()<br/>kreisgrafik.js:118 und :126"]
-    ZS["zeichneSpineHorizontal()<br/>spine-horizontal.js:350 und :351"]
+    subgraph vorher["vorher — zwei Durchläufe"]
+        A1["zeichneKreiseOrtRuns()"]
+        A1 -->|"1 · Zählung"| A2["zaehleAnnotationenLiveNachOrtBasis()"]
+        A2 -->|"ruft intern auf"| A3["sammleAnnotationenNachOrtBasis()<br/>Scan 1 · Liste wird verworfen"]
+        A1 -->|"2 · gleiche Argumente"| A4["sammleAnnotationenNachOrtBasis()<br/>Scan 2 · dieselbe Liste noch einmal"]
+    end
 
-    ZK -->|"1 · zaehlen"| ZAEHL
-    ZS -->|"1 · zaehlen"| ZAEHL
-    ZAEHL["zaehleAnnotationenLiveNachOrtBasis()<br/>datenbereinigung.js:377"]
-    ZAEHL --> SCAN1["daten.annotationen.filter(…)<br/>voller Linearscan, neues Array"]
-
-    ZK -->|"2 · dieselben Argumente"| SAMM
-    ZS -->|"2 · dieselben Argumente"| SAMM
-    SAMM["sammleAnnotationenNachOrtBasis()<br/>datenbereinigung.js:366"]
-    SAMM --> SCAN2["daten.annotationen.filter(…)<br/>derselbe Scan noch einmal"]
-
-    ZAEHL -.->|"ruft intern auf"| SAMM
+    subgraph nachher["nachher — ein Durchlauf"]
+        B1["zeichneKreiseOrtRuns()"]
+        B1 --> B2["sammleAnnotationenNachOrtBasis()<br/>Scan 1 · Liste bleibt erhalten"]
+        B2 --> B3["zaehleBandCounts(treffer)<br/>Kreisflächen"]
+        B2 --> B4["treffer.filter(hasFwert)<br/>F-Wert-Punkte"]
+    end
 ```
 
-| Fundstelle | Befund | Priorität | Begründung |
-|---|---|---|---|
-| `kreisgrafik.js:118` + `:126` | Beide Aufrufe mit identischem `filter`, `annIndex` und `daten` — der zweite wiederholt die Arbeit des ersten vollständig | **hoch** | Für jeden Ortskreis, in jedem Frame. Bei Kapitel 5 (321 Annotationen, 16 ortRuns) sind das rund 10 000 Elementbesuche und 32 neue Arrays pro Frame, bei 60 fps also etwa 600 000 Besuche pro Sekunde — für ein Ergebnis, das sich nur beim Scrollen ändert. `sammleAnnotationenNachOrtBasis` einmal aufrufen und die Zählung daraus ableiten halbiert es sofort; ein Cache über `annIndex` beseitigt es fast ganz |
-| `spine-horizontal.js:350` + `:351` | Dieselbe Doppelung in der Graph-Ansicht | **hoch** | Gleiche Begründung. Zusätzlich wird hier `wohnungFilterFuerOrt(e.ortBasis)` in beiden Zeilen separat aufgerufen |
-| `spine-horizontal.js:350-351` | `wohnungFilterFuerOrt(e.ortBasis)` zweimal mit demselben Argument | niedrig | Einzeiler: in eine Variable ziehen. Fällt beim Beheben des Punkts darüber ohnehin mit an |
+`zaehleBandCounts(annotationen)` ist der aus der Zählfunktion herausgelöste
+zweite Schritt (`datenbereinigung.js:411`). Er musste dorthin, weil er
+`valenzBucket()` braucht, das modulintern in `datenbereinigung.js` liegt.
+`zaehleAnnotationenLiveNachOrtBasis()` behält Signatur und Verhalten und ist
+jetzt ein Zweizeiler über beiden Schritten — die zwei gecachten Aufrufer
+(`annotationBoxPosition`, `spineLayout`) blieben dadurch unangetastet.
 
-`ortsveraenderung.js:255-256` und `annotationsbox.js:82` enthalten dieselbe
-Doppelung, laufen aber nur einmal und landen im Cache (`ovProKapitel` bzw.
-`annotationBoxPositionCache`) — dort ist sie folgenlos.
+| Stelle | vorher | jetzt |
+|---|---|---|
+| `kreisgrafik.js:119` + `:128` | 2 Scans je Ortskreis, **jeden Frame** | `kreisgrafik.js:124-125`, 1 Scan |
+| `spine-horizontal.js:346` + `:347` | 2 Scans je Eintrag, **jeden Frame**, dazu `wohnungFilterFuerOrt()` doppelt | `spine-horizontal.js:348-351`, 1 Scan, 1 Filteraufruf |
+| `ortsveraenderung.js:246` + `:247` | 2 Scans je Knoten und Kapitel, einmalig | `ortsveraenderung.js:247-250`, 1 Scan |
+| `annotationsbox.js:85`, `spine-horizontal.js:190` | nur Zählung, kein Doppelscan | unverändert |
+
+**Nachgewiesen gleichwertig und tatsächlich halbiert:** Die alte
+Zählimplementierung wurde wörtlich erhalten und gegen den neuen Pfad laufen
+gelassen — über alle 18 Kapitel, für jeden Ort mal acht `annIndex`-Stände
+(inklusive der Ränder −1, 0 und über die Länge hinaus), dazu die exotischen
+Filtertypen (Funktion, Zahl, `Set`). **1281 Fälle, 0 Abweichungen** — geprüft
+wurden `bandCounts` auf Wertgleichheit, die F-Wert-Liste auf Länge *und*
+Objektidentität (`===`, damit auch das Aliasing unverändert ist) und der
+Wrapper gegen seine alte Implementierung. `daten.annotationen.filter` wurde
+dabei instrumentiert und gezählt: **2544 volle Durchläufe vorher, 1272
+nachher — exakt 50 %.**
+
+Dass die beiden Scans überhaupt redundant sein *können*, ist nachprüfbar:
+`daten.annotationen` wird im ganzen Projekt an genau einer Stelle geschrieben
+(`datenbereinigung.js:269`, in `bereinigeStationenDaten()`), und die läuft
+einmalig in `preload`/`setup`, nie in `draw()`.
+
+**Nicht gemacht:** der im Befund erwähnte Cache über `annIndex`. Sein Schlüssel
+müsste den `filter` enthalten, und `wohnungFilterFuerOrt()` liefert bei
+Gedanken-Orten jedes Mal ein frisches `Set` — Identitäts-Caching greift dort
+nicht, man müsste über den Inhalt schlüsseln, dazu käme die Invalidierung. Das
+bleibt eine eigene Entscheidung.
 
 ### Kleinere Wiederholungen
 
@@ -356,12 +387,15 @@ bewegt.
 | Fundstelle | Befund | Priorität | Begründung |
 |---|---|---|---|
 | `sketch.js:277` | Ein Umbau auf `noLoop()`/`redraw()` ist möglich, lohnt aber nicht als eigenständige Aufgabe | niedrig | Er bräuchte vier Auslöser (`scroll`, `mousemove`, `click`, `resize`) **und** ein „läuft gerade etwas?"-Prädikat. Genau das ist der teure Teil: `kapitelZoomAmount` nähert sich seinem Ziel per `lerp` nur asymptotisch — `uebersichtsrouten.js:329-334` hält das ausdrücklich fest („läuft nur asymptotisch gegen 1") und beschreibt gleich den Fehler, den ein zu naiver Nulltest an dieser Stelle schon einmal verursacht hat. Ein „fertig" gibt es nicht, man müsste eine Epsilon-Schwelle einführen. Falsch gewählt, bleibt die Animation sichtbar hängen — ein Fehlerbild, das nur auf langsamen Geräten auftritt und schwer zu reproduzieren ist |
-| `sketch.js:277` | Die durchgehende Bildrate ist die *Sichtbarkeit* des Problems, nicht seine Ursache | mittel | Was der Loop 60-mal pro Sekunde wiederholt, ist die Doppelzählung aus dem [DRY-Abschnitt](#dry). Ein Cache über `annIndex` senkt die Kosten pro Frame um etwa den Faktor zwei bis fünf, mit lokal begrenztem Risiko und ohne den Lebenszyklus anzufassen. Danach ist die Frage, ob der Loop überhaupt noch stört, neu zu stellen — vermutlich lautet die Antwort nein |
+| `sketch.js:277` | Die durchgehende Bildrate ist die *Sichtbarkeit* des Problems, nicht seine Ursache | mittel | **Teilweise erledigt.** Der grösste Posten, den der Loop 60-mal pro Sekunde wiederholte, war die Doppelzählung aus dem [DRY-Abschnitt](#dry) — sie ist auf die Hälfte gesenkt, ohne den Lebenszyklus anzufassen. Offen bleibt, dass auch der verbleibende eine Scan pro Kreis und Frame ein Ergebnis neu berechnet, das sich zwischen zwei Scroll-Schritten nicht ändert; dafür bräuchte es den Cache. Ob der Loop danach überhaupt noch stört, wäre neu zu beurteilen |
 
 **Empfehlung:** Loop lassen, Rechenaufwand pro Frame senken. Die durchgehende
 Bildrate ist für ein scroll- und animationsgetriebenes Stück wie dieses
 vertretbar; sie ist nur deshalb spürbar, weil in jedem Frame Ergebnisse neu
 berechnet werden, die sich zwischen zwei Scroll-Schritten gar nicht ändern.
+Der erste Schritt in diese Richtung ist gemacht — die Scans pro Frame sind
+halbiert. Der `noLoop()`-Umbau steht damit noch weniger zur Debatte als
+vorher.
 
 ---
 
@@ -396,6 +430,14 @@ Geprüft wurden die zwölf Module aus `index.html` plus `index.html` selbst;
   (`id="naechstesKapitel"` ist kein Funktionsaufruf). Beide erzeugten zunächst
   falsche „ungenutzt"-Meldungen; beide sind im Abschnitt
   [Toter Code](#toter-code) festgehalten.
+- **Gleichwertigkeit des zusammengelegten Scans:** die alte Zählimplementierung
+  wörtlich erhalten und gegen den neuen Pfad laufen gelassen — alle 18 Kapitel,
+  jeder Ort mal acht `annIndex`-Stände inklusive der Ränder, dazu die
+  exotischen Filtertypen (Funktion, Zahl, `Set`). Verglichen wurden
+  `bandCounts` auf Wertgleichheit, die F-Wert-Liste auf Länge und
+  Objektidentität und der Wrapper gegen seine Vorgängerversion. 1281 Fälle,
+  0 Abweichungen. Zusätzlich wurde `daten.annotationen.filter` instrumentiert,
+  um die Halbierung zu belegen statt sie zu behaupten: 2544 → 1272 Durchläufe.
 - **Namensverdeckung:** aus allen zwölf Modulen die Parameter (auch von
   Pfeilfunktionen und mit Destrukturierung) und alle lokalen
   `let`/`const`/`var` extrahiert und gegen die 254 globalen Projektnamen

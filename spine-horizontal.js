@@ -13,7 +13,7 @@
                             zeichneKreiseFuerRun, zeichneFwertPunkte
    aus datenbereinigung.js: ROUTE_COLOR_RGB, groessterKreisRadius,
                             wohnungFilterFuerOrt, sammleAnnotationenNachOrtBasis,
-                            zaehleAnnotationenLiveNachOrtBasis
+                            zaehleBandCounts, zaehleAnnotationenLiveNachOrtBasis
    aus sonifikation.js:     SONIFIKATION_GESAMTDAUER_SEK, sonifikationSpieltGerade,
                             beendeSonifikationAudio, spieleKapitel1SonifikationAudio,
                             spieleKapitelSonifikationAudio
@@ -343,8 +343,12 @@ function zeichneSpineHorizontal(eintraege, fortschritt, daten = stationenData) {
     let alphaSkala = constrain(position - (i - 1), 0, 1);
     if (alphaSkala <= 0) return;
     let x = startX + i * abstand;
-    let bc = zaehleAnnotationenLiveNachOrtBasis(wohnungFilterFuerOrt(e.ortBasis), globalAnnIndex, daten);
-    let fwertAnnotationen = sammleAnnotationenNachOrtBasis(wohnungFilterFuerOrt(e.ortBasis), globalAnnIndex, daten).filter(a => a.hasFwert);
+    // Filter und Scan je EINMAL: aus derselben Trefferliste kommen die
+    // Zählung für die Kreisflächen und die F-Wert-Punkte.
+    let filter = wohnungFilterFuerOrt(e.ortBasis);
+    let treffer = sammleAnnotationenNachOrtBasis(filter, globalAnnIndex, daten);
+    let bc = zaehleBandCounts(treffer);
+    let fwertAnnotationen = treffer.filter(a => a.hasFwert);
     kreisDaten.push({ i, x, bc, fwertAnnotationen, radius: 0 });
   });
 

@@ -17,8 +17,7 @@
                            leereBandCounts, lonLatToScreen, zeichneKreiseFuerRun,
                            zeichneFwertPunkte
    aus datenbereinigung.js: ROUTE_COLOR_RGB, groessterKreisRadius,
-                           sammleAnnotationenNachOrtBasis,
-                           zaehleAnnotationenLiveNachOrtBasis
+                           sammleAnnotationenNachOrtBasis, zaehleBandCounts
    aus p5:                 width/height, Zeichen- und Text-API, drawingContext
 
    --- Wer von aussen hierher greift ----------------------------------------
@@ -242,9 +241,13 @@ function ovBaueDaten() {
     alleDaten.forEach(([nr, daten]) => {
       if (!daten || !daten.annotationen || !daten.annotationen.length) return;
       let bis = daten.annotationen.length - 1;
+      // Ein Scan für beides — wie in kreisgrafik.js und spine-horizontal.js.
+      // Hier nur der Einheitlichkeit halber: ovBaueDaten() läuft einmal und
+      // landet in ovProKapitel.
+      let treffer = sammleAnnotationenNachOrtBasis(filter, bis, daten);
       proKapitel[nr] = {
-        bandCounts: zaehleAnnotationenLiveNachOrtBasis(filter, bis, daten),
-        fwerte: sammleAnnotationenNachOrtBasis(filter, bis, daten).filter(a => a.hasFwert),
+        bandCounts: zaehleBandCounts(treffer),
+        fwerte: treffer.filter(a => a.hasFwert),
       };
     });
     return proKapitel;
