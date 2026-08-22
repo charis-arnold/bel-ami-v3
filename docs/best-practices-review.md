@@ -8,9 +8,10 @@ vom 22. August 2026 über alle zwölf Module (4532 Zeilen) plus `index.html`.
 umgesetzt: die Konsolidierung der Radius-Formel samt der beiden daran
 hängenden Befunde (Rückgabewert von `zeichneKreiseFuerRun()`, Namensverdeckung
 in `zeichneFwertPunkte()`), der doppelte Vollscan pro Frame samt dem
-doppelten `wohnungFilterFuerOrt()`-Aufruf sowie die drei Canvas-Zustands-
-Befunde in `kreisgrafik.js` (dort klammern sich jetzt alle sechs zeichnenden
-Funktionen einheitlich mit `push()`/`pop()`). Die betroffenen Zeilen unten sind als **erledigt**
+doppelten `wohnungFilterFuerOrt()`-Aufruf, die drei Canvas-Zustands-Befunde
+in `kreisgrafik.js` (dort klammern sich jetzt alle sechs zeichnenden
+Funktionen einheitlich mit `push()`/`pop()`) sowie die Fremdschreibzugriffe
+aus `draw()` samt dem `kapitelHover`-Knoten. Die betroffenen Zeilen unten sind als **erledigt**
 markiert und tragen die Fundstelle im heutigen Code. Alles Übrige steht
 unverändert offen. Die Namensverdeckung wurde bei dieser Gelegenheit erstmals
 systematisch über alle Module geprüft — Ergebnis unter
@@ -31,9 +32,9 @@ sondern nur: faktisch greift kein anderes Modul darauf zu.
 | **hoch** | ~~Pro Frame und Ortskreis wird `daten.annotationen` zweimal vollständig durchlaufen~~ — **erledigt**, jetzt ein Scan über `zaehleBandCounts()` | DRY |
 | **hoch** | ~~`zeichneKreiseFuerRun()` liefert den Radius nur als Nebenprodukt des Zeichnens~~ — **erledigt**, die Funktion gibt nichts mehr zurück | Single Responsibility |
 | **hoch** | ~~Parameter `kreisRadius` verdeckt die gleichnamige globale Funktion~~ — **erledigt**, heisst jetzt `radius` | Globale Variablen |
-| **mittel** | `draw()` schreibt in Variablen von drei fremden Modulen | Globale Variablen |
+| **mittel** | ~~`draw()` schreibt in Variablen von drei fremden Modulen~~ — **erledigt**, alle fünf Zugriffe verlagert | Globale Variablen |
 | **mittel** | ~~`zeichneKreisLabels()` setzt sechs p5-Zeichenzustände und stellt keinen zurück~~ — **erledigt**, `push()`/`pop()` | Single Responsibility |
-| **mittel** | `zeichneUebersichtsrouten()` zeichnet und setzt dabei `kapitelHover` | Single Responsibility |
+| **mittel** | ~~`zeichneUebersichtsrouten()` zeichnet und setzt dabei `kapitelHover`~~ — **erledigt**, `draw()` zieht nichts mehr nach | Single Responsibility |
 | **mittel** | 110 der 254 globalen Namen werden nur in ihrem eigenen Modul gebraucht | Globale Variablen |
 | **mittel** | Kapitel-1-Datenregeln stehen im Zeichenmodul `kreisgrafik.js` | Single Responsibility |
 | **mittel** | ~~`zeichneHalbkreis`/`zeichneVollkreis` setzen `globalCompositeOperation` hart zurück~~ — **erledigt**, `push()`/`pop()` | Single Responsibility |
@@ -94,7 +95,7 @@ aussen — bei ihnen ist nichts zu kapseln. Sie sind reine Werkzeugkästen.
 | Fundstelle | Befund | Priorität | Begründung |
 |---|---|---|---|
 | ~~`kreisgrafik.js:345`~~ → `kreisgrafik.js:353` | **Erledigt.** Der dritte Parameter von `zeichneFwertPunkte()` hiess `kreisRadius` und verdeckte die gleichnamige globale Funktion aus `datenbereinigung.js:320`, die vier Module benutzen. Er heisst jetzt `radius` | **hoch** | Im Rumpf war `kreisRadius` die Zahl, nicht die Funktion. Unschädlich nur, solange dort niemand die Funktion braucht — mit `groessterKreisRadius` daneben wäre die Stelle zusätzlich verwirrend geworden |
-| `sketch.js:281, 386, 505, 812-814` | `draw()` schreibt in Variablen dreier fremder Module: `spineEintraegep5` (spine-horizontal), `kapitelZoomAmount` und `kapitelHover` (uebersichtsrouten), `letzteActiveBbox` und `letzterFotoOffsetX/Y` (fotomarker) | mittel | Der Zustand dieser Module wird nicht von ihnen selbst gepflegt, sondern von aussen fortgeschrieben. Wer `kapitelZoomAmount` verstehen will, muss ihn in `sketch.js` suchen. Das ist die eigentliche Hürde vor jeder Kapselung — sie muss vor den IIFEs weg, nicht danach |
+| ~~`sketch.js:281, 386, 505, 812-814`~~ | **Erledigt.** `draw()` schrieb in Variablen dreier fremder Module — faktisch fünf Zugriffe, denn `:295` schrieb zusätzlich in `spineEintraegeKapitel[…]`. Alle sind in ihr besitzendes Modul gewandert: `aktualisiereKapitelZoom()` und der Hover-Guard in `uebersichtsrouten.js`, `merkeKartenlage()` in `fotomarker.js`, `stelleSpineDatenBereit()` in `spine-horizontal.js`. `draw()` schreibt jetzt nur noch eigene Variablen (`letzterZoomKapitel`, `kapitel1ZoomAmount`) | mittel | Das war die eigentliche Hürde vor jeder Kapselung. Sie ist weg — die Lesezugriffe von aussen bleiben und stören erst bei einer echten IIFE-Umstellung |
 
 ### Namensverdeckung: systematisch nachgeprüft
 
@@ -126,23 +127,22 @@ entweder gar nicht oder nur in anderen Dateien anfasst.
 
 Das Abhängigkeitsdiagramm in [architektur.md](architektur.md#abhängigkeitsdiagramm)
 zeigt *Lesezugriffe*. Für die Frage nach kapselbarem Zustand zählt die
-Gegenrichtung — sie sieht anders aus:
+Gegenrichtung — sie sieht anders aus. Der Stand nach der Kapselung:
 
 ```mermaid
 graph LR
-    SK["sketch.js<br/>preload / setup / draw"]
+    SK["sketch.js<br/>preload / setup"]
+    DRAW["sketch.js · draw()"]
     DOM["dom-aufbau.js"]
     UR["uebersichtsrouten.js"]
     SH["spine-horizontal.js"]
     FM["fotomarker.js"]
 
-    SK -->|"spineEintraegep5"| SH
-    SK -->|"kapitelZoomAmount<br/>kapitelHover"| UR
-    SK -->|"letzteActiveBbox<br/>letzterFotoOffsetX/Y<br/>fotoPopup*"| FM
+    SK ==>|"fotoMarkerListe<br/>fotoPopup*"| FM
+    DOM ==>|"9 DOM-Handles"| SK
     UR -->|"kapitelAnsichtsModus<br/>kapitelEinstiegsStartMillis"| SK
     UR -->|"grafikSpielt<br/>grafikFortschritt<br/>grafikPlayAusblendStart"| SH
     SH -->|"kapitelAnsichtsModus"| SK
-    DOM -->|"9 DOM-Handles"| SK
 
     KG["kreisgrafik.js"]
     KD["kartendekor.js"]
@@ -150,16 +150,32 @@ graph LR
     AB["annotationsbox.js"]
 
     classDef schreibfrei stroke-dasharray: 5 5,stroke-width:2px
-    class KG,KD,GEO,AB schreibfrei
+    class KG,KD,GEO,AB,DRAW schreibfrei
 ```
 
-Gestrichelt: **`kreisgrafik.js`, `kartendekor.js`, `geo-projektion.js` und
-`annotationsbox.js` schreiben in keinen fremden Zustand** — und, ausser dem
-Cache in `annotationsbox.js:122`, auch in keinen eigenen. Sie sind reine
-Funktionen über ihren Argumenten und liessen sich als erste kapseln.
+Dicke Pfeile sind **einmalige Initialisierung** (`preload`/`setup`/
+`bereinigeEingangsdaten`), dünne sind **Ereignis-Handler**. Die einmaligen
+sind unkritisch und in [architektur.md](architektur.md) als Muster
+beschrieben: `dom-aufbau.js` baut DOM-Knoten und legt sie in `sketch.js`-
+Handles ab, `preload`/`setup` füllen die `fotomarker.js`-Handles.
 
-`spine-horizontal.js` und `uebersichtsrouten.js` schreiben gegenseitig und in
-`sketch.js` hinein — dieses Dreieck müsste vor einer Kapselung aufgelöst werden.
+**`draw()` schreibt in keine fremde Modulvariable mehr.** Bis zur Kapselung
+liefen fünf Zugriffe je Frame von dort nach aussen — sie sind zu
+`aktualisiereKapitelZoom()`, `merkeKartenlage()`, `stelleSpineDatenBereit()`
+und dem Hover-Guard in `zeichneUebersichtsrouten()` geworden.
+
+Gestrichelt: **`kreisgrafik.js`, `kartendekor.js`, `geo-projektion.js`,
+`annotationsbox.js`** schreiben in keinen fremden Zustand — und, ausser dem
+Cache in `annotationsbox.js`, auch in keinen eigenen. Sie liessen sich als
+erste kapseln.
+
+**Was bleibt:** das Dreieck aus Ereignis-Handlern.
+`setzeKapitelAnsichtZurueck()` (uebersichtsrouten.js) schreibt in vier
+Variablen von `spine-horizontal.js` und `sketch.js`,
+`setzeKapitelAnsichtModus()` (spine-horizontal.js) zurück in `sketch.js`.
+Anders als die Frame-Schreibzugriffe laufen diese nur bei Klicks — sie sind
+kein Dauerzustand, aber vor einer IIFE-Umstellung müssten auch sie aufgelöst
+werden.
 
 ---
 
@@ -203,7 +219,7 @@ modulweiten Zustand setzt:
 
 | Fundstelle | Befund | Priorität | Begründung |
 |---|---|---|---|
-| `uebersichtsrouten.js:291, 390, 452` | `zeichneUebersichtsrouten()` setzt beim Zeichnen `kapitelHover` — erst auf `null` (`:291`), dann in zwei Trefferprüfungen auf eine Kapitelnummer | mittel | Das ist die Vermischung, nach der die Fragestellung suchte, nur in einem anderen Modul. Die Folge steht in `sketch.js:505`: dort muss `kapitelHover = null` von Hand nachgezogen werden, wenn die Routen gerade *nicht* gezeichnet werden — der Zustand hängt daran, ob eine Zeichenfunktion lief. Trennen liesse sich das über ein `hoverZielUnterMaus(...)` vor dem Zeichnen |
+| ~~`uebersichtsrouten.js:291, 390, 452`~~ → `uebersichtsrouten.js:144` | **Erledigt.** `zeichneUebersichtsrouten()` wird jetzt unbedingt aufgerufen und übernimmt den Fall „wird nicht gezeichnet" selbst: bei `fortschritt <= 0` setzt sie Hover und Cursor zurück und steigt aus. Der `else`-Zweig in `draw()` ist ersatzlos entfallen | mittel | Kein `hoverZielUnterMaus()` extrahiert: Der Treffertest hängt an der Startpunkt-Geometrie samt Streuung deckungsgleicher Punkte, die erst im Zeichendurchlauf entsteht — ein Extrakt hätte sie dupliziert, also genau die Art Kopie, die dieses Review sonst bekämpft |
 | `sketch.js:277-833` | `draw()` ist 557 Zeilen lang und deckt Scroll-Akte, Kapitel-Zoom, Annotationsbox, Legende, Kapitelregister, Foto-Marker und Schlussakt ab | niedrig | Ein echter Befund, aber kein lohnender: Die Abschnitte teilen sich durchgehend Zwischenwerte (`activeBbox`, `zoomAmount`, `scrollFortschritt`), ein Aufteilen erzeugt vor allem lange Parameterlisten. Der Nutzen wäre Lesbarkeit, das Risiko real |
 
 `ovBaueDaten()` und `ovBerechneLayout()` (`ortsveraenderung.js:244`, `:302`)
