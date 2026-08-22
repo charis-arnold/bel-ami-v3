@@ -9,7 +9,9 @@ umgesetzt: die Konsolidierung der Radius-Formel samt der beiden daran
 hängenden Befunde (Rückgabewert von `zeichneKreiseFuerRun()`, Namensverdeckung
 in `zeichneFwertPunkte()`). Die betroffenen Zeilen unten sind als **erledigt**
 markiert und tragen die Fundstelle im heutigen Code. Alles Übrige steht
-unverändert offen.
+unverändert offen. Die Namensverdeckung wurde bei dieser Gelegenheit erstmals
+systematisch über alle Module geprüft — Ergebnis unter
+[Globale Variablen](#namensverdeckung-systematisch-nachgeprüft).
 
 **Randbedingung, die jede Bewertung hier färbt:** Das Projekt nutzt keine
 ES-Module (siehe [architektur.md](architektur.md)). Jeder Name landet im
@@ -37,6 +39,7 @@ sondern nur: faktisch greift kein anderes Modul darauf zu.
 | **niedrig** | Farbwerte aus `KREIS_KATEGORIEN` werden an drei Stellen in drei Formate übersetzt | DRY |
 | **niedrig** | Das Font-Literal `'Source Sans 3', sans-serif` steht zwölfmal im Code | DRY |
 | **niedrig** | `wohnungFilterFuerOrt()` wird zweimal mit demselben Argument aufgerufen | DRY |
+| **niedrig** | Sechs Stellen verdecken p5-Globals (`color`, `text` ×3, `max`, `key`) — alle heute wirkungslos | Globale Variablen |
 | — | **Toter Code: nichts gefunden.** Alle 82 Funktionen sind erreichbar | Toter Code |
 
 ---
@@ -89,6 +92,32 @@ aussen — bei ihnen ist nichts zu kapseln. Sie sind reine Werkzeugkästen.
 |---|---|---|---|
 | ~~`kreisgrafik.js:345`~~ → `kreisgrafik.js:353` | **Erledigt.** Der dritte Parameter von `zeichneFwertPunkte()` hiess `kreisRadius` und verdeckte die gleichnamige globale Funktion aus `datenbereinigung.js:320`, die vier Module benutzen. Er heisst jetzt `radius` | **hoch** | Im Rumpf war `kreisRadius` die Zahl, nicht die Funktion. Unschädlich nur, solange dort niemand die Funktion braucht — mit `groessterKreisRadius` daneben wäre die Stelle zusätzlich verwirrend geworden |
 | `sketch.js:281, 386, 505, 812-814` | `draw()` schreibt in Variablen dreier fremder Module: `spineEintraegep5` (spine-horizontal), `kapitelZoomAmount` und `kapitelHover` (uebersichtsrouten), `letzteActiveBbox` und `letzterFotoOffsetX/Y` (fotomarker) | mittel | Der Zustand dieser Module wird nicht von ihnen selbst gepflegt, sondern von aussen fortgeschrieben. Wer `kapitelZoomAmount` verstehen will, muss ihn in `sketch.js` suchen. Das ist die eigentliche Hürde vor jeder Kapselung — sie muss vor den IIFEs weg, nicht danach |
+
+### Namensverdeckung: systematisch nachgeprüft
+
+Der Befund oben war ein Zufallsfund beim Detaillesen von `kreisgrafik.js`, kein
+Suchergebnis. Nachgeholt: alle Parameter, Pfeilfunktions-Parameter,
+Destrukturierungen und lokalen `let`/`const`/`var` aller zwölf Module gegen die
+254 globalen Projektnamen gehalten.
+
+**Verdeckungen von Projektnamen: null.** `kreisRadius` war die einzige, und sie
+ist behoben. Sechs Stellen verdecken p5-Globals — alle sind heute wirkungslos,
+weil das Projekt den verdeckten Namen an keiner Stelle benutzt oder ihn nur in
+einer anderen Datei benutzt:
+
+| Fundstelle | Verdeckt | Priorität | Warum es heute nichts ausmacht |
+|---|---|---|---|
+| `kreisgrafik.js:62` | p5s `color()` — Parameter `color` von `drawHatchedCircle()` | niedrig | Von den sechs die einzige mit realem Restrisiko: `color()` wird im Projekt tatsächlich aufgerufen (`fotomarker.js:81-82`), und `drawHatchedCircle` ist eine Zeichenfunktion, in der ein `color()`-Aufruf plausibel wäre. Nur: er steht dort nicht, und die Verdeckung wirkt ausschliesslich in diesem einen Rumpf |
+| `ortsveraenderung.js:176` | p5s `text()` — Parameter `text` von `ovTextUmbruch()` | niedrig | **p5s `text()` wird im ganzen Projekt kein einziges Mal aufgerufen.** Wegen des dokumentierten Unsichtbarkeits-Bugs läuft aller Text über `drawingContext.fillText()` (13 Stellen). Die Falle kann nicht zuschnappen, solange diese Regel gilt |
+| `ortsveraenderung.js:198` | p5s `text()` — Parameter `text` von `ovLabelZeilen()` | niedrig | Wie oben. Beide Funktionen sind reine String-Helfer, die nur `textWidth()` brauchen |
+| `dom-aufbau.js:206` | p5s `text()` — destrukturierter Parameter `{ groesse, text }` | niedrig | Wie oben, zusätzlich: `dom-aufbau.js` baut DOM-Knoten und zeichnet nie auf den Canvas |
+| `ortsveraenderung.js:412` | p5s `max()` — lokales `let max` in `ueberstand` | niedrig | p5s `max()`/`min()` werden im Projekt nie benutzt; gerechnet wird durchgehend mit `Math.max` (28×) und `Math.min` (20×). Die Konvention schützt die Stelle |
+| `uebersichtsrouten.js:309` | p5s `key` — lokales `let key` | niedrig | p5s `key` wird nirgends gelesen; der Tastatur-Handler in `sketch.js:250` nimmt `e.key` vom DOM-Event |
+
+Keine dieser sechs erreicht das Gewicht des behobenen Falls. Dort ging es um
+eine **Projektfunktion**, die vier Module benutzen und die drei Zeilen entfernt
+in derselben Datei aufgerufen wird — hier um p5-Namen, die das Projekt
+entweder gar nicht oder nur in anderen Dateien anfasst.
 
 ### Wer in wessen Zustand schreibt
 
@@ -367,6 +396,16 @@ Geprüft wurden die zwölf Module aus `index.html` plus `index.html` selbst;
   (`id="naechstesKapitel"` ist kein Funktionsaufruf). Beide erzeugten zunächst
   falsche „ungenutzt"-Meldungen; beide sind im Abschnitt
   [Toter Code](#toter-code) festgehalten.
+- **Namensverdeckung:** aus allen zwölf Modulen die Parameter (auch von
+  Pfeilfunktionen und mit Destrukturierung) und alle lokalen
+  `let`/`const`/`var` extrahiert und gegen die 254 globalen Projektnamen
+  geschnitten. Für p5-Globals reichte das nicht — deren Namensraum ist von
+  aussen nicht abzählbar. Stattdessen umgekehrt gefragt: Welche p5-Namen
+  benutzt das Projekt überhaupt? Nur deren Verdeckung kann je etwas bewirken.
+  Dazu wurden alle referenzierten Bezeichner erhoben und Projektnamen,
+  Browser-Globals, Schlüsselwörter und lokale Bindungen abgezogen. Die sechs
+  gefundenen Fälle wurden einzeln gegengeprüft, ob der verdeckte p5-Name im
+  Code (nicht nur im Kommentar) tatsächlich aufgerufen wird.
 - **Zustandsänderungen:** je Funktionsrumpf nach Zuweisungen an modulweite
   `let`/`var` gesucht (`=`, `+=`, `++`, sowie `.set`/`.push`/`.delete` auf
   Cache-Objekten) und danach unterschieden, ob die Funktion auch zeichnet.
