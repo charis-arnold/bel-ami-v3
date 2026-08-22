@@ -809,9 +809,7 @@ function draw() {
   // Kapitel-Zoom sichtbar neben der eigentlichen Karte.
   let fotoOffsetX = (zoomedKapitel && kapitelZoomAmount > 0.001) ? mapOffsetX : kartenOffsetX;
   let fotoOffsetY = (zoomedKapitel && kapitelZoomAmount > 0.001) ? mapOffsetY : kartenOffsetY;
-  letzteActiveBbox = activeBbox;
-  letzterFotoOffsetX = fotoOffsetX;
-  letzterFotoOffsetY = fotoOffsetY;
+  merkeKartenlage(activeBbox, fotoOffsetX, fotoOffsetY);
   // In der grafischen Ansicht deckt zeichneSpineHorizontal (oben) die Karte
   // bereits vollständig ab — Foto-Marker blieben sonst sichtbar darüber
   // schweben.

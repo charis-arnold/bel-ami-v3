@@ -21,7 +21,8 @@
    setup()                   befüllt die fünf fotoPopup*-Handles und hängt drei
                              Listener auf schliesseFotoPopup (Schliessen-Knopf,
                              Klick auf den Hintergrund, Escape)
-   draw()                    schreibt letzteActiveBbox und ruft zeichneFotoMarker()
+   draw()                    ruft merkeKartenlage() und zeichneFotoMarker();
+                             schreibt selbst nichts mehr hierher
    mousePressed()            prüft die Marker auf Treffer und ruft oeffneFotoPopup()
    zeichneUebersichtsrouten() nutzt FOTO_MARKER_TREFFER_RADIUS für den
                              Hover-Test der Kapitel-Badges — dieselbe Distanz,
@@ -57,6 +58,22 @@ let letzterFotoOffsetX = mapOffsetX, letzterFotoOffsetY = mapOffsetY;
 // für die Kapitel-Badges genutzt, damit alle Klickziele der Karte dieselbe
 // Grosszügigkeit haben.
 const FOTO_MARKER_TREFFER_RADIUS = 12;
+
+// Merkt sich Bbox und Kartenoffset des laufenden Frames für den Treffertest
+// in mousePressed(). Bewusst eine eigene Funktion und nicht Teil von
+// zeichneFotoMarker(): draw() ruft sie UNBEDINGT auf, zeichneFotoMarker()
+// dagegen nur ausserhalb der Graph-Ansicht.
+//
+// Folge davon, unverändert gegenüber früher: In der Graph-Ansicht bleibt der
+// Merker frisch, obwohl dort keine Marker gezeichnet werden — ein Klick auf
+// die Stelle, an der ein Marker auf der Karte läge, öffnet dessen Popup.
+// mousePressed() prüft nur letzteActiveBbox, nicht den Ansichtsmodus. Falls
+// das nicht gewollt ist, gehört der Test dorthin und nicht hierher.
+function merkeKartenlage(bbox, offsetX, offsetY) {
+  letzteActiveBbox = bbox;
+  letzterFotoOffsetX = offsetX;
+  letzterFotoOffsetY = offsetY;
+}
 
 // ---------------------------------------------------------------------------
 // Foto-Marker (Fotobank Huma-Num/FNP) — eigenständige, additive Ebene
