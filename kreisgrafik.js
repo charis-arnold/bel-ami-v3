@@ -429,13 +429,35 @@ function zeichneFwertPunkte(cx, cy, kreisRadius, fwertAnnotationen, alphaSkala =
     });
   });
 
+  // Sektorbreite: im Normalzustand (ZEIGE_NEUTRALE_WERTE) bleibt sie hart bei
+  // einem Drittel — das gewohnte Bild mit allen drei Gruppen darf sich NICHT
+  // verändern, auch nicht an Orten, die zufällig nur zwei Gruppen belegen.
+  // Erst wenn die neutrale Gruppe per Toggle wegfällt, wird die Breite aus der
+  // Zahl der tatsächlich belegten Gruppen abgeleitet: zwei Gruppen bekommen je
+  // eine Halbebene (negativ unten, positiv oben — passend zu den
+  // Valenz-Halbkreisen darunter), eine einzelne den ganzen Kreis. Der freie
+  // Platz der ausgeblendeten Gruppe verfällt damit nicht mehr ungenutzt.
+  let neuVerteilen = !ZEIGE_NEUTRALE_WERTE;
+  let belegteGruppen = gruppen.filter(g => g.formen.length).length;
+  let sektorBreite = neuVerteilen && belegteGruppen > 0 ? TWO_PI / belegteGruppen : DRITTEL;
+  // Etwas schmaler als der volle Sektor, damit Punkte an der Sektorgrenze
+  // nicht in den Nachbarsektor hineinragen (bei zwei Gruppen: damit sich die
+  // untere und die obere Halbebene links und rechts nicht berühren).
+  let maxSpanne = sektorBreite * 0.8;
+
   noStroke();
   gruppen.forEach(({ mitte, formen }) => {
     if (!formen.length) return;
     let ringRadius = kreisRadius + FWERT_PUNKT_RAND_ABSTAND;
     let rest = formen;
     while (rest.length) {
-      let bogenlaenge = ringRadius * DRITTEL;
+      // Platzbudget eines Rings. Im Normalzustand weiterhin das volle Drittel
+      // (unverändert, siehe oben) — im neu verteilten Zustand dagegen genau
+      // der Bogen, der anschliessend auch bespielt wird (maxSpanne statt
+      // sektorBreite). Vorher standen hier zwei verschiedene Breiten: gepackt
+      // wurde nach 120°, verteilt aber über 96°, also 25% Überbelegung — die
+      // Punkte überlappten sich zwangsläufig.
+      let bogenlaenge = ringRadius * (neuVerteilen ? maxSpanne : DRITTEL);
       let platz = 0;
       let anzahlImRing = 0;
       for (let f of rest) {
@@ -447,9 +469,14 @@ function zeichneFwertPunkte(cx, cy, kreisRadius, fwertAnnotationen, alphaSkala =
       let ringFormen = rest.slice(0, anzahlImRing);
       rest = rest.slice(anzahlImRing);
 
-      // Etwas schmaler als das volle Drittel verteilt, damit Punkte an der
-      // Drittel-Grenze nicht ins Nachbar-Drittel hineinragen.
-      let spanne = DRITTEL * 0.8;
+      // Im Normalzustand fest, damit das gewohnte Bild erhalten bleibt.
+      // Neu verteilt wächst der Bogen dagegen VON DER SEKTORMITTE AUS mit der
+      // Punktzahl (negativ von der Kreismitte unten, positiv von der
+      // Kreismitte oben) und wird erst bei voller Halbebene gedeckelt — sonst
+      // würden drei Punkte über 144° verschmiert, nur weil so viel Platz da
+      // ist. platz ist die Summe der Punktbreiten dieses Rings, also genau der
+      // Bogen, den sie nebeneinander brauchen.
+      let spanne = neuVerteilen ? Math.min(maxSpanne, platz / ringRadius) : maxSpanne;
       let n = ringFormen.length;
       ringFormen.forEach((f, i) => {
         let winkelPunkt = n === 1 ? mitte : mitte - spanne / 2 + (i / (n - 1)) * spanne;
