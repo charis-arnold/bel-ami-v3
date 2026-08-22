@@ -15,7 +15,7 @@ let naechstesKapitelEl; // #naechstesKapitel — Hinweis am Kapitelende, siehe d
 function naechstesKapitel(nr) {
   if (!nr) return null;
   let ziel = String(parseInt(nr, 10) + 1).padStart(2, '0');
-  return kapitelKarten[ziel] ? ziel : null;
+  return kapitelHatEigeneAnsicht(ziel) ? ziel : null;
 }
 // Kapitel 02–18 öffnen sich per Klick (springeZuKapitelZoom/oeffneKapitelZoom),
 // nicht scroll-gebunden wie Kapitel 1 — daher kein data-von/data-bis-Fenster
@@ -162,6 +162,29 @@ let letzterZoomKapitel = null; // bleibt waehrend des Ausblendens gesetzt, siehe
 // (kapitel03Data), alle anderen (02, 04–18) in weitereKapitelDaten.
 function datenFuerKapitel(nr) {
   return nr === '03' ? kapitel03Data : weitereKapitelDaten[nr];
+}
+
+// Hat dieses Kapitel eine eigene, öffenbare Ansicht? Entweder einen eigenen
+// Kartenausschnitt (kapitelKarten) oder zumindest ein Spine-Panel
+// (KAPITEL_MIT_SPINE_PANEL in datenbereinigung.js).
+//
+// Die Regel stand vorher viermal im Code: dreimal in uebersichtsrouten.js
+// (Hover-Test, oeffneKapitelZoom, springeZuKapitelZoom) und einmal in
+// naechstesKapitel() oben, dort sogar nur zur Hälfte. Sie steht jetzt hier,
+// bei ihren Geschwistern — sketch.js hält das Kapitelinventar.
+//
+// !!kapitelKarten[nr] prüft die INVENTARZUGEHÖRIGKEIT, nicht ob das Bild
+// geladen ist: Die Einträge stehen als Literal da, .bild füllt erst
+// preload(). Ein Kapitel in OHNE_EIGENEN_KARTENAUSSCHNITT behält seinen
+// Eintrag und gilt hier weiterhin als vorhanden.
+//
+// Die ODER-Klausel kann heute nicht greifen — beide Listen führen dieselben
+// 17 Kapitel (02–18). Sie bleibt trotzdem: Sie benennt die Absicht und hält
+// beide Listen als gleichwertige Quellen. Dass es zwei handgepflegte Listen
+// für dasselbe gibt, ist der eigentliche Mangel; eine einzige Quelle wäre
+// der saubere Schnitt, aber das ist eine Datenstruktur-Entscheidung.
+function kapitelHatEigeneAnsicht(nr) {
+  return !!kapitelKarten[nr] || KAPITEL_MIT_SPINE_PANEL.has(nr);
 }
 
 function preload() {

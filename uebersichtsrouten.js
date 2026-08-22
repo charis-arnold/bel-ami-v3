@@ -33,11 +33,12 @@
    für die Lesezugriffe Getter oder eine gemeinsame Zustandsdatei.
 
    --- Abhängigkeiten NACH AUSSEN (alle erst zur Laufzeit) -----------------
-   aus sketch.js (8):       uebersichtsRouten, kapitelKarten, stationenData,
-                            datenFuerKapitel, zeichneRoute, kapitelAnsichtsModus,
-                            kapitelEinstiegsStartMillis, KAPITEL_EINSTIEG_SCROLL_ENDE
-   aus datenbereinigung.js: SCROLL_MEILENSTEINE, KAPITEL_MIT_SPINE_PANEL,
-                            ROUTE_COLOR_RGB, FWERT_COLOR_RGB
+   aus sketch.js (8):       uebersichtsRouten, kapitelHatEigeneAnsicht,
+                            stationenData, datenFuerKapitel, zeichneRoute,
+                            kapitelAnsichtsModus, kapitelEinstiegsStartMillis,
+                            KAPITEL_EINSTIEG_SCROLL_ENDE
+   aus datenbereinigung.js: SCROLL_MEILENSTEINE, ROUTE_COLOR_RGB,
+                            FWERT_COLOR_RGB
    aus geo-projektion.js:   lonLatToScreen, mapOffsetX, mapOffsetY
    aus kreisgrafik.js:      zeichneKreiseOrtRuns
    aus fotomarker.js:       FOTO_MARKER_TREFFER_RADIUS (Hover-Radius der Badges —
@@ -300,9 +301,9 @@ function zeichneUebersichtsrouten(bbox, alpha, fortschritt) {
   }
 
   // Startpunkt (schwarz) + Kapitelnummer je Route — erscheint zusammen mit
-  // der Route, sobald diese zu wachsen beginnt. Kapitel mit eigenem
-  // Kartenausschnitt (siehe kapitelKarten) sind klickbar — Hover zeigt das
-  // per Cursor/Farbe an, Klick zoomt in kapitel<NR>-karte.png (siehe
+  // der Route, sobald diese zu wachsen beginnt. Kapitel mit eigener Ansicht
+  // (siehe kapitelHatEigeneAnsicht in sketch.js) sind klickbar — Hover zeigt
+  // das per Cursor/Farbe an, Klick zoomt in kapitel<NR>-karte.png (siehe
   // oeffneKapitelZoom/mousePressed).
   noStroke();
   textFont("'Source Sans 3', sans-serif"); // wie .annotation-tag (var(--sans)) und die Kreis-Labels
@@ -402,11 +403,12 @@ function zeichneUebersichtsrouten(bbox, alpha, fortschritt) {
       labelLinks = cos(dupWinkel) < -0.01;
     }
 
-    // Klickbar, sobald entweder ein eigener Kartenausschnitt (kapitelKarten)
-    // ODER zumindest ein Spine-Panel (KAPITEL_MIT_SPINE_PANEL) vorhanden ist
-    // — Kapitel ohne eigenen Ausschnitt (aktuell 02, 14, 15) zeigen beim
-    // Zoom dann nur das Spine-Panel, die Karte bleibt auf der Übersicht.
-    let klickbar = (!!kapitelKarten[kapitelNr] || KAPITEL_MIT_SPINE_PANEL.has(kapitelNr)) && !zoomedKapitel;
+    // Klickbar, sobald das Kapitel eine eigene Ansicht hat (siehe
+    // kapitelHatEigeneAnsicht in sketch.js) — und gerade keine offen ist.
+    // Ein Kapitel ohne eigenen Kartenausschnitt zeigte beim Zoom nur das
+    // Spine-Panel, die Karte bliebe auf der Übersicht; aktuell hat aber
+    // jedes Kapitel 02–18 beides.
+    let klickbar = kapitelHatEigeneAnsicht(kapitelNr) && !zoomedKapitel;
     let hover = klickbar && dist(mouseX, mouseY, start.x, start.y) < FOTO_MARKER_TREFFER_RADIUS;
     if (hover) kapitelHover = kapitelNr;
 
@@ -543,7 +545,7 @@ function aktualisiereKapitelZoom() {
 }
 
 function oeffneKapitelZoom(nr) {
-  if (!kapitelKarten[nr] && !KAPITEL_MIT_SPINE_PANEL.has(nr)) return;
+  if (!kapitelHatEigeneAnsicht(nr)) return;
   zoomedKapitel = nr;
   setzeKapitelAnsichtZurueck();
 }
@@ -568,7 +570,7 @@ function schliesseKapitelZoom() {
 // jedes Kapitel (auch annotationsarme) noch klar bei dessen erster
 // Annotation (siehe zoomedLokalerFortschritt/annIndexZoom dort).
 function springeZuKapitelZoom(nr) {
-  if (!kapitelKarten[nr] && !KAPITEL_MIT_SPINE_PANEL.has(nr)) return;
+  if (!kapitelHatEigeneAnsicht(nr)) return;
   let trackEl = document.querySelector('.scroll-track');
   let start = SCROLL_MEILENSTEINE.uebersichtRoutenStart
     + 0.01 * (SCROLL_MEILENSTEINE.uebersichtRoutenEnd - SCROLL_MEILENSTEINE.uebersichtRoutenStart);
