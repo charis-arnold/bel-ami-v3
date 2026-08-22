@@ -10,8 +10,9 @@ hängenden Befunde (Rückgabewert von `zeichneKreiseFuerRun()`, Namensverdeckung
 in `zeichneFwertPunkte()`), der doppelte Vollscan pro Frame samt dem
 doppelten `wohnungFilterFuerOrt()`-Aufruf, die drei Canvas-Zustands-Befunde
 in `kreisgrafik.js` (dort klammern sich jetzt alle sechs zeichnenden
-Funktionen einheitlich mit `push()`/`pop()`) sowie die Fremdschreibzugriffe
-aus `draw()` samt dem `kapitelHover`-Knoten. Die betroffenen Zeilen unten sind als **erledigt**
+Funktionen einheitlich mit `push()`/`pop()`), die Fremdschreibzugriffe aus
+`draw()` samt dem `kapitelHover`-Knoten sowie die Kapitel-1-Datenregeln, die
+im Zeichenmodul standen. Die betroffenen Zeilen unten sind als **erledigt**
 markiert und tragen die Fundstelle im heutigen Code. Alles Übrige steht
 unverändert offen. Die Namensverdeckung wurde bei dieser Gelegenheit erstmals
 systematisch über alle Module geprüft — Ergebnis unter
@@ -35,8 +36,8 @@ sondern nur: faktisch greift kein anderes Modul darauf zu.
 | **mittel** | ~~`draw()` schreibt in Variablen von drei fremden Modulen~~ — **erledigt**, alle fünf Zugriffe verlagert | Globale Variablen |
 | **mittel** | ~~`zeichneKreisLabels()` setzt sechs p5-Zeichenzustände und stellt keinen zurück~~ — **erledigt**, `push()`/`pop()` | Single Responsibility |
 | **mittel** | ~~`zeichneUebersichtsrouten()` zeichnet und setzt dabei `kapitelHover`~~ — **erledigt**, `draw()` zieht nichts mehr nach | Single Responsibility |
-| **mittel** | 110 der 254 globalen Namen werden nur in ihrem eigenen Modul gebraucht | Globale Variablen |
-| **mittel** | Kapitel-1-Datenregeln stehen im Zeichenmodul `kreisgrafik.js` | Single Responsibility |
+| **mittel** | 116 der 260 globalen Namen werden nur in ihrem eigenen Modul gebraucht | Globale Variablen |
+| **mittel** | ~~Kapitel-1-Datenregeln stehen im Zeichenmodul `kreisgrafik.js`~~ — **erledigt**, jetzt `ortRunSichtbar()` in `datenbereinigung.js` | Single Responsibility |
 | **mittel** | ~~`zeichneHalbkreis`/`zeichneVollkreis` setzen `globalCompositeOperation` hart zurück~~ — **erledigt**, `push()`/`pop()` | Single Responsibility |
 | **niedrig** | `draw()` läuft mit 557 Zeilen als eine Funktion | Single Responsibility |
 | **niedrig** | `noLoop()`/`redraw()` wäre möglich, aber der Umbau ist gross und der Gewinn klein | draw()-Loop |
@@ -50,11 +51,16 @@ sondern nur: faktisch greift kein anderes Modul darauf zu.
 
 ## Globale Variablen
 
-Alle zwölf Module deklarieren zusammen **254 Namen im globalen Scope**: 82
-Funktionen und 172 Variablen/Konstanten. Davon werden **115 nur im eigenen
+Alle zwölf Module deklarieren zusammen **260 Namen im globalen Scope**: 88
+Funktionen und 172 Variablen/Konstanten. Davon werden **121 nur im eigenen
 Modul gebraucht**. Fünf davon sind p5-Lebenszyklus-Hooks (`preload`, `setup`,
 `draw`, `mousePressed`, `windowResized`), die global bleiben *müssen*, weil p5
-sie am `window` sucht — bleiben **110 echte Kandidaten** für Modul-Scope.
+sie am `window` sucht — bleiben **116 echte Kandidaten** für Modul-Scope.
+
+Die Zahl ist im Lauf der bisherigen Schritte *gestiegen*, nicht gefallen: Jede
+Konsolidierung hat Logik aus fremden Modulen in ihr Heimatmodul geholt und
+dort intern gemacht. Zuletzt `ortRunSichtbar()` — dadurch wurden fünf Namen in
+`datenbereinigung.js` von exportiert zu intern.
 
 ### Wie viel jedes Modul nach aussen gibt
 
@@ -64,13 +70,13 @@ sie am `window` sucht — bleiben **110 echte Kandidaten** für Modul-Scope.
 | `sonifikation.js` | 20 | 15 | 5 | 75 % |
 | `annotationsbox.js` | 7 | 5 | 2 | 71 % |
 | `kreisgrafik.js` | 13 | 8 | 5 | 61 % |
-| `spine-horizontal.js` | 22 | 12 | 10 | 54 % |
+| `spine-horizontal.js` | 23 | 12 | 11 | 52 % |
 | `kartendekor.js` | 4 | 2 | 2 | 50 % |
-| `uebersichtsrouten.js` | 15 | 6 | 9 | 40 % |
+| `uebersichtsrouten.js` | 16 | 6 | 10 | 37 % |
 | `sketch.js` | 66 | 25 | 41 | 37 % |
-| `datenbereinigung.js` | 35 | 6 | 29 | 17 % |
+| `datenbereinigung.js` | 38 | 12 | 26 | 31 % |
 | `geo-projektion.js` | 9 | 0 | 9 | 0 % |
-| `fotomarker.js` | 13 | 0 | 13 | 0 % |
+| `fotomarker.js` | 14 | 0 | 14 | 0 % |
 | `dom-aufbau.js` | 6 | 0 | 6 | 0 % |
 
 `geo-projektion.js`, `fotomarker.js` und `dom-aufbau.js` geben alles nach
@@ -209,7 +215,7 @@ Canvas-Zustand und Zeichnen-plus-Messen:
 | ~~`kreisgrafik.js:166-171`~~ → `kreisgrafik.js:206` | **Erledigt.** `zeichneKreisLabels()` setzte `noStroke()`, `fill()`, `textFont()`, `textSize()`, `textStyle(BOLD)` und `textAlign()` und stellte keinen davon zurück. Steht jetzt zwischen `push()` und `pop()` | mittel | Der Zustand leckte in alles, was danach zeichnete — nachweislich: der Kommentar bei `uebersichtsrouten.js:334-338` nennt genau diese Funktion als Ursache dafür, dass die Kapitel-Badges ihre Deckkraft erbten |
 | ~~`kreisgrafik.js:200-212`~~ → `kreisgrafik.js:241-246` | **Erledigt an der Ursache.** `zeichneKreiseFuerRun()` und `zeichneFwertPunkte()` klammern sich jetzt selbst; ihr `pop()` gleicht p5s Zwischenspeicher wieder ab. Die Direktzuweisung in `zeichneKreisLabels` blieb bewusst stehen — dort wird ohnehin über `drawingContext.fillText` gezeichnet und die Farbe wechselt je Label. Ihr Kommentar nennt jetzt diesen Grund statt des früheren Notbehelfs | mittel | Die Umgehung sass beim Opfer, nicht bei der Ursache |
 | ~~`kreisgrafik.js:229-240`, `245-254`~~ → `kreisgrafik.js:276`, `:293` | **Erledigt.** Beide setzten `globalCompositeOperation` nach dem Zeichnen hart auf `'source-over'`. Jetzt `push()`/`pop()` — der vorherige Wert wird wiederhergestellt statt angenommen | mittel | Auch `drawHatchedCircle` (`:91`) wurde von `ctx.save()`/`restore()` auf `push()`/`pop()` umgestellt: `restore()` stellt den Canvas zurück, lässt p5s Zwischenspeicher aber falsch |
-| `kreisgrafik.js:98-111` | `zeichneKreiseOrtRuns()` wendet Kapitel-1-Datenregeln an: `WOHNUNG_SAMMELPUNKT_ABSORBIERTE_ORTRUNS`, `GEDANKEN_ORTRUN_UNTERDRUECKT` und die `RUE_NOTRE_DAME_DE_LORETTE_ORT`-Sonderbehandlung, abgesichert über `daten === stationenData` | mittel | Das sind Regeln über die Daten, keine Zeichenentscheidungen. Sie gehören zu ihren Geschwistern in `datenbereinigung.js:90-157`. Der eigene Kommentar (`:100-106`) erklärt, wie fragil die Absicherung ist: die Sets sind reine Namenslisten ohne Kapitelbezug, und ohne den `daten === stationenData`-Test würde etwa Kapitel 3 seinen „Parc Monceau" verlieren |
+| ~~`kreisgrafik.js:98-111`~~ → `datenbereinigung.js:404` | **Erledigt.** Die vier Ausschlussgründe (Route noch nicht so weit, vorzeitige Erwähnung, Kapitel-1-Unterdrückung, Wohnung-Split) standen als Kaskade in der Zeichenschleife. Sie sind zu `ortRunSichtbar()` im Datenmodul geworden; `zeichneKreiseOrtRuns` prüft nur noch eine Zeile | mittel | **Die fünf Namen lagen nie im Zeichenmodul** — sie waren immer in `datenbereinigung.js` deklariert, nur die *Anwendung* stand am falschen Ort. Dabei kam heraus, dass `ortRunsFuerSpine` dieselbe Zwei-Set-Regel mit demselben `daten === stationenData`-Gate ein zweites Mal anwandte; beide nutzen jetzt `istKapitel1Unterdrueckt()` |
 | `kreisgrafik.js:93-151` | `zeichneKreiseOrtRuns()` filtert, projiziert, zählt, zeichnet und sammelt zugleich Label-Kandidaten für die anschliessende Kollisionsauflösung | mittel | Fünf Aufgaben in 58 Zeilen. Der Schnitt zwischen Sammeln und Zeichnen ist bereits angelegt (`labelKandidaten` → `zeichneKreisLabels`) — er müsste nur konsequent bis zur Auswahl der Orte durchgezogen werden |
 
 ### Gegenprobe über alle Module

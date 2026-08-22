@@ -162,24 +162,34 @@ const GEDANKEN_ZIEL_ORT = {
   'imaginierter Sommergarten': 'Café Américain',
 };
 
-// Liefert die ortRun-Namen, die einen eigenen Spine-Eintrag bekommen: jeden
-// Kartenkreis (siehe zeichneKreiseOrtRuns in sketch.js), unter Ausschluss der
-// absorbierten Wohnung-Mini-Erwähnungen UND der Gedanken-Orte (siehe
+// Unterdrückt dieser Ort seinen eigenen Auftritt? Betrifft die absorbierten
+// Wohnung-Mini-Erwähnungen und die Gedanken-Orte (siehe
 // GEDANKEN_ORTRUN_UNTERDRUECKT/GEDANKEN_ZIEL_ORT — die zählen bei ihrem
-// echten Ort mit, bekommen aber keinen eigenen Spine-Eintrag).
-// WOHNUNG_SAMMELPUNKT_ABSORBIERTE_ORTRUNS/GEDANKEN_ORTRUN_UNTERDRUECKT sind
-// reine Namens-Sets ohne Kapitelbezug (siehe deren eigene Kommentare) — nur
-// für Kapitel 1 (daten === stationenData) ausschliessen, sonst kann ein
-// automatisch gebautes Kapitel zufällig denselben ortBasis-Namen für einen
-// eigenen, echten Ort verwenden (z.B. Kapitel 3s "Parc Monceau") und würde
-// hier fälschlich mit unterdrückt — derselbe Fallstrick wie bei
-// zeichneKreiseOrtRuns in sketch.js, dort schon so gegated.
+// echten Ort mit, bekommen aber keinen eigenen Eintrag).
+//
+// Das Kapitel-1-Gate ist der heikle Teil: Beide Sets sind reine Namenslisten
+// ohne Kapitelbezug (siehe deren eigene Kommentare). Ohne die Prüfung
+// daten === stationenData würde ein automatisch gebautes Kapitel, das
+// zufällig denselben ortBasis-Namen für einen eigenen, echten Ort verwendet
+// (z.B. Kapitel 3s "Parc Monceau"), fälschlich mit unterdrückt.
+//
+// Die Regel galt schon immer an zwei Stellen — für die Spine (unten) und für
+// die Kartenkreise (ortRunSichtbar, weiter unten). Sie steht deshalb hier
+// einmal statt zweimal.
+function istKapitel1Unterdrueckt(ort, daten) {
+  if (daten !== stationenData) return false;
+  return WOHNUNG_SAMMELPUNKT_ABSORBIERTE_ORTRUNS.has(ort)
+      || GEDANKEN_ORTRUN_UNTERDRUECKT.has(ort);
+}
+
+// Liefert die ortRun-Namen, die einen eigenen Spine-Eintrag bekommen: jeden
+// Kartenkreis (siehe ortRunSichtbar/zeichneKreiseOrtRuns), unter Ausschluss
+// der oben beschriebenen Fälle.
 function ortRunsFuerSpine(daten) {
-  let istKapitel1 = daten === stationenData;
   return new Set(
     (daten.ortRuns || [])
       .map(r => r.ort)
-      .filter(ort => !istKapitel1 || (!WOHNUNG_SAMMELPUNKT_ABSORBIERTE_ORTRUNS.has(ort) && !GEDANKEN_ORTRUN_UNTERDRUECKT.has(ort)))
+      .filter(ort => !istKapitel1Unterdrueckt(ort, daten))
   );
 }
 
@@ -356,6 +366,27 @@ function groessterKreisRadius(bandCounts, maxRadius = 100, radiusSkala = 1) {
 function istVorzeitigeErwaehnung(r, daten = stationenData) {
   let halteort = (daten.halteorte || []).find(h => h.name === r.ort);
   return !!halteort && halteort.revealIndex !== r.revealIndex;
+}
+
+// Bekommt dieser ortRun beim aktuellen Scrollstand einen eigenen Kartenkreis?
+// Bündelt alle vier Ausschlussgründe an einem Ort — sie standen vorher als
+// Kaskade mitten in der Zeichenschleife von zeichneKreiseOrtRuns
+// (kreisgrafik.js). Es sind Aussagen über die Daten, keine
+// Zeichenentscheidungen, und sie gehören zu ihren Geschwistern hier.
+//
+// punktIndex: Position auf der Route (steuert das Erscheinen).
+// annIndex:   Position in der Annotationsfolge (steuert den Wohnung-Split).
+// Beide sind getrennt nötig — Kapitel 1 lässt sie auseinanderlaufen.
+function ortRunSichtbar(r, punktIndex, annIndex, daten = stationenData) {
+  if (punktIndex < r.revealIndex) return false;
+  if (istVorzeitigeErwaehnung(r, daten)) return false;
+  if (istKapitel1Unterdrueckt(r.ort, daten)) return false;
+  // Zeitabhängig und deshalb nicht im gemeinsamen Kern: Die Rue Notre-Dame de
+  // Lorette gehört bis zum Wohnungswechsel zum Sammelpunkt und bekommt erst
+  // danach einen eigenen Kreis.
+  if (daten === stationenData && r.ort === RUE_NOTRE_DAME_DE_LORETTE_ORT
+      && annIndex < wohnungSplitAi(daten)) return false;
+  return true;
 }
 
 // Zählt, wie viele Annotationen zu ortBasis (String oder Set

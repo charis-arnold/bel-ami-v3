@@ -25,13 +25,16 @@
    zeichneKreiseFuerRun() bzw. anordnung von zeichneFwertPunkte().
 
    --- Abhängigkeiten NACH AUSSEN (Laufzeit) --------------------------------
-   aus datenbereinigung.js (15): KREIS_KATEGORIEN, kreisRadius,
-     groessterKreisRadius, FWERT_PUNKTGROESSE,
-     FWERT_PUNKT_FARBE, hexZuRgb, sammleAnnotationenNachOrtBasis,
-     zaehleBandCounts, wohnungFilterFuerOrt, wohnungSplitAi,
-     istVorzeitigeErwaehnung, WOHNUNG_SAMMELPUNKT_ANKER,
-     WOHNUNG_SAMMELPUNKT_ABSORBIERTE_ORTRUNS, GEDANKEN_ORTRUN_UNTERDRUECKT,
-     RUE_NOTRE_DAME_DE_LORETTE_ORT
+   aus datenbereinigung.js (11): KREIS_KATEGORIEN, kreisRadius,
+     groessterKreisRadius, FWERT_PUNKTGROESSE, FWERT_PUNKT_FARBE, hexZuRgb,
+     sammleAnnotationenNachOrtBasis, zaehleBandCounts, wohnungFilterFuerOrt,
+     ortRunSichtbar, WOHNUNG_SAMMELPUNKT_ANKER
+
+   Die fünf Namen der Kapitel-1-Ausschlussregeln (wohnungSplitAi,
+   istVorzeitigeErwaehnung, WOHNUNG_SAMMELPUNKT_ABSORBIERTE_ORTRUNS,
+   GEDANKEN_ORTRUN_UNTERDRUECKT, RUE_NOTRE_DAME_DE_LORETTE_ORT) werden hier
+   nicht mehr gebraucht — die Entscheidung trifft ortRunSichtbar() in
+   datenbereinigung.js.
    aus geo-projektion.js (3): lonLatToScreen, mapOffsetX, mapOffsetY
    aus sketch.js (2): stationenData, kapitel1ZoomAmount (blendet das
      Startpunkt-Label ein)
@@ -122,20 +125,11 @@ function zeichneKreiseOrtRuns(punktIndex, annIndex, activeBbox, offsetX = mapOff
   let labelKandidaten = [];
 
   runs.forEach(r => {
-    if (punktIndex < r.revealIndex) return;
-    if (istVorzeitigeErwaehnung(r, daten)) return;
-    // Die folgenden drei Ausnahmen gehören zu Kapitel-1-eigenen Mechanismen
-    // (Gedanken-Spalte, Wohnung/Rue-Notre-Dame-Split) und dürfen nur dort
-    // greifen: sie sind reine Namens-Sets ohne Kapitelbezug, und mehrere
-    // automatisch gebaute Kapitel (z.B. Kapitel 3) verwenden zufällig
-    // denselben ortBasis-Namen (z.B. "Parc Monceau") für einen eigenen,
-    // echten Ort — ohne diesen Kapitel-1-Filter würde dessen Kreis
-    // faelschlich komplett unterdrückt.
-    if (daten === stationenData) {
-      if (WOHNUNG_SAMMELPUNKT_ABSORBIERTE_ORTRUNS.has(r.ort)) return;
-      if (GEDANKEN_ORTRUN_UNTERDRUECKT.has(r.ort)) return;
-      if (r.ort === RUE_NOTRE_DAME_DE_LORETTE_ORT && annIndex < wohnungSplitAi(daten)) return;
-    }
+    // Wer einen eigenen Kreis bekommt, entscheidet datenbereinigung.js — die
+    // vier Ausschlussgründe (Route noch nicht so weit, vorzeitige Erwähnung,
+    // Kapitel-1-Unterdrückung, Wohnung-Split) sind Aussagen über die Daten,
+    // nicht über das Zeichnen. Sie standen früher als Kaskade hier.
+    if (!ortRunSichtbar(r, punktIndex, annIndex, daten)) return;
     // Alle ortRuns wachsen live mit annIndex (nicht nur die Hauptorte) —
     // so löst wirklich jede Annotation irgendwo auf der Karte eine
     // sichtbare Änderung aus, statt dass Nebenerwähnungen als fertiger,
