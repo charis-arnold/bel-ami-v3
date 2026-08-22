@@ -10,10 +10,12 @@
 
    --- Abhängigkeiten NACH AUSSEN (alle erst zur Laufzeit) -------------------
    aus sketch.js:           kapitelAnsichtsModus, zoomedKapitel, stationenData,
-                            zeichneKreiseFuerRun, zeichneFwertPunkte
+                            datenFuerKapitel, zeichneKreiseFuerRun,
+                            zeichneFwertPunkte
    aus datenbereinigung.js: ROUTE_COLOR_RGB, groessterKreisRadius,
                             wohnungFilterFuerOrt, sammleAnnotationenNachOrtBasis,
-                            zaehleBandCounts, zaehleAnnotationenLiveNachOrtBasis
+                            zaehleBandCounts, zaehleAnnotationenLiveNachOrtBasis,
+                            baueSpineDaten, ortRunsFuerSpine
    aus sonifikation.js:     SONIFIKATION_GESAMTDAUER_SEK, sonifikationSpieltGerade,
                             beendeSonifikationAudio, spieleKapitel1SonifikationAudio,
                             spieleKapitelSonifikationAudio
@@ -22,7 +24,8 @@
    --- Wer von aussen hierher greift ----------------------------------------
    setup()                      hängt toggleGrafikPlay an den Play-Button
    baueKapitelRegister()        ruft setzeKapitelAnsichtModus()
-   draw()                       befüllt spineEintraegep5/spineEintraegeKapitel,
+   draw()                       ruft stelleSpineDatenBereit() (befüllt
+                                spineEintraegep5/spineEintraegeKapitel),
                                 ruft aktualisiereGrafikFortschritt() und
                                 zeichneSpineHorizontal(), liest grafikSpielt
                                 und grafikPlayAusblendStart
@@ -62,10 +65,36 @@ let grafikPlayAusblendStart = null;
 // Spine in p5
 // ---------------------------------------------------------------------------
 
-// Spine-Daten: einmal beim Start berechnen (baueSpineDaten() lebt in
-// datenbereinigung.js und gibt das Array zurück, siehe draw())
+// Spine-Daten: einmal berechnen und dann halten (baueSpineDaten() lebt in
+// datenbereinigung.js und gibt das Array zurück, siehe
+// stelleSpineDatenBereit() gleich unten)
 let spineEintraegep5 = [];  // { typ, text, rv, stationIdx, kreisId }
 let spineEintraegeKapitel = {}; // Cache je Kapitelnummer (02–18), lazy befüllt beim ersten Zoom
+
+// Baut die beiden Caches auf, sobald die Daten da sind. Von draw() einmal je
+// Frame gerufen — vorher standen diese beiden Zuweisungen direkt in draw(),
+// also schrieb sketch.js in den Zustand dieses Moduls hinein.
+//
+// kapitelNr ist das zuletzt gezoomte Kapitel (letzterZoomKapitel in
+// sketch.js, nicht zoomedKapitel): Das generische Spine-Panel für 02–18 soll
+// während des Ausblendens (kapitelZoomAmount -> 0) weiter die richtigen Daten
+// zeigen, statt abrupt zu verschwinden. Kapitel 1 hat sein eigenes, live
+// wachsendes Panel und läuft über spineEintraegep5.
+//
+// Die Hauptorte kommen dynamisch aus ortRunsFuerSpine(daten), nicht mehr aus
+// einer je Kapitel von Hand gepflegten Liste (siehe KAPITEL_MIT_SPINE_PANEL
+// in datenbereinigung.js).
+function stelleSpineDatenBereit(kapitelNr) {
+  if (spineEintraegep5.length === 0 && stationenData.ortRuns) {
+    spineEintraegep5 = baueSpineDaten(stationenData, ortRunsFuerSpine(stationenData));
+  }
+  if (kapitelNr && !spineEintraegeKapitel[kapitelNr]) {
+    let daten = datenFuerKapitel(kapitelNr);
+    if (daten && daten.ortRuns) {
+      spineEintraegeKapitel[kapitelNr] = baueSpineDaten(daten, ortRunsFuerSpine(daten));
+    }
+  }
+}
 
 // Ansichtsmodus direkt setzen (Menübalken-Einträge "Plan"/"Graph", siehe
 // baueKapitelRegister) — setzt NICHT auf annIndex/Scroll auf, sondern

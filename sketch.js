@@ -277,24 +277,13 @@ function getScrollProgress() {
 function draw() {
   background(220);
 
-  if (spineEintraegep5.length === 0 && stationenData.ortRuns) {
-    spineEintraegep5 = baueSpineDaten(stationenData, ortRunsFuerSpine(stationenData));
-  }
-  // Generisches Spine-Panel fürs jeweils gezoomte Kapitel (02–18, ausser 01 —
-  // das hat sein eigenes live wachsendes Panel), einmal berechnet und dann
-  // gecacht — die Hauptorte kommen aber wie bei Kapitel 1 dynamisch aus
-  // ortRunsFuerSpine(daten), nicht mehr aus einer je Kapitel von Hand
-  // gepflegten Liste (siehe KAPITEL_MIT_SPINE_PANEL in datenbereinigung.js).
   // letzterZoomKapitel bleibt auch nach dem Schliessen (zoomedKapitel=null)
-  // gesetzt, damit das Panel während des Ausblendens (kapitelZoomAmount -> 0)
-  // weiter die richtigen Daten zeigt, statt abrupt zu verschwinden.
+  // gesetzt, damit das Spine-Panel während des Ausblendens
+  // (kapitelZoomAmount -> 0) weiter die richtigen Daten zeigt, statt abrupt
+  // zu verschwinden. Der Aufbau der Caches liegt in spine-horizontal.js,
+  // dem die beiden Arrays gehören.
   if (zoomedKapitel) letzterZoomKapitel = zoomedKapitel;
-  if (letzterZoomKapitel && !spineEintraegeKapitel[letzterZoomKapitel]) {
-    let daten = datenFuerKapitel(letzterZoomKapitel);
-    if (daten && daten.ortRuns) {
-      spineEintraegeKapitel[letzterZoomKapitel] = baueSpineDaten(daten, ortRunsFuerSpine(daten));
-    }
-  }
+  stelleSpineDatenBereit(letzterZoomKapitel);
   let targetCrop = coverCrop(ch1Image.width, ch1Image.height);
   let targetBbox = cropToBbox(targetCrop, ch1ImgBbox, ch1Image.width, ch1Image.height);
 
