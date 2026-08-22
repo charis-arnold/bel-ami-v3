@@ -29,6 +29,20 @@
    dieser Datei ruft eine Funktion auf — beim Laden wird nichts ausgewertet.
 ============================================================================= */
 
+// --- Modulkapselung ------------------------------------------------------
+// Alles bis zum Exportblock am Dateiende ist modulintern: 36 der 44
+// Top-Level-Namen werden von keinem anderen Modul gelesen (siehe
+// docs/best-practices-review.md, Punkt "Globale Variablen").
+//
+// Der Rumpf ist bewusst NICHT eingerückt. Bei 656 Zeilen würde eine
+// Einrückung jede einzelne Zeile als geändert markieren — der Diff wäre
+// nicht mehr prüfbar und git blame für die ganze Datei wertlos. Die
+// schliessende Klammer steht ganz unten, direkt nach dem Export.
+//
+// Kein 'use strict': Das wäre eine Verhaltensänderung über die Kapselung
+// hinaus und gehört, wenn überhaupt, in einen eigenen Schritt.
+(function () {
+
 // Die sieben kapitelübergreifenden Orte der Ortsveränderung (Schlussakt,
 // siehe zeichneOrtsveraenderung). Jeder ist an seiner echten Koordinate
 // verankert; die senkrechte Linie darunter ist eine Zwischenphase, an deren
@@ -654,3 +668,19 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
   textAlign(LEFT, CENTER); // zurücksetzen — andere Zeichenfunktionen erwarten das
   textStyle(NORMAL);
 }
+
+
+// --- Öffentliche Schnittstelle -------------------------------------------
+// Die einzigen acht Namen, die dieses Modul nach aussen gibt — alle acht
+// werden ausschliesslich von sketch.js gelesen. Alles Übrige bleibt in der
+// Kapsel oben.
+window.OV_KARTE_AUS = OV_KARTE_AUS;
+window.OV_ZOOM = OV_ZOOM;
+window.SK_EINBLENDEN = SK_EINBLENDEN;
+window.SK_RAUSZOOM = SK_RAUSZOOM;
+window.SK_TEXT = SK_TEXT;
+window.ovPhase = ovPhase;
+window.ovZoomBbox = ovZoomBbox;
+window.zeichneOrtsveraenderung = zeichneOrtsveraenderung;
+
+})(); // Ende der Modulkapselung, siehe Kommentar oben

@@ -7,7 +7,8 @@ verbesserungswürdig ist, steht getrennt davon in
 
 **Randbedingung, aus der sich alles Weitere ergibt:** Das Projekt nutzt **keine
 ES-Module**. Jede Datei ist ein eigenes `<script>`-Tag, alle Funktionen und
-Variablen landen im globalen Scope. Es gibt kein `import`/`export` — wer worauf
+Variablen landen im globalen Scope — mit einer Ausnahme: `ortsveraenderung.js`
+steht in einer IIFE und gibt nur acht Namen über `window.*` heraus. Es gibt kein `import`/`export` — wer worauf
 zugreift, ist nirgends deklariert, sondern ergibt sich aus der Reihenfolge in
 `index.html` und dem Zeitpunkt des Zugriffs.
 
@@ -128,7 +129,7 @@ eigenen Header-Abschnitt aus.
 | 2 | `geo-projektion.js` | 148 | `lonLatToScreen`, `coverCrop`, `cropToBbox`, `bboxToImgCrop` | `startBbox`, `uebersichtBbox`, `ch1ImgBbox`, `mapOffsetX`, `mapOffsetY` |
 | 3 | `kreisgrafik.js` | 463 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `zeichneKreisLabels`, `leereBandCounts` | `HATCH_SPACING`, `FWERT_PUNKT_DURCHMESSER`, `FWERT_PUNKT_FARBE_RGB` |
 | 4 | `kartendekor.js` | 188 | `zeichneMassstabsleiste`, `zeichneWindrose`, `haversineMeter` | `MASSSTAB_SCHRITTE` |
-| 5 | `ortsveraenderung.js` | 657 | `zeichneOrtsveraenderung`, `ovPhase`, `ovZoomBbox`, `ovBerechneLayout` | `VERGLEICHS_KNOTEN`, `OV_*`/`SK_*`-Phasenfenster, `ovLayout`, `ovProKapitel` |
+| 5 | `ortsveraenderung.js` | 687 | `zeichneOrtsveraenderung`, `ovPhase`, `ovZoomBbox` | `OV_KARTE_AUS`/`OV_ZOOM`/`SK_*`-Phasenfenster — **als einziges Modul gekapselt**, alles Übrige ist modulintern |
 | 6 | `spine-horizontal.js` | 462 | `zeichneSpineHorizontal`, `toggleGrafikPlay`, `setzeKapitelAnsichtModus`, `stelleSpineDatenBereit`, `spineLayout`, `aktualisiereGrafikFortschritt` | `spineEintraegep5`, `spineEintraegeKapitel`, `grafikSpielt`, `grafikFortschritt`, `SPINE_*` |
 | 7 | `fotomarker.js` | 133 | `zeichneFotoMarker`, `merkeKartenlage`, `oeffneFotoPopup`, `schliesseFotoPopup` | `fotoMarkerListe`, `letzteActiveBbox`, `letzterFotoOffsetX/Y`, `FOTO_MARKER_TREFFER_RADIUS` |
 | 8 | `annotationsbox.js` | 124 | `annotationBoxPosition` | `ANNOTATION_BOX_POSITIONEN`, `annotationBoxPositionCache` |
