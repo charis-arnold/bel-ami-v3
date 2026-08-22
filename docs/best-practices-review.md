@@ -36,7 +36,7 @@ sondern nur: faktisch greift kein anderes Modul darauf zu.
 | **mittel** | ~~`draw()` schreibt in Variablen von drei fremden Modulen~~ — **erledigt**, alle fünf Zugriffe verlagert | Globale Variablen |
 | **mittel** | ~~`zeichneKreisLabels()` setzt sechs p5-Zeichenzustände und stellt keinen zurück~~ — **erledigt**, `push()`/`pop()` | Single Responsibility |
 | **mittel** | ~~`zeichneUebersichtsrouten()` zeichnet und setzt dabei `kapitelHover`~~ — **erledigt**, `draw()` zieht nichts mehr nach | Single Responsibility |
-| **mittel** | 119 der 262 globalen Namen sind modulintern — **1 von 12 Modulen gekapselt** (`ortsveraenderung.js`, 36 Namen), 83 Kandidaten offen | Globale Variablen |
+| **mittel** | 124 der 262 Namen sind modulintern; davon 36 tatsächlich gekapselt (**1 von 12 Modulen**), 83 Kandidaten offen | Globale Variablen |
 | **mittel** | ~~Kapitel-1-Datenregeln stehen im Zeichenmodul `kreisgrafik.js`~~ — **erledigt**, jetzt `ortRunSichtbar()` in `datenbereinigung.js` | Single Responsibility |
 | **mittel** | ~~`zeichneHalbkreis`/`zeichneVollkreis` setzen `globalCompositeOperation` hart zurück~~ — **erledigt**, `push()`/`pop()` | Single Responsibility |
 | **niedrig** | `draw()` läuft mit 557 Zeilen als eine Funktion | Single Responsibility |
@@ -70,20 +70,32 @@ nichts mehr gefunden, was die Zuordnung noch verschieben würde.
 
 ### Wie viel jedes Modul nach aussen gibt
 
-| Modul | Namen gesamt | nur modulintern | extern genutzt | Anteil intern |
-|---|---|---|---|---|
-| `ortsveraenderung.js` | 44 | 36 | 8 | 81 % |
-| `sonifikation.js` | 21 | 17 | 4 | 80 % |
-| `annotationsbox.js` | 7 | 5 | 2 | 71 % |
-| `kreisgrafik.js` | 13 | 8 | 5 | 61 % |
-| `spine-horizontal.js` | 23 | 12 | 11 | 52 % |
-| `kartendekor.js` | 4 | 2 | 2 | 50 % |
-| `uebersichtsrouten.js` | 16 | 6 | 10 | 37 % |
-| `sketch.js` | 67 | 26 | 41 | 38 % |
-| `datenbereinigung.js` | 38 | 12 | 26 | 31 % |
-| `geo-projektion.js` | 9 | 0 | 9 | 0 % |
-| `fotomarker.js` | 14 | 0 | 14 | 0 % |
-| `dom-aufbau.js` | 6 | 0 | 6 | 0 % |
+| Modul | gekapselt | Namen gesamt | nur modulintern | extern genutzt | Anteil intern |
+|---|---|---|---|---|---|
+| `ortsveraenderung.js` | **ja** (8 Exporte) | 44 | 36 | 8 | 81 % |
+| `sonifikation.js` | nein | 21 | 17 | 4 | 80 % |
+| `annotationsbox.js` | nein | 7 | 5 | 2 | 71 % |
+| `kreisgrafik.js` | nein | 13 | 8 | 5 | 61 % |
+| `spine-horizontal.js` | nein | 23 | 12 | 11 | 52 % |
+| `kartendekor.js` | nein | 4 | 2 | 2 | 50 % |
+| `sketch.js` | nein | 67 | 26 | 41 | 39 % |
+| `uebersichtsrouten.js` | nein | 16 | 6 | 10 | 38 % |
+| `datenbereinigung.js` | nein | 38 | 12 | 26 | 32 % |
+| `geo-projektion.js` | nein | 9 | 0 | 9 | 0 % |
+| `fotomarker.js` | nein | 14 | 0 | 14 | 0 % |
+| `dom-aufbau.js` | nein | 6 | 0 | 6 | 0 % |
+| **Summe** | **1 von 12** | **262** | **124** | **138** | 47 % |
+
+Stand am Code erhoben, nicht aus dieser Doku fortgeschrieben: Die Prüfung
+sucht strukturell nach einer umschliessenden sofort ausgeführten Funktion
+(Klammertiefe auf kommentarbereinigtem Quelltext), nicht nach einer bestimmten
+Schreibweise. **Nur `ortsveraenderung.js` ist gekapselt** — bei allen elf
+anderen stehen die Deklarationen weiterhin auf Datei-Toplevel.
+
+Von den 124 modulinternen Namen sind damit **36 aus dem globalen Scope
+entfernt**. Von den verbleibenden 88 müssen fünf global bleiben (die
+p5-Hooks `preload`, `setup`, `draw`, `mousePressed`, `windowResized`) —
+**83 echte Kandidaten offen.**
 
 `geo-projektion.js`, `fotomarker.js` und `dom-aufbau.js` geben alles nach
 aussen — bei ihnen ist nichts zu kapseln. Sie sind reine Werkzeugkästen.
@@ -93,12 +105,12 @@ aussen — bei ihnen ist nichts zu kapseln. Sie sind reine Werkzeugkästen.
 | Fundstelle | Befund | Priorität | Begründung |
 |---|---|---|---|
 | ~~`ortsveraenderung.js:42-302`~~ | **Erledigt.** Die Datei steht in einer IIFE und gibt nur acht Namen über `window.*` heraus; 36 sind modulintern | mittel | Erster gekapselter Modul. Der Rumpf ist bewusst nicht eingerückt — bei 656 Zeilen hätte das jede Zeile als geändert markiert und `git blame` zerstört; so ist der Diff eine reine Einfügung von 30 Zeilen. Nachgewiesen: Exportliste exakt (8 gebraucht, 8 exportiert, nichts fehlt oder ist überflüssig), Rumpf byteweise unverändert, alle 36 internen Namen von aussen unsichtbar, alle 8 Exportwerte identisch zur Vorher-Fassung |
-| `sonifikation.js:44-184` | 15 von 20 Namen modulintern, darunter der gesamte Zustand (`sonifikationDaten`, `sonifikationBereit`, `sonifikationSpielplan`, `sonifikationTimeoutId`) | mittel | Das Modul ist bereits sauber geschnitten — es lädt zuletzt und niemand greift auf seine Interna zu. Kapselung ist hier reine Formsache und entsprechend risikoarm |
+| `sonifikation.js:44-184` | 17 von 21 Namen modulintern, darunter der gesamte Zustand (`sonifikationDaten`, `sonifikationBereit`, `sonifikationSpielplan`, `sonifikationTimeoutId`) | mittel | Das Modul ist bereits sauber geschnitten — es lädt zuletzt und niemand greift auf seine Interna zu. Kapselung ist hier reine Formsache und entsprechend risikoarm |
 | `spine-horizontal.js:150-178` | Die neun `SPINE_*`-Layoutkonstanten, `spineLayoutCache`, `spineLayout()` und `grafikStartZeit` sind modulintern | mittel | `SPINE_RAND_LINKS` und Konsorten sind Layout-Details, die im globalen Namensraum nichts verloren haben |
 | `kreisgrafik.js:56-333` | `HATCH_SPACING`, `drawHatchedCircle`, `zeichneKreisLabels`, `zeichneHalbkreis`, `zeichneVollkreis` sowie `FWERT_PUNKT_FARBE_RGB` und die beiden `FWERT_PUNKT_*_ABSTAND`-Konstanten sind modulintern | mittel | Vier davon sind Zeichen-Primitive, die nur `zeichneKreiseFuerRun` und `zeichneKreiseOrtRuns` aufrufen. `FWERT_PUNKT_DURCHMESSER` muss dagegen global bleiben — `dom-aufbau.js:212` baut die Legende daraus |
-| `sketch.js:6-158` | 25 Namen modulintern, u. a. `bgImage`, `bgImage2`, `ch1Image`, `kapitel03Data`, `weitereKapitelDaten`, `letzterZoomKapitel` und sechs DOM-Handles (`heroText`, `begleitTexte`, `kapitelEinstiegsTexte`, `annotationBoxEl`, `schlusstextEl`, `naechstesKapitelEl`) | niedrig | Hier ist der Nutzen am kleinsten: `sketch.js` muss die fünf p5-Hooks global lassen, eine IIFE ginge also nur um sie herum. Der Aufwand steht in schlechtem Verhältnis zum Gewinn |
+| `sketch.js:6-158` | 26 Namen modulintern, u. a. `bgImage`, `bgImage2`, `ch1Image`, `kapitel03Data`, `weitereKapitelDaten`, `letzterZoomKapitel` und sechs DOM-Handles (`heroText`, `begleitTexte`, `kapitelEinstiegsTexte`, `annotationBoxEl`, `schlusstextEl`, `naechstesKapitelEl`) | niedrig | Hier ist der Nutzen am kleinsten: `sketch.js` muss die fünf p5-Hooks global lassen, eine IIFE ginge also nur um sie herum. Der Aufwand steht in schlechtem Verhältnis zum Gewinn |
 | `uebersichtsrouten.js:87-513` | `KAPITEL_SCHEIBE_GRUNDANTEIL`, `KAPITEL_NACHGLUEHEN`, `scheibenCache`, `kapitelHitze`, `setzeKapitelAnsichtZurueck`, `oeffneKapitelZoom` | niedrig | Kleiner Posten, und `oeffneKapitelZoom` ist trotz nur interner Nutzung ein Name, den man beim Lesen erwartet |
-| `datenbereinigung.js:92-352` | `WOHNUNG_SPLIT_ANNOTATION_ID`, `WOHNUNG_VOR_SPLIT_FILTER`, `RUE_NOTRE_DAME_FILTER`, `GEDANKEN_FILTER`, `GEDANKEN_ZIEL_ORT`, `valenzBucket` | niedrig | Sechs von 34 — das Modul ist als gemeinsame Grundlage gedacht und gibt zu Recht fast alles heraus |
+| `datenbereinigung.js:92-352` | `WOHNUNG_SPLIT_ANNOTATION_ID`, `WOHNUNG_VOR_SPLIT_FILTER`, `RUE_NOTRE_DAME_FILTER`, `GEDANKEN_FILTER`, `GEDANKEN_ZIEL_ORT`, `valenzBucket` | niedrig | Zwölf von 38 — das Modul ist als gemeinsame Grundlage gedacht und gibt zu Recht fast alles heraus |
 | `annotationsbox.js:54-58` | Die vier Mass-Konstanten und `annotationBoxPositionCache` | niedrig | Nur fünf Namen; das Modul ist ohnehin das kleinste |
 | `kartendekor.js:25-36` | `haversineMeter`, `MASSSTAB_SCHRITTE` | niedrig | Zwei Namen. `geo-projektion.js:34` verweist ausdrücklich auf `haversineMeter` — beim Kapseln müsste dieser Kommentar mit |
 
@@ -474,15 +486,24 @@ Alle Zahlen sind aus dem Code erhoben, keine aus den Kommentaren übernommen.
 Geprüft wurden die zwölf Module aus `index.html` plus `index.html` selbst;
 `style.css` und `docs/` nur, wo sie Verweise auf Code enthalten.
 
-- **Deklarationen (254 Namen):** Quelltext zuerst kommentar- und
-  stringbereinigt, dann Top-Level-`function`/`let`/`const`/`var` je Datei
-  gezählt — Klammertiefe mitgeführt, damit Deklarationen *innerhalb* von
-  Funktionen nicht mitzählen. Mehrfachdeklarationen auf einer Zeile
-  (`let a, b, c;`) aufgelöst.
-- **Modulintern vs. extern:** für jeden der 254 Namen über alle Dateien
+- **Deklarationen (zuletzt 262 Namen):** Quelltext zuerst kommentar- und
+  stringbereinigt, dann `function`/`let`/`const`/`var` je Datei gezählt —
+  Klammertiefe mitgeführt, damit Deklarationen *innerhalb* von Funktionen
+  nicht mitzählen. Mehrfachdeklarationen auf einer Zeile (`let a, b, c;`)
+  aufgelöst.
+  **Falle bei gekapselten Modulen:** Steht die Datei in einer IIFE, liegen
+  ihre Deklarationen auf Klammertiefe 1, nicht 0 — ein Zähler, der nur Tiefe 0
+  nimmt, meldet für `ortsveraenderung.js` schlicht **null Namen**. Die
+  Erhebung muss deshalb zuerst feststellen, ob eine Datei gekapselt ist, und
+  dann auf der passenden Tiefe zählen.
+- **Modulintern vs. extern:** für jeden Top-Level-Namen über alle Dateien
   gesucht, mit Wortgrenzen und ohne Punkt-Zugriffe (`obj.name` zählt nicht).
   Zeilen wurden gezählt, nicht nur Dateien, damit „einmal erwähnt" von
   „durchgehend benutzt" unterscheidbar bleibt.
+  **Der Spread-Operator muss vorher entschärft werden** (`...NAME` → Leerraum),
+  sonst verwirft das Muster ihn als Punkt-Zugriff. Diese Falle ist bei einer
+  Wiederholung dieser Erhebung erneut zugeschnappt und hat `sketch.js` um
+  einen Namen falsch einsortiert — siehe auch [Toter Code](#toter-code).
 - **Toter Code — Aufruf-Suche über das gesamte Projekt, nicht dateiweise:**
   Aus allen zwölf Modulen wurde ein Aufruf-Graph gebaut (Funktionsrumpf →
   jeder darin vorkommende Funktionsname), anschliessend von den
@@ -520,7 +541,7 @@ Geprüft wurden die zwölf Module aus `index.html` plus `index.html` selbst;
   auch die Schriftwerte mit abdeckt.
 - **Namensverdeckung:** aus allen zwölf Modulen die Parameter (auch von
   Pfeilfunktionen und mit Destrukturierung) und alle lokalen
-  `let`/`const`/`var` extrahiert und gegen die 254 globalen Projektnamen
+  `let`/`const`/`var` extrahiert und gegen alle globalen Projektnamen
   geschnitten. Für p5-Globals reichte das nicht — deren Namensraum ist von
   aussen nicht abzählbar. Stattdessen umgekehrt gefragt: Welche p5-Namen
   benutzt das Projekt überhaupt? Nur deren Verdeckung kann je etwas bewirken.
@@ -542,6 +563,12 @@ Geprüft wurden die zwölf Module aus `index.html` plus `index.html` selbst;
   Randfälle: leeres Objekt, fehlende Kategorien, Werte über dem 100px-Deckel,
   `unrated` allein. Dazu vier Skalierungsstufen und beide `maxRadius`-Varianten
   (100 und `Infinity`). 7592 Vergleiche, 0 Abweichungen.
+- **Kapselungsstand:** strukturell geprüft, nicht per Textsuche nach einer
+  bestimmten Schreibweise: erste Code-Zeile nach dem Header auf eine
+  umschliessende sofort ausgeführte Funktion getestet (auch `(() => {…})()`,
+  `!function`, führendes Semikolon), dann die Klammertiefe über die ganze
+  Datei mitgeführt. Zusätzlich für gekapselte Module geprüft, ob der
+  Exportblock exakt der Menge der von aussen gebrauchten Namen entspricht.
 - **Zeichenzustand:** alle `push()`/`pop()`-, `save()`/`restore()`- und
   `textStyle`/`textAlign`/`textFont`-Aufrufe über alle Module aufgelistet und
   gegeneinander gehalten, um zu bestimmen, welche Module aufräumen und welche
