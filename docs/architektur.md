@@ -126,7 +126,7 @@ eigenen Header-Abschnitt aus.
 |---|---|---|---|---|
 | 1 | `datenbereinigung.js` | 469 | `bereinigeStationenDaten`, `baueSpineDaten`, `sammleAnnotationenNachOrtBasis`, `zaehleBandCounts`, `zaehleAnnotationenLiveNachOrtBasis`, `ortRunsFuerSpine`, `kreisRadius`, `groessterKreisRadius`, `hexZuRgb` | `KREIS_KATEGORIEN`, `SCROLL_MEILENSTEINE`, `ROUTE_COLOR_RGB`, `FWERT_*`, `GEDANKEN_*`, `WOHNUNG_*` |
 | 2 | `geo-projektion.js` | 148 | `lonLatToScreen`, `coverCrop`, `cropToBbox`, `bboxToImgCrop` | `startBbox`, `uebersichtBbox`, `ch1ImgBbox`, `mapOffsetX`, `mapOffsetY` |
-| 3 | `kreisgrafik.js` | 426 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `zeichneKreisLabels`, `leereBandCounts` | `HATCH_SPACING`, `FWERT_PUNKT_DURCHMESSER`, `FWERT_PUNKT_FARBE_RGB` |
+| 3 | `kreisgrafik.js` | 469 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `zeichneKreisLabels`, `leereBandCounts` | `HATCH_SPACING`, `FWERT_PUNKT_DURCHMESSER`, `FWERT_PUNKT_FARBE_RGB` |
 | 4 | `kartendekor.js` | 188 | `zeichneMassstabsleiste`, `zeichneWindrose`, `haversineMeter` | `MASSSTAB_SCHRITTE` |
 | 5 | `ortsveraenderung.js` | 657 | `zeichneOrtsveraenderung`, `ovPhase`, `ovZoomBbox`, `ovBerechneLayout` | `VERGLEICHS_KNOTEN`, `OV_*`/`SK_*`-Phasenfenster, `ovLayout`, `ovProKapitel` |
 | 6 | `spine-horizontal.js` | 435 | `zeichneSpineHorizontal`, `toggleGrafikPlay`, `setzeKapitelAnsichtModus`, `spineLayout`, `aktualisiereGrafikFortschritt` | `spineEintraegep5`, `spineEintraegeKapitel`, `grafikSpielt`, `grafikFortschritt`, `SPINE_*` |

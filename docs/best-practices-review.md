@@ -7,8 +7,10 @@ vom 22. August 2026 über alle zwölf Module (4532 Zeilen) plus `index.html`.
 **Stand der Umsetzung.** Der Befund wurde am 22. August 2026 erhoben. Seither
 umgesetzt: die Konsolidierung der Radius-Formel samt der beiden daran
 hängenden Befunde (Rückgabewert von `zeichneKreiseFuerRun()`, Namensverdeckung
-in `zeichneFwertPunkte()`) sowie der doppelte Vollscan pro Frame samt dem
-doppelten `wohnungFilterFuerOrt()`-Aufruf. Die betroffenen Zeilen unten sind als **erledigt**
+in `zeichneFwertPunkte()`), der doppelte Vollscan pro Frame samt dem
+doppelten `wohnungFilterFuerOrt()`-Aufruf sowie die drei Canvas-Zustands-
+Befunde in `kreisgrafik.js` (dort klammern sich jetzt alle sechs zeichnenden
+Funktionen einheitlich mit `push()`/`pop()`). Die betroffenen Zeilen unten sind als **erledigt**
 markiert und tragen die Fundstelle im heutigen Code. Alles Übrige steht
 unverändert offen. Die Namensverdeckung wurde bei dieser Gelegenheit erstmals
 systematisch über alle Module geprüft — Ergebnis unter
@@ -30,11 +32,11 @@ sondern nur: faktisch greift kein anderes Modul darauf zu.
 | **hoch** | ~~`zeichneKreiseFuerRun()` liefert den Radius nur als Nebenprodukt des Zeichnens~~ — **erledigt**, die Funktion gibt nichts mehr zurück | Single Responsibility |
 | **hoch** | ~~Parameter `kreisRadius` verdeckt die gleichnamige globale Funktion~~ — **erledigt**, heisst jetzt `radius` | Globale Variablen |
 | **mittel** | `draw()` schreibt in Variablen von drei fremden Modulen | Globale Variablen |
-| **mittel** | `zeichneKreisLabels()` setzt sechs p5-Zeichenzustände und stellt keinen zurück | Single Responsibility |
+| **mittel** | ~~`zeichneKreisLabels()` setzt sechs p5-Zeichenzustände und stellt keinen zurück~~ — **erledigt**, `push()`/`pop()` | Single Responsibility |
 | **mittel** | `zeichneUebersichtsrouten()` zeichnet und setzt dabei `kapitelHover` | Single Responsibility |
 | **mittel** | 110 der 254 globalen Namen werden nur in ihrem eigenen Modul gebraucht | Globale Variablen |
 | **mittel** | Kapitel-1-Datenregeln stehen im Zeichenmodul `kreisgrafik.js` | Single Responsibility |
-| **mittel** | `zeichneHalbkreis`/`zeichneVollkreis` setzen `globalCompositeOperation` hart zurück statt wiederherzustellen | Single Responsibility |
+| **mittel** | ~~`zeichneHalbkreis`/`zeichneVollkreis` setzen `globalCompositeOperation` hart zurück~~ — **erledigt**, `push()`/`pop()` | Single Responsibility |
 | **niedrig** | `draw()` läuft mit 557 Zeilen als eine Funktion | Single Responsibility |
 | **niedrig** | `noLoop()`/`redraw()` wäre möglich, aber der Umbau ist gross und der Gewinn klein | draw()-Loop |
 | **niedrig** | Farbwerte aus `KREIS_KATEGORIEN` werden an drei Stellen in drei Formate übersetzt | DRY |
@@ -188,9 +190,9 @@ Canvas-Zustand und Zeichnen-plus-Messen:
 | Fundstelle | Befund | Priorität | Begründung |
 |---|---|---|---|
 | ~~`kreisgrafik.js:271-326`~~ → `kreisgrafik.js:279` | **Erledigt.** `zeichneKreiseFuerRun()` zeichnete und gab zugleich `groessterHatchRadius` zurück — ein Nebenprodukt der Zeichenschleife. Die Funktion gibt jetzt nichts mehr zurück und holt den Wert vorab über `groessterKreisRadius()` (`:293`); die drei Aufrufer tun dasselbe | **hoch** | Das war die Ursache der fünf Formel-Kopien: Wer die Grösse VOR dem Zeichnen brauchte, musste sie nachbauen. In `spine-horizontal.js` wurde die Zeichenschleife dabei einfacher — der Wert lag dort als `k.radius` längst bereit |
-| `kreisgrafik.js:166-171` | `zeichneKreisLabels()` setzt `noStroke()`, `fill()`, `textFont()`, `textSize()`, `textStyle(BOLD)`, `textAlign()` — und stellt keinen davon zurück. Kein `push()`/`pop()` | mittel | Der Zustand leckt in alles, was danach zeichnet. Die anderen Module räumen auf: `ortsveraenderung.js:654` tut es mit dem ausdrücklichen Kommentar „zurücksetzen — andere Zeichenfunktionen erwarten das", ebenso `uebersichtsrouten.js:459`, `fotomarker.js:101`, `spine-horizontal.js:440`. `kreisgrafik.js` ist die Ausnahme von einer Konvention, die sonst gilt |
-| `kreisgrafik.js:200-212` | Der Kommentar erklärt, dass p5s Füllfarben-Zwischenspeicher von den direkten `fillStyle`-Zuweisungen in `zeichneKreiseFuerRun`/`zeichneFwertPunkte` umgangen wird — und umgeht ihn deshalb hier ebenfalls | mittel | Die Umgehung sitzt beim Opfer, nicht bei der Ursache. `zeichneKreiseFuerRun:319` und `zeichneFwertPunkte:402` setzen `drawingContext.fillStyle` ohne `save()`/`restore()`; ein Paar davon an der Quelle würde den Workaround an allen Folgestellen erübrigen |
-| `kreisgrafik.js:229-240`, `245-254` | `zeichneHalbkreis()` und `zeichneVollkreis()` setzen `ctx.globalCompositeOperation = 'multiply'` und setzen es danach hart auf `'source-over'` zurück, statt den vorherigen Wert wiederherzustellen | mittel | Sie stellen nicht wieder her, sondern *nehmen an*, dass vorher `'source-over'` galt. `drawHatchedCircle:65/78` in derselben Datei macht es mit `save()`/`restore()` richtig — die Datei ist in sich uneinheitlich |
+| ~~`kreisgrafik.js:166-171`~~ → `kreisgrafik.js:206` | **Erledigt.** `zeichneKreisLabels()` setzte `noStroke()`, `fill()`, `textFont()`, `textSize()`, `textStyle(BOLD)` und `textAlign()` und stellte keinen davon zurück. Steht jetzt zwischen `push()` und `pop()` | mittel | Der Zustand leckte in alles, was danach zeichnete — nachweislich: der Kommentar bei `uebersichtsrouten.js:334-338` nennt genau diese Funktion als Ursache dafür, dass die Kapitel-Badges ihre Deckkraft erbten |
+| ~~`kreisgrafik.js:200-212`~~ → `kreisgrafik.js:241-246` | **Erledigt an der Ursache.** `zeichneKreiseFuerRun()` und `zeichneFwertPunkte()` klammern sich jetzt selbst; ihr `pop()` gleicht p5s Zwischenspeicher wieder ab. Die Direktzuweisung in `zeichneKreisLabels` blieb bewusst stehen — dort wird ohnehin über `drawingContext.fillText` gezeichnet und die Farbe wechselt je Label. Ihr Kommentar nennt jetzt diesen Grund statt des früheren Notbehelfs | mittel | Die Umgehung sass beim Opfer, nicht bei der Ursache |
+| ~~`kreisgrafik.js:229-240`, `245-254`~~ → `kreisgrafik.js:276`, `:293` | **Erledigt.** Beide setzten `globalCompositeOperation` nach dem Zeichnen hart auf `'source-over'`. Jetzt `push()`/`pop()` — der vorherige Wert wird wiederhergestellt statt angenommen | mittel | Auch `drawHatchedCircle` (`:91`) wurde von `ctx.save()`/`restore()` auf `push()`/`pop()` umgestellt: `restore()` stellt den Canvas zurück, lässt p5s Zwischenspeicher aber falsch |
 | `kreisgrafik.js:98-111` | `zeichneKreiseOrtRuns()` wendet Kapitel-1-Datenregeln an: `WOHNUNG_SAMMELPUNKT_ABSORBIERTE_ORTRUNS`, `GEDANKEN_ORTRUN_UNTERDRUECKT` und die `RUE_NOTRE_DAME_DE_LORETTE_ORT`-Sonderbehandlung, abgesichert über `daten === stationenData` | mittel | Das sind Regeln über die Daten, keine Zeichenentscheidungen. Sie gehören zu ihren Geschwistern in `datenbereinigung.js:90-157`. Der eigene Kommentar (`:100-106`) erklärt, wie fragil die Absicherung ist: die Sets sind reine Namenslisten ohne Kapitelbezug, und ohne den `daten === stationenData`-Test würde etwa Kapitel 3 seinen „Parc Monceau" verlieren |
 | `kreisgrafik.js:93-151` | `zeichneKreiseOrtRuns()` filtert, projiziert, zählt, zeichnet und sammelt zugleich Label-Kandidaten für die anschliessende Kollisionsauflösung | mittel | Fünf Aufgaben in 58 Zeilen. Der Schnitt zwischen Sammeln und Zeichnen ist bereits angelegt (`labelKandidaten` → `zeichneKreisLabels`) — er müsste nur konsequent bis zur Auswahl der Orte durchgezogen werden |
 
@@ -438,6 +440,17 @@ Geprüft wurden die zwölf Module aus `index.html` plus `index.html` selbst;
   Objektidentität und der Wrapper gegen seine Vorgängerversion. 1281 Fälle,
   0 Abweichungen. Zusätzlich wurde `daten.annotationen.filter` instrumentiert,
   um die Halbierung zu belegen statt sie zu behaupten: 2544 → 1272 Durchläufe.
+- **Verhalten von p5s `push()`/`pop()`:** nicht aus dem Gedächtnis angenommen,
+  sondern im Quelltext von p5 1.9.0 nachgelesen (von der im `index.html`
+  eingebundenen CDN-Version geladen). Belegt wurden drei Dinge:
+  `_setFill()` überspringt die Zuweisung bei Gleichheit mit
+  `_cachedFillStyle` (das ist der Mechanismus hinter allen drei Workarounds);
+  `Renderer2D.pop()` gleicht `_cachedFillStyle`/`_cachedStrokeStyle` nach dem
+  `restore()` wieder mit dem Canvas ab; und die Textsetzer `textFont`/
+  `textSize`/`textStyle`/`textAlign` schreiben über `_applyTextProperties()`
+  sofort in `drawingContext.font`/`textAlign`/`textBaseline` — weshalb
+  `drawingContext.fillText` nach ihnen funktioniert und `save()`/`restore()`
+  auch die Schriftwerte mit abdeckt.
 - **Namensverdeckung:** aus allen zwölf Modulen die Parameter (auch von
   Pfeilfunktionen und mit Destrukturierung) und alle lokalen
   `let`/`const`/`var` extrahiert und gegen die 254 globalen Projektnamen

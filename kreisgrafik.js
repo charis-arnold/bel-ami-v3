@@ -37,6 +37,29 @@
      Startpunkt-Label ein)
    aus p5: Zeichen- und Text-API, drawingContext
 
+   --- Zeichenzustand: jede Funktion klammert sich selbst ------------------
+   Alle sechs zeichnenden Funktionen hier stehen zwischen push() und pop().
+   Das ist keine Kosmetik, sondern nötig, weil dieses Modul (wie die anderen
+   Zeichenmodule) an p5s Zeichen-API vorbei direkt in drawingContext schreibt
+   — wegen des Unsichtbarkeits-Bugs bei text()/arc()/ellipse(), siehe die
+   Kommentare weiter unten.
+
+   p5 führt über Füll- und Strichfarbe einen Zwischenspeicher: _setFill()
+   überspringt die Zuweisung, wenn die Farbe der zuletzt über fill() gesetzten
+   entspricht. Eine Direktzuweisung an drawingContext.fillStyle lässt diesen
+   Zwischenspeicher veralten — ein späteres fill() wird dann übersprungen,
+   während der Canvas noch die direkt gesetzte Farbe hält.
+
+   pop() heilt genau das: p5 gleicht dort _cachedFillStyle/_cachedStrokeStyle
+   wieder mit dem echten Canvas ab (p5 1.9.0, Renderer2D.pop). drawingContext
+   .save()/.restore() allein tut das NICHT — es stellt den Canvas zurück und
+   lässt p5s Zwischenspeicher falsch. Deshalb push()/pop() und nicht save()/
+   restore(), auch in drawHatchedCircle, wo früher save()/restore() stand.
+
+   Was das repariert hat: zeichneKreisLabels liess seine sechs Zustände früher
+   nach draussen laufen; die Kapitel-Badges in uebersichtsrouten.js erbten
+   dadurch dessen Deckkraft (siehe den Kommentar dort).
+
    --- ACHTUNG: Auswertung beim LADEN ---------------------------------------
    const FWERT_PUNKT_FARBE_RGB = hexZuRgb(FWERT_PUNKT_FARBE);
    Diese Zeile ruft eine fremde Funktion beim Laden auf. Diese Datei MUSS
@@ -62,8 +85,11 @@ const HATCH_SPACING = 3;
 
 function drawHatchedCircle(cx, cy, r, color, alphaSkala = 1) {
   if (r <= 0) return;
+  // push() statt ctx.save(): Diese Funktion schreibt strokeStyle direkt.
+  // ctx.restore() stellt zwar den Canvas zurück, lässt p5s Zwischenspeicher
+  // (_cachedStrokeStyle) aber falsch — pop() gleicht ihn wieder ab.
+  push();
   const ctx = drawingContext;
-  ctx.save();
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.clip();
@@ -76,7 +102,7 @@ function drawHatchedCircle(cx, cy, r, color, alphaSkala = 1) {
     ctx.lineTo(cx + r, ly);
     ctx.stroke();
   }
-  ctx.restore();
+  pop();
 }
 
 // ---------------------------------------------------------------------------
@@ -171,6 +197,13 @@ function zeichneKreisLabels(kandidaten) {
   kandidaten = kandidaten.filter(k => (k.alpha === undefined ? 1 : k.alpha) > 0.002);
   if (kandidaten.length === 0) return;
 
+  // Klammer um die ganze Funktion: Sie setzt sechs Zeichenzustände und
+  // schreibt zusätzlich direkt in fillStyle. Ohne pop() blieben beide
+  // Ebenen verstellt — p5s Zwischenspeicher (_cachedFillStyle) UND der
+  // Canvas. Genau das hat nachweislich Schaden angerichtet: siehe den
+  // Kommentar bei zeichneUebersichtsrouten (uebersichtsrouten.js), wo die
+  // Kapitel-Badges deshalb ihre Deckkraft von hier erbten.
+  push();
   noStroke();
   fill(33, 43, 46, 255); // #212B2E, wie die Kapitelnummern
   textFont("'Source Sans 3', sans-serif"); // wie .annotation-tag (var(--sans)) und die Spine-Labels
@@ -205,10 +238,12 @@ function zeichneKreisLabels(kandidaten) {
         drawingContext.setLineDash([]);
         noStroke();
       }
-      // Direkt statt über fill() — siehe zeichneOrtsveraenderung: p5s
-      // Füllfarben-Zwischenspeicher wird von den direkt gesetzten
-      // fillStyle-Zuweisungen in zeichneKreiseFuerRun/zeichneFwertPunkte
-      // umgangen und liefert sonst die zuletzt dort gesetzte Farbe.
+      // Direkt statt über fill(): Gezeichnet wird unten ohnehin über
+      // drawingContext.fillText, und die Farbe wechselt je Label (alpha).
+      // Der frühere Grund — p5s Füllfarben-Zwischenspeicher, umgangen von
+      // den Direktzuweisungen in zeichneKreiseFuerRun/zeichneFwertPunkte —
+      // gilt nicht mehr: beide klammern sich jetzt selbst, ihr pop() gleicht
+      // den Zwischenspeicher wieder ab.
       drawingContext.fillStyle = k.farbe
         ? k.farbe
         : `rgba(33, 43, 46, ${alpha})`;
@@ -219,6 +254,8 @@ function zeichneKreisLabels(kandidaten) {
       // fillStyle kommt schon vom fill()-Aufruf oben.
       drawingContext.fillText(k.text, k.x, y);
     });
+
+  pop();
 }
 
 // Vollflächiger Halbkreis (PIE-Modus über exakt 180°, daher ohne sichtbaren
@@ -236,6 +273,7 @@ function zeichneKreisLabels(kandidaten) {
 // Canvas-Context gezeichnet statt über p5s arc()/ellipse().
 function zeichneHalbkreis(cx, cy, r, winkelMitte, farbeRgb, alphaSkala = 1, blend = false) {
   if (r <= 0) return;
+  push();
   let ctx = drawingContext;
   if (blend) ctx.globalCompositeOperation = 'multiply';
   ctx.fillStyle = `rgba(${farbeRgb[0]}, ${farbeRgb[1]}, ${farbeRgb[2]}, ${0.75 * alphaSkala})`;
@@ -244,7 +282,7 @@ function zeichneHalbkreis(cx, cy, r, winkelMitte, farbeRgb, alphaSkala = 1, blen
   ctx.arc(cx, cy, r, winkelMitte - HALF_PI, winkelMitte + HALF_PI);
   ctx.closePath();
   ctx.fill();
-  if (blend) ctx.globalCompositeOperation = 'source-over';
+  pop();
 }
 
 // Vollflächiger Kreis für neutrale Valenz — dieselbe Deckkraft/Blend-Logik
@@ -252,13 +290,14 @@ function zeichneHalbkreis(cx, cy, r, winkelMitte, farbeRgb, alphaSkala = 1, blen
 // neutral hat keine Links/Rechts- bzw. Oben/Unten-Seite wie neg/pos.
 function zeichneVollkreis(cx, cy, r, farbeRgb, alphaSkala = 1, blend = false) {
   if (r <= 0) return;
+  push();
   let ctx = drawingContext;
   if (blend) ctx.globalCompositeOperation = 'multiply';
   ctx.fillStyle = `rgba(${farbeRgb[0]}, ${farbeRgb[1]}, ${farbeRgb[2]}, ${0.75 * alphaSkala})`;
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, TWO_PI);
   ctx.fill();
-  if (blend) ctx.globalCompositeOperation = 'source-over';
+  pop();
 }
 
 // winkel: feste (NICHT von der Routenrichtung abgeleitete) Basis für die
@@ -291,6 +330,7 @@ function zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF
   // immer unten) — sonst könnte eine flächenmässig kleinere Schraffur einer
   // Kategorie eine grössere Valenz-Fläche einer ANDEREN Kategorie zudecken,
   // die Kreisgrafik wirkte dann unvollständig (schraffiert statt farbig).
+  push(); // schreibt unten direkt in fillStyle (Mittelpunkt), siehe pop() am Ende
   let hatchFormen = [];
   let flaechenFormen = [];
   // Aussenradius vorab, nicht mehr nebenbei in der Schleife: dieselbe
@@ -337,6 +377,7 @@ function zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF
     drawingContext.arc(cx, cy, 4, 0, TWO_PI);
     drawingContext.fill();
   }
+  pop();
 }
 
 // Pixel-Durchmesser je F-Wert-Punktgrösse (1..3, siehe FWERT_PUNKTGROESSE in
@@ -359,6 +400,7 @@ const FWERT_PUNKT_RING_ABSTAND = 8; // Abstand zwischen zwei Punkte-Ringen, fall
 function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1, anordnung = 'seitlich') {
   if (!fwertAnnotationen.length || radius <= 0) return;
 
+  push(); // setzt noStroke() und schreibt direkt in fillStyle, siehe pop() am Ende
   const DRITTEL = TWO_PI / 3;
   // Gruppenmitten [negativ, positiv, neutral/unbewertet] je Anordnung. Sie
   // folgen der Teilung der Halbkreise in zeichneKreiseFuerRun, damit die
@@ -422,4 +464,5 @@ function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1, a
       ringRadius += FWERT_PUNKT_RING_ABSTAND;
     }
   });
+  pop();
 }
