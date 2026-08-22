@@ -1,5 +1,5 @@
 /* =============================================================================
-   sketch.js — p5-Zeichnung für Bel-Ami v2
+   sketch.js — p5-Zeichnung für Bel-Ami v3
    Datenaufbereitung und Darstellung sind getrennt gehalten.
 ============================================================================= */
 
@@ -99,6 +99,8 @@ let registerTabs; // gemeinsamer Fixed-Container beider Register (siehe #registe
 // "Plan"/"Graph"-Einträge oben im Kapitel-Menübalken
 // (setzeKapitelAnsichtModus).
 let kapitelAnsichtsModus = 'karte';
+
+
 // Zoomstand des Kapitel-1-Kartenausschnitts (0 = Startseite/Gesamtkarte,
 // 1 = ganz im Ausschnitt), je Frame in draw() gesetzt. Wird ausserhalb von
 // draw() gebraucht, um die Beschriftung des Routen-Startpunkts erst mit dem
@@ -108,6 +110,8 @@ let grafikPlayButton;
 
 // --- Übersichtsrouten (Kapitel 02–18, nur in der letzten, rausgezoomten Ansicht) ---
 let uebersichtsRouten = {};
+
+
 
 // --- Kapitelausschnitte: Startpunkt/Nummer einer Übersichtsroute wird zum
 // Link, der auf den eigenen Kartenausschnitt dieses Kapitels zoomt. Nur
@@ -165,6 +169,7 @@ let letzterZoomKapitel = null; // bleibt waehrend des Ausblendens gesetzt, siehe
 function datenFuerKapitel(nr) {
   return nr === '03' ? kapitel03Data : weitereKapitelDaten[nr];
 }
+
 
 function preload() {
   bgImage = loadImage('bilder-karten/paris-startkarte-web.png');
