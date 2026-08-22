@@ -11,7 +11,7 @@
    toggleGrafikPlay in sketch.js) spielt Kapitel 1 als eigenständiges, in
    sich geschlossenes Stück ab — feste Gesamtdauer
    (SONIFIKATION_GESAMTDAUER_SEK), NICHT an scrollY gekoppelt. Dieses Modul
-   liefert dafür NUR den Ton (spieleKapitel1SonifikationAudio/
+   liefert dafür NUR den Ton (spieleSonifikationFuer/
    beendeSonifikationAudio) — die Graph-Ansicht selbst (horizontale
    Spine, zeichneSpineHorizontal in sketch.js) läuft parallel mit derselben
    Gesamtdauer, siehe aktuelleGrafikAnimationDauer() dort. Frühere Fassung
@@ -201,6 +201,20 @@ function spieleSchichten(notenFolge, gainFolgenProKategorie, slowFaktor, gesamtd
     sonifikationTimeoutId = null;
     beendeSonifikationAudio();
   }, gesamtdauerSek * 1000);
+}
+
+// Startet den Ton, der zur gerade offenen Ansicht gehört: Kapitel 1, wenn
+// kein Kapitel gezoomt ist, sonst das gezoomte. Die Auswahl gehört in dieses
+// Modul — sie stand vorher als if/else in toggleGrafikPlay()
+// (spine-horizontal.js) und zwang das Grafikmodul, beide Einstiegspunkte zu
+// kennen.
+//
+// Bewusst ohne async/await: Die beiden Ziele sind async, der Aufrufer wartet
+// aber nicht auf sie. Der Wrapper reicht dieselbe Promise durch, die dort
+// schon fallen gelassen wird — Verhalten unverändert.
+function spieleSonifikationFuer(kapitelNr) {
+  if (kapitelNr) return spieleKapitelSonifikationAudio(kapitelNr);
+  return spieleKapitel1SonifikationAudio();
 }
 
 // Reiner Audio-Start — die Graph-Ansicht (horizontale Spine) läuft

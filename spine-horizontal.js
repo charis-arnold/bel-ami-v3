@@ -17,8 +17,7 @@
                             zaehleBandCounts, zaehleAnnotationenLiveNachOrtBasis,
                             baueSpineDaten, ortRunsFuerSpine
    aus sonifikation.js:     SONIFIKATION_GESAMTDAUER_SEK, sonifikationSpieltGerade,
-                            beendeSonifikationAudio, spieleKapitel1SonifikationAudio,
-                            spieleKapitelSonifikationAudio
+                            beendeSonifikationAudio, spieleSonifikationFuer
    aus p5:                  width/height, Zeichen- und Text-API, drawingContext, millis
 
    --- Wer von aussen hierher greift ----------------------------------------
@@ -138,8 +137,7 @@ function aktuelleGrafikAnimationDauer() {
 // in der Graph-Ansicht (Resume statt Neustart bei Pause->Play über
 // grafikStartZeit = jetzt - bereits-gelaufene-Zeit, damit
 // aktualisiereGrafikFortschritt() nahtlos weiterzählt). Für JEDES Kapitel
-// zusätzlich mit Ton: spieleKapitel1SonifikationAudio()/
-// spieleKapitelSonifikationAudio(nr)/beendeSonifikationAudio()
+// zusätzlich mit Ton: spieleSonifikationFuer(nr)/beendeSonifikationAudio()
 // (sonifikation.js) starten/stoppen synchron zur Spine — kein Resume für
 // den Ton (Strudel kann nicht an einer beliebigen Stelle einsteigen),
 // Pause->Play beginnt den Ton daher jeweils neu, auch wenn die Spine an
@@ -152,8 +150,8 @@ function toggleGrafikPlay() {
     // Pause/Weiter den schon ausgeblendeten Text nicht neu wegblenden lässt.
     if (grafikPlayAusblendStart === null) grafikPlayAusblendStart = millis();
     grafikStartZeit = millis() - grafikFortschritt * aktuelleGrafikAnimationDauer();
-    if (!zoomedKapitel) spieleKapitel1SonifikationAudio();
-    else spieleKapitelSonifikationAudio(zoomedKapitel);
+    // Welcher Ton zu welcher Ansicht gehört, entscheidet sonifikation.js.
+    spieleSonifikationFuer(zoomedKapitel);
   } else if (sonifikationSpieltGerade) {
     beendeSonifikationAudio();
   }
