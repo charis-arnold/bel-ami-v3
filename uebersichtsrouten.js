@@ -20,13 +20,17 @@
       Escape/Hochscrollen (schliesseKapitelZoom).
 
    --- Geteilter Zustand: WICHTIG ------------------------------------------
-   kapitelZoomAmount wird hier deklariert, aber AUSSCHLIESSLICH in draw()
-   geschrieben (eine lerp()-Zeile je Frame). kapitelHover wird hier und in
-   draw() gesetzt und in mousePressed() gelesen. zoomedKapitel wird nur hier
-   geschrieben, aber im ganzen Projekt gelesen — auch in
-   spine-horizontal.js. Die Variablen liegen im globalen Scope; bei einer
-   Umstellung auf ES-Module bräuchte es dafür Setter oder eine gemeinsame
-   Zustandsdatei.
+   Alle drei Modulvariablen werden AUSSCHLIESSLICH hier geschrieben:
+   kapitelZoomAmount über aktualisiereKapitelZoom() (von draw() einmal je
+   Frame gerufen), kapitelHover in zeichneUebersichtsrouten(), zoomedKapitel
+   in oeffneKapitelZoom()/schliesseKapitelZoom(). Gelesen werden sie im
+   ganzen Projekt — zoomedKapitel auch in spine-horizontal.js, kapitelHover
+   in mousePressed().
+
+   Früher schrieb draw() in die ersten beiden direkt hinein. Das ist
+   aufgelöst; die Lesezugriffe von aussen sind geblieben. Die Variablen
+   liegen im globalen Scope; bei einer Umstellung auf ES-Module bräuchte es
+   für die Lesezugriffe Getter oder eine gemeinsame Zustandsdatei.
 
    --- Abhängigkeiten NACH AUSSEN (alle erst zur Laufzeit) -----------------
    aus sketch.js (8):       uebersichtsRouten, kapitelKarten, stationenData,
@@ -131,6 +135,21 @@ function kapitelHitze(fortschritt, scheibe) {
 }
 
 function zeichneUebersichtsrouten(bbox, alpha, fortschritt) {
+  // Ausserhalb des Übersichtsakts wird nichts gezeichnet — und dann gibt es
+  // auch keine Hover-Ziele. Dass DIESE Funktion das erledigt und nicht der
+  // Aufrufer, ist der Punkt: kapitelHover gehört hierher, weil nur hier die
+  // Geometrie der Startpunkte bekannt ist (samt Streuung deckungsgleicher
+  // Punkte, siehe dupWinkel weiter unten). Früher rief draw() diese Funktion
+  // nur bedingt auf und musste kapitelHover im else-Zweig von Hand nachziehen.
+  // Der Test steht bewusst explizit hier und verlässt sich nicht darauf, dass
+  // bei alpha 0 ohnehin nichts passiert — das hinge an labelAlpha-Kaskaden
+  // tief in der Schleife unten.
+  if (fortschritt <= 0) {
+    kapitelHover = null;
+    cursor(ARROW);
+    return { aktuelleAnnotationZoom: null };
+  }
+
   noFill();
   strokeWeight(2);
 

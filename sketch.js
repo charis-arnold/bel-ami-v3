@@ -496,15 +496,14 @@ function draw() {
   // Beim Rauszoomen im allerletzten Akt kommen sie zurück (Math.max) — das
   // Schlussbild ist wieder die ganze Karte mit allen achtzehn Routen, so wie
   // der Überblicksakt sie hinterlassen hat.
-  if (uebersichtRoutenFortschritt > 0) {
-    let routenSichtbar = Math.max((1 - 0.45 * kreisVergleichMapFade) * (1 - ovZoom), skRauszoom);
-    let routenAlpha = 180 * routenSichtbar;
-    let uebersichtRoutenErgebnis = zeichneUebersichtsrouten(activeBbox, routenAlpha, uebersichtRoutenFortschritt);
-    aktuelleAnnotationZoom = uebersichtRoutenErgebnis && uebersichtRoutenErgebnis.aktuelleAnnotationZoom;
-  } else {
-    kapitelHover = null; // Routen (und damit Hover-Ziele) aktuell nicht gezeichnet
-    cursor(ARROW);
-  }
+  // Unbedingt aufgerufen, auch bei Fortschritt 0: zeichneUebersichtsrouten()
+  // steigt dann selbst früh aus und setzt dabei kapitelHover und den Cursor
+  // zurück. Früher stand das hier in einem else-Zweig — draw() musste den
+  // Zustand eines fremden Moduls von Hand nachziehen.
+  let routenSichtbar = Math.max((1 - 0.45 * kreisVergleichMapFade) * (1 - ovZoom), skRauszoom);
+  let routenAlpha = 180 * routenSichtbar;
+  let uebersichtRoutenErgebnis = zeichneUebersichtsrouten(activeBbox, routenAlpha, uebersichtRoutenFortschritt);
+  aktuelleAnnotationZoom = uebersichtRoutenErgebnis.aktuelleAnnotationZoom;
 
   // Kapitel 1s eigene Route/Kreise nutzen weiterhin activeBbox — sobald ein
   // ANDERES Kapitel gezoomt ist (zoomedKapitel), zeigt activeBbox aber dessen
