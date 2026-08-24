@@ -5,30 +5,15 @@
    Enthält ausschliesslich reine Datenfunktionen — keine p5-Zeichenaufrufe.
 ============================================================================= */
 
-// --- Modulkapselung ------------------------------------------------------
-// Alles bis zum Exportblock am Dateiende ist modulintern: 12 der 38
-// Top-Level-Namen werden von keinem anderen Modul gelesen (siehe
-// docs/best-practices-review.md, Punkt "Globale Variablen").
+// --- Modulkapselung ---------------------------------------------------
+// 12 von 38 Namen intern, 26 im Exportblock am Dateiende.
+// Konvention: docs/architektur.md.
 //
-// Der Rumpf ist bewusst NICHT eingerückt. Bei 500 Zeilen würde eine
-// Einrückung jede einzelne Zeile als geändert markieren — der Diff wäre
-// nicht mehr prüfbar und git blame für die ganze Datei wertlos. Die
-// schliessende Klammer steht ganz unten, direkt nach dem Export.
-//
-// Kein 'use strict': Das wäre eine Verhaltensänderung über die Kapselung
-// hinaus und gehört, wenn überhaupt, in einen eigenen Schritt.
-//
-// LADEREIHENFOLGE — hier besonders wichtig: Diese Datei ist Skript 1 in
-// index.html, und kreisgrafik.js (Skript 3) greift BEIM LADEN auf hexZuRgb
-// und FWERT_PUNKT_FARBE zu (const FWERT_PUNKT_FARBE_RGB = hexZuRgb(...)).
-// Die IIFE läuft sofort und der Exportblock steht am Dateiende — beide
-// Namen liegen also auf window, bevor Skript 2 überhaupt beginnt. Ein
-// Verschieben dieser Datei nach hinten bräche kreisgrafik.js sofort, genau
-// wie vor der Kapselung.
-//
-// Kein Export wird intern verändert; alle 26 sind const oder function.
-// Deshalb überall einfache Zuweisungen, keine Lesebindungen wie in
-// sonifikation.js oder uebersichtsrouten.js.
+// Ladereihenfolge kritisch: Skript 1 in index.html, und kreisgrafik.js
+// (Skript 3) liest hexZuRgb und FWERT_PUNKT_FARBE beim Laden. Die IIFE
+// läuft sofort, der Export steht am Dateiende — beide liegen auf window,
+// bevor Skript 2 beginnt. Diese Datei nach hinten schieben bricht
+// kreisgrafik.js.
 (function () {
 
 const CATEGORY_COLORS = { gold_dunkel: '#63561F', gold_mittel: '#917712', gold_hell: '#BF9E16' };
@@ -58,7 +43,8 @@ const FWERT_COLORS = {
 };
 
 // Punktgrösse (1 = klein … 3 = gross) der F-Wert-Punkte ausserhalb des
-// Kreisdiagramms je F-Wert-Typ (siehe zeichneFwertPunkte in sketch.js). Ein
+// Kreisdiagramms je F-Wert-Typ (siehe zeichneFwertPunkte, kreisgrafik.js).
+// Ein
 // vierter, sehr seltener Typ (persoenliche_sehnsucht, gesamthaft nur 1
 // Annotation) hat keine eigene Grösse — fällt beim Aufrufer auf 1 zurück.
 const FWERT_PUNKTGROESSE = {
@@ -77,23 +63,11 @@ const KREIS_KATEGORIEN = [
   { key: 'gold_hell', farbe: [202, 179, 122] },
 ];
 
-// Kapitel 1s Spine zeigt jeden ortRun, der auch auf der Karte einen eigenen
-// Kreis bekommt — siehe ortRunsFuerSpine() weiter unten (dynamisch, nicht
-// mehr eine feste Liste, damit Karte und Spine nie auseinanderlaufen).
-
-// Hauptorte für das generische Spine-Panel eines gezoomten Kapitels (02–18)
-// beim Kapitel-Zoom (siehe sketch.js: oeffneKapitelZoom/draw) — dieselbe
-// dynamische Funktion wie Kapitel 1s eigenes, live wachsendes Panel
-// (ortRunsFuerSpine, siehe oben), NICHT mehr eine je Kapitel von Hand
-// gepflegte/generierte feste Liste: die driftete nach jeder weiteren
-// Datenbereinigung (Umbenennungen, Zusammenlegungen) rasch auseinander und
-// liess auf der Karte gezeigte Kreise in der Spine fehlen (z.B. Kapitel 3:
-// 4 echte Orte fehlten zuletzt) — jetzt kann Karte und Spine gar nicht mehr
-// auseinanderlaufen, weil beide direkt aus denselben ortRuns lesen.
-
-// Reine Existenz-Prüfung ("hat Kapitel X überhaupt ein Spine-Panel?", siehe
-// sketch.js: springeZuKapitelZoom/oeffneKapitelZoom/Kapitelregister) — Kapitel
-// 01 bewusst nicht enthalten, das hat sein eigenes Panel (siehe oben).
+// Reine Existenz-Prüfung ("hat Kapitel X überhaupt ein Spine-Panel?", gelesen
+// von springeZuKapitelZoom/oeffneKapitelZoom in uebersichtsrouten.js und vom
+// Kapitelregister). Kapitel 01 nicht enthalten: es hat sein eigenes Panel.
+// Welche Orte darin stehen, entscheidet für alle Kapitel ortRunsFuerSpine()
+// weiter unten, aus denselben ortRuns wie die Kartenkreise.
 const KAPITEL_MIT_SPINE_PANEL = new Set([
   '02', '03', '04', '05', '06', '07', '08', '09', '10',
   '11', '12', '13', '14', '15', '16', '17', '18',
@@ -146,9 +120,9 @@ function wohnungFilterFuerOrt(ort) {
   return ort;
 }
 
-// Ordnet jedem Gedanken-Spalte-Eintrag genau die eine Annotation zu, die
-// dahintersteckt. Der ortBasis-Wert reicht dafür aus (er hat dort ohnehin
-// nur eine Annotation).
+// Die fünf gedachten/erinnerten Orte in Kapitel 1. Nur die WERTE werden
+// gelesen (Object.values unten) — die Schlüssel stehen als Herkunftsangabe
+// da, welcher ortBasis-Text im Datensatz dahintersteckt.
 const GEDANKEN_FILTER = {
   'Champs-Élysées / Avenue du Bois de Boulogne': 'Champs-Élysées / Avenue du Bois de Boulogne',
   'Afrika (Erinnerung, Militärdienst)': 'Afrika',
@@ -157,13 +131,10 @@ const GEDANKEN_FILTER = {
   'imaginierter Sommergarten, Paris': 'imaginierter Sommergarten',
 };
 
-// Mehrere ortRuns tragen exakt den ortBasis-Wert, der oben schon einer
-// Gedanken-Spalte zugeordnet ist (Champs-Élysées/Bois de Boulogne, Afrika,
-// Bois de Boulogne, Parc Monceau, imaginierter Sommergarten) — diese ortRuns
-// bekommen deshalb keinen eigenen wachsenden Kreis auf der Karte/Spine
-// (siehe zeichneKreiseOrtRuns), sondern zählen stattdessen bei dem echten
-// Ort mit, an dem Duroy sich in diesem Moment tatsächlich aufhält (siehe
-// GEDANKEN_ZIEL_ORT/wohnungFilterFuerOrt) — nicht in einem separaten Kreis.
+// Diese fünf ortRuns bekommen keinen eigenen Kreis auf Karte/Spine (siehe
+// zeichneKreiseOrtRuns, kreisgrafik.js). Sie zählen bei dem echten Ort mit,
+// an dem Duroy in diesem Moment tatsächlich steht — siehe GEDANKEN_ZIEL_ORT
+// und wohnungFilterFuerOrt.
 const GEDANKEN_ORTRUN_UNTERDRUECKT = new Set(
   Object.values(GEDANKEN_FILTER).filter(v => typeof v === 'string')
 );
@@ -199,9 +170,8 @@ const GEDANKEN_ZIEL_ORT = {
 // zufällig denselben ortBasis-Namen für einen eigenen, echten Ort verwendet
 // (z.B. Kapitel 3s "Parc Monceau"), fälschlich mit unterdrückt.
 //
-// Die Regel galt schon immer an zwei Stellen — für die Spine (unten) und für
-// die Kartenkreise (ortRunSichtbar, weiter unten). Sie steht deshalb hier
-// einmal statt zweimal.
+// Zwei Leser: ortRunsFuerSpine (Spine) und ortRunSichtbar (Kartenkreise),
+// beide weiter unten.
 function istKapitel1Unterdrueckt(ort, daten) {
   if (daten !== stationenData) return false;
   return WOHNUNG_SAMMELPUNKT_ABSORBIERTE_ORTRUNS.has(ort)
@@ -219,37 +189,12 @@ function ortRunsFuerSpine(daten) {
   );
 }
 
-// Benannte Scroll-Meilensteine (Anteil 0..1 der gesamten Scrollstrecke) —
-// ersetzen die zuvor verstreuten Magic Numbers in sketch.js' draw().
-//
-// Die Scrollstrecke wurde von 2200vh über 2640vh auf jetzt 3080vh verlängert
-// (neue Akte: Rauszoomen auf die Gesamtkarte, danach Übersichtsrouten
-// zeichnen). Alle bisherigen Werte sind erneut umskaliert (Faktor 2640/3080),
-// damit sich an ihrer absoluten Scroll-Position (in vh) nichts ändert.
-// Scrollstrecke zuletzt von 3080vh auf 4080vh verlängert — alle Werte BIS
-// uebersichtRoutenStart wurden um den Faktor 3080/4080 (0.754902)
-// zurückskaliert, damit sich an ihrer absoluten vh-Position nichts ändert.
-// uebersichtRoutenEnd bleibt bewusst bei 1.0: der komplette gewonnene
-// Platz (1000vh) geht an diesen letzten Akt, macht das Ablaufen der
-// Kapitelrouten also entsprechend langsamer.
-//
-// (Zwischenzeitlich testweise auf 5880vh mit einem eigenen Kapitel-Zoom-
-// Scroll-Akt erweitert — wieder verworfen: Kapitel-Zoom soll sich sofort
-// mit voll sichtbarer Route öffnen (Klick), nicht per Scroll enthüllen.
-// Verlassen des Zooms geschieht durch Zurückscrollen VOR
-// uebersichtRoutenStart, siehe oeffneKapitelZoom/schliesseKapitelZoom in
-// sketch.js — dafür reicht der bestehende uebersichtRoutenFortschritt<=0-
-// Check, kein eigener Akt nötig.)
-//
-// Scrollstrecke NOCH EINMAL von 4080vh auf 6080vh verlängert (neuer,
-// letzter Akt: Kreisvergleich handverlesener, kapitelübergreifender Orte,
-// siehe kreisvergleich-orte.json/baue-kreisvergleich.py) — alle Werte BIS
-// uebersichtRoutenEnd wurden um den Faktor 4080/6080 (0.671053)
-// zurückskaliert. uebersichtRoutenEnd (jetzt 0.671053 statt 1.0) markiert
-// zugleich den Start des neuen Akts (kreisVergleichStart) — die
-// Übersichtskarte blendet dort aus, danach wachsen die Kreise der 8 Orte
-// mit jedem erreichten Kapitel (kreisVergleichAktuellesKapitel in
-// sketch.js).
+// Benannte Scroll-Meilensteine, Anteil 0..1 der gesamten Scrollstrecke
+// (9300vh, .scroll-track in index.html). Die krummen Werte kommen daher,
+// dass die Strecke mehrfach verlängert wurde und jeder Wert dabei so
+// umgerechnet wurde, dass seine absolute vh-Position gleich blieb. Wer die
+// Strecke erneut ändert, muss genauso umrechnen, sonst verschieben sich
+// alle Akte.
 const SCROLL_MEILENSTEINE = {
   heroFadeStart: 0.011829, heroFadeEnd: 0.035485,
   // Zwischen heroFadeEnd und zoomStart 700vh zusätzliche Lesezeit — der
@@ -258,8 +203,7 @@ const SCROLL_MEILENSTEINE = {
   // dieses Zoom-Übergangs wieder aus (sein data-bis fällt mit zoomEnd
   // zusammen).
   zoomStart: 0.110753, zoomEnd: 0.158065,
-  // Spine blendet gleichzeitig mit dem Zoom-Beginn ein (nicht mehr mit dem
-  // Begleittext synchron — der lebt jetzt bereits auf der Startseite).
+  // Spine blendet gleichzeitig mit dem Zoom-Beginn ein.
   spineFadeStart: 0.113118, spineFadeEnd: 0.16043,
   // Zwischen zoomEnd und routeStart 550vh zusätzliche Lesezeit — der
   // Kapitel-Einstiegstext (.begleittext-dunkel, eigenes data-von/data-bis
@@ -272,22 +216,18 @@ const SCROLL_MEILENSTEINE = {
   // Akt: Übersichtsrouten (Kapitel 02–18) bauen sich auf. Breite (2933vh)
   // so bemessen, dass auch das annotationsreichste Kapitel (Kapitel 8,
   // 400 Annotationen) im gleichen Tempo (~7.3vh/Annotation) durchläuft wie
-  // Kapitel 1 (1100vh / 150 Annotationen) — vorher war der Akt mit 1440vh
-  // fest für alle Kapitel gleich lang, wodurch annotationsreiche Kapitel
-  // (5–9) beim Scrollen spürbar schneller wirkten als Kapitel 1.
+  // Kapitel 1 (1100vh / 150 Annotationen).
   uebersichtRoutenStart: 0.418279, uebersichtRoutenEnd: 0.733656,
-  // Neuer, letzter Akt (2000vh): Übersichtskarte blendet aus (erste 8% des
-  // Akts, kreisVergleichFadeEnd), danach wachsen die Kreise der 8
-  // handverlesenen Orte mit jedem erreichten Kapitel (1..18, linear über
-  // den Rest des Akts verteilt).
+  // Schlussakt Ortsveränderung (2000vh): Übersichtskarte blendet aus, danach
+  // wachsen die Kreise der sieben Orte (VERGLEICHS_KNOTEN) mit jedem
+  // erreichten Kapitel 1..18.
+  // kreisVergleichFadeEnd liest niemand — das Ausblenden steuert OV_KARTE_AUS
+  // in ortsveraenderung.js. Der Schlüssel steht nur noch hier.
   kreisVergleichStart: 0.733656, kreisVergleichFadeEnd: 0.750967,
   kreisVergleichEnd: 0.94871,
   // Akt: die Startkarte kommt zurück. Sie blendet hinter den sieben Kreisen
   // ein, danach fährt die Ansicht aus deren Ausschnitt auf die Gesamtkarte
-  // zurück — der Bogen schliesst dort, wo er begonnen hat. Dieser Akt wurde
-  // hinten angehängt: der Scroll-Track ist von 8823vh auf 9300vh gewachsen,
-  // alle vorherigen Werte sind mit 8823/9300 umgerechnet und behalten dadurch
-  // ihre Länge in Pixeln.
+  // zurück — der Bogen schliesst dort, wo er begonnen hat.
   startkarteStart: 0.94871,
 };
 
@@ -317,20 +257,11 @@ function bereinigeFotoMarker(rohdaten) {
 // Kapitel ohne verwertbare Route (z.B. 15 — Empfang bei den Walters, ein
 // einziger Innenraum-Schauplatz ohne Koordinaten-Streuung) werden hier
 // herausgefiltert, damit sketch.js nur echte Linien zeichnet.
-// Behält jedes Kapitel mit mindestens EINEM Routenpunkt.
-//
-// Die Bedingung lautete früher "> 1" — ein Kapitel mit nur einem Punkt zeichnet
-// ja keine Linie. Damit fiel aber Kapitel 2 komplett aus uebersichtsRouten
-// heraus: es spielt an einem einzigen Ort (Wohnung Forestier), sein
-// routenPfadDetail hat genau einen Punkt. Und weil sich am selben Objekt nicht
-// nur die Linien, sondern auch der Kapitelpunkt mit Nummer, die Scheiben-
-// aufteilung des Übersichtsakts und die Einstiegstexte orientieren, fehlte
-// Kapitel 2 in der ganzen Übersicht — ohne dass es auffiel, weil die eine
-// fehlende Linie ohnehin unsichtbar gewesen wäre.
-//
-// Die Zeichenwege kommen mit einem einzelnen Punkt zurecht: die Linien-
-// schleife zeichnet einen Vertex und damit nichts, Badge und Hover greifen
-// auf punkte[0] zu.
+// Behält jedes Kapitel mit mindestens EINEM Routenpunkt, nicht erst ab zwei:
+// Kapitel 2 spielt an einem einzigen Ort (Wohnung Forestier) und hätte sonst
+// auch Kapitelpunkt, Scheibenaufteilung und Einstiegstext verloren, die alle
+// am selben Objekt hängen. Die Zeichenwege kommen mit einem Punkt zurecht —
+// die Linienschleife zeichnet dann nichts, Badge und Hover lesen punkte[0].
 function bereinigeUebersichtsrouten(rohdaten) {
   let bereinigt = {};
   Object.entries(rohdaten || {}).forEach(([kapitel, punkte]) => {
@@ -349,10 +280,10 @@ function bereinigeUebersichtsrouten(rohdaten) {
 // (z.B. 31 vs. 12 Annotationen) am Deckel optisch verschwinden, wie es bei
 // einer linearen r = BASIS + n*MULT-Formel mit niedrigem Deckel passiert.
 // maxRadius: Obergrenze, damit sehr grosse Kreise die Karte nicht sprengen.
-// Die Übersichtskarten-Knoten (zeichneVergleichsKnoten) übergeben bewusst
-// Infinity und skalieren stattdessen selbst — bei ihnen summieren sich alle
-// 18 Kapitel auf, fünf von sechs Orten liefen sonst in den Deckel und wären
-// am Ende gleich gross, genau dort wo der Vergleich Unterschiede zeigen soll.
+// Der Schlussakt (VERGLEICHS_KNOTEN in ortsveraenderung.js) übergibt bewusst
+// Infinity und skaliert selbst: dort summieren sich alle 18 Kapitel auf, die
+// Orte liefen sonst reihum in den Deckel und wären am Ende gleich gross —
+// genau dort, wo der Vergleich Unterschiede zeigen soll.
 function kreisRadius(n, maxRadius = 100) {
   const BASIS = 6, K = 11.5;
   return n > 0 ? Math.min(maxRadius, BASIS + K * Math.sqrt(n)) : 0;
@@ -363,11 +294,10 @@ function kreisRadius(n, maxRadius = 100) {
 // Kategorie, siehe zeichneKreiseFuerRun) sind die äussersten Formen; ihr
 // Maximum ist deshalb der Rand, an dem aussen die F-Wert-Punkte ansetzen.
 //
-// Bis hierher rechneten fünf Stellen diese Formel jede für sich nach: Der
-// Wert entstand nur als Rückgabe von zeichneKreiseFuerRun(), also als
-// Nebenprodukt des Zeichnens — wer ihn VORHER brauchte (Spine-Layout,
-// Annotationsbox, Ortsveränderung), musste ihn nachbauen. maxRadius und
-// radiusSkala bedeuten dasselbe wie dort.
+// maxRadius und radiusSkala bedeuten dasselbe wie in zeichneKreiseFuerRun
+// (kreisgrafik.js), das intern dieselbe Funktion ruft. Wer den Radius VOR
+// dem Zeichnen braucht (Spine-Layout, Annotationsbox, Ortsveränderung),
+// holt ihn hier — zeichneKreiseFuerRun gibt nichts zurück.
 //
 // ACHTUNG, umgekehrte Reihenfolge: zeichneKreiseFuerRun() nimmt die beiden
 // als (…, radiusSkala, maxRadius), hier stehen sie als (…, maxRadius,
@@ -395,10 +325,8 @@ function istVorzeitigeErwaehnung(r, daten = stationenData) {
 }
 
 // Bekommt dieser ortRun beim aktuellen Scrollstand einen eigenen Kartenkreis?
-// Bündelt alle vier Ausschlussgründe an einem Ort — sie standen vorher als
-// Kaskade mitten in der Zeichenschleife von zeichneKreiseOrtRuns
-// (kreisgrafik.js). Es sind Aussagen über die Daten, keine
-// Zeichenentscheidungen, und sie gehören zu ihren Geschwistern hier.
+// Bündelt alle vier Ausschlussgründe. Gelesen von zeichneKreiseOrtRuns
+// (kreisgrafik.js).
 //
 // punktIndex: Position auf der Route (steuert das Erscheinen).
 // annIndex:   Position in der Annotationsfolge (steuert den Wohnung-Split).
@@ -415,22 +343,10 @@ function ortRunSichtbar(r, punktIndex, annIndex, daten = stationenData) {
   return true;
 }
 
-// Zählt, wie viele Annotationen zu ortBasis (String oder Set
-// mehrerer ortBasis-Werte, oder eine konkrete Annotations-id) bereits an
-// Reihenfolge-Position annIndex erreicht sind — dieselbe Logik, nach der die
-// Kreise in der Spine wachsen. Wird auch auf der Route (Hauptorte) und in
-// der Gedanken-Spalte verwendet, damit alle Darstellungen gleich schnell
-// wachsen statt sofort voll zu erscheinen.
-// Valenz (a.valenz: 1/-1/0/fehlt) auf denselben neg/pos/neutral/unrated-
-// Bucket abgebildet wie die Python-Pipeline (valenz_bucket() in
-// baue-kapitel-stationen.py) — musste bislang nirgends in JS nachgebildet
-// werden, da die (vorberechneten) bandCounts in den ortRuns/Kreisvergleich-
-// Daten bereits fertig gebucketed aus Python kommen. zaehleAnnotationenLive-
-// NachOrtBasis() ist die einzige Stelle, die bandCounts LIVE aus den rohen
-// Annotationen selbst zusammenzählt (fürs Live-Wachsen beim Scrollen) —
-// bucketed bislang fälschlich alles nach "unrated", ungeachtet der echten
-// Valenz (Bug: die neuen Valenz-Halbkreise auf der Karte blieben dadurch
-// immer bei Radius 0, weil bc.neg/bc.pos nie befüllt wurden).
+// a.valenz (1/-1/0/fehlt) auf denselben Bucket abgebildet wie die
+// Python-Pipeline (valenz_bucket() in baue-kapitel-stationen.py). Muss
+// übereinstimmen: die vorberechneten bandCounts kommen von dort, die
+// live gezählten entstehen hier.
 function valenzBucket(v) {
   if (v === 1) return 'pos';
   if (v === -1) return 'neg';
@@ -456,15 +372,11 @@ function sammleAnnotationenNachOrtBasis(filter, annIndex, daten = stationenData)
   });
 }
 
-// Zählt eine BEREITS gefilterte Trefferliste zu bandCounts zusammen.
-//
-// Aus zaehleAnnotationenLiveNachOrtBasis() herausgelöst, damit Aufrufer, die
-// beides brauchen — die Zählung für die Kreisflächen UND die rohe Liste für
-// die F-Wert-Punkte — nur einmal über daten.annotationen laufen: erst
-// sammeln, dann aus derselben Liste zählen. Vorher warf die Zählung ihre
-// Liste weg, und der Aufrufer holte sie sich mit einem zweiten, identischen
-// Scan zurück — pro Ortskreis und Frame (siehe zeichneKreiseOrtRuns in
-// kreisgrafik.js und zeichneSpineHorizontal in spine-horizontal.js).
+// Zählt eine BEREITS gefilterte Trefferliste zu bandCounts zusammen. Getrennt
+// vom Sammeln, damit Aufrufer, die beides brauchen — Zählung für die
+// Kreisflächen UND rohe Liste für die F-Wert-Punkte — nur einmal über
+// daten.annotationen laufen (zeichneKreiseOrtRuns in kreisgrafik.js,
+// zeichneSpineHorizontal in spine-horizontal.js, je Ortskreis und Frame).
 function zaehleBandCounts(annotationen) {
   let ergebnis = {
     gold_dunkel: { unrated: 0, neg: 0, pos: 0, neutral: 0 },
@@ -492,15 +404,12 @@ function zaehleAnnotationenLiveNachOrtBasis(filter, annIndex, daten = stationenD
 // Kapitel). hauptorte: Set der ortRun-Namen, die einen Spine-Eintrag
 // bekommen sollen.
 //
-// Läuft (anders als früher) direkt über daten.annotationen statt über die
-// bereits zu je einem Kreis pro Ort ZUSAMMENGEFÜHRTEN daten.ortRuns — nur
-// so lässt sich erkennen, ob ein Ort SPÄTER, nach einer Unterbrechung durch
-// andere Orte, noch einmal auftaucht (eine echte Rückkehr, siehe
-// zeichneSpineHorizontal in sketch.js: bekommt dort keinen zweiten Kreis,
-// sondern einen Bogen zurück zum ersten). Jeder ZUSAMMENHÄNGENDE Lauf
-// gleicher ortBasis wird zu genau einem Eintrag; alle bandCounts werden nur
-// noch live (über den jeweiligen annIndex zur Spielkopf-Position) gezählt,
-// nicht mehr aus einem vorberechneten Endstand.
+// Läuft über daten.annotationen, nicht über die zu je einem Kreis pro Ort
+// zusammengeführten daten.ortRuns: nur dort ist erkennbar, ob ein Ort nach
+// einer Unterbrechung noch einmal auftaucht. So eine Rückkehr bekommt in
+// zeichneSpineHorizontal (spine-horizontal.js) keinen zweiten Kreis, sondern
+// einen Bogen zurück zum ersten. Jeder zusammenhängende Lauf gleicher
+// ortBasis wird zu genau einem Eintrag.
 function baueSpineDaten(daten, hauptorte) {
   let eintraege = [];
   let indexNachOrt = new Map(); // ortBasis-Name -> Index in eintraege
@@ -525,10 +434,10 @@ function baueSpineDaten(daten, hauptorte) {
 }
 
 
-// --- Öffentliche Schnittstelle -------------------------------------------
-// 26 Namen gehen nach aussen — die grösste Schnittstelle im Projekt. Sechs
-// Module lesen daraus: kreisgrafik, ortsveraenderung, spine-horizontal,
-// annotationsbox, dom-aufbau, fotomarker, uebersichtsrouten und sketch.
+// --- Export ------------------------------------------------------------
+// 26 Namen — die grösste Schnittstelle im Projekt. Acht Module lesen daraus:
+// kreisgrafik, ortsveraenderung, spine-horizontal, annotationsbox,
+// dom-aufbau, fotomarker, uebersichtsrouten, sketch.
 
 // Farben, Kategorien, Punktgrössen
 window.CATEGORY_COLORS = CATEGORY_COLORS;
