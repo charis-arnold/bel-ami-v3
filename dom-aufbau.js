@@ -1,61 +1,14 @@
 /* =============================================================================
    dom-aufbau.js — Aufbau der HTML-Bedienelemente
 
-   Aus sketch.js herausgelöst (siehe docs/modularisierung-log.md). Alles, was
-   beim Start EINMAL an DOM-Knoten erzeugt wird: das Kapitelregister links
-   (Plan/Graph, "Alle", Kapitel 01–18), der Legendeninhalt rechts, die
-   Gedanken-Spalte und die drei Marker-Ebenen der Kapitel-1-Ansicht. Dazu der
-   Akkordeon-Umschalter der beiden Register.
-
-   Hier wird nur GEBAUT, nicht gezeichnet und nicht positioniert: Die Knoten
-   bekommen ihre Bildschirmposition erst später in draw(), das dafür
-   lonLatToScreen() aus geo-projektion.js nutzt. Diese Datei selbst greift
-   nirgends auf die Geo-Projektion zu.
-
-   --- Abhängigkeiten NACH AUSSEN (alle erst zur Laufzeit) -------------------
-   aus sketch.js (18):
-     DOM-Wurzeln       kartenMarkierungenEl, kapitelRegister,
-                       legendeInhalt, registerTabs
-     gefüllte Container kapitelRegisterEintraege, markierungsEintraege,
-                       stationsMarker, zwischenMarker — nur befüllt, nie neu
-                       zugewiesen
-
-   Die acht erzeugten Knoten (modusZeile, planEintrag, graphEintrag,
-   leerzeile, alleEintrag, legendeValenzText, legendeValenzKreis,
-   legendeFwertHinweis) werden NICHT mehr von hier aus gesetzt: Sie gehen als
-   Rückgabewert von baueKapitelRegister()/baueLegende() hinaus, setup() nimmt
-   sie entgegen. Siehe docs/best-practices-review.md, "Gruppe B".
-     Konstanten        WEITERE_KAPITEL_NUMMERN, LEGENDE_VALENZ_OBEN_UNTEN,
-                       LEGENDE_FWERT_OBEN_UNTEN, FWERT_PUNKT_DURCHMESSER
-     Navigation        scrolleZuKapitel1, springeZuKapitelZoom,
-                       springeZurUebersicht
-     Daten             stationenData
-   aus datenbereinigung.js: KREIS_KATEGORIEN, CATEGORY_LABELS, FWERT_PUNKT_FARBE
-   aus spine-horizontal.js: setzeKapitelAnsichtModus (Plan/Graph-Umschalter)
-
-   Keine Zugriffe auf geo-projektion.js, kartendekor.js, ortsveraenderung.js,
-   fotomarker.js, annotationsbox.js oder sonifikation.js.
-
-   --- Wer von aussen hierher greift ----------------------------------------
-   setup()  ruft die fünf baue*-Funktionen und hängt oeffneRegister an die
-            Klick-Listener der beiden Registertabs
-
-   Der Zustand ist geteilt, nicht gekapselt: Die hier gefüllten Listen und
-   Element-Referenzen liegen weiterhin in sketch.js und werden dort von draw()
-   je Frame gelesen. Bei einer Umstellung auf ES-Module müssten diese
-   Variablen mitwandern oder über Rückgabewerte übergeben werden.
-
-   Wird in index.html VOR sketch.js geladen. Kein Top-Level-Initialisierer —
-   die Datei enthält ausschliesslich Funktionsdeklarationen.
+   Alles, was beim Start EINMAL an DOM-Knoten erzeugt wird: Kapitelregister
+   links, Legendeninhalt rechts, die drei Marker-Ebenen der Kapitel-1-Ansicht,
+   dazu der Akkordeon-Umschalter der Register. Hier wird nur gebaut — die
+   Bildschirmposition bekommen die Knoten erst in draw().
 ============================================================================= */
 
-// Öffnet EIN Register (Legende ODER Prolog) exklusiv (Akkordeon: das jeweils
-// andere schliesst automatisch mit) und markiert den Zustand zusätzlich am
-// gemeinsamen #registerTabs-Container. Daran hängt in style.css die Regel,
-// die den TAB (nicht den Inhalt) des GESCHLOSSENEN Registers an dieselbe
-// Kante mit ausfahren lässt wie das gerade geöffnete — sonst bliebe er am
-// Bildschirmrand stehen, während der geöffnete Tab zur Inhaltskante
-// wandert, und die beiden Tabs würden optisch auseinanderreissen.
+// Öffnet ein Register exklusiv (Akkordeon). Die Klasse am gemeinsamen
+// Container lässt in style.css den geschlossenen Tab mit ausfahren.
 function oeffneRegister(box, andererBox, eigeneKlasse, andereKlasse) {
   const warOffen = box.classList.contains('offen');
   box.classList.toggle('offen', !warOffen);
@@ -64,25 +17,10 @@ function oeffneRegister(box, andererBox, eigeneKlasse, andereKlasse) {
   registerTabs.classList.remove(andereKlasse);
 }
 
-// Kapitelregister (linker Rand). Oben drei feste Einträge (ersetzen den
-// ehemaligen ansicht-wechseln-btn oben rechts):
-//   - "Plan"/"Graph" (eine Zeile, zwei Hälften): setzt kapitelAnsichtsModus
-//     direkt auf 'karte' bzw. 'grafik' (siehe setzeKapitelAnsichtModus) für
-//     die gerade offene Kapitel-Ansicht.
-//   - Leerzeile als Abstandshalter.
-//   - "Alle": verlässt jede offene Kapitel-Ansicht zurück auf die neutrale
-//     Übersichtskarte (springeZurUebersicht).
-// Danach ein Eintrag je Kapitel, 01–18 lückenlos. 01 hat kein
-// kapitelKarten-Pendant, eigenes System — springt per scrolleZuKapitel1()
-// zurück in die Hauptgeschichte statt in einen Kapitel-Zoom. Alle anderen
-// (inkl. 03, das in WEITERE_KAPITEL_NUMMERN fehlt, da eigene Datenquelle
-// kapitel03Data) springen per springeZuKapitelZoom(nr) — die Funktion hat
-// einen eigenen Sicherheits-Guard und tut bei fehlenden Daten einfach nichts.
+// Kapitelregister links: Plan/Graph, Leerzeile, "Alle", dann 01–18.
+// 01 springt zurück in die Hauptgeschichte statt in einen Kapitel-Zoom.
 function baueKapitelRegister() {
-  // Die fünf Handles sind LOKAL und gehen als Rückgabewert hinaus — vorher
-  // schrieb diese Funktion sie direkt in sketch.js-Variablen (siehe
-  // docs/best-practices-review.md, "Gruppe B"). Gebaut wird hier, gehalten
-  // wird in sketch.js, wo draw() sie jeden Frame liest.
+  // Lokal, gehen als Rückgabewert hinaus; gehalten werden sie in sketch.js.
   let modusZeile = document.createElement('div');
   modusZeile.className = 'kapitel-register-modus-zeile';
 
@@ -122,25 +60,15 @@ function baueKapitelRegister() {
     eintrag.textContent = 'Kapitel ' + parseInt(nr, 10);
     eintrag.addEventListener('click', nr === '01' ? scrolleZuKapitel1 : () => springeZuKapitelZoom(nr));
     kapitelRegister.appendChild(eintrag);
-    // kapitelRegisterEintraege wird nur BEFÜLLT, nie neu zugewiesen — die
-    // Referenz bleibt stabil, deshalb bleibt das hier.
+    // Wird nur befüllt, nie neu zugewiesen — die Referenz bleibt stabil.
     kapitelRegisterEintraege[nr] = eintrag;
   });
 
   return { modusZeile, planEintrag, graphEintrag, leerzeile, alleEintrag };
 }
 
-// Legende (mitte rechts, sichtbar in Plan- UND Graph-Ansicht, siehe
-// draw()) — Farberklärung der Kreisgrafik (zeichneKreiseFuerRun). Inhalt aus
-// KREIS_KATEGORIEN/CATEGORY_LABELS (datenbereinigung.js) gebaut statt hart
-// codiert, damit Legende und tatsächliche Kreisfarben nie auseinanderlaufen.
-// Erklärt beide Bild-Ebenen einzeln: die schraffierte Gesamtfläche (alle
-// Erwähnungen der Kategorie, auch neutrale/unbewertete) und die vollflächigen
-// Halbkreise (nur negativ/positiv bewertete, per fester Position oben/unten
-// unterschieden — NICHT per Farbe, siehe "Kreise"-Kommentar bei
-// zeichneKreiseFuerRun). Valenz- und F-Wert-Zeile werden hier mit der
-// oben/unten-Fassung gebaut (Plan und Graph, der Normalfall) und von draw()
-// auf links/rechts umgestellt, sobald der Schlussakt Ortsveränderung läuft.
+// Legende rechts, aus KREIS_KATEGORIEN gebaut statt hart codiert, damit sie
+// nie von den echten Kreisfarben abweicht.
 function baueLegende() {
   let titel = document.createElement('div');
   titel.className = 'legende-titel';
@@ -182,10 +110,8 @@ function baueLegende() {
   valenzText.className = 'legende-valenz-text';
   valenzText.textContent = LEGENDE_VALENZ_OBEN_UNTEN;
   valenzZeile.appendChild(valenzText);
-  // valenzText/valenzKreis gehen unten als Rückgabewert hinaus: Die
-  // Halbkreise stehen in Plan- wie Graph-Ansicht oben/unten, im Schlussakt
-  // Ortsveränderung dagegen links/rechts (siehe zeichneOrtsveraenderung) —
-  // die Legende ist in allen dreien sichtbar und muss das mitmachen.
+  // Gehen als Rückgabewert hinaus: die Halbkreise stehen im Schlussakt
+  // links/rechts statt oben/unten, die Legende muss das mitmachen.
   legendeInhalt.appendChild(valenzZeile);
 
   let neutralZeile = document.createElement('div');
@@ -208,7 +134,7 @@ function baueLegende() {
   fwertTitel.textContent = 'F-Wert';
   legendeInhalt.appendChild(fwertTitel);
 
-  // Reihenfolge = Grösse 1..3, siehe FWERT_PUNKTGROESSE (datenbereinigung.js).
+  // Reihenfolge = Grösse 1..3, siehe FWERT_PUNKTGROESSE.
   [
     { groesse: 1, text: 'Raum löst Emotion aus' },
     { groesse: 2, text: 'Emotion färbt Raum' },
@@ -238,8 +164,7 @@ function baueLegende() {
   fwertHinweis.textContent = LEGENDE_FWERT_OBEN_UNTEN;
   legendeInhalt.appendChild(fwertHinweis);
 
-  // Drei Handles hinaus statt drei Fremdzuweisungen. Alle drei wechseln mit
-  // der Ansicht, siehe draw() in sketch.js.
+  // Drei Handles hinaus; alle drei wechseln mit der Ansicht.
   return {
     legendeValenzText: valenzText,
     legendeValenzKreis: valenzKreis,
