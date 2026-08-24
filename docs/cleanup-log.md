@@ -1538,3 +1538,60 @@ Der Foto-Teil von `mousePressed()` bleibt in `sketch.js`. Ihn zu verschieben
 (etwa als `fotoMarkerUnterMaus()` im Modul) wäre eine Änderung am Kontrollfluss
 und gehört in einen eigenen Schritt — so bereits im Modularisierungs-Log
 vermerkt.
+
+---
+
+## Offener Punkt — Restspuren der Gedanken-Spalte, plus toter Meilenstein-Schlüssel
+
+**Datum:** 24. August 2026
+**Status:** notiert, nicht bearbeitet
+**Aufräumen erst,** wenn `sketch.js` aus der aktiven Bearbeitung raus ist.
+
+Aufgefallen beim Kommentar-Durchgang durch `datenbereinigung.js`. Zwei
+voneinander unabhängige Sachen, hier nur zusammen notiert, weil sie im selben
+Durchgang auftauchten.
+
+### A) Kommentare beschreiben die Gedanken-Spalte noch als bestehend
+
+Das Feature ist seit
+[Schritt 4](#schritt-4--gedanken-spalte-vollständig-entfernt) (20. August 2026)
+vollständig entfernt: kein DOM-Builder, keine CSS-Klasse, kein Element in
+`index.html`. Zwei Kopfkommentare führen es weiterhin als vorhanden:
+
+| Fundstelle | Wortlaut | Befund |
+|---|---|---|
+| `dom-aufbau.js:7` | „das Kapitelregister links …, der Legendeninhalt rechts, die **Gedanken-Spalte** und die drei Marker-Ebenen" | Die Datei hat keinen Builder dafür — `baueKapitelRegister`, `baueLegende`, `baueKartenMarkierungen`, `baueStationsMarker`, `baueZwischenMarker`, sonst nichts |
+| `sketch.js:724` | „Kartenbezogene DOM-Overlays (Ortsmarker, **Gedanken-Spalte**, Karten-Markierungen, Annotation-Box)" | Zählt ein Overlay auf, das es nicht mehr gibt |
+
+Drei weitere Fundstellen in `datenbereinigung.js` (bei `GEDANKEN_FILTER`,
+`GEDANKEN_ORTRUN_UNTERDRUECKT` und über `valenzBucket`) sind im selben
+Durchgang bereits korrigiert.
+
+`docs/code-analyse-sketch-js.md:35` nennt `baueGedankenColumn()` ebenfalls
+noch — das ist eine Bestandsaufnahme von vor der Bereinigung und beschreibt
+korrekt den damaligen Stand. Nicht anzufassen.
+
+**Nicht Teil dieses Punkts: `rohdaten.gedanken`.** Die Normalisierungszeile
+(`datenbereinigung.js:242`) ist in [Schritt 13 C](#c-stationendatengedanken--geprüft-und-bewusst-behalten)
+geprüft und **bewusst behalten** worden — das Feld ist redaktionell befüllt,
+es ist die Herkunft der noch aktiven `GEDANKEN_FILTER`/`GEDANKEN_ZIEL_ORT`-Kette,
+und die Python-Pipeline schreibt es weiterhin. Diese Entscheidung steht; sie
+soll beim Aufräumen von A) nicht versehentlich mit aufgerollt werden.
+
+### B) `kreisVergleichFadeEnd` hat keinen Leser
+
+Unabhängig von der Gedanken-Spalte, gleicher Durchgang gefunden.
+
+`SCROLL_MEILENSTEINE.kreisVergleichFadeEnd` (`0.750967`, `datenbereinigung.js:226`)
+wird von keiner Stelle gelesen. Das Ausblenden der Übersichtskarte im
+Schlussakt, das der Schlüssel laut seinem früheren Kommentar steuerte, läuft
+über `OV_KARTE_AUS = [0.12, 0.32]` in `ortsveraenderung.js:110`, ausgewertet
+in `draw()` als `ovPhase(ovFortschritt, OV_KARTE_AUS)`.
+
+Der Kommentar an der Fundstelle ist bereits auf den Ist-Zustand gesetzt und
+benennt den toten Schlüssel. Der Schlüssel selbst steht noch im Objekt —
+Entfernen ist eine Code-Änderung und gehört in einen eigenen Schritt.
+
+Zu klären dabei: `SCROLL_MEILENSTEINE` ist exportiert und wird in `sketch.js`
+an 14 Stellen gelesen. Vor dem Entfernen ist zu prüfen, ob der Schlüssel
+wirklich nirgends dynamisch adressiert wird.
