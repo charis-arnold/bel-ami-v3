@@ -70,14 +70,36 @@
    einzige nicht-literale Top-Level-Initialisierer hier.
 
    --- Wer von aussen hierher greift ----------------------------------------
-   sketch.js              zeichneKreiseOrtRuns (Kapitel-1-Route und Kapitel-Zoom)
+   sketch.js              zeichneKreiseOrtRuns (Kapitel-1-Route)
+   uebersichtsrouten.js   zeichneKreiseOrtRuns (Kapitel-Zoom 02–18)
    ortsveraenderung.js    zeichneKreiseFuerRun, zeichneFwertPunkte, leereBandCounts
    spine-horizontal.js    zeichneKreiseFuerRun, zeichneFwertPunkte
    dom-aufbau.js          FWERT_PUNKT_DURCHMESSER (Legendenaufbau)
 
+   Das sind genau die fünf Namen des Exportblocks am Dateiende.
+
    Damit ist dies nach geo-projektion.js die zweite gemeinsame Grundlage
    mehrerer Module — es steht in index.html entsprechend weit vorne.
 ============================================================================= */
+
+// --- Modulkapselung ------------------------------------------------------
+// Alles bis zum Exportblock am Dateiende ist modulintern: 8 der 13
+// Top-Level-Namen werden von keinem anderen Modul gelesen (siehe
+// docs/best-practices-review.md, Punkt "Globale Variablen").
+//
+// Der Rumpf ist bewusst NICHT eingerückt. Bei über 400 Zeilen würde eine
+// Einrückung jede einzelne Zeile als geändert markieren — der Diff wäre
+// nicht mehr prüfbar und git blame für die ganze Datei wertlos. Die
+// schliessende Klammer steht ganz unten, direkt nach dem Export.
+//
+// Kein 'use strict': Das wäre eine Verhaltensänderung über die Kapselung
+// hinaus und gehört, wenn überhaupt, in einen eigenen Schritt.
+//
+// Die Ladezeit-Abhängigkeit auf datenbereinigung.js (siehe oben, hexZuRgb)
+// bleibt bestehen: Die IIFE läuft sofort beim Laden, der Aufruf findet also
+// zum selben Zeitpunkt statt wie vorher. Die Reihenfolge in index.html muss
+// unverändert bleiben.
+(function () {
 
 // Zeilenabstand der Schraffur in den Gesamtkreisen (siehe drawHatchedCircle).
 const HATCH_SPACING = 3;
@@ -460,3 +482,15 @@ function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1, a
   });
   pop();
 }
+
+
+// --- Öffentliche Schnittstelle -------------------------------------------
+// Die einzigen fünf Namen, die dieses Modul nach aussen gibt. Wer sie liest,
+// steht im Header-Block "Wer von aussen hierher greift".
+window.FWERT_PUNKT_DURCHMESSER = FWERT_PUNKT_DURCHMESSER;
+window.leereBandCounts = leereBandCounts;
+window.zeichneKreiseOrtRuns = zeichneKreiseOrtRuns;
+window.zeichneKreiseFuerRun = zeichneKreiseFuerRun;
+window.zeichneFwertPunkte = zeichneFwertPunkte;
+
+})(); // Ende der Modulkapselung, siehe Kommentar oben

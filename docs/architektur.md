@@ -7,8 +7,9 @@ verbesserungswürdig ist, steht getrennt davon in
 
 **Randbedingung, aus der sich alles Weitere ergibt:** Das Projekt nutzt **keine
 ES-Module**. Jede Datei ist ein eigenes `<script>`-Tag, alle Funktionen und
-Variablen landen im globalen Scope — mit einer Ausnahme: `ortsveraenderung.js`
-steht in einer IIFE und gibt nur acht Namen über `window.*` heraus. Es gibt kein `import`/`export` — wer worauf
+Variablen landen im globalen Scope — mit zwei Ausnahmen: `ortsveraenderung.js`
+(acht Exporte) und `kreisgrafik.js` (fünf) stehen in einer IIFE und geben nur
+diese Namen über `window.*` heraus. Es gibt kein `import`/`export` — wer worauf
 zugreift, ist nirgends deklariert, sondern ergibt sich aus der Reihenfolge in
 `index.html` und dem Zeitpunkt des Zugriffs.
 
@@ -127,7 +128,7 @@ eigenen Header-Abschnitt aus.
 |---|---|---|---|---|
 | 1 | `datenbereinigung.js` | 500 | `bereinigeStationenDaten`, `baueSpineDaten`, `sammleAnnotationenNachOrtBasis`, `zaehleBandCounts`, `zaehleAnnotationenLiveNachOrtBasis`, `ortRunsFuerSpine`, `ortRunSichtbar`, `kreisRadius`, `groessterKreisRadius`, `hexZuRgb` | `KREIS_KATEGORIEN`, `SCROLL_MEILENSTEINE`, `ROUTE_COLOR_RGB`, `FWERT_*`, `GEDANKEN_*`, `WOHNUNG_*` |
 | 2 | `geo-projektion.js` | 148 | `lonLatToScreen`, `coverCrop`, `cropToBbox`, `bboxToImgCrop` | `startBbox`, `uebersichtBbox`, `ch1ImgBbox`, `mapOffsetX`, `mapOffsetY` |
-| 3 | `kreisgrafik.js` | 463 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `zeichneKreisLabels`, `leereBandCounts` | `HATCH_SPACING`, `FWERT_PUNKT_DURCHMESSER`, `FWERT_PUNKT_FARBE_RGB` |
+| 3 | `kreisgrafik.js` | 497 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `leereBandCounts` | `FWERT_PUNKT_DURCHMESSER` — **gekapselt**, die übrigen acht Namen (u. a. `HATCH_SPACING`, `FWERT_PUNKT_FARBE_RGB`, `zeichneKreisLabels`) sind modulintern |
 | 4 | `kartendekor.js` | 188 | `zeichneMassstabsleiste`, `zeichneWindrose`, `haversineMeter` | `MASSSTAB_SCHRITTE` |
 | 5 | `ortsveraenderung.js` | 687 | `zeichneOrtsveraenderung`, `ovPhase`, `ovZoomBbox` | `OV_KARTE_AUS`/`OV_ZOOM`/`SK_*`-Phasenfenster — **als einziges Modul gekapselt**, alles Übrige ist modulintern |
 | 6 | `spine-horizontal.js` | 462 | `zeichneSpineHorizontal`, `toggleGrafikPlay`, `setzeKapitelAnsichtModus`, `stelleSpineDatenBereit`, `spineLayout`, `aktualisiereGrafikFortschritt` | `spineEintraegep5`, `spineEintraegeKapitel`, `grafikSpielt`, `grafikFortschritt`, `SPINE_*` |
