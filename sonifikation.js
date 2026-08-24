@@ -33,6 +33,24 @@
    c-moll, mit fliessenden Attack/Release-Werten statt Beat-Repetition.
 ============================================================================= */
 
+// --- Modulkapselung ------------------------------------------------------
+// Alles bis zum Exportblock am Dateiende ist modulintern: 17 der 21
+// Top-Level-Namen werden von keinem anderen Modul gelesen (siehe
+// docs/best-practices-review.md, Punkt "Globale Variablen").
+//
+// Der Rumpf ist bewusst NICHT eingerückt. Eine Einrückung würde jede
+// einzelne Zeile als geändert markieren — der Diff wäre nicht mehr prüfbar
+// und git blame für die ganze Datei wertlos. Die schliessende Klammer steht
+// ganz unten, direkt nach dem Export.
+//
+// Kein 'use strict': Das wäre eine Verhaltensänderung über die Kapselung
+// hinaus und gehört, wenn überhaupt, in einen eigenen Schritt.
+//
+// Diese Datei lädt eigenständig — kein Top-Level-Initialisierer greift auf
+// ein anderes Modul zu. Sie steht in index.html zuletzt, könnte aber überall
+// stehen.
+(function () {
+
 // Sample-Bänke laut strudel.cc-eigenem prebake.mjs (Codeberg uzu/strudel,
 // packages/website/src/repl/prebake.mjs) — @strudel/web lädt selbst KEINE
 // Samples (führte zu "sound X not found" in der Konsole); "gm_*"-Sounds
@@ -321,3 +339,31 @@ function beendeSonifikationAudio() {
     sonifikationTimeoutId = null;
   }
 }
+
+
+// --- Öffentliche Schnittstelle -------------------------------------------
+// Vier Namen gehen nach aussen. Gelesen werden sie von spine-horizontal.js
+// (Play-Button, Animationsdauer) und uebersichtsrouten.js (Ton beim
+// Verlassen einer Kapitelansicht stoppen).
+window.SONIFIKATION_GESAMTDAUER_SEK = SONIFIKATION_GESAMTDAUER_SEK;
+window.spieleSonifikationFuer = spieleSonifikationFuer;
+window.beendeSonifikationAudio = beendeSonifikationAudio;
+
+// sonifikationSpieltGerade ist die Ausnahme: ein VERÄNDERLICHES let, das
+// hier drinnen umgeschaltet wird (spieleSchichten setzt true,
+// beendeSonifikationAudio setzt false) und draussen gelesen wird.
+//
+// Eine einfache Zuweisung window.x = x würde nur den Wert beim Laden
+// kopieren — die Flagge bliebe für immer false, und die drei externen
+// Leser würden beendeSonifikationAudio() nie mehr aufrufen. Der Ton liefe
+// beim Ansichtswechsel weiter. Deshalb hier eine lebende Lesebindung
+// statt einer Kopie.
+//
+// Schreiben von aussen ist damit wirkungslos — das entspricht der
+// tatsächlichen Nutzung: alle drei Leser lesen nur.
+Object.defineProperty(window, 'sonifikationSpieltGerade', {
+  get: function () { return sonifikationSpieltGerade; },
+  configurable: true,
+});
+
+})(); // Ende der Modulkapselung, siehe Kommentar oben
