@@ -74,21 +74,9 @@
    wertet etwas aus.
 ============================================================================= */
 
-// --- Modulkapselung ------------------------------------------------------
-// Alles bis zum Exportblock am Dateiende ist modulintern: 6 der 16
-// Top-Level-Namen werden von keinem anderen Modul gelesen (siehe
-// docs/best-practices-review.md, Punkt "Globale Variablen").
-//
-// Der Rumpf ist bewusst NICHT eingerückt. Eine Einrückung würde jede
-// einzelne Zeile als geändert markieren — der Diff wäre nicht mehr prüfbar
-// und git blame für die ganze Datei wertlos. Die schliessende Klammer steht
-// ganz unten, direkt nach dem Export.
-//
-// Kein 'use strict': Das wäre eine Verhaltensänderung über die Kapselung
-// hinaus und gehört, wenn überhaupt, in einen eigenen Schritt.
-//
-// Diese Datei lädt eigenständig — kein Top-Level-Initialisierer greift auf
-// ein anderes Modul zu.
+// --- Modulkapselung ---------------------------------------------------
+// 6 von 16 Namen intern, 10 im Exportblock am Dateiende.
+// Konvention: docs/architektur.md. Lädt eigenständig.
 (function () {
 
 let zoomedKapitel = null;      // z.B. '03', oder null (Übersicht)
@@ -615,8 +603,8 @@ function springeZurUebersicht() {
 }
 
 
-// --- Öffentliche Schnittstelle -------------------------------------------
-// Sieben Funktionen gehen als Wert hinaus.
+// --- Export ------------------------------------------------------------
+// Sieben Funktionen als Wert.
 window.kapitelScheiben = kapitelScheiben;
 window.zeichneUebersichtsrouten = zeichneUebersichtsrouten;
 window.aktualisiereKapitelZoom = aktualisiereKapitelZoom;
@@ -625,18 +613,13 @@ window.schliesseKapitelZoom = schliesseKapitelZoom;
 window.springeZuKapitelZoom = springeZuKapitelZoom;
 window.springeZurUebersicht = springeZurUebersicht;
 
-// Die drei Zustandsvariablen dagegen als LESEBINDUNG: Alle drei werden hier
-// drinnen laufend umgeschaltet — zoomedKapitel beim Öffnen/Schliessen,
-// kapitelZoomAmount jeden Frame per lerp, kapitelHover bei jedem
-// Treffertest. Eine Zuweisung window.x = x würde nur den Startwert kopieren
-// und die Leser für immer auf null bzw. 0 festnageln (siehe den
-// gleichgelagerten Fall in sonifikation.js).
+// Die drei Zustandsvariablen als Lesebindung — laufend umgeschaltet:
+// zoomedKapitel beim Öffnen/Schliessen, kapitelZoomAmount jeden Frame per
+// lerp, kapitelHover bei jedem Treffertest. Wertkopie würde die Leser auf
+// null bzw. 0 festnageln.
 //
-// Schreiben von aussen ist damit wirkungslos — und das ist hier Absicht:
-// Bis vor kurzem schrieb draw() zwei dieser drei Variablen direkt, was
-// docs/best-practices-review.md als "die eigentliche Hürde vor jeder
-// Kapselung" führte. Diese Zugriffe sind aufgelöst; die Bindung hält den
-// Zustand jetzt technisch dort, wo er ohnehin hingehört.
+// Schreiben von aussen ist damit wirkungslos, und das ist Absicht: draw()
+// schrieb bis vor kurzem zwei der drei direkt.
 ['zoomedKapitel', 'kapitelZoomAmount', 'kapitelHover'].forEach(function (name) {
   Object.defineProperty(window, name, {
     get: function () {
