@@ -1,61 +1,25 @@
 /* =============================================================================
-   sonifikation.js — Erstentwurf (siehe Sonifikation-Brief-fuer-Claude-Code.md)
-   Eigenständiges, additives Modul: rührt datenbereinigung.js nicht an.
-   Datenquelle: kapitel01-sonifikation.json (siehe
-   data-prep/05 bereinigen/baue-sonifikation.py) — pro Station (0–5, die 6
-   "Halte" entlang der Kapitel-1-Route) Annotationsanzahl, Intensitäts-Summe,
-   F-Wert-Anteile UND Gehstrecken (davor/eigen, in Metern).
+   sonifikation.js — Kapitel als Tonstück, über Strudel
 
-   ZEITBASIERTE PLAY-ENGINE (statt Scroll, siehe Konzept-Diskussion): Ein
-   Klick auf den Play-Button der Graph-Ansicht (grafikPlayButton/
-   toggleGrafikPlay in sketch.js) spielt Kapitel 1 als eigenständiges, in
-   sich geschlossenes Stück ab — feste Gesamtdauer
-   (SONIFIKATION_GESAMTDAUER_SEK), NICHT an scrollY gekoppelt. Dieses Modul
-   liefert dafür NUR den Ton (spieleSonifikationFuer/
-   beendeSonifikationAudio) — die Graph-Ansicht selbst (horizontale
-   Spine, zeichneSpineHorizontal in sketch.js) läuft parallel mit derselben
-   Gesamtdauer, siehe aktuelleGrafikAnimationDauer() dort. Frühere Fassung
-   hatte hier ein eigenes, synchronisiertes Karten-Bild
-   (zeichneSonifikationsAbspiel() in sketch.js, gesteuert über
-   window.sonifikationSpieltAb + sonifikationAktuelleRevealIndex()) — beides
-   entfernt, da die Graph-Ansicht dieselbe Aufgabe jetzt übernimmt.
-
-   Warum nicht scroll-getrieben: Scroll-Geschwindigkeit ist durch den Nutzer
-   beliebig steuerbar (schnelles Wischen, Pausieren, Zurückscrollen) — das
-   verhindert jedes musikalische Tempo/Rubato. Ein Play-Button mit eigenem,
-   von der Route abgeleitetem Zeitplan (baueSpielplan()) macht die
-   Wegstrecke zwischen den Stationen und die Verweildauer (Annotationsdichte)
-   zur eigentlichen musikalischen Struktur — analog zum Grundgedanken von
-   commute.dataveyes.com (Metronom statt Scroll).
-
-   Wachstums-Metrik (siehe Rückfrage/Antwort zum Brief): anzahlAnnotationen.
-   Die drei F-Wert-Kategorien sind drei konstante Instrumenten-Layer, in
-   c-moll, mit fliessenden Attack/Release-Werten statt Beat-Repetition.
+   Liefert NUR den Ton zum Play-Button der Graph-Ansicht; die Spine läuft
+   parallel mit derselben Gesamtdauer. Zeitbasiert, nicht scroll-gekoppelt:
+   der Zeitplan kommt aus Gehstrecke und Annotationsdichte je Station
+   (kapitel01-sonifikation.json). Drei F-Wert-Kategorien = drei Layer in c-moll.
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 17 von 21 Namen intern, 4 im Exportblock am Dateiende.
-// Konvention: docs/architektur.md. Lädt eigenständig; steht zuletzt in
-// index.html, könnte aber überall stehen.
+// 17 von 21 Namen intern, 4 exportiert. Konvention: docs/architektur.md.
 (function () {
 
-// Sample-Bänke laut strudel.cc-eigenem prebake.mjs (Codeberg uzu/strudel,
-// packages/website/src/repl/prebake.mjs) — @strudel/web lädt selbst KEINE
-// Samples (führte zu "sound X not found" in der Konsole); "gm_*"-Sounds
-// (General MIDI) brauchen zusätzlich das separate @strudel/soundfonts-Paket
-// und sind hier bewusst NICHT verwendet. Stattdessen direkt VCSL (Versilian
-// Community Sample Library, echte Instrumentalaufnahmen statt GM-Synth) +
-// die dedizierte Klavier-Bank, exakt dieselben zwei CDN-Quellen, die
-// strudel.cc selbst lädt.
+// Dieselben zwei CDN-Quellen, die strudel.cc selbst lädt. @strudel/web bringt
+// keine Samples mit; gm_*-Sounds brauchen ein Extrapaket und bleiben draussen.
 const SONIFIKATION_SAMPLE_BAENKE = [
   ['https://strudel.b-cdn.net/piano.json', 'https://strudel.b-cdn.net/piano/'],
   ['https://strudel.b-cdn.net/vcsl.json', 'https://strudel.b-cdn.net/VCSL/'],
 ];
 
-// VCSL hat keine Streicher-/Klarinetten-Samples (stark perkussions-/
-// weltinstrumente-lastige Bibliothek, siehe vcsl.json) — Auswahl entsprechend
-// auf tatsächlich vorhandene Klangfarben angepasst, sinngemäss statt wörtlich
-// am Saint-Saëns-Bild (Klavier/Orgel/Saxophon statt Klavier/Streicher/Holz).
+// VCSL hat keine Streicher/Klarinetten — Klavier/Orgel/Saxophon statt der
+// ursprünglich gedachten Saint-Saëns-Besetzung.
 const SONIFIKATION_INSTRUMENTE = {
   ort_loest_emotion_aus: { sound: 'piano', attack: 0.02, release: 0.6, octave: 3 },
   emotion_faerbt_raum: { sound: 'pipeorgan_quiet', attack: 0.25, release: 1.2, octave: 4 },
@@ -66,12 +30,8 @@ const SONIFIKATION_INSTRUMENTE = {
 // Wert; erste Annahme, per Ohr anzupassen.
 const SONIFIKATION_GESAMTDAUER_SEK = 45;
 
-// Gewichtungs-Formel für die Dauer einer Station (siehe Modulkopf-Kommentar):
-// Basiswert, damit auch strecken-/annotationsarme Stationen (z.B. Station 1,
-// "Place de la Madeleine", nur 3 Annotationen, keine eigene Wegstrecke) einen
-// hörbaren Moment bekommen, plus Anteil aus Gehstrecke (davor + eigen) und
-// Annotationsdichte. STRECKEN_SKALA/ANNOTATION_SKALA sind Stellschrauben,
-// keine gemessenen Grössen — frei anpassbar, um die Balance zu verändern.
+// Dauer je Station: Basiswert plus Anteile aus Gehstrecke und Annotationen.
+// Die beiden Skalen sind Stellschrauben, keine gemessenen Grössen.
 const SONIFIKATION_GEWICHT_BASIS = 3;
 const SONIFIKATION_GEWICHT_STRECKEN_SKALA = 200; // Meter pro Gewichtspunkt
 const SONIFIKATION_GEWICHT_ANNOTATION_SKALA = 0.6; // Gewichtspunkte pro Annotation
@@ -80,9 +40,7 @@ let sonifikationDaten = null;
 let sonifikationBereit = false;
 let sonifikationSpieltGerade = false;
 
-// Zeitplan: [{station, ort, start, ende, dauer, revealIndexVorher, revealIndexEigen}, ...]
-// (Sekunden ab Start) — nur für den Audio-Aufbau (baueGainFolge/Notenfolge)
-// hier im Modul selbst gebraucht.
+// Zeitplan in Sekunden ab Start, nur modulintern für den Audio-Aufbau.
 let sonifikationSpielplan = null;
 
 async function ladeSonifikationDaten() {
@@ -116,12 +74,8 @@ function baueSpielplan(stationen) {
   });
 }
 
-// Baut aus den Stationsdaten für eine F-Wert-Kategorie eine gewichtete
-// Strudel-Gain-Folge (dieselben @-Gewichte wie die Notenfolge, siehe
-// spieleKapitel1SonifikationAudio — sonst würden Gain- und Notenwechsel
-// zeitlich auseinanderlaufen). 0, wo diese Kategorie an dieser Station gar
-// nicht vorkommt, sonst die Anzahl normiert auf die insgesamt grösste
-// Station (maxAnzahl) über alle Kategorien hinweg.
+// Gain-Folge je Kategorie, auf maxAnzahl normiert. Dieselben @-Gewichte wie
+// die Notenfolge, sonst laufen Gain- und Notenwechsel auseinander.
 function baueGainFolge(stationen, spielplan, kategorie, maxAnzahl) {
   return stationen
     .map((s, i) => {
@@ -132,25 +86,10 @@ function baueGainFolge(stationen, spielplan, kategorie, maxAnzahl) {
     .join(' ');
 }
 
-// initStrudel() muss innerhalb des Klick-Handlers passieren (Autoplay-
-// Policy). WICHTIG: initStrudel() selbst ist async und gibt ein Promise
-// zurück, das erst resolved, nachdem @strudel/core/mini/webaudio etc. per
-// evalScope() global registriert wurden (siehe packages/web/web.mjs,
-// defaultPrebake()) — davor existiert die globale samples()-Funktion (und
-// note/n/s/stack/...) schlicht noch nicht. Die prebake-Option wird intern
-// GENAU an der richtigen Stelle ausgeführt (nach defaultPrebake, also
-// nachdem samples() bereits existiert).
-// KORREKTUR (nach Prüfung des tatsächlich per CDN geladenen Bundles,
-// @strudel/web@1.0.3 — nicht nur der Doku/dem neueren main-Branch-Quelltext):
-// initStrudel() gibt in dieser Version GAR NICHTS zurück (kein "return repl"
-// wie im main-Branch) — repl bleibt intern privat. setCps/setcps werden nur
-// registriert, wenn der REPL SELBST intern seine eigene .evaluate()-Methode
-// aufruft (die dabei H() ausführt) — das global exponierte evaluate() ist
-// eine ANDERE, einfachere Funktion ohne diesen Seiteneffekt. Damit ist
-// setcps/cpm in dieser Version von aussen schlicht nicht erreichbar.
-// Lösung: Standard-Tempo ist fest cps=0.5 (1 Zyklus = 2s, siehe Scheduler-
-// Konstruktor im Bundle) — Gesamtdauer daher über .slow() steuern, das
-// bereits im allerersten Entwurf nachweislich funktioniert hat.
+// ACHTUNG initStrudel() muss im Klick-Handler laufen (Autoplay-Policy) und
+// gibt in @strudel/web@1.0.3 nichts zurück — setcps/cpm sind von aussen nicht
+// erreichbar. Tempo liegt deshalb fest bei cps=0.5, die Gesamtdauer wird
+// über .slow() gesteuert.
 const SONIFIKATION_STANDARD_CPS = 0.5;
 
 async function stelleSonifikationBereit() {
@@ -160,16 +99,10 @@ async function stelleSonifikationBereit() {
       SONIFIKATION_SAMPLE_BAENKE.map(([json, basis]) => samples(json, basis, { prebake: true }))
     ),
   });
-  // Race im geladenen @strudel/web@1.0.3-Bundle selbst (per Test beobachtet,
-  // nicht dokumentiert): das von initStrudel() zurückgegebene Promise kann
-  // einen Tick VOR der eigentlichen evalScope()-Registrierung von n/s/note/…
-  // als globale Funktionen auflösen — n(...) direkt danach wirft dann
-  // "n is not defined". Kapitel 1s eigener Aufruf (spieleKapitel1Sonifikation-
-  // Audio) verdeckte das bisher zufällig durch den JSON-Fetch dazwischen
-  // (genug Zeit für den fehlenden Tick); ohne so einen Zwischenschritt (wie
-  // bei spieleKapitelSonifikationAudio) schlägt es zuverlässig fehl. Kurzes
-  // Polling (im Test reichte 1 Tick) statt eines festen sleep(), damit es
-  // auch bei einer langsameren Registrierung nicht erneut flackert.
+  // ACHTUNG das Promise von initStrudel() kann einen Tick VOR der Registrierung
+  // von n/s/note auflösen — ein n(...) direkt danach wirft "n is not defined".
+  // Kurzes Polling statt festem sleep(). Nur per Test beobachtet, nicht
+  // dokumentiert.
   let versuche = 0;
   while (typeof n !== 'function' && versuche < 50) {
     await new Promise(r => setTimeout(r, 10));
@@ -180,13 +113,8 @@ async function stelleSonifikationBereit() {
 
 let sonifikationTimeoutId = null;
 
-// Gemeinsamer Wiedergabe-Kern für Kapitel 1 (eigene, wegstreckengewichtete
-// Stationen-Einteilung, siehe spieleKapitel1SonifikationAudio) UND jedes
-// andere Kapitel (02–18, gleichverteilte Schritte, siehe
-// spieleKapitelSonifikationAudio) — beide bauen nur notenFolge/
-// gainFolgenProKategorie in ihrer je eigenen Logik zusammen und übergeben
-// hier an dieselben drei Instrumenten-Layer (SONIFIKATION_INSTRUMENTE,
-// Saint-Saëns-Stilrichtung, siehe Modulkopf).
+// Gemeinsamer Wiedergabe-Kern: beide Aufrufer bauen nur notenFolge und
+// gainFolgen, gespielt wird hier auf denselben drei Layern.
 function spieleSchichten(notenFolge, gainFolgenProKategorie, slowFaktor, gesamtdauerSek) {
   let layers = Object.entries(SONIFIKATION_INSTRUMENTE).map(([kategorie, instr]) =>
     n(notenFolge)
@@ -209,27 +137,15 @@ function spieleSchichten(notenFolge, gainFolgenProKategorie, slowFaktor, gesamtd
   }, gesamtdauerSek * 1000);
 }
 
-// Startet den Ton, der zur gerade offenen Ansicht gehört: Kapitel 1, wenn
-// kein Kapitel gezoomt ist, sonst das gezoomte. Die Auswahl gehört in dieses
-// Modul — sie stand vorher als if/else in toggleGrafikPlay()
-// (spine-horizontal.js) und zwang das Grafikmodul, beide Einstiegspunkte zu
-// kennen.
-//
-// Bewusst ohne async/await: Die beiden Ziele sind async, der Aufrufer wartet
-// aber nicht auf sie. Der Wrapper reicht dieselbe Promise durch, die dort
-// schon fallen gelassen wird — Verhalten unverändert.
+// Wählt den Ton zur offenen Ansicht: Kapitel 1, wenn keines gezoomt ist.
+// Ohne await, der Aufrufer wartet ohnehin nicht.
 function spieleSonifikationFuer(kapitelNr) {
   if (kapitelNr) return spieleKapitelSonifikationAudio(kapitelNr);
   return spieleKapitel1SonifikationAudio();
 }
 
-// Reiner Audio-Start — die Graph-Ansicht (horizontale Spine) läuft
-// unabhängig davon parallel weiter, siehe toggleGrafikPlay/
-// aktuelleGrafikAnimationDauer in sketch.js, die für Kapitel 1 dieselbe
-// SONIFIKATION_GESAMTDAUER_SEK als Gesamtdauer verwenden — beide Uhren
-// starten dadurch (bis auf die kurze Ladezeit von Strudel/den JSON-Daten
-// beim allerersten Play) zur selben Zeit und bleiben synchron, ohne dass
-// dieses Modul die Graph-Ansicht selbst kennen oder steuern muss.
+// Reiner Audio-Start. Die Spine läuft unabhängig parallel und nutzt dieselbe
+// SONIFIKATION_GESAMTDAUER_SEK, deshalb bleiben beide Uhren synchron.
 async function spieleKapitel1SonifikationAudio() {
   await stelleSonifikationBereit();
   let daten = await ladeSonifikationDaten();
@@ -238,13 +154,8 @@ async function spieleKapitel1SonifikationAudio() {
 
   sonifikationSpielplan = baueSpielplan(stationen);
 
-  // Je Kategorie: eine Melodie in c-moll (.scale() statt fest ausnotierter
-  // Töne), eine Tonstufe pro Station — aber NICHT gleich lang: die
-  // @-Gewichte (siehe Modulkopf) kommen aus derselben Gehstrecke/
-  // Annotationsdichte wie der visuelle Zeitplan (baueSpielplan), damit Ton
-  // und Graph-Ansicht dieselbe innere Struktur teilen. .slow() dehnt
-  // den einen Zyklus (bei Standardtempo cps=0.5 sonst 2s lang) exakt auf
-  // SONIFIKATION_GESAMTDAUER_SEK.
+  // Eine Tonstufe je Station, Länge über die @-Gewichte aus baueSpielplan.
+  // .slow() dehnt den einen Zyklus auf SONIFIKATION_GESAMTDAUER_SEK.
   let notenFolge = sonifikationSpielplan.map((e, i) => `${i}@${e.dauer.toFixed(3)}`).join(' ');
   let slowFaktor = SONIFIKATION_GESAMTDAUER_SEK / (1 / SONIFIKATION_STANDARD_CPS);
 
@@ -256,28 +167,11 @@ async function spieleKapitel1SonifikationAudio() {
   spieleSchichten(notenFolge, gainFolgenProKategorie, slowFaktor, SONIFIKATION_GESAMTDAUER_SEK);
 }
 
-// Dieselbe Saint-Saëns-Klangsprache (SONIFIKATION_INSTRUMENTE) für jedes
-// einzelne Kapitel 02–18 — anders als Kapitel 1 (eigene, von Hand
-// gepflegte kapitel01-sonifikation.json mit fester 6-Stationen-Einteilung
-// und wegstreckengewichteten Dauern) braucht diese Fassung KEINE eigene
-// Python-Ausgabedatei: sie liest direkt dieselben Spine-Einträge
-// (spineEintraegeKapitel[nr], baueSpineDaten() in datenbereinigung.js), die
-// ohnehin schon für die wachsenden Kreise der Graph-Ansicht gebaut werden —
-// Ton und Bild teilen sich dadurch garantiert dieselbe Struktur, ohne
-// eigene Gewichtungs-Formel. Jeder Spine-Schritt bekommt exakt denselben
-// Zeitanteil wie in der Animation (aktuelleGrafikAnimationDauer, sketch.js,
-// dort bereits gleichverteilt statt wegstreckengewichtet) — 'rueckkehr'-
-// Schritte bleiben bewusst stumm/Pause ('~' in der Strudel-Mini-Notation):
-// eine Rückkehr lässt in der Graph-Ansicht den URSPRÜNGLICHEN Kreis
-// weiterwachsen statt einen neuen zu zeigen, das liesse sich in einer rein
-// sequenziellen Tonfolge nicht rückwirkend auf einen bereits gespielten Ton
-// nachbilden. Die Notenhöhe ist wie bei Kapitel 1 nur die fortlaufende
-// Position in der c-moll-Tonleiter — die drei Instrumenten-Layer folgen
-// der F-Wert-Verteilung (SONIFIKATION_INSTRUMENTE-Schlüssel) der jeweils
-// EIGENEN Annotationen jedes Schritts (zwischen seinem rv und dem rv des
-// nächsten Spine-Eintrags, exklusive — durch die Bauweise von
-// baueSpineDaten immer exakt der eine zusammenhängende Ortsbesuch, den
-// dieser Schritt darstellt).
+// Kapitel 02–18 lesen dieselben Spine-Einträge wie die Graph-Ansicht, Ton
+// und Bild teilen so die Struktur ohne eigene Python-Datei.
+
+// 'rueckkehr'-Schritte bleiben stumm ('~'): eine Rückkehr lässt den alten
+// Kreis weiterwachsen, was sich sequenziell nicht nachbilden liesse.
 async function spieleKapitelSonifikationAudio(nr) {
   await stelleSonifikationBereit();
   let daten = datenFuerKapitel(nr);
@@ -306,19 +200,16 @@ async function spieleKapitelSonifikationAudio(nr) {
     ).join(' ');
   });
 
-  // aktuelleGrafikAnimationDauer() (sketch.js) liest zoomedKapitel selbst
-  // aus — hier korrekt, weil dieser Aufruf nur aus toggleGrafikPlay kommt,
-  // während zoomedKapitel bereits === nr ist.
+  // aktuelleGrafikAnimationDauer() (spine-horizontal.js) liest zoomedKapitel
+  // selbst — hier korrekt, weil der Aufruf nur aus toggleGrafikPlay kommt.
   let gesamtdauerSek = aktuelleGrafikAnimationDauer() / 1000;
   let slowFaktor = gesamtdauerSek / (1 / SONIFIKATION_STANDARD_CPS);
 
   spieleSchichten(notenFolge, gainFolgenProKategorie, slowFaktor, gesamtdauerSek);
 }
 
-// Play/Pause-Steuerung lebt in sketch.js (toggleGrafikPlay) — hier nur das
-// Aufräumen des Audio-Teils (Sound stoppen, Timeout löschen). Rührt bewusst
-// weder grafikSpielt noch grafikPlayButton an: die Graph-Ansicht bleibt
-// alleinige Quelle für Play-Icon/Fortschritt (siehe sketch.js).
+// Nur der Audio-Teil. Play-Zustand und Button gehören der Graph-Ansicht
+// (toggleGrafikPlay, spine-horizontal.js) und bleiben unangetastet.
 function beendeSonifikationAudio() {
   if (typeof hush === 'function') hush();
   sonifikationSpieltGerade = false;
@@ -330,17 +221,13 @@ function beendeSonifikationAudio() {
 
 
 // --- Export ------------------------------------------------------------
-// Vier Namen, gelesen von spine-horizontal.js (Play, Animationsdauer) und
-// uebersichtsrouten.js (Ton beim Verlassen einer Kapitelansicht).
+// Vier Namen. Leser: docs/architektur.md.
 window.SONIFIKATION_GESAMTDAUER_SEK = SONIFIKATION_GESAMTDAUER_SEK;
 window.spieleSonifikationFuer = spieleSonifikationFuer;
 window.beendeSonifikationAudio = beendeSonifikationAudio;
 
-// sonifikationSpieltGerade wird hier umgeschaltet (spieleSchichten true,
-// beendeSonifikationAudio false) und draussen gelesen. Wertkopie würde die
-// Flagge auf false einfrieren — die drei Leser riefen beendeSonifikationAudio()
-// nie mehr, der Ton liefe beim Ansichtswechsel weiter. Deshalb Lesebindung.
-// Schreiben von aussen bleibt wirkungslos; alle drei Leser lesen nur.
+// Lesebindung statt Wertkopie: die Flagge fröre sonst auf false ein und der
+// Ton liefe beim Ansichtswechsel weiter.
 Object.defineProperty(window, 'sonifikationSpieltGerade', {
   get: function () { return sonifikationSpieltGerade; },
   configurable: true,
