@@ -308,12 +308,12 @@ function aktualisiereKapitelZoom() {
   kapitelZoomAmount = lerp(kapitelZoomAmount, zoomedKapitel ? 1 : 0, 0.08);
 }
 
-// ACHTUNG setzt voraus, dass die Scrollposition schon im uebersichtRouten-Akt
-// liegt — sonst schliesst der <=0-Check in draw() den Zoom im nächsten Frame
+// ACHTUNG setzt voraus, dass die Scrollposition schon im uebersichtRouten-Akt liegt — 
+// sonst schliesst der <=0-Check in draw() den Zoom im nächsten Frame
 // wieder. Von aussen immer über springeZuKapitelZoom().
 function oeffneKapitelZoom(nr) {
   if (!kapitelHatEigeneAnsicht(nr)) return;
-  zoomedKapitel = nr;
+  zoomedKapitel = nr; 
   setzeKapitelAnsichtZurueck();
 }
 
