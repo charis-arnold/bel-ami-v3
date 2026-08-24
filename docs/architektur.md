@@ -26,6 +26,20 @@ Die drei übrigen — `geo-projektion.js`, `fotomarker.js`, `dom-aufbau.js` —
 sind bewusst ungekapselt: Bei ihnen wird **jeder** Top-Level-Name von aussen
 gelesen, eine Kapsel brächte null.
 
+**Form der Kapsel** — gilt für alle neun, steht deshalb nur hier und nicht in
+jeder Datei:
+
+- **Rumpf nicht eingerückt.** Eine Einrückung um zwei Zeichen würde bei
+  Dateien dieser Grösse jede Zeile als geändert markieren: Diff unlesbar,
+  `git blame` wertlos. So bleibt der Kapsel-Diff eine reine Einfügung von
+  Wrapper und Exportblock.
+- **Kein `'use strict'`.** Wäre eine Verhaltensänderung über die Kapselung
+  hinaus (undeklarierte Zuweisungen, `this`, doppelte Parameternamen) und
+  gehört, wenn überhaupt, in einen eigenen Schritt.
+- **Exportblock am Dateiende**, `window.X = X` je Zeile, kein
+  Namespace-Objekt — so bleiben die Aufrufstellen in den lesenden Modulen
+  unverändert.
+
 **Zwei Regeln, die dabei gelten:**
 
 1. Ist ein exportierter Name **veränderlich** und wird im Modul umgeschaltet,
