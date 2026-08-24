@@ -36,7 +36,7 @@ sondern nur: faktisch greift kein anderes Modul darauf zu.
 | **mittel** | ~~`draw()` schreibt in Variablen von drei fremden Modulen~~ — **erledigt**, alle fünf Zugriffe verlagert | Globale Variablen |
 | **mittel** | ~~`zeichneKreisLabels()` setzt sechs p5-Zeichenzustände und stellt keinen zurück~~ — **erledigt**, `push()`/`pop()` | Single Responsibility |
 | **mittel** | ~~`zeichneUebersichtsrouten()` zeichnet und setzt dabei `kapitelHover`~~ — **erledigt**, `draw()` zieht nichts mehr nach | Single Responsibility |
-| **mittel** | 124 der 262 Namen sind modulintern; davon 86 tatsächlich gekapselt (**7 von 12 Modulen**), 33 Kandidaten offen | Globale Variablen |
+| **mittel** | 124 der 262 Namen sind modulintern; davon 86 gekapselt (**7 von 12 Modulen**), 33 offen — davon 12 seit der Auflösung des Handler-Dreiecks entblockiert | Globale Variablen |
 | **mittel** | ~~Kapitel-1-Datenregeln stehen im Zeichenmodul `kreisgrafik.js`~~ — **erledigt**, jetzt `ortRunSichtbar()` in `datenbereinigung.js` | Single Responsibility |
 | **mittel** | ~~`zeichneHalbkreis`/`zeichneVollkreis` setzen `globalCompositeOperation` hart zurück~~ — **erledigt**, `push()`/`pop()` | Single Responsibility |
 | **niedrig** | `draw()` läuft mit 557 Zeilen als eine Funktion | Single Responsibility |
@@ -262,55 +262,92 @@ Daten-Neubau kann es lautlos auseinanderlaufen.
 
 Das Abhängigkeitsdiagramm in [architektur.md](architektur.md#abhängigkeitsdiagramm)
 zeigt *Lesezugriffe*. Für die Frage nach kapselbarem Zustand zählt die
-Gegenrichtung — sie sieht anders aus. Der Stand nach der Kapselung:
+Gegenrichtung. Der Stand nach der Auflösung des Handler-Dreiecks:
 
 ```mermaid
 graph LR
     SK["sketch.js<br/>preload / setup"]
-    DRAW["sketch.js · draw()"]
     DOM["dom-aufbau.js"]
-    UR["uebersichtsrouten.js"]
-    SH["spine-horizontal.js"]
     FM["fotomarker.js"]
 
-    SK ==>|"fotoMarkerListe<br/>fotoPopup*"| FM
-    DOM ==>|"9 DOM-Handles"| SK
-    UR -->|"kapitelAnsichtsModus<br/>kapitelEinstiegsStartMillis"| SK
-    UR -->|"grafikSpielt<br/>grafikFortschritt<br/>grafikPlayAusblendStart"| SH
-    SH -->|"kapitelAnsichtsModus"| SK
+    DOM ==>|"8 DOM-Handles"| SK
+    SK ==>|"fotoMarkerListe<br/>fotoPopup* (5)"| FM
 
+    UR["uebersichtsrouten.js"]
+    SH["spine-horizontal.js"]
     KG["kreisgrafik.js"]
     KD["kartendekor.js"]
     GEO["geo-projektion.js"]
     AB["annotationsbox.js"]
+    DB["datenbereinigung.js"]
+    SO["sonifikation.js"]
+    DRAW["sketch.js · draw()"]
 
     classDef schreibfrei stroke-dasharray: 5 5,stroke-width:2px
-    class KG,KD,GEO,AB,DRAW schreibfrei
+    class UR,SH,KG,KD,GEO,AB,DB,SO,DRAW schreibfrei
 ```
 
-Dicke Pfeile sind **einmalige Initialisierung** (`preload`/`setup`/
-`bereinigeEingangsdaten`), dünne sind **Ereignis-Handler**. Die einmaligen
-sind unkritisch und in [architektur.md](architektur.md) als Muster
-beschrieben: `dom-aufbau.js` baut DOM-Knoten und legt sie in `sketch.js`-
-Handles ab, `preload`/`setup` füllen die `fotomarker.js`-Handles.
+**Von 21 modulübergreifenden Schreibzugriffen sind 15 übrig**, in nur noch
+zwei Gruppen — beide sind einmalige Initialisierung, keine läuft im Frame:
 
-**`draw()` schreibt in keine fremde Modulvariable mehr.** Bis zur Kapselung
-liefen fünf Zugriffe je Frame von dort nach aussen — sie sind zu
-`aktualisiereKapitelZoom()`, `merkeKartenlage()`, `stelleSpineDatenBereit()`
-und dem Hover-Guard in `zeichneUebersichtsrouten()` geworden.
+| Gruppe | Zugriffe | blockiert |
+|---|---|---|
+| `dom-aufbau.js` → `sketch.js` (DOM-Handles in `baueKapitelRegister`, `baueLegende`) | 8 | **`sketch.js`** |
+| `sketch.js` → `fotomarker.js` (`preload`, `setup`, `bereinigeEingangsdaten`) | 7 | `fotomarker.js` — hat 0 interne Namen, also folgenlos |
 
-Gestrichelt: **`kreisgrafik.js`, `kartendekor.js`, `geo-projektion.js`,
-`annotationsbox.js`** schreiben in keinen fremden Zustand — und, ausser dem
-Cache in `annotationsbox.js`, auch in keinen eigenen. Sie liessen sich als
-erste kapseln.
+Gestrichelt: neun Module schreiben in keinen fremden Zustand mehr, darunter
+`draw()`.
 
-**Was bleibt:** das Dreieck aus Ereignis-Handlern.
-`setzeKapitelAnsichtZurueck()` (uebersichtsrouten.js) schreibt in vier
-Variablen von `spine-horizontal.js` und `sketch.js`,
-`setzeKapitelAnsichtModus()` (spine-horizontal.js) zurück in `sketch.js`.
-Anders als die Frame-Schreibzugriffe laufen diese nur bei Klicks — sie sind
-kein Dauerzustand, aber vor einer IIFE-Umstellung müssten auch sie aufgelöst
-werden.
+### Das Handler-Dreieck ist aufgelöst
+
+`setzeKapitelAnsichtZurueck()` (uebersichtsrouten.js) schrieb in **fünf**
+fremde Variablen — nicht vier, wie hier zuvor stand: `kapitelAnsichtsModus`
+und `kapitelEinstiegsStartMillis` (sketch.js) sowie `grafikSpielt`,
+`grafikFortschritt`, `grafikPlayAusblendStart` (spine-horizontal.js).
+`setzeKapitelAnsichtModus()` (spine-horizontal.js) schrieb zusätzlich in
+`kapitelAnsichtsModus`. Zusammen sechs Zugriffe.
+
+**Ursache:** Niemand besass den Zustand „Kapitel-Ansicht". Er liegt zu drei
+Fünfteln in `spine-horizontal.js`, zu zwei Fünfteln in `sketch.js` — jede
+Funktion, die ihn zurücksetzt, musste zwangsläufig fremd schreiben, egal wo
+sie steht.
+
+**Lösung, nach dem Muster der bisherigen Umbauten:** Jedes Modul bekam einen
+Setter für seinen *eigenen* Zustand, die beiden Handler komponieren nur noch.
+
+| neu | Modul | setzt |
+|---|---|---|
+| `setzeAnsichtsModus(modus)` | sketch.js | `kapitelAnsichtsModus` |
+| `starteKapitelEinstieg()` | sketch.js | `kapitelEinstiegsStartMillis` |
+| `setzeGrafikZurueck()` | spine-horizontal.js | die drei `grafik*` **und** stoppt den Ton |
+
+Der Unterschied zwischen den beiden Handlern bleibt bewusst erhalten und ist
+jetzt sichtbar statt in fünf gleichen Zeilen versteckt: `setzeKapitelAnsichtModus`
+hat einen Guard und keine Einstiegs-Uhr, `setzeKapitelAnsichtZurueck` umgekehrt.
+Wer ein Kapitel öffnet, während „karte" schon aktiv ist, muss die
+Graph-Animation trotzdem zurückgesetzt bekommen — deshalb dort kein Guard.
+
+**Nachgewiesen:** alte Fassungen wörtlich erhalten und gegen die Komposition
+laufen gelassen, über alle Kombinationen aus Ausgangsmodus, Zielmodus,
+Play-Zustand, Ton-Zustand, Fortschritt und Ausblend-Marke. **192 Fälle,
+0 Abweichungen im Endzustand.**
+
+Eine Abweichung gibt es, und sie ist bewusst: Der **Ton-Stopp verschiebt sich
+in der Reihenfolge** (72 der 192 Fälle, immer wenn Ton lief). Vorher stand er
+in `setzeKapitelAnsichtModus` vor dem Modus-Setzen und in
+`setzeKapitelAnsichtZurueck` nach dem Grafik-Reset; jetzt liegt er in beiden
+Fällen in `setzeGrafikZurueck()`. Folgenlos, weil `beendeSonifikationAudio()`
+keine der fünf Variablen liest (geprüft) und alles synchron in einem Handler
+abläuft. Die Alternative wäre, den Ton-Stopp wieder in beide Handler zu
+duplizieren — dann wäre `setzeGrafikZurueck()` ein Reset, der den Ton
+weiterlaufen liesse.
+
+**Wirkung auf die Kapselung:** `spine-horizontal.js` empfängt jetzt **null**
+Fremdschreibzugriffe und ist damit kapselbar — seine fünf extern gelesenen
+veränderlichen Namen werden von aussen nur noch gelesen, die Lesebindung
+trägt. Das wären 12 weitere Namen. **`sketch.js` bleibt blockiert**: Gruppe B
+(`dom-aufbau.js`, 8 DOM-Handles) besteht unverändert und braucht einen eigenen
+Entwurfsschritt.
 
 ---
 

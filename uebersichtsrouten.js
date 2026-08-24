@@ -540,19 +540,23 @@ function scrolleZuKapitel1() {
 // Kapitel-Ansicht frisch in der Kartenansicht startet (siehe
 // oeffneKapitelZoom/schliesseKapitelZoom/springeZuKapitelZoom).
 function setzeKapitelAnsichtZurueck() {
-  kapitelAnsichtsModus = 'karte';
-  grafikSpielt = false;
-  grafikFortschritt = 0;
-  grafikPlayAusblendStart = null;
-  // Kapitelwechsel während laufender Sonifikation (Kapitel 1s Graph-
-  // Play-Button, siehe toggleGrafikPlay) sauber abbrechen — sonst liefe der
-  // Ton unabhängig von der (jetzt zurückgesetzten) Graph-Ansicht weiter.
-  if (sonifikationSpieltGerade) beendeSonifikationAudio();
+  // Drei Aufrufe statt fünf Fremdzuweisungen: Jedes Modul setzt seinen
+  // eigenen Zustand zurück (siehe docs/best-practices-review.md,
+  // "Handler-Dreieck"). Der Ton wird in setzeGrafikZurueck() mitgestoppt —
+  // sonst liefe er unabhängig von der zurückgesetzten Graph-Ansicht weiter.
+  setzeAnsichtsModus('karte');   // sketch.js
+  setzeGrafikZurueck();          // spine-horizontal.js
   // Startzeit für den zeitbasierten Fade des Kapitel-Einstiegstexts
   // (.kapitel-einstiegstext, siehe draw()) — bei jedem Kapitelwechsel neu,
   // auch beim Schliessen (dort harmlos, da dann kein zoomedKapitel matcht).
-  kapitelEinstiegsStartMillis = millis();
+  starteKapitelEinstieg();       // sketch.js
 }
+
+// UNTERSCHIED zu setzeKapitelAnsichtModus() in spine-horizontal.js, das
+// dieselben ersten beiden Schritte macht: Dort steht ein Guard, der früh
+// aussteigt, wenn der Modus schon stimmt. Hier NICHT — wer ein Kapitel
+// öffnet, während "karte" bereits aktiv ist, muss die Graph-Animation
+// trotzdem zurückgesetzt bekommen. Und nur hier läuft die Einstiegs-Uhr neu.
 
 // Weiches Ein-/Ausblenden des Kapitel-Zooms. Ein Integrator, der GENAU
 // EINMAL pro Frame ticken muss — deshalb ruft draw() ihn direkt auf und nicht

@@ -101,9 +101,22 @@ function stelleSpineDatenBereit(kapitelNr) {
 // Jeder Wechsel IN die grafische Ansicht beginnt bei 0 (Animation muss aktiv
 // per Play gestartet werden). Klick auf den bereits aktiven Modus tut nichts.
 function setzeKapitelAnsichtModus(modus) {
-  if (kapitelAnsichtsModus === modus) return;
+  if (kapitelAnsichtsModus === modus) return; // nur gelesen, nicht geschrieben
+  setzeAnsichtsModus(modus);   // sketch.js
+  setzeGrafikZurueck();        // eigener Zustand, siehe unten
+}
+
+// Setzt den Play-Zustand der Graph-Animation zurück und stoppt den Ton dazu.
+// Beides gehört zusammen: Der Ton läuft synchron zur Animation, ein
+// zurückgesetzter Fortschritt ohne gestoppten Ton hinterliesse ihn
+// verwaist (siehe toggleGrafikPlay).
+//
+// Von zwei Stellen gerufen: setzeKapitelAnsichtModus() oben (Menübalken) und
+// setzeKapitelAnsichtZurueck() in uebersichtsrouten.js (Kapitelwechsel).
+// Letztere schrieb vorher direkt in diese drei Variablen hinein — siehe
+// docs/best-practices-review.md, "Handler-Dreieck".
+function setzeGrafikZurueck() {
   if (sonifikationSpieltGerade) beendeSonifikationAudio();
-  kapitelAnsichtsModus = modus;
   grafikSpielt = false;
   grafikFortschritt = 0;
   grafikPlayAusblendStart = null;

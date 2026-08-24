@@ -24,6 +24,14 @@ function naechstesKapitel(nr) {
 let kapitelEinstiegsStartMillis = null;
 const KAPITEL_EINSTIEG_FADE_MS = 800;
 
+// Setzt die Einstiegstext-Uhr neu. Von uebersichtsrouten.js beim
+// Kapitelwechsel gerufen — vorher schrieb setzeKapitelAnsichtZurueck() dort
+// direkt in diese Variable hinein (siehe docs/best-practices-review.md,
+// "Handler-Dreieck").
+function starteKapitelEinstieg() {
+  kapitelEinstiegsStartMillis = millis();
+}
+
 
 // Der Einstiegstext blendet von selbst EIN (zeitbasiert, ab Klick-Zeitpunkt),
 // danach übernimmt das Scrollen: zwischen diesen beiden Anteilen des
@@ -97,6 +105,16 @@ let registerTabs; // gemeinsamer Fixed-Container beider Register (siehe #registe
 // "Plan"/"Graph"-Einträge oben im Kapitel-Menübalken
 // (setzeKapitelAnsichtModus).
 let kapitelAnsichtsModus = 'karte';
+
+// Setzt den Ansichtsmodus. Gerufen von setzeKapitelAnsichtModus()
+// (spine-horizontal.js, Menübalken) und setzeKapitelAnsichtZurueck()
+// (uebersichtsrouten.js, Kapitelwechsel) — beide schrieben vorher direkt in
+// diese Variable hinein. Nur das Setzen liegt hier; was sonst noch zum
+// Zurücksetzen gehört, macht jedes Modul für seinen eigenen Zustand
+// (setzeGrafikZurueck in spine-horizontal.js, starteKapitelEinstieg oben).
+function setzeAnsichtsModus(modus) {
+  kapitelAnsichtsModus = modus;
+}
 // Zoomstand des Kapitel-1-Kartenausschnitts (0 = Startseite/Gesamtkarte,
 // 1 = ganz im Ausschnitt), je Frame in draw() gesetzt. Wird ausserhalb von
 // draw() gebraucht, um die Beschriftung des Routen-Startpunkts erst mit dem
