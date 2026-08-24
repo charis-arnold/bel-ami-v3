@@ -293,7 +293,7 @@ async function spieleKapitel1SonifikationAudio() {
 async function spieleKapitelSonifikationAudio(nr) {
   await stelleSonifikationBereit();
   let daten = datenFuerKapitel(nr);
-  let eintraege = spineEintraegeKapitel[nr];
+  let eintraege = spineEintraegeFuer(nr);
   if (!daten || !eintraege || !eintraege.length) return;
 
   let annotationen = daten.annotationen;

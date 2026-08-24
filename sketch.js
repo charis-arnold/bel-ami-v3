@@ -573,7 +573,7 @@ function draw() {
   // sichtbar).
   if (inKapitelGrafikAnsicht) {
     background(226, 230, 225); // #E2E6E1
-    let grafikEintraege = zoomedKapitel ? spineEintraegeKapitel[zoomedKapitel] : spineEintraegep5;
+    let grafikEintraege = spineEintraegeFuer(zoomedKapitel);
     let grafikDaten = zoomedKapitel ? datenFuerKapitel(zoomedKapitel) : stationenData;
     aktualisiereGrafikFortschritt();
     zeichneSpineHorizontal(grafikEintraege || [], grafikFortschritt, grafikDaten);

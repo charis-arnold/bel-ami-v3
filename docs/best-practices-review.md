@@ -36,7 +36,7 @@ sondern nur: faktisch greift kein anderes Modul darauf zu.
 | **mittel** | ~~`draw()` schreibt in Variablen von drei fremden Modulen~~ — **erledigt**, alle fünf Zugriffe verlagert | Globale Variablen |
 | **mittel** | ~~`zeichneKreisLabels()` setzt sechs p5-Zeichenzustände und stellt keinen zurück~~ — **erledigt**, `push()`/`pop()` | Single Responsibility |
 | **mittel** | ~~`zeichneUebersichtsrouten()` zeichnet und setzt dabei `kapitelHover`~~ — **erledigt**, `draw()` zieht nichts mehr nach | Single Responsibility |
-| **mittel** | 124 der 262 Namen sind modulintern; davon 86 gekapselt (**7 von 12 Modulen**), 33 offen — davon 12 seit der Auflösung des Handler-Dreiecks entblockiert | Globale Variablen |
+| **mittel** | 127 der 266 Namen sind modulintern; davon 100 gekapselt (**8 von 12 Modulen**), **22 Kandidaten offen** — alle in `sketch.js` | Globale Variablen |
 | **mittel** | ~~Kapitel-1-Datenregeln stehen im Zeichenmodul `kreisgrafik.js`~~ — **erledigt**, jetzt `ortRunSichtbar()` in `datenbereinigung.js` | Single Responsibility |
 | **mittel** | ~~`zeichneHalbkreis`/`zeichneVollkreis` setzen `globalCompositeOperation` hart zurück~~ — **erledigt**, `push()`/`pop()` | Single Responsibility |
 | **niedrig** | `draw()` läuft mit 557 Zeilen als eine Funktion | Single Responsibility |
@@ -76,34 +76,33 @@ nichts mehr gefunden, was die Zuordnung noch verschieben würde.
 | `sonifikation.js` | **ja** (4 Exporte) | 21 | 17 | 4 | 80 % |
 | `annotationsbox.js` | **ja** (2 Exporte) | 7 | 5 | 2 | 71 % |
 | `kreisgrafik.js` | **ja** (5 Exporte) | 13 | 8 | 5 | 61 % |
-| `spine-horizontal.js` | nein | 23 | 12 | 11 | 52 % |
+| `spine-horizontal.js` | **ja** (11 Exporte) | 25 | 14 | 11 | 56 % |
 | `kartendekor.js` | **ja** (2 Exporte) | 4 | 2 | 2 | 50 % |
-| `sketch.js` | nein | 67 | 26 | 41 | 39 % |
+| `sketch.js` | nein | 69 | 27 | 42 | 39 % |
 | `uebersichtsrouten.js` | **ja** (10 Exporte) | 16 | 6 | 10 | 38 % |
 | `datenbereinigung.js` | **ja** (26 Exporte) | 38 | 12 | 26 | 32 % |
 | `geo-projektion.js` | — *(geprüft, bewusst nicht)* | 9 | 0 | 9 | 0 % |
 | `fotomarker.js` | nein | 14 | 0 | 14 | 0 % |
 | `dom-aufbau.js` | nein | 6 | 0 | 6 | 0 % |
-| **Summe** | **7 von 12** | **262** | **124** | **138** | 47 % |
+| **Summe** | **8 von 12** | **266** | **127** | **139** | 48 % |
 
 Stand am Code erhoben, nicht aus dieser Doku fortgeschrieben: Die Prüfung
 sucht strukturell nach einer umschliessenden sofort ausgeführten Funktion
 (Klammertiefe auf kommentarbereinigtem Quelltext), nicht nach einer bestimmten
-Schreibweise. **Gekapselt sind sieben Module**: `datenbereinigung.js`,
-`uebersichtsrouten.js`, `ortsveraenderung.js`, `kreisgrafik.js`,
-`sonifikation.js`, `annotationsbox.js` und `kartendekor.js`.
+Schreibweise. **Gekapselt sind acht Module**: `datenbereinigung.js`,
+`spine-horizontal.js`, `uebersichtsrouten.js`, `ortsveraenderung.js`,
+`kreisgrafik.js`, `sonifikation.js`, `annotationsbox.js` und
+`kartendekor.js`.
 
-Von den 124 modulinternen Namen sind damit **86 aus dem globalen Scope
-entfernt**. Von den verbleibenden 38 müssen fünf global bleiben (die
+Von den 127 modulinternen Namen sind damit **100 aus dem globalen Scope
+entfernt**. Von den verbleibenden 27 müssen fünf global bleiben (die
 p5-Hooks `preload`, `setup`, `draw`, `mousePressed`, `windowResized`) —
-**33 echte Kandidaten offen.**
+**22 echte Kandidaten offen, alle in `sketch.js`.**
 
-Diese verteilen sich auf nur noch zwei Module: `sketch.js` (26, davon 5
-p5-Hooks) und `spine-horizontal.js` (12). **Beide sind durch
-Fremdschreibzugriffe blockiert** — sie brauchen zuerst die Auflösung des
-[Handler-Dreiecks](#wer-in-wessen-zustand-schreibt) bzw. des Init-Musters.
-Die Kapselung ist damit an dem Punkt angekommen, an dem sie ohne
-strukturelle Vorarbeit nicht weitergeht.
+Die drei übrigen ungekapselten Module (`geo-projektion.js`, `fotomarker.js`,
+`dom-aufbau.js`) haben null interne Namen — dort ist nichts zu kapseln.
+`sketch.js` bleibt blockiert durch die acht DOM-Handle-Schreibzugriffe aus
+`dom-aufbau.js`. Das ist der letzte verbleibende Posten von Punkt 8.
 
 **`geo-projektion.js` wurde geprüft und bewusst ausgelassen.** Alle neun
 Namen werden extern gelesen, keiner ist intern — eine Kapsel würde rund
@@ -178,7 +177,7 @@ ohnehin ansteht.
 |---|---|---|---|
 | ~~`ortsveraenderung.js:42-302`~~ | **Erledigt.** Die Datei steht in einer IIFE und gibt nur acht Namen über `window.*` heraus; 36 sind modulintern | mittel | Erster gekapselter Modul. Der Rumpf ist bewusst nicht eingerückt — bei 656 Zeilen hätte das jede Zeile als geändert markiert und `git blame` zerstört; so ist der Diff eine reine Einfügung von 30 Zeilen. Nachgewiesen: Exportliste exakt (8 gebraucht, 8 exportiert, nichts fehlt oder ist überflüssig), Rumpf byteweise unverändert, alle 36 internen Namen von aussen unsichtbar, alle 8 Exportwerte identisch zur Vorher-Fassung |
 | ~~`sonifikation.js:44-184`~~ | **Erledigt.** Die Datei steht in einer IIFE und gibt vier Namen heraus; 17 sind modulintern, darunter der gesamte Zustand (`sonifikationDaten`, `sonifikationBereit`, `sonifikationSpielplan`, `sonifikationTimeoutId`) | mittel | Drittes gekapseltes Modul. **Erster Fall mit veränderlichem Export:** `sonifikationSpieltGerade` wird drinnen umgeschaltet und draussen gelesen — eine einfache `window.X = X`-Zuweisung hätte die Flagge beim Laden eingefroren (empirisch nachgewiesen). Deshalb dort eine Lesebindung über `Object.defineProperty`; die drei übrigen Exporte bleiben einfache Zuweisungen |
-| `spine-horizontal.js:150-178` | Die neun `SPINE_*`-Layoutkonstanten, `spineLayoutCache`, `spineLayout()` und `grafikStartZeit` sind modulintern | mittel | `SPINE_RAND_LINKS` und Konsorten sind Layout-Details, die im globalen Namensraum nichts verloren haben |
+| ~~`spine-horizontal.js:150-178`~~ | **Erledigt.** Die Datei steht in einer IIFE und gibt elf Namen heraus; 14 sind modulintern — die neun `SPINE_*`-Konstanten, `spineLayout`, `spineLayoutCache`, `grafikStartZeit` und **beide Spine-Caches** | mittel | Achtes gekapseltes Modul. Drei Exporte sind Lesebindungen (`grafikSpielt`, `grafikFortschritt`, `grafikPlayAusblendStart`). Erst möglich durch die Auflösung des Handler-Dreiecks — vorher schrieb `uebersichtsrouten.js` in genau diese drei hinein, was eine Lesebindung wirkungslos gemacht hätte |
 | ~~`kreisgrafik.js:56-333`~~ | **Erledigt.** Die Datei steht in einer IIFE und gibt fünf Namen über `window.*` heraus; acht sind modulintern (`HATCH_SPACING`, `drawHatchedCircle`, `zeichneKreisLabels`, `zeichneHalbkreis`, `zeichneVollkreis`, `FWERT_PUNKT_FARBE_RGB` und die beiden `FWERT_PUNKT_*_ABSTAND`-Konstanten) | mittel | Zweites gekapseltes Modul, gleiche Bauart wie `ortsveraenderung.js`: Rumpf nicht eingerückt, Diff eine reine Einfügung. Anders als dort hat diese Datei eine **Ladezeit-Abhängigkeit** (`hexZuRgb` für `FWERT_PUNKT_FARBE_RGB`) — die IIFE läuft sofort, der Aufruf findet zum selben Zeitpunkt statt wie vorher, geprüft im Vorher/Nachher-Vergleich |
 | `sketch.js:6-158` | 26 Namen modulintern, u. a. `bgImage`, `bgImage2`, `ch1Image`, `kapitel03Data`, `weitereKapitelDaten`, `letzterZoomKapitel` und sechs DOM-Handles (`heroText`, `begleitTexte`, `kapitelEinstiegsTexte`, `annotationBoxEl`, `schlusstextEl`, `naechstesKapitelEl`) | niedrig | Hier ist der Nutzen am kleinsten: `sketch.js` muss die fünf p5-Hooks global lassen, eine IIFE ginge also nur um sie herum. Der Aufwand steht in schlechtem Verhältnis zum Gewinn |
 | ~~`uebersichtsrouten.js:87-513`~~ | **Erledigt.** Die Datei steht in einer IIFE und gibt zehn Namen heraus; sechs sind modulintern (`KAPITEL_SCHEIBE_GRUNDANTEIL`, `KAPITEL_NACHGLUEHEN`, `scheibenCache`, `kapitelHitze`, `setzeKapitelAnsichtZurueck`, `oeffneKapitelZoom`) | niedrig | Viertes gekapseltes Modul. Drei der zehn Exporte (`zoomedKapitel`, `kapitelZoomAmount`, `kapitelHover`) sind Lesebindungen — sie werden laufend umgeschaltet. **Erst möglich, weil `draw()` seine Schreibzugriffe darauf abgegeben hat**: Wären sie noch da, hätte die Bindung sie wirkungslos gemacht |
@@ -235,7 +234,7 @@ Auffälligkeiten empirisch nachgeprüft.
 |---|---|---|
 | `uebersichtsrouten.js:409`, `:546`, `:571`, `sketch.js:18` | „Hat Kapitel X eine eigene Ansicht?" — dieselbe Regel viermal, jedes Mal aus `kapitelKarten` (sketch.js) und `KAPITEL_MIT_SPINE_PANEL` (datenbereinigung.js) zusammengebaut; die vierte Stelle sogar nur zur Hälfte | **erledigt** → `kapitelHatEigeneAnsicht()` in `sketch.js` |
 | `spine-horizontal.js:155-156` | Sonifikations-Dispatch: „welcher Ton für welche Ansicht" im Grafikmodul entschieden | **erledigt** → `spieleSonifikationFuer()` in `sonifikation.js` |
-| `sonifikation.js:278` | Greift direkt in `spineEintraegeKapitel[nr]` statt über einen Accessor | offen — **nicht** mit der Kapselung von `sonifikation.js` gelöst, siehe unten |
+| ~~`sonifikation.js:278`~~ → `sonifikation.js:296` | **Erledigt.** Griff direkt in `spineEintraegeKapitel[nr]`. Jetzt über `spineEintraegeFuer(nr)` in `spine-horizontal.js` | erledigt — zusammen mit der Kapselung dieses Moduls |
 | `ortsveraenderung.js:41` | `VERGLEICHS_KNOTEN.daten` trägt handgepflegte Kennzahlen (`'12 Kapitel'`, `'240 Annotationen'`, `'37 F-Werte'`), die `ovBaueDaten`/`ovStand` daneben live berechnen | offen — **Datenpflege, kein Modulschnitt** |
 
 Zum letzten Punkt nachgerechnet: Bei allen sieben Knoten stimmen Kapitelzahl,

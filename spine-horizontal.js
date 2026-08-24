@@ -23,15 +23,19 @@
    --- Wer von aussen hierher greift ----------------------------------------
    setup()                      hängt toggleGrafikPlay an den Play-Button
    baueKapitelRegister()        ruft setzeKapitelAnsichtModus()
-   draw()                       ruft stelleSpineDatenBereit() (befüllt
-                                spineEintraegep5/spineEintraegeKapitel),
-                                ruft aktualisiereGrafikFortschritt() und
-                                zeichneSpineHorizontal(), liest grafikSpielt
+   draw()                       ruft stelleSpineDatenBereit() (befüllt die
+                                beiden Caches), spineEintraegeFuer(),
+                                aktualisiereGrafikFortschritt() und
+                                zeichneSpineHorizontal(); liest grafikSpielt
                                 und grafikPlayAusblendStart
-   setzeKapitelAnsichtZurueck() setzt grafikSpielt/grafikFortschritt/
-                                grafikPlayAusblendStart zurück
-   sonifikation.js              liest spineEintraegeKapitel und ruft
+   setzeKapitelAnsichtZurueck() ruft setzeGrafikZurueck() — schreibt seit der
+                                Auflösung des Handler-Dreiecks nicht mehr
+                                direkt in die drei Variablen
+   sonifikation.js              ruft spineEintraegeFuer() und
                                 aktuelleGrafikAnimationDauer()
+
+   Die beiden Caches spineEintraegep5/spineEintraegeKapitel sind modulintern
+   und werden von aussen nur über spineEintraegeFuer() gelesen.
 
    ACHTUNG — Abhängigkeitszyklus mit sonifikation.js: beide Dateien greifen
    gegenseitig aufeinander zu. Das trägt nur, weil ALLE Zugriffe in beiden
@@ -46,6 +50,29 @@
 
    Wird in index.html VOR sketch.js geladen.
 ============================================================================= */
+
+// --- Modulkapselung ------------------------------------------------------
+// Alles bis zum Exportblock am Dateiende ist modulintern: 14 der 25
+// Top-Level-Namen werden von keinem anderen Modul gelesen (siehe
+// docs/best-practices-review.md, Punkt "Globale Variablen").
+//
+// Der Rumpf ist bewusst NICHT eingerückt. Eine Einrückung würde jede
+// einzelne Zeile als geändert markieren — der Diff wäre nicht mehr prüfbar
+// und git blame für die ganze Datei wertlos. Die schliessende Klammer steht
+// ganz unten, direkt nach dem Export.
+//
+// Kein 'use strict': Das wäre eine Verhaltensänderung über die Kapselung
+// hinaus und gehört, wenn überhaupt, in einen eigenen Schritt.
+//
+// Diese Datei lädt eigenständig — kein Top-Level-Initialisierer greift auf
+// ein anderes Modul zu.
+//
+// Diese Kapselung war lange blockiert: uebersichtsrouten.js schrieb in
+// grafikSpielt/grafikFortschritt/grafikPlayAusblendStart hinein, was eine
+// Lesebindung wirkungslos gemacht hätte. Seit der Auflösung des
+// Handler-Dreiecks (setzeGrafikZurueck weiter unten) werden die drei von
+// aussen nur noch gelesen.
+(function () {
 
 // Zustand der Play-Animation — aus sketch.js mitgewandert, wo sie zwischen
 // den übrigen Zustandsvariablen standen.
@@ -93,6 +120,17 @@ function stelleSpineDatenBereit(kapitelNr) {
       spineEintraegeKapitel[kapitelNr] = baueSpineDaten(daten, ortRunsFuerSpine(daten));
     }
   }
+}
+
+// Die Spine-Einträge zu einer Ansicht: ohne Kapitelnummer die von Kapitel 1
+// (spineEintraegep5), sonst die des gezoomten Kapitels aus dem Cache.
+//
+// Gegenstück zu stelleSpineDatenBereit() oben — die eine baut, diese liest.
+// Vorher griffen sketch.js und sonifikation.js direkt in die beiden Caches
+// hinein; mit dem Accessor bleiben sie modulintern. Siehe
+// docs/best-practices-review.md, Punkt A3 der Vorabprüfung.
+function spineEintraegeFuer(kapitelNr) {
+  return kapitelNr ? spineEintraegeKapitel[kapitelNr] : spineEintraegep5;
 }
 
 // Ansichtsmodus direkt setzen (Menübalken-Einträge "Plan"/"Graph", siehe
@@ -472,3 +510,42 @@ function zeichneSpineHorizontal(eintraege, fortschritt, daten = stationenData) {
 
   textStyle(NORMAL);
 }
+
+
+// --- Öffentliche Schnittstelle -------------------------------------------
+// Acht Funktionen als Wert.
+window.setzeKapitelAnsichtModus = setzeKapitelAnsichtModus;
+window.setzeGrafikZurueck = setzeGrafikZurueck;
+window.toggleGrafikPlay = toggleGrafikPlay;
+window.aktualisiereGrafikFortschritt = aktualisiereGrafikFortschritt;
+window.aktuelleGrafikAnimationDauer = aktuelleGrafikAnimationDauer;
+window.stelleSpineDatenBereit = stelleSpineDatenBereit;
+window.spineEintraegeFuer = spineEintraegeFuer;
+window.zeichneSpineHorizontal = zeichneSpineHorizontal;
+
+// Die drei Play-Zustandsvariablen als LESEBINDUNG: Sie werden hier drinnen
+// laufend umgeschaltet (toggleGrafikPlay, aktualisiereGrafikFortschritt,
+// setzeGrafikZurueck). Eine Zuweisung window.x = x würde nur den Startwert
+// kopieren — draw() bekäme für immer false/0/null zu sehen und der
+// Play-Button bliebe wirkungslos.
+//
+// Schreiben von aussen ist damit unmöglich. Genau das war bis vor kurzem
+// noch nötig: uebersichtsrouten.js setzte alle drei direkt zurück. Dieser
+// Weg läuft jetzt über setzeGrafikZurueck() oben.
+['grafikSpielt', 'grafikFortschritt', 'grafikPlayAusblendStart'].forEach(function (name) {
+  Object.defineProperty(window, name, {
+    get: function () {
+      return name === 'grafikSpielt' ? grafikSpielt
+           : name === 'grafikFortschritt' ? grafikFortschritt
+           : grafikPlayAusblendStart;
+    },
+    configurable: true,
+  });
+});
+
+// spineEintraegep5 und spineEintraegeKapitel gehen NICHT mehr hinaus: Seit
+// spineEintraegeFuer() oben existiert, lesen sketch.js und sonifikation.js
+// über den Accessor. Das schliesst auch das Schlupfloch, dass eine
+// exportierte Objektreferenz von aussen beschreibbar bliebe.
+
+})(); // Ende der Modulkapselung, siehe Kommentar oben
