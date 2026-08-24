@@ -1556,23 +1556,23 @@ Durchgang auftauchten.
 Das Feature ist seit
 [Schritt 4](#schritt-4--gedanken-spalte-vollständig-entfernt) (20. August 2026)
 vollständig entfernt: kein DOM-Builder, keine CSS-Klasse, kein Element in
-`index.html`. Zwei Kopfkommentare führen es weiterhin als vorhanden:
+`index.html`. Ein Kommentar führt es weiterhin als vorhanden:
 
 | Fundstelle | Wortlaut | Befund |
 |---|---|---|
-| `dom-aufbau.js:7` | „das Kapitelregister links …, der Legendeninhalt rechts, die **Gedanken-Spalte** und die drei Marker-Ebenen" | Die Datei hat keinen Builder dafür — `baueKapitelRegister`, `baueLegende`, `baueKartenMarkierungen`, `baueStationsMarker`, `baueZwischenMarker`, sonst nichts |
-| `sketch.js:724` | „Kartenbezogene DOM-Overlays (Ortsmarker, **Gedanken-Spalte**, Karten-Markierungen, Annotation-Box)" | Zählt ein Overlay auf, das es nicht mehr gibt |
+| `sketch.js:723` | „Kartenbezogene DOM-Overlays (Ortsmarker, **Gedanken-Spalte**, Karten-Markierungen, Annotation-Box)" | Zählt ein Overlay auf, das es nicht mehr gibt. **Einzige verbliebene Fundstelle im Code** |
 
-Drei weitere Fundstellen in `datenbereinigung.js` (bei `GEDANKEN_FILTER`,
-`GEDANKEN_ORTRUN_UNTERDRUECKT` und über `valenzBucket`) sind im selben
-Durchgang bereits korrigiert.
+Die übrigen sind inzwischen erledigt: drei in `datenbereinigung.js` (bei
+`GEDANKEN_FILTER`, `GEDANKEN_ORTRUN_UNTERDRUECKT` und über `valenzBucket`)
+sowie der Kopfblock von `dom-aufbau.js` — Letzterer beim Kürzen der Kommentare
+am 24. August entfallen.
 
 `docs/code-analyse-sketch-js.md:35` nennt `baueGedankenColumn()` ebenfalls
 noch — das ist eine Bestandsaufnahme von vor der Bereinigung und beschreibt
 korrekt den damaligen Stand. Nicht anzufassen.
 
 **Nicht Teil dieses Punkts: `rohdaten.gedanken`.** Die Normalisierungszeile
-(`datenbereinigung.js:242`) ist in [Schritt 13 C](#c-stationendatengedanken--geprüft-und-bewusst-behalten)
+(`datenbereinigung.js:176`) ist in [Schritt 13 C](#c-stationendatengedanken--geprüft-und-bewusst-behalten)
 geprüft und **bewusst behalten** worden — das Feld ist redaktionell befüllt,
 es ist die Herkunft der noch aktiven `GEDANKEN_FILTER`/`GEDANKEN_ZIEL_ORT`-Kette,
 und die Python-Pipeline schreibt es weiterhin. Diese Entscheidung steht; sie
@@ -1582,10 +1582,10 @@ soll beim Aufräumen von A) nicht versehentlich mit aufgerollt werden.
 
 Unabhängig von der Gedanken-Spalte, gleicher Durchgang gefunden.
 
-`SCROLL_MEILENSTEINE.kreisVergleichFadeEnd` (`0.750967`, `datenbereinigung.js:226`)
+`SCROLL_MEILENSTEINE.kreisVergleichFadeEnd` (`0.750967`, `datenbereinigung.js:162`)
 wird von keiner Stelle gelesen. Das Ausblenden der Übersichtskarte im
 Schlussakt, das der Schlüssel laut seinem früheren Kommentar steuerte, läuft
-über `OV_KARTE_AUS = [0.12, 0.32]` in `ortsveraenderung.js:110`, ausgewertet
+über `OV_KARTE_AUS = [0.12, 0.32]` in `ortsveraenderung.js:56`, ausgewertet
 in `draw()` als `ovPhase(ovFortschritt, OV_KARTE_AUS)`.
 
 Der Kommentar an der Fundstelle ist bereits auf den Ist-Zustand gesetzt und
@@ -1595,3 +1595,146 @@ Entfernen ist eine Code-Änderung und gehört in einen eigenen Schritt.
 Zu klären dabei: `SCROLL_MEILENSTEINE` ist exportiert und wird in `sketch.js`
 an 14 Stellen gelesen. Vor dem Entfernen ist zu prüfen, ob der Schlüssel
 wirklich nirgends dynamisch adressiert wird.
+
+---
+
+## Zurückgezogen — `spieleKapitelSonifikationAudio` ist NICHT tot
+
+**Datum:** 24. August 2026
+**Status:** Befund war falsch, Eintrag zurückgezogen
+
+Am 24. August als offener Punkt eingetragen, am selben Tag widerlegt.
+
+Die Funktion existiert: `sonifikation.js:281`
+(`async function spieleKapitelSonifikationAudio(nr)`), gerufen von
+`spieleSonifikationFuer()` in `sonifikation.js:222`. Sie ist modulintern und
+steht nicht im Exportblock — von `spine-horizontal.js` aus ist sie deshalb
+nicht erreichbar, aber der Name stimmt.
+
+**Ursache des Fehlbefunds:** eine `grep`-Ausgabe mit `head -2` gelesen und die
+beiden angezeigten Kommentarzeilen für das vollständige Ergebnis gehalten. Die
+Trefferzahl daneben zählte bereits die zwei echten Codestellen.
+
+Was am ursprünglichen Eintrag bestehen bleibt, jetzt ohne die falsche Prämisse:
+
+| Fundstelle | Befund | Status |
+|---|---|---|
+| `sonifikation.js:170` | Verweis auf `spieleKapitelSonifikationAudio` | Korrekt, kein Handlungsbedarf |
+| `spine-horizontal.js:157` | nannte dieselbe Funktion als Tonquelle | Beim Kürzen der Kommentare entfallen. Der Verweis war insofern unglücklich, als der Name von dort nicht sichtbar ist — der Einstieg ist `spieleSonifikationFuer` |
+| `sonifikation.js:309` | verortet `aktuelleGrafikAnimationDauer()` in `sketch.js` | **Falsch, steht noch.** Die Funktion liegt in `spine-horizontal.js:164` |
+| `sonifikation.js:20` | führt `window.sonifikationSpieltAb` als bestehend | **Tot, steht noch.** Einziges Vorkommen im Projekt |
+
+Die letzten beiden werden beim Kommentar-Durchgang durch `sonifikation.js`
+mit erledigt.
+
+---
+
+## HOCHPRIORITÄR — Windrose: Farbpalette kollabiert, Norden nicht ausgezeichnet
+
+**Datum:** 24. August 2026
+**Datei:** `kartendekor.js`
+**Status:** offen, betrifft aktiven Code — nicht nur Kommentare
+
+Gefunden beim Kommentar-Durchgang. `zeichneWindrose()` deklariert fünf
+Farbkonstanten, die auf nur zwei verschiedene Werte zeigen:
+
+| Konstante | Wert | Helligkeit | Name passt? |
+|---|---|---|---|
+| `zinkgrau` | `#9DA69D` | 162 | ja |
+| `schmiedeeisenSchwarz` | `#9DA69D` | 162 | **nein** — hellgrau bei einem Namen, der Schwarz verspricht |
+| `kalksteinCreme` | `#212B2E` | 40 | **nein** — fast schwarz statt creme |
+| `cafeRot` | `#212B2E` | 40 | **nein** — kein Rotanteil |
+| `messingGold` | `#212B2E` | 40 | **nein** — kein Goldton |
+
+### Sichtbare Folgen
+
+**1. Der Nordzacken ist nicht ausgezeichnet.** `richtungenHaupt` gibt Nord
+`cafeRot` und den drei übrigen `kalksteinCreme` — beide sind `#212B2E`. Alle
+vier Hauptzacken rendern identisch:
+
+```
+Nord  links #212B2E  rechts #9DA69D
+Ost   links #212B2E  rechts #9DA69D
+Sued  links #212B2E  rechts #9DA69D
+West  links #212B2E  rechts #9DA69D
+```
+
+Die eigene Konstante für Nord ist offensichtlich als Hervorhebung gedacht und
+wirkungslos. Eine Windrose, die Norden nicht kenntlich macht, verfehlt ihren
+Zweck.
+
+**2. Auch die Nebenzacken sind gleich.** `messingGold`/`zinkgrau` ergibt
+dieselbe Kombination — alle acht Zacken sehen gleich aus.
+
+**3. Der Rand des Zentrums ist unsichtbar.** `stroke(messingGold)` und
+`fill(kalksteinCreme)` tragen denselben Wert, das `strokeWeight(1)` ist inert.
+
+### Nicht entschieden
+
+Ob die Werte verlorengegangen sind oder die Palette bewusst auf zwei Töne
+reduziert wurde und nur die Namen stehenblieben. Für Letzteres spricht, dass
+das Ergebnis in sich stimmig zweifarbig ist; dagegen spricht die eigene
+Nord-Konstante, die dann keinen Zweck mehr hätte.
+
+Ein Kommentar in `kartendekor.js` räumte den Zustand halb ein
+(„schmiedeeisenSchwarz/zinkgrau sind inzwischen helle Zacken-Farben") — beim
+Kürzen entfallen, der Befund steht dafür hier.
+
+### Zu tun
+
+Entscheiden, ob Norden farblich hervorgehoben werden soll. Danach entweder die
+echten Farbwerte wiederherstellen oder die Konstanten auf zwei ehrlich benannte
+reduzieren (etwa `zackeDunkel` / `zackeHell`). Beides ist eine Code-Änderung
+und gehört in einen eigenen Schritt.
+
+---
+
+## BUG — Foto-Popup öffnet in der Graph-Ansicht, wo kein Marker sichtbar ist
+
+**Datum:** 24. August 2026
+**Dateien:** `fotomarker.js`, `sketch.js`
+**Status:** offen, reproduzierbar — betrifft aktiven Code
+
+In der Graph-Ansicht werden keine Foto-Marker gezeichnet, ihr Treffertest läuft
+aber weiter. Ein Klick auf die Stelle, an der ein Marker auf der Karte läge,
+öffnet dessen Popup — über der Spine-Darstellung, die dort eigentlich alles
+abdeckt.
+
+### Ursache: eine Asymmetrie in `draw()`
+
+| Zeile | Aufruf | Bedingung |
+|---|---|---|
+| `sketch.js:858` | `merkeKartenlage(activeBbox, fotoOffsetX, fotoOffsetY)` | **unbedingt** |
+| `sketch.js:865` | `zeichneFotoMarker(...)` | nur `if (!inKapitelGrafikAnsicht)` |
+
+`merkeKartenlage()` hält `letzteActiveBbox` und die beiden Offsets damit auch
+in der Graph-Ansicht frisch. `mousePressed()` prüft dann nur, ob überhaupt eine
+Bbox vorliegt:
+
+```js
+sketch.js:889   if (!letzteActiveBbox) return;
+sketch.js:892   let pos = lonLatToScreen(f.lon, f.lat, letzteActiveBbox, …);
+```
+
+Der Ansichtsmodus wird nirgends abgefragt. Die Trennung ist bewusst gebaut —
+`merkeKartenlage()` ist eigens von `zeichneFotoMarker()` abgespalten, damit der
+Merker beim Ausblenden nicht einfriert —, aber die Folge für den Treffertest
+wurde nicht mitgezogen.
+
+### Reproduktion
+
+1. Ein Kapitel öffnen, auf "Graph" umschalten
+2. Auf eine Bildschirmstelle klicken, an der in der Plan-Ansicht ein
+   Foto-Sternchen sitzt
+3. Das Popup öffnet sich, obwohl dort kein Marker zu sehen ist
+
+### Zu tun
+
+Den Treffertest in `mousePressed()` an den Ansichtsmodus binden — dieselbe
+Bedingung wie beim Zeichnen (`!inKapitelGrafikAnsicht`). Der Foto-Teil von
+`mousePressed()` liegt in `sketch.js`; die Änderung gehört dorthin, nicht nach
+`fotomarker.js`.
+
+Der Befund stand bis zum 24. August als Fliesstext in `fotomarker.js` bei
+`merkeKartenlage()` („Falls das nicht gewollt ist, gehört der Test dorthin") und
+ist beim Kürzen der Kommentare zu einer `ACHTUNG`-Warnung verdichtet worden.
