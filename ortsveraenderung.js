@@ -1,49 +1,18 @@
 /* =============================================================================
    ortsveraenderung.js — Schlussakt "Ortsveränderung"
 
-   Aus sketch.js herausgelöst (siehe docs/modularisierung-log.md). Der letzte
-   Akt der Erzählung: sieben kapitelübergreifende Orte (VERGLEICHS_KNOTEN)
-   wachsen als senkrechte Linien aus der Karte, die Karte blendet aus, die
-   Punkte kehren auf ihre echten Koordinaten zurück, die Ansicht zoomt auf den
-   Ausschnitt, der alle sieben fasst — und während die Kapitel 1..18
-   durchzählen, wachsen ihre Kreisgrafiken auf den Endstand.
-
-   Der Ablauf steckt in den Phasenfenstern OV_* (Ortsveränderung) und SK_*
-   (Schlusskarte); ovPhase() rechnet den Aktfortschritt in den Stand eines
-   einzelnen Fensters um.
-
-   --- Abhängigkeiten NACH AUSSEN (alle erst zur Laufzeit) -------------------
-   aus sketch.js:          stationenData, uebersichtsRouten, datenFuerKapitel,
-                           leereBandCounts, lonLatToScreen, zeichneKreiseFuerRun,
-                           zeichneFwertPunkte
-   aus datenbereinigung.js: ROUTE_COLOR_RGB, groessterKreisRadius,
-                           sammleAnnotationenNachOrtBasis, zaehleBandCounts
-   aus p5:                 width/height, Zeichen- und Text-API, drawingContext
-
-   --- Wer von aussen hierher greift ----------------------------------------
-   draw() in sketch.js, an sieben Stellen: fünf ovPhase()-Aufrufe mit
-   SK_EINBLENDEN / SK_RAUSZOOM / SK_TEXT / OV_KARTE_AUS / OV_ZOOM, dazu
-   ovZoomBbox() und zeichneOrtsveraenderung().
-
-   Wird in index.html VOR sketch.js geladen. Kein Top-Level-Initialisierer
-   dieser Datei ruft eine Funktion auf — beim Laden wird nichts ausgewertet.
+   Sieben kapitelübergreifende Orte (VERGLEICHS_KNOTEN) wachsen als senkrechte
+   Linien aus der Karte, kehren auf ihre echten Koordinaten zurück, die Ansicht
+   zoomt auf sie — dann zählen die Kapitel 1..18 durch und die Kreise wachsen.
+   Ablauf in den Phasenfenstern OV_* und SK_*, umgerechnet von ovPhase().
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 36 von 44 Namen intern — der höchste Anteil im Projekt, überwiegend
-// Layoutkonstanten des Schlussakts. 8 im Exportblock am Dateiende.
-// Konvention: docs/architektur.md. Lädt eigenständig.
+// 36 von 44 Namen intern, 8 exportiert. Konvention: docs/architektur.md.
 (function () {
 
-// Die sieben kapitelübergreifenden Orte der Ortsveränderung (Schlussakt,
-// siehe zeichneOrtsveraenderung). Jeder ist an seiner echten Koordinate
-// verankert; die senkrechte Linie darunter ist eine Zwischenphase, an deren
-// Ende die Punkte wieder auf ihrem Ort liegen.
-//
-// Orte mit mehreren Namen teilen sich einen Anker: Rue Fontaine (Forestiers
-// Wohnung, dann Duroys) und Rue Constantinople sind ohnehin dieselbe Adresse,
-// die Madeleine-Varianten liegen 51 m auseinander. Die beiden Walter-Adressen
-// sind 465 m getrennt — der Anker liegt in ihrer Mitte.
+// Die sieben Orte des Schlussakts, je an ihrer echten Koordinate verankert.
+// Orte mit mehreren Namen teilen sich einen Anker (Walter: Mitte der beiden).
 const VERGLEICHS_KNOTEN = [
   { label: 'Redaktion La Vie Française', textSeite: 'rechts',
     text: 'Zwölf Kapitel führen hierher. Hier wird geschrieben, was Paris für wahr hält — und hier misst sich, wer er geworden ist. Der einzige Ort, der ihn weder hebt noch senkt.',
@@ -69,17 +38,8 @@ const VERGLEICHS_KNOTEN = [
     text: 'Am Anfang geht er hungrig an den Terrassen vorbei und zählt seine Münzen. Am Ende läutet dieselbe Kirche für seine Hochzeit. Kein zweiter Ort kehrt sein Vorzeichen so vollständig um.',
     daten: ['2 Kapitel', '106 Annotationen', '−1.00 → +0.71', '52 F-Werte'], lon: 2.32439, lat: 48.86993,
     namen: ['Place de la Madeleine', 'Église de la Madeleine, Paris'] },
-  // Einziger öffentlicher Ort neben der Madeleine, der über mehrere Kapitel
-  // trägt — aber nur, wenn man die kapitelweise vergebenen Einzelnamen wieder
-  // zusammenführt: derselbe Boulevard heisst je nach Kapitel "Boulevard des
-  // Italiens", "Café Riche", "Café Tortoni" oder "Café am Boulevard". Einzeln
-  // steht jeder davon in genau einem Kapitel, zusammen sind es sieben.
-  // Bewusst NICHT dabei: die ÄUSSEREN Boulevards (Weinstube und verdächtige
-  // Lokale, lat 48.883 — eine andere Achse im Norden), der Boulevard
-  // Malesherbes (das ist das Haus Walter, eigener Knoten) und der Boulevard
-  // des Batignolles. Das Label ist als einziges kein Kapitelname: für die
-  // Gruppe gibt es keinen, "Grands Boulevards" ist der historische Name der
-  // Achse.
+  // Sammelt die kapitelweise verschiedenen Boulevard-Namen zu einer Achse.
+  // Label ist als einziges kein Kapitelname — die Gruppe hat keinen.
   { label: 'Grands Boulevards', textSeite: 'oben-fix',
     text: 'Die Bühne der Stadt. Erst steht er davor und sieht zu, wie andere sitzen; später sitzt er selbst, bestellt und wird gesehen.',
     daten: ['7 Kapitel', '114 Annotationen', '−0.50 → +0.50', '36 F-Werte'], lon: 2.33617, lat: 48.87124,
@@ -90,37 +50,19 @@ const VERGLEICHS_KNOTEN = [
       'Boulevard-Cafés (unterwegs), Paris'] },
 ];
 // ── Schlussakt "Ortsveränderung" ───────────────────────────────────────────
-// Ablauf über den letzten Akt (kreisVergleichStart..1.0), als Anteile davon.
-// Die Phasen überlappen bewusst, damit nichts hart einsetzt.
-//   1. Die senkrechten Linien wachsen gestaffelt nach unten — erst hier,
-//      wenn die letzte Übersichtsroute fertig gezeichnet ist.
-//   2. Die Karte blendet aus. Die ROUTEN bleiben stehen: auf sie sollen die
-//      Ortspunkte gleich zu liegen kommen.
-//   3. Die Linien schrumpfen wieder, die Punkte landen auf ihrem echten Ort.
-//   4. Die Ortsbeschriftung blendet ein — sobald die Linien ausgewachsen
-//      sind und bevor sie zurückschrumpfen. Sie hängt am unteren Ende der
-//      Linie und fährt beim Schrumpfen mit dem Punkt nach oben.
-//   5. Zoom auf den Ausschnitt, der alle sieben Orte fasst — dadurch rücken
-//      sie weit genug auseinander, dass die Kreise sich nicht überlagern.
-//      Läuft GLEICHZEITIG mit dem Schrumpfen der Linien an: die Punkte
-//      fahren nach oben zurück, während die Karte sich unter ihnen aufzieht,
-//      statt beides nacheinander abzuspulen.
-//   6. Die Kreise wachsen, während unter ihnen die Kapitel durchzählen.
+
+// Anteile am letzten Akt. Die Fenster überlappen, damit nichts hart einsetzt.
 const OV_LINIE_WACHSEN = [0.00, 0.18];
 const OV_KARTE_AUS     = [0.12, 0.32];
 const OV_LINIE_ZURUECK = [0.32, 0.46];
 const OV_LABEL_EIN     = [0.18, 0.30];
 const OV_ZOOM          = [0.32, 0.52];
 const OV_KAPITEL       = [0.64, 1.00];
-// Allerletzter Akt: die Startkarte kommt zurück. Erst blendet sie hinter den
-// sieben Kreisen ein, danach fährt die Ansicht aus deren Ausschnitt auf die
-// Gesamtkarte zurück. Die Kreise verblassen dabei — beim Rauszoomen behalten
-// sie ihre Pixelgrösse, während die Karte darunter schrumpft, und würden
-// sonst ineinanderlaufen.
+// Allerletzter Akt: Startkarte blendet ein, dann Rauszoom auf die Gesamtkarte.
+// Die Kreise verblassen dabei, sonst liefen sie beim Rauszoomen ineinander.
 const SK_EINBLENDEN = [0.00, 0.45];
 const SK_RAUSZOOM   = [0.45, 1.00];
-// Der Schlusstext kommt zuletzt: erst die Karte, dann die Zoomfahrt, dann das
-// Wort. Er steht am Ende allein auf der Gesamtkarte.
+// Der Schlusstext kommt zuletzt und steht allein auf der Gesamtkarte.
 const SK_TEXT       = [0.62, 0.90];
 
 const OV_STAFFEL = 0.45;      // Anteil des Wachstumsfensters, über den die Linien versetzt starten
@@ -132,46 +74,31 @@ const OV_LABEL_MAX_BREITE = 200; // ab dieser Breite wird zweizeilig gesetzt
 const OV_LABEL_ZEILE = 15;       // Zeilenhöhe der Ortsbeschriftung
 const OV_LABEL_ABSTAND = 34;     // Luft zwischen Kreisrand und Ortsbeschriftung
 const OV_LABEL_LUFT = 12;        // Mindestabstand zwischen Beschriftung und nächstem Kreis
-// Erläuterungstext unter jedem Kreis: dieselbe Serifenschrift wie die
-// Einstiegstexte, nur viel kleiner. Er erzählt die gefühlte Veränderung des
-// Orts und nennt die Zahlen dahinter.
+// Erläuterungstext je Kreis, Serifenschrift wie die Einstiegstexte, kleiner.
 const OV_TEXT_GROESSE = 11;
 const OV_TEXT_ZEILE = 16;
 const OV_TEXT_BREITE = 220;
 const OV_TEXT_ABSTAND = 30;      // Luft zwischen Kreisrand und seitlichem Textblock
                                  // (je Knoten über textAbstand überschreibbar)
 const OV_TEXT_ABSTAND_OBEN = 46; // mehr Luft bei den Blöcken über dem Kreis
-// textSeite legt fest, wo der Erläuterungsblock steht:
-//   'links-fix' — am linken Fensterrand
-//   'rechts'    — direkt neben dem Kreis, Seite vorgegeben
-//   'oben-fix'  — über dem Kreis, linke Textkante auf dessen Achse
-//   ohne Angabe — seitlich neben dem Kreis, nach aussen von der Bildmitte
-//                 gewählt
-// (Die Gegenstücke 'rechts-fix' und 'links' waren nie in Gebrauch und wurden
-// entfernt, siehe Schritt 11 im Cleanup-Log — wer sie braucht, muss die
-// jeweilige Verzweigung wieder ergänzen.)
-// Alle fixierten Varianten werden bei der Zoomberechnung NICHT mitgezählt:
-// sie stehen fest, und die Kreise sollen sich ihretwegen nicht verschieben.
-// Der Text ist in jedem Fall linksbündig gesetzt.
+// textSeite: 'links-fix' am linken Fensterrand, 'rechts' neben dem Kreis,
+// 'oben-fix' darüber, ohne Angabe seitlich nach aussen. Text linksbündig.
+
+// Fixierte Varianten zählen beim Zoom nicht mit — die Kreise sollen sich
+// ihretwegen nicht verschieben.
 const OV_TEXT_RAND = 24;         // Abstand vom Fensterrand bei fixierten Blöcken
-// Zuführungslinie vom Ortspunkt zur Textbox. Die Box hängt versetzt an ihrem
-// Ende, damit die Linie nicht durch den Text läuft: bei den seitlichen Blöcken
-// unterhalb der waagrechten Linie, beim oberen rechts neben der senkrechten.
+// Zuführungslinie zur Textbox; die Box hängt versetzt, damit die Linie nicht
+// durch den Text läuft.
 const OV_LINIE_VERSATZ = 14;     // Abstand zwischen Linie und erster Textzeile
 
-// versatz: Feinkorrektur einzelner Ortspunkte in Bildschirmpixeln. Sie fährt
-// zusammen mit dem Schlusszoom ein (OV_ZOOM) — in genau dem Moment blendet die
-// Route aus, die Punkte müssen also nicht mehr exakt auf ihr liegen. Sie
-// schafft Luft, wo die Beschriftung eines Kreises in den Nachbarkreis lief:
-// Palais Walter und Place de la Madeleine rücken waagrecht auseinander,
-// Rue Boursault und Rue Constantinople senkrecht.
+// Feinkorrektur einzelner Ortspunkte in Pixeln, fährt mit dem Schlusszoom ein.
+// Schafft Luft, wo eine Beschriftung in den Nachbarkreis lief.
 function ovVersatz(knoten, faktor) {
   let v = knoten.versatz;
   return v ? { x: (v.x || 0) * faktor, y: (v.y || 0) * faktor } : { x: 0, y: 0 };
 }
 const OV_TEXT_FONT = "'Source Serif 4', serif";
-// Datenzeile unter dem Fliesstext — im Stil der Kategorien in der
-// Annotationsbox (.annotation-tag): serifenlos, fett, versal, gesperrt.
+// Datenzeile im Stil von .annotation-tag: serifenlos, fett, versal, gesperrt.
 const OV_DATEN_GROESSE = 9.5;
 const OV_DATEN_ZEILE = 14;
 const OV_DATEN_ABSTAND = 12;   // Luft zwischen Fliesstext und Datenzeile
@@ -195,12 +122,8 @@ function ovTextUmbruch(text, maxBreite) {
   return zeilen;
 }
 
-// Bricht eine lange Ortsbeschriftung auf zwei Zeilen. Bevorzugte Trennstellen
-// in dieser Reihenfolge: vor einer Klammer ("GEORGES DUROYS WOHNUNG" /
-// "(RUE BOURSAULT)"), nach einem Komma ("PALAIS WALTER," / "FAUBOURG
-// SAINT-HONORÉ"), sonst am Leerzeichen, das der Mitte am nächsten liegt.
-// Setzt voraus, dass Schrift und Grösse der Beschriftung bereits gesetzt sind
-// (textWidth misst mit dem aktuellen Zustand).
+// Bricht eine lange Ortsbeschriftung auf zwei Zeilen: vor Klammer, sonst nach
+// Komma, sonst am mittigsten Leerzeichen. Schrift muss vorher gesetzt sein.
 function ovLabelZeilen(text) {
   if (textWidth(text) <= OV_LABEL_MAX_BREITE) return [text];
   let klammer = text.indexOf('(');
@@ -222,10 +145,7 @@ function ovPhase(p, fenster) {
   return constrain(map(p, fenster[0], fenster[1], 0, 1), 0, 1);
 }
 
-// Je Knoten und Kapitel vorberechnet: bandCounts und F-Wert-Annotationen.
-// Der Schlussakt zählt die Kapitel durch (1..18) und summiert dabei auf —
-// das live über alle 18 Kapitel zu scannen wären 126 Durchläufe pro Frame.
-// Einmal gebaut, danach nur noch aufaddiert.
+// Je Knoten und Kapitel vorberechnet — live wären es 126 Scans pro Frame.
 let ovProKapitel = null;   // [knoten][kapitelNr] -> { bandCounts, fwerte }
 let ovRohradien = null;    // Endstand-Rohradius je Knoten (ohne Deckel)
 let ovErstesKapitel = null; // erste Kapitelnummer mit Inhalt, je Knoten
@@ -247,9 +167,7 @@ function ovBaueDaten() {
     alleDaten.forEach(([nr, daten]) => {
       if (!daten || !daten.annotationen || !daten.annotationen.length) return;
       let bis = daten.annotationen.length - 1;
-      // Ein Scan für beides — wie in kreisgrafik.js und spine-horizontal.js.
-      // Hier nur der Einheitlichkeit halber: ovBaueDaten() läuft einmal und
-      // landet in ovProKapitel.
+      // Ein Scan für beides. Hier unkritisch: ovBaueDaten() läuft nur einmal.
       let treffer = sammleAnnotationenNachOrtBasis(filter, bis, daten);
       proKapitel[nr] = {
         bandCounts: zaehleBandCounts(treffer),
@@ -261,9 +179,8 @@ function ovBaueDaten() {
   ovRohradien = ovProKapitel.map(proKapitel => {
     let summe = leereBandCounts();
     Object.values(proKapitel).forEach(k => ovAddiere(summe, k.bandCounts));
-    // Infinity statt des 100px-Deckels: hier summieren sich alle 18 Kapitel
-    // auf, mit Deckel wären fünf von sechs Orten am Ende gleich gross (siehe
-    // kreisRadius). Verkleinert wird stattdessen gemeinsam über kreisSkala.
+    // Infinity statt des 100px-Deckels — sonst wären am Ende fast alle Orte
+    // gleich gross. Verkleinert wird gemeinsam über kreisSkala.
     return groessterKreisRadius(summe, Infinity);
   });
   // Erstes Kapitel, in dem der Ort überhaupt vorkommt — daran hängt das
@@ -278,9 +195,8 @@ function ovBaueDaten() {
   ovLayout = null;
 }
 
-// Summe bis einschliesslich Kapitel maxNr ('18' = alles). Liefert zusätzlich
-// die Nummer des letzten Kapitels, das überhaupt beigetragen hat — sie steht
-// im Schlussakt unter dem Kreis.
+// Summe bis einschliesslich Kapitel maxNr, plus die Nummer des letzten
+// Kapitels, das beigetragen hat (steht unter dem Kreis).
 function ovStand(index, maxNr) {
   let summe = leereBandCounts();
   let fwerte = [];
@@ -298,10 +214,8 @@ function ovStand(index, maxNr) {
   return { bandCounts: summe, fwerte, letztes };
 }
 
-// Zielausschnitt des Schlusszooms: alle sieben Orte plus Rand, auf das
-// Seitenverhältnis des Canvas gebracht. Dazu die Kreis-Skala, bei der sich in
-// diesem Ausschnitt keine zwei Kreise berühren — dadurch stehen die Kreise am
-// Ende deutlich grösser als in der gestaffelten Zwischenphase.
+// Zielausschnitt des Schlusszooms: alle sieben Orte plus Rand, aufs
+// Canvas-Seitenverhältnis gebracht, dazu die grösstmögliche Kreis-Skala.
 function ovBerechneLayout() {
   if (ovLayout && ovLayout.breite === width && ovLayout.hoehe === height) return ovLayout;
 
@@ -309,9 +223,8 @@ function ovBerechneLayout() {
   const mercLat = (y) => degrees(2 * Math.atan(Math.exp(y)) - Math.PI / 2);
   const RAND = 12; // Mindestluft zum Fensterrand
 
-  // Beschriftungsbreiten einmal messen — sie bestimmen mit, wie weit ein Ort
-  // vom seitlichen Rand entfernt stehen muss ("GEORGES DUROYS WOHNUNG (RUE
-  // BOURSAULT)" ist deutlich breiter als sein Kreis).
+  // Beschriftungsbreiten messen: sie können breiter sein als ihr Kreis und
+  // bestimmen mit, wie weit ein Ort vom Rand weg muss.
   textFont("'Source Sans 3', sans-serif");
   textStyle(BOLD);
   textSize(13);
@@ -326,9 +239,8 @@ function ovBerechneLayout() {
   textFont("'Source Sans 3', sans-serif");
   textStyle(BOLD);
   textSize(OV_DATEN_GROESSE);
-  // Zwei feste Zeilen statt freiem Umbruch: Kapitel und Annotationen oben,
-  // die Valenz (neg/pos bzw. der Verlauf) und die F-Werte darunter. So steht
-  // die Gefühlsangabe bei jedem Ort an derselben Stelle.
+  // Zwei feste Zeilen: Kapitel/Annotationen oben, Valenz/F-Werte darunter —
+  // so steht die Gefühlsangabe bei jedem Ort an derselben Stelle.
   let datenZeilen = VERGLEICHS_KNOTEN.map(k => {
     if (!k.daten || !k.daten.length) return [];
     let oben = k.daten.slice(0, 2).join(OV_DATEN_TRENNER).toUpperCase();
@@ -339,9 +251,7 @@ function ovBerechneLayout() {
   textFont(OV_TEXT_FONT);
   textSize(OV_TEXT_GROESSE);
 
-  // Höhe unterhalb des Kreises: nur noch Ortsbeschriftung und Kapitelzeile.
-  // Der Erläuterungstext steht seitlich (siehe unten) und braucht hier keinen
-  // Platz mehr.
+  // Höhe unter dem Kreis: nur Ortsbeschriftung und Kapitelzeile.
   let untenHoehe = labelZeilen.map(z => OV_LABEL_ABSTAND + (z.length - 1) * OV_LABEL_ZEILE + 16 + 7);
   let textBreite = textZeilen.map(z => z.length ? Math.max(...z.map(t => textWidth(t))) : 0);
   // Halbe Texthöhe — der Block steht mittig auf der Kreishöhe.
@@ -355,11 +265,8 @@ function ovBerechneLayout() {
   // Bbox für einen gegebenen Rand bauen: Rand auf die Ankerspanne, dann auf
   // das Canvas-Seitenverhältnis aufziehen.
   //
-  // Das Verhältnis wird in MERCATOR-Einheiten gebildet, nicht in Grad: die
-  // Karten sind EPSG:3857, dort entspricht ein Breitengrad auf Pariser Höhe
-  // dem 1/cos(48.87°) = 1.52-fachen eines Längengrads. Mit demselben
-  // Meterfaktor für beide Achsen kam ein um genau diesen Faktor horizontal
-  // gestreckter Ausschnitt heraus.
+  // ACHTUNG Seitenverhältnis in MERCATOR-Einheiten, nicht in Grad — sonst
+  // wird der Ausschnitt auf Pariser Höhe um Faktor 1.52 horizontal gestreckt.
   let baueBbox = (rand) => {
     let dLon = (o0 - w0) * rand, dLat = (n0 - s0) * rand;
     let west = w0 - dLon, ost = o0 + dLon, sued = s0 - dLat, nord = n0 + dLat;
@@ -376,15 +283,12 @@ function ovBerechneLayout() {
     return { west, east: ost, south: sued, north: nord };
   };
 
-  // Kreis-Skala: grösster Faktor, bei dem sich weder zwei Kreise berühren NOCH
-  // die Beschriftung eines Kreises in den darunterliegenden läuft.
-  //
-  // Die zweite Bedingung ist nötig, weil Ortsname und Kapitelzeile unter dem
-  // Kreis hängen und NICHT mitskalieren: je grösser die Kreise, desto eher
-  // stösst der Text des oberen an den unteren. Für ein senkrecht gestapeltes
-  // Paar (waagrecht so nah, dass der Text den unteren Kreis trifft) gilt
-  //   dy >= r_oben * s + untenHoehe_oben + r_unten * s
-  // und damit s <= (dy - untenHoehe_oben) / (r_oben + r_unten).
+  // Grösster Faktor, bei dem sich weder Kreise berühren noch eine
+  // Beschriftung in den Kreis darunter läuft.
+
+  // ACHTUNG zweite Bedingung nötig, weil der Text unter dem Kreis NICHT
+  // mitskaliert: dy >= r_oben*s + untenHoehe_oben + r_unten*s, also
+  // s <= (dy - untenHoehe_oben) / (r_oben + r_unten).
   let skalaFuer = (bbox, pos) => {
     let skala = 1;
     for (let i = 0; i < pos.length; i++) {
@@ -408,14 +312,11 @@ function ovBerechneLayout() {
     return skala;
   };
 
-  // Überstand über den Fensterrand, in px. Berücksichtigt, was um den
-  // Ankerpunkt herum tatsächlich Platz braucht: der Kreis nach allen Seiten,
-  // unten zusätzlich Ortsbeschriftung und Kapitelzeile, seitlich die halbe
-  // Beschriftungsbreite. Ein Rand, der nur die Anker umschliesst, reicht
-  // nicht — die Kreise ragen um ihren Radius darüber hinaus.
-  // Der Erläuterungstext steht seitlich, und zwar nach AUSSEN: Kreise in der
-  // linken Bildhälfte bekommen ihn rechts, Kreise rechts bekommen ihn links.
-  // So wandert er nie über die Bildmitte, wo die meisten Nachbarkreise liegen.
+  // Überstand über den Fensterrand in px: Kreisradius nach allen Seiten, unten
+  // zusätzlich Beschriftung und Kapitelzeile, seitlich die halbe Labelbreite.
+
+  // Erläuterungstext nach AUSSEN — er wandert so nie über die Bildmitte, wo
+  // die meisten Nachbarkreise liegen.
   let textRechts = pos => pos.x < width / 2;
   let ueberstand = (pos, skala) => {
     let max = 0;
@@ -438,9 +339,8 @@ function ovBerechneLayout() {
     return max;
   };
 
-  // Rand so weit aufziehen, bis alles hineinpasst. Grösserer Rand heisst
-  // kleinere Kreise (die Skala hängt an den Pixelabständen), das Verfahren
-  // konvergiert deshalb.
+  // Rand aufziehen, bis alles passt. Grösserer Rand heisst kleinere Kreise,
+  // deshalb konvergiert das.
   let rand = OV_ZOOM_RAND;
   let mitVersatz = (bbox) => VERGLEICHS_KNOTEN.map(k => {
     let p = lonLatToScreen(k.lon, k.lat, bbox, 0, 0);
@@ -477,12 +377,8 @@ function ovZoomBbox() {
   return ovBerechneLayout().bbox;
 }
 
-// Zeichnet den Schlussakt. p = Fortschritt im Akt (0..1), bbox = die gerade
-// gültige (bereits Richtung ovZoomBbox geblendete) Kartenbbox.
-// textFaktor blendet NUR die Schrift aus, nicht die Kreise: sobald die
-// Schlusskarte einblendet, verschwinden Erläuterung, Ortsbeschriftung und
-// Kapitelzähler, während die Kreisgrafiken noch stehen und erst mit dem
-// Rauszoomen verblassen.
+// p = Fortschritt im Akt (0..1), bbox = die gerade gültige Kartenbbox.
+// textFaktor blendet NUR die Schrift aus, die Kreise bleiben stehen.
 function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
   if (alpha <= 0 || !stationenData || !stationenData.annotationen) return;
   ovBaueDaten();
@@ -545,12 +441,10 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
     if (pLabel > 0) {
       textStyle(BOLD);
       textSize(13);
-      // fillStyle DIREKT setzen, nicht über p5s fill(): p5 merkt sich die
-      // zuletzt gesetzte Füllfarbe und überspringt die Zuweisung, wenn der
-      // Wert gleich bleibt. zeichneFwertPunkte oben schreibt fillStyle aber
-      // direkt (F-Wert-Rot) und umgeht diesen Zwischenspeicher — der
-      // Ortsname wurde dadurch rot gezeichnet, sobald sich seine Deckkraft
-      // von Frame zu Frame nicht änderte.
+      // ACHTUNG fillStyle direkt setzen, nicht über fill(): p5 überspringt die
+      // Zuweisung bei gleichbleibendem Wert. zeichneFwertPunkte schreibt oben
+      // direkt in fillStyle und umgeht den Zwischenspeicher — der Ortsname
+      // wurde dadurch rot, sobald sich seine Deckkraft nicht mehr änderte.
       drawingContext.fillStyle = `rgba(33, 43, 46, ${alpha * pLabel * textFaktor / 255})`;
       zeilen.forEach((zeile, z) => {
         drawingContext.fillText(zeile, anker.x, cy + rand + OV_LABEL_ABSTAND + z * OV_LABEL_ZEILE);
@@ -566,18 +460,10 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
         anker.x, cy + rand + OV_LABEL_ABSTAND + (zeilen.length - 1) * OV_LABEL_ZEILE + 16);
     }
 
-    // Erläuterung SEITLICH neben dem Kreis, immer linksbündig gesetzt und
-    // mittig auf seiner Höhe. Sie steht nach aussen: Kreise links der
-    // Bildmitte bekommen sie rechts und umgekehrt. Dieselbe Serifenschrift
-    // wie die Einstiegstexte, nur viel kleiner; sie blendet mit der
-    // Ortsbeschriftung ein.
-    // Die Textbox erscheint dann, wenn dieser Ort seine ERSTE Annotation
-    // bekommt — also genau in dem Kapitelschritt, in dem seine Kreisgrafik
-    // zum ersten Mal etwas zeigt. Die Redaktion, die Madeleine und die
-    // Boulevards starten in Kapitel 1, die Rue Boursault in 3, die Rue
-    // Constantinople in 5, Rue Fontaine und Palais Walter in 6 — die Texte
-    // erscheinen dadurch nacheinander statt alle auf einmal.
-    // pKapitel * 18 ist die laufende, ungerundete Position des Kapitelzählers.
+    // Erläuterung seitlich neben dem Kreis, linksbündig und nach aussen.
+
+    // Die Textbox erscheint, wenn dieser Ort seine erste Annotation bekommt —
+    // die Texte kommen dadurch nacheinander statt alle auf einmal.
     let erstes = ovErstesKapitel[i];
     let pTextbox = constrain(map(pKapitel * 18, erstes - 1, erstes, 0, 1), 0, 1);
     let erlaeuterung = layout.textZeilen[i];
@@ -589,10 +475,8 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
       drawingContext.textAlign = 'left';
       drawingContext.fillStyle = `rgba(33, 43, 46, ${alpha * pTextbox * textFaktor * 0.85 / 255})`;
       let breite = Math.max(...erlaeuterung.map(t => textWidth(t)));
-      // Der Textblock hängt am ENDRADIUS, nicht am laufenden: sonst schöbe
-      // ihn der wachsende Kreis Kapitel für Kapitel vor sich her. So steht er
-      // von Anfang an fest, und der Kreis wächst in seine endgültige Grösse
-      // hinein, ohne den Text zu bewegen.
+      // Am ENDRADIUS aufgehängt, nicht am laufenden — sonst schöbe der
+      // wachsende Kreis den Text Kapitel für Kapitel vor sich her.
       let endRand = ovRohradien[i] * layout.kreisSkala;
       let abstand = k.textAbstand || OV_TEXT_ABSTAND;
       let linksBuendig, start;
@@ -607,9 +491,8 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
         linksBuendig = anker.x + OV_LINIE_VERSATZ;
         linie = [anker.x, cy - endRand, anker.x, start - OV_TEXT_ZEILE / 2];
       } else {
-        // Waagrechte Linie auf Höhe des Ortspunkts; die Box hängt darunter.
-        // Links endet die Linie am linken Boxrand, rechts am rechten — so
-        // spannt sie einmal über die Boxbreite und der Text bleibt frei.
+        // Waagrechte Linie auf Punkthöhe, Box darunter. Sie spannt über die
+        // Boxbreite, damit der Text frei bleibt.
         let rechtsDavon = k.textSeite === 'rechts' ? true
           : anker.x < width / 2;
         if (k.textSeite === 'links-fix') linksBuendig = OV_TEXT_RAND;
@@ -632,9 +515,8 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
         drawingContext.fillText(zeile, linksBuendig, start + z * OV_TEXT_ZEILE);
       });
 
-      // Datenzeile darunter — Zahlen und F-Werte im Stil der Kategorien in
-      // der Annotationsbox. letterSpacing kennt nicht jeder Browser; wo es
-      // fehlt, wird es schlicht ignoriert.
+      // Datenzeile darunter. letterSpacing kennt nicht jeder Browser, wo es
+      // fehlt wird es ignoriert.
       let daten = layout.datenZeilen[i];
       if (daten && daten.length) {
         textFont("'Source Sans 3', sans-serif");
