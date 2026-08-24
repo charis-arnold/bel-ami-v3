@@ -1,93 +1,41 @@
 /* =============================================================================
    fotomarker.js — Foto-Marker (Fotobank Huma-Num/FNP) und Bild-Popup
 
-   Aus sketch.js herausgelöst (siehe docs/modularisierung-log.md). Eine
-   eigenständige, additive Ebene über der Karte: an jeder Fotokoordinate ein
-   Sternchen, das bei Hover den Titel zeigt und beim Klick ein Popup mit dem
-   Bild öffnet. Die Ebene hängt an keinem Erzählzustand — sie bekommt die
-   sichtbare Bbox und den Kartenoffset als Parameter und zeichnet sich in
-   jeder Kartenansicht gleich.
+   Additive Ebene über der Karte: an jeder Fotokoordinate ein Sternchen, das
+   bei Hover den Titel zeigt und beim Klick ein Popup öffnet. Hängt an keinem
+   Erzählzustand — Bbox und Kartenoffset kommen als Parameter.
 
-   --- Abhängigkeiten NACH AUSSEN -------------------------------------------
-   aus geo-projektion.js:   lonLatToScreen (zur Laufzeit) sowie mapOffsetX/
-                            mapOffsetY — diese beiden BEIM LADEN, siehe den
-                            Hinweis zur Ladereihenfolge unten
-   aus datenbereinigung.js: FWERT_COLOR_RGB
-   aus p5:                  Zeichen- und Text-API, drawingContext, mouseX/mouseY
-
-   --- Wer von aussen hierher greift ----------------------------------------
-   preload()                 lädt fotomarker.json nach fotoMarkerListe
-   bereinigeEingangsdaten()  ersetzt sie durch bereinigeFotoMarker(...)
-   setup()                   befüllt die fünf fotoPopup*-Handles und hängt drei
-                             Listener auf schliesseFotoPopup (Schliessen-Knopf,
-                             Klick auf den Hintergrund, Escape)
-   draw()                    ruft merkeKartenlage() und zeichneFotoMarker();
-                             schreibt selbst nichts mehr hierher
-   mousePressed()            prüft die Marker auf Treffer und ruft oeffneFotoPopup()
-   zeichneUebersichtsrouten() nutzt FOTO_MARKER_TREFFER_RADIUS für den
-                             Hover-Test der Kapitel-Badges — dieselbe Distanz,
-                             damit sich alle Klickziele der Karte gleich anfühlen
-
-   Der Foto-Teil von mousePressed() ist ebenfalls in sketch.js geblieben:
-   mousePressed ist eine p5-Lifecycle-Funktion und behandelt zuerst die
-   Kapitel-Badges, dann die Foto-Marker. Sie aufzuteilen hiesse, den
-   Kontrollfluss umzubauen — eine Logikänderung, die diese Schritte vermeiden.
-
-   --- ACHTUNG: Auswertung beim LADEN ---------------------------------------
-   let letzterFotoOffsetX = mapOffsetX, letzterFotoOffsetY = mapOffsetY;
-   Diese Zeile liest zwei fremde Variablen beim Laden. Diese Datei MUSS
-   deshalb nach geo-projektion.js stehen — sonst ReferenceError. Sie ist der
-   einzige Top-Level-Zugriff nach aussen; keine Funktion wird beim Laden
-   aufgerufen. (Bis zum Umzug standen die beiden Merker in sketch.js, weil
-   mapOffsetX/mapOffsetY dort lagen — siehe cleanup-log.md, Schritt 13.)
-
-   Wird in index.html VOR sketch.js geladen.
+   ACHTUNG letzterFotoOffsetX/Y lesen mapOffsetX/Y BEIM LADEN — diese Datei
+   muss nach geo-projektion.js stehen, sonst ReferenceError.
 ============================================================================= */
 
-// DOM-Referenzen des Popups — in setup() aus dem Dokument geholt.
+// DOM-Referenzen des Popups, in setup() geholt.
 let fotoPopup, fotoPopupTitel, fotoPopupPlz, fotoPopupBild, fotoPopupBeschreibung;
 
-// --- Foto-Marker (separate, additive Ebene — Fotobank Huma-Num/FNP) ---
 let fotoMarkerListe = [];
-// Zustand des zuletzt gezeichneten Frames, den mousePressed() in sketch.js
-// fürs Hit-Testing braucht: dieselbe Bbox und derselbe Kartenoffset, mit denen
-// die Marker gezeichnet wurden. Alle drei werden in draw() gemeinsam gesetzt.
+// Zustand des zuletzt gezeichneten Frames, alle drei in draw() gesetzt.
 let letzteActiveBbox = null;
 let letzterFotoOffsetX = mapOffsetX, letzterFotoOffsetY = mapOffsetY;
-// Trefferradius fürs Anklicken — auch von zeichneUebersichtsrouten (sketch.js)
-// für die Kapitel-Badges genutzt, damit alle Klickziele der Karte dieselbe
-// Grosszügigkeit haben.
+// Auch von uebersichtsrouten.js genutzt, damit alle Klickziele gleich gross sind.
 const FOTO_MARKER_TREFFER_RADIUS = 12;
 
-// Merkt sich Bbox und Kartenoffset des laufenden Frames für den Treffertest
-// in mousePressed(). Bewusst eine eigene Funktion und nicht Teil von
-// zeichneFotoMarker(): draw() ruft sie UNBEDINGT auf, zeichneFotoMarker()
-// dagegen nur ausserhalb der Graph-Ansicht.
-//
-// Folge davon, unverändert gegenüber früher: In der Graph-Ansicht bleibt der
-// Merker frisch, obwohl dort keine Marker gezeichnet werden — ein Klick auf
-// die Stelle, an der ein Marker auf der Karte läge, öffnet dessen Popup.
-// mousePressed() prüft nur letzteActiveBbox, nicht den Ansichtsmodus. Falls
-// das nicht gewollt ist, gehört der Test dorthin und nicht hierher.
+// Merkt sich Bbox und Offset des Frames für den Treffertest in mousePressed().
+// Eigene Funktion, weil draw() sie unbedingt ruft, zeichneFotoMarker() nicht.
+
+// ACHTUNG in der Graph-Ansicht bleibt der Merker frisch, obwohl dort keine
+// Marker gezeichnet werden: ein Klick auf die Stelle, wo einer auf der Karte
+// läge, öffnet sein Popup. mousePressed() prüft nur letzteActiveBbox, nicht
+// den Ansichtsmodus. Ungelöst, siehe docs/cleanup-log.md.
 function merkeKartenlage(bbox, offsetX, offsetY) {
   letzteActiveBbox = bbox;
   letzterFotoOffsetX = offsetX;
   letzterFotoOffsetY = offsetY;
 }
 
-// ---------------------------------------------------------------------------
-// Foto-Marker (Fotobank Huma-Num/FNP) — eigenständige, additive Ebene
-// ---------------------------------------------------------------------------
-
 function zeichneFotoMarker(activeBbox, offsetX = mapOffsetX, offsetY = mapOffsetY, alphaMultiplier = 1, kartenZoomFaktor = 0) {
-  if (alphaMultiplier <= 0) return; // z.B. Kreisvergleich-Akt — keine Karte mehr, also auch keine Foto-Marker
-  // Grösse skaliert mit dem Zoom: 11 (wie die Kapitelnummern) nur ganz
-  // draussen in der Übersicht — dieselbe Fläche wirkt in einem eingezoomten
-  // Kartenausschnitt (viel kleinerer geografischer Ausschnitt auf derselben
-  // Canvas-Grösse, alles andere also visuell grösser) winzig. kartenZoomFaktor
-  // (0 = Übersicht, 1 = voll in Kapitel-1- oder Kapitel-Kartenausschnitt
-  // gezoomt, siehe Aufrufer) skaliert linear bis zur alten festen Grösse
-  // (20/24, vor der "wie Kapitelnummern"-Angleichung) hoch.
+  if (alphaMultiplier <= 0) return; // keine Karte, also auch keine Marker
+  // Grösse skaliert mit dem Zoom: 11 wie die Kapitelnummern in der Übersicht,
+  // 20 im Kartenausschnitt — sonst wirkt das Sternchen dort winzig.
   let sternGroesse = lerp(11, 20, constrain(kartenZoomFaktor, 0, 1));
   fotoMarkerListe.forEach(f => {
     let pos = lonLatToScreen(f.lon, f.lat, activeBbox, offsetX, offsetY);
@@ -100,11 +48,11 @@ function zeichneFotoMarker(activeBbox, offsetX = mapOffsetX, offsetY = mapOffset
     textAlign(CENTER, CENTER);
     textStyle(BOLD);
     textSize(hover ? sternGroesse * 1.2 : sternGroesse);
-    drawingContext.fillText('*', pos.x, pos.y - 3); // leichte optische Korrektur nach oben (Sternchen-Glyphe); p5s text() bleibt bei laufender Animation manchmal unsichtbar, siehe zeichneSpineHorizontal
+    drawingContext.fillText('*', pos.x, pos.y - 3); // -3 korrigiert die Glyphe optisch nach oben
 
     if (hover) {
-      textFont("'Source Sans 3', sans-serif"); // wie .annotation-tag (var(--sans)) und die Kreis-Labels/Kapitelnummern
-      textStyle(BOLD); // .annotation-tag ist font-weight: 700
+      textFont("'Source Sans 3', sans-serif"); // wie .annotation-tag
+      textStyle(BOLD);
       textSize(11);
       let label = f.titel || 'Foto ansehen';
       let tw = textWidth(label) + 16;
