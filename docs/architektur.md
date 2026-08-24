@@ -22,9 +22,19 @@ Neun der zwölf Module sind gekapselt und geben nur die genannten Namen über
 | `sonifikation.js` | 4 (1 Lesebindung) |
 | `annotationsbox.js`, `kartendekor.js` | je 2 |
 
-Die drei übrigen — `geo-projektion.js`, `fotomarker.js`, `dom-aufbau.js` —
-sind bewusst ungekapselt: Bei ihnen wird **jeder** Top-Level-Name von aussen
-gelesen, eine Kapsel brächte null.
+Die drei übrigen sind bewusst ungekapselt: Bei ihnen wird **jeder**
+Top-Level-Name von aussen gelesen, eine Kapsel müsste also alles exportieren
+und nähme dem globalen Scope nichts ab.
+
+| Modul | Top-Level-Namen | davon nur intern | Warum ungekapselt |
+|---|---|---|---|
+| `geo-projektion.js` | 9 | **0** | Unterste Schicht — `lonLatToScreen`, die drei Bboxen, `mapOffsetX/Y` und die drei Crop-Funktionen werden alle von aussen gebraucht |
+| `dom-aufbau.js` | 6 | **0** | Nur die fünf `baue*`-Funktionen plus `oeffneRegister`, alle von `setup()` gerufen |
+| `fotomarker.js` | 13 | **0** | Zusätzlicher Blocker: `sketch.js` **schreibt** in sechs dieser Namen (`fotoMarkerListe` in `preload`/`bereinigeEingangsdaten`, die fünf `fotoPopup*`-Handles in `setup`). Eine Kapsel würde diese sieben Zuweisungen wirkungslos machen — sie liefen ins Leere, ohne Fehlermeldung |
+
+Für `fotomarker.js` wäre eine Kapselung also nicht nur nutzlos, sondern
+schädlich, solange die Initialisierung in `sketch.js` liegt. Das ist der Rest
+der Fremdschreibzugriffe aus Punkt 8 (21 → 7).
 
 **Form der Kapsel** — gilt für alle neun, steht deshalb nur hier und nicht in
 jeder Datei:
