@@ -296,8 +296,16 @@ function setup() {
   cnv.parent('scrollyStage');
 
   baueKartenMarkierungen();
-  baueKapitelRegister();
-  baueLegende();
+  // Destrukturierungs-ZUWEISUNG, bewusst ohne const/let: Die acht Handles
+  // sind oben auf Modulebene deklariert, weil draw() sie jeden Frame liest.
+  // Ein `const { … } =` hier würde funktionslokale Konstanten anlegen, die
+  // Modulvariablen blieben undefined — Menübalken-Hervorhebung und
+  // Legendentext fielen still aus.
+  //
+  // Vorher schrieb dom-aufbau.js diese acht direkt von aussen; jetzt baut es
+  // und gibt zurück (siehe docs/best-practices-review.md, "Gruppe B").
+  ({ modusZeile, planEintrag, graphEintrag, leerzeile, alleEintrag } = baueKapitelRegister());
+  ({ legendeValenzText, legendeValenzKreis, legendeFwertHinweis } = baueLegende());
   baueStationsMarker();
   baueZwischenMarker();
 }

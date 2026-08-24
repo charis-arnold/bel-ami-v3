@@ -36,7 +36,7 @@ sondern nur: faktisch greift kein anderes Modul darauf zu.
 | **mittel** | ~~`draw()` schreibt in Variablen von drei fremden Modulen~~ — **erledigt**, alle fünf Zugriffe verlagert | Globale Variablen |
 | **mittel** | ~~`zeichneKreisLabels()` setzt sechs p5-Zeichenzustände und stellt keinen zurück~~ — **erledigt**, `push()`/`pop()` | Single Responsibility |
 | **mittel** | ~~`zeichneUebersichtsrouten()` zeichnet und setzt dabei `kapitelHover`~~ — **erledigt**, `draw()` zieht nichts mehr nach | Single Responsibility |
-| **mittel** | 127 der 266 Namen sind modulintern; davon 100 gekapselt (**8 von 12 Modulen**), **22 Kandidaten offen** — alle in `sketch.js` | Globale Variablen |
+| **mittel** | 139 der 266 Namen sind modulintern; davon 100 gekapselt (**8 von 12 Modulen**), **34 Kandidaten offen** — alle in `sketch.js` | Globale Variablen |
 | **mittel** | ~~Kapitel-1-Datenregeln stehen im Zeichenmodul `kreisgrafik.js`~~ — **erledigt**, jetzt `ortRunSichtbar()` in `datenbereinigung.js` | Single Responsibility |
 | **mittel** | ~~`zeichneHalbkreis`/`zeichneVollkreis` setzen `globalCompositeOperation` hart zurück~~ — **erledigt**, `push()`/`pop()` | Single Responsibility |
 | **niedrig** | `draw()` läuft mit 557 Zeilen als eine Funktion | Single Responsibility |
@@ -78,13 +78,13 @@ nichts mehr gefunden, was die Zuordnung noch verschieben würde.
 | `kreisgrafik.js` | **ja** (5 Exporte) | 13 | 8 | 5 | 61 % |
 | `spine-horizontal.js` | **ja** (11 Exporte) | 25 | 14 | 11 | 56 % |
 | `kartendekor.js` | **ja** (2 Exporte) | 4 | 2 | 2 | 50 % |
-| `sketch.js` | nein | 69 | 27 | 42 | 39 % |
+| `sketch.js` | nein | 69 | 39 | 30 | 57 % |
 | `uebersichtsrouten.js` | **ja** (10 Exporte) | 16 | 6 | 10 | 38 % |
 | `datenbereinigung.js` | **ja** (26 Exporte) | 38 | 12 | 26 | 32 % |
 | `geo-projektion.js` | — *(geprüft, bewusst nicht)* | 9 | 0 | 9 | 0 % |
 | `fotomarker.js` | nein | 14 | 0 | 14 | 0 % |
 | `dom-aufbau.js` | nein | 6 | 0 | 6 | 0 % |
-| **Summe** | **8 von 12** | **266** | **127** | **139** | 48 % |
+| **Summe** | **8 von 12** | **266** | **139** | **127** | 52 % |
 
 Stand am Code erhoben, nicht aus dieser Doku fortgeschrieben: Die Prüfung
 sucht strukturell nach einer umschliessenden sofort ausgeführten Funktion
@@ -94,15 +94,36 @@ Schreibweise. **Gekapselt sind acht Module**: `datenbereinigung.js`,
 `kreisgrafik.js`, `sonifikation.js`, `annotationsbox.js` und
 `kartendekor.js`.
 
-Von den 127 modulinternen Namen sind damit **100 aus dem globalen Scope
-entfernt**. Von den verbleibenden 27 müssen fünf global bleiben (die
-p5-Hooks `preload`, `setup`, `draw`, `mousePressed`, `windowResized`) —
-**22 echte Kandidaten offen, alle in `sketch.js`.**
+Von den 139 modulinternen Namen sind damit **100 aus dem globalen Scope
+entfernt**. Von den verbleibenden 39 müssen fünf ausdrücklich exportiert
+werden (die p5-Hooks `preload`, `setup`, `draw`, `mousePressed`,
+`windowResized`, die p5 am `window` sucht) — **34 echte Kandidaten offen,
+alle in `sketch.js`.**
 
 Die drei übrigen ungekapselten Module (`geo-projektion.js`, `fotomarker.js`,
-`dom-aufbau.js`) haben null interne Namen — dort ist nichts zu kapseln.
-`sketch.js` bleibt blockiert durch die acht DOM-Handle-Schreibzugriffe aus
-`dom-aufbau.js`. Das ist der letzte verbleibende Posten von Punkt 8.
+`dom-aufbau.js`) haben null interne Namen — dort ist nichts zu kapseln;
+bei `fotomarker.js` einzeln gegengeprüft. **`sketch.js` ist seit der
+Auflösung von Gruppe B nicht mehr blockiert** und damit der letzte Schritt
+von Punkt 8.
+
+#### Korrektur: zwölf Namen waren nie extern
+
+Die Zahlen für `sketch.js` waren bisher falsch — statt 27/42 sind es
+**39/30**. Grund: Die Erhebung zählte `index.html` als Referenzquelle mit,
+und zwölf `sketch.js`-Namen kommen dort vor: `stage`, `naechstesKapitel`,
+`annotationInner`, `annotationTag`, `annotationBar`, `scrollFortschritt`,
+`scrollFortschrittFuellung`, `legendeBox`, `legendeTab`, `prologBox`,
+`prologTab`, `grafikPlayButton`.
+
+**Es sind ausnahmslos HTML-`id`-Attribute**, keine Code-Referenzen —
+`index.html` enthält gar kein Inline-Skript (geprüft). Dieselbe Falle wie im
+Abschnitt [Toter Code](#toter-code), wo `id="naechstesKapitel"` schon einmal
+eine Funktion fälschlich als tot gemeldet hatte.
+
+Geprüft, ob dadurch bei den acht bereits gekapselten Modulen etwas
+fälschlich exportiert wurde: **nein** — der Effekt tritt nur bei `sketch.js`
+auf. Für künftige Erhebungen gilt: `index.html` gehört nur dann als
+Referenzquelle dazu, wenn sie ein Inline-Skript enthält.
 
 **`geo-projektion.js` wurde geprüft und bewusst ausgelassen.** Alle neun
 Namen werden extern gelesen, keiner ist intern — eine Kapsel würde rund
@@ -286,16 +307,27 @@ graph LR
     class UR,SH,KG,KD,GEO,AB,DB,SO,DRAW schreibfrei
 ```
 
-**Von 21 modulübergreifenden Schreibzugriffen sind 15 übrig**, in nur noch
-zwei Gruppen — beide sind einmalige Initialisierung, keine läuft im Frame:
+**Von 21 modulübergreifenden Schreibzugriffen sind 7 übrig** — alle in einer
+Gruppe, und sie ist folgenlos:
 
-| Gruppe | Zugriffe | blockiert |
+| Gruppe | Zugriffe | Status |
 |---|---|---|
-| `dom-aufbau.js` → `sketch.js` (DOM-Handles in `baueKapitelRegister`, `baueLegende`) | 8 | **`sketch.js`** |
-| `sketch.js` → `fotomarker.js` (`preload`, `setup`, `bereinigeEingangsdaten`) | 7 | `fotomarker.js` — hat 0 interne Namen, also folgenlos |
+| ~~Handler-Dreieck~~ | ~~6~~ | **erledigt** — je Modul ein Setter, Handler komponieren |
+| ~~`dom-aufbau.js` → `sketch.js`~~ (8 DOM-Handles) | ~~8~~ | **erledigt** — Rückgabewerte statt Seiteneffekte |
+| `sketch.js` → `fotomarker.js` (`preload`, `setup`, `bereinigeEingangsdaten`) | 7 | offen — blockiert nur `fotomarker.js`, und das hat 0 interne Namen |
 
-Gestrichelt: neun Module schreiben in keinen fremden Zustand mehr, darunter
-`draw()`.
+Damit empfängt **`sketch.js` keine Fremdschreibzugriffe mehr** und ist
+kapselbar. Die sieben verbleibenden gehen von `sketch.js` nach
+`fotomarker.js`; dort ist ohnehin nichts zu kapseln (alle 14 Namen werden
+von aussen gelesen — einzeln gegengeprüft).
+
+Eine mildere Form der Kopplung bleibt, die keine Variablenzuweisung ist und
+deshalb nicht blockiert: `dom-aufbau.js` befüllt vier Container, die
+`sketch.js` gehören — `kapitelRegisterEintraege[nr] = …` sowie `.push()` auf
+`markierungsEintraege`, `stationsMarker`, `zwischenMarker`. Geprüft: **keiner
+der vier wird je neu zugewiesen**, die Referenz bleibt stabil, ein Wertexport
+trägt.
+
 
 ### Das Handler-Dreieck ist aufgelöst
 

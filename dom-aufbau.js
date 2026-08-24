@@ -13,13 +13,18 @@
    nirgends auf die Geo-Projektion zu.
 
    --- Abhängigkeiten NACH AUSSEN (alle erst zur Laufzeit) -------------------
-   aus sketch.js (26):
+   aus sketch.js (18):
      DOM-Wurzeln       kartenMarkierungenEl, kapitelRegister,
                        legendeInhalt, registerTabs
-     erzeugte Knoten   modusZeile, planEintrag, graphEintrag, leerzeile,
-                       alleEintrag, kapitelRegisterEintraege, legendeValenzText,
-                       legendeValenzKreis, legendeFwertHinweis
-     gefüllte Listen   markierungsEintraege, stationsMarker, zwischenMarker
+     gefüllte Container kapitelRegisterEintraege, markierungsEintraege,
+                       stationsMarker, zwischenMarker — nur befüllt, nie neu
+                       zugewiesen
+
+   Die acht erzeugten Knoten (modusZeile, planEintrag, graphEintrag,
+   leerzeile, alleEintrag, legendeValenzText, legendeValenzKreis,
+   legendeFwertHinweis) werden NICHT mehr von hier aus gesetzt: Sie gehen als
+   Rückgabewert von baueKapitelRegister()/baueLegende() hinaus, setup() nimmt
+   sie entgegen. Siehe docs/best-practices-review.md, "Gruppe B".
      Konstanten        WEITERE_KAPITEL_NUMMERN, LEGENDE_VALENZ_OBEN_UNTEN,
                        LEGENDE_FWERT_OBEN_UNTEN, FWERT_PUNKT_DURCHMESSER
      Navigation        scrolleZuKapitel1, springeZuKapitelZoom,
@@ -74,17 +79,21 @@ function oeffneRegister(box, andererBox, eigeneKlasse, andereKlasse) {
 // kapitel03Data) springen per springeZuKapitelZoom(nr) — die Funktion hat
 // einen eigenen Sicherheits-Guard und tut bei fehlenden Daten einfach nichts.
 function baueKapitelRegister() {
-  modusZeile = document.createElement('div');
+  // Die fünf Handles sind LOKAL und gehen als Rückgabewert hinaus — vorher
+  // schrieb diese Funktion sie direkt in sketch.js-Variablen (siehe
+  // docs/best-practices-review.md, "Gruppe B"). Gebaut wird hier, gehalten
+  // wird in sketch.js, wo draw() sie jeden Frame liest.
+  let modusZeile = document.createElement('div');
   modusZeile.className = 'kapitel-register-modus-zeile';
 
-  planEintrag = document.createElement('button');
+  let planEintrag = document.createElement('button');
   planEintrag.type = 'button';
   planEintrag.className = 'kapitel-register-modus-item';
   planEintrag.textContent = 'Plan';
   planEintrag.addEventListener('click', () => setzeKapitelAnsichtModus('karte'));
   modusZeile.appendChild(planEintrag);
 
-  graphEintrag = document.createElement('button');
+  let graphEintrag = document.createElement('button');
   graphEintrag.type = 'button';
   graphEintrag.className = 'kapitel-register-modus-item';
   graphEintrag.textContent = 'Graph';
@@ -93,11 +102,11 @@ function baueKapitelRegister() {
 
   kapitelRegister.appendChild(modusZeile);
 
-  leerzeile = document.createElement('div');
+  let leerzeile = document.createElement('div');
   leerzeile.className = 'kapitel-register-leerzeile';
   kapitelRegister.appendChild(leerzeile);
 
-  alleEintrag = document.createElement('button');
+  let alleEintrag = document.createElement('button');
   alleEintrag.type = 'button';
   alleEintrag.className = 'kapitel-register-item';
   alleEintrag.textContent = 'Alle';
@@ -113,8 +122,12 @@ function baueKapitelRegister() {
     eintrag.textContent = 'Kapitel ' + parseInt(nr, 10);
     eintrag.addEventListener('click', nr === '01' ? scrolleZuKapitel1 : () => springeZuKapitelZoom(nr));
     kapitelRegister.appendChild(eintrag);
+    // kapitelRegisterEintraege wird nur BEFÜLLT, nie neu zugewiesen — die
+    // Referenz bleibt stabil, deshalb bleibt das hier.
     kapitelRegisterEintraege[nr] = eintrag;
   });
+
+  return { modusZeile, planEintrag, graphEintrag, leerzeile, alleEintrag };
 }
 
 // Legende (mitte rechts, sichtbar in Plan- UND Graph-Ansicht, siehe
@@ -169,13 +182,10 @@ function baueLegende() {
   valenzText.className = 'legende-valenz-text';
   valenzText.textContent = LEGENDE_VALENZ_OBEN_UNTEN;
   valenzZeile.appendChild(valenzText);
-  // Für die Umschaltung merken: die Halbkreise stehen in Plan- wie
-  // Graph-Ansicht oben/unten, im Schlussakt Ortsveränderung dagegen
-  // links/rechts (siehe zeichneOrtsveraenderung) — die Legende ist in allen
-  // dreien sichtbar und muss das mitmachen.
-  legendeValenzText = valenzText;
-  legendeValenzKreis = valenzKreis;
-
+  // valenzText/valenzKreis gehen unten als Rückgabewert hinaus: Die
+  // Halbkreise stehen in Plan- wie Graph-Ansicht oben/unten, im Schlussakt
+  // Ortsveränderung dagegen links/rechts (siehe zeichneOrtsveraenderung) —
+  // die Legende ist in allen dreien sichtbar und muss das mitmachen.
   legendeInhalt.appendChild(valenzZeile);
 
   let neutralZeile = document.createElement('div');
@@ -227,7 +237,14 @@ function baueLegende() {
   fwertHinweis.className = 'legende-hinweis';
   fwertHinweis.textContent = LEGENDE_FWERT_OBEN_UNTEN;
   legendeInhalt.appendChild(fwertHinweis);
-  legendeFwertHinweis = fwertHinweis; // wechselt mit der Ansicht, siehe draw()
+
+  // Drei Handles hinaus statt drei Fremdzuweisungen. Alle drei wechseln mit
+  // der Ansicht, siehe draw() in sketch.js.
+  return {
+    legendeValenzText: valenzText,
+    legendeValenzKreis: valenzKreis,
+    legendeFwertHinweis: fwertHinweis,
+  };
 }
 
 function baueKartenMarkierungen() {
