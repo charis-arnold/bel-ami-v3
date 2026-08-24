@@ -14,26 +14,13 @@
    Wird in index.html VOR sketch.js geladen.
 ============================================================================= */
 
-// --- Modulkapselung ------------------------------------------------------
-// Alles bis zum Exportblock am Dateiende ist modulintern: 2 der 4
-// Top-Level-Namen werden von keinem anderen Modul gelesen (siehe
-// docs/best-practices-review.md, Punkt "Globale Variablen").
+// --- Modulkapselung ---------------------------------------------------
+// 2 von 4 Namen intern, 2 im Exportblock am Dateiende.
+// Konvention: docs/architektur.md. Lädt eigenständig.
 //
-// Der Rumpf ist bewusst NICHT eingerückt. Eine Einrückung würde jede
-// einzelne Zeile als geändert markieren — der Diff wäre nicht mehr prüfbar
-// und git blame für die ganze Datei wertlos. Die schliessende Klammer steht
-// ganz unten, direkt nach dem Export.
-//
-// Kein 'use strict': Das wäre eine Verhaltensänderung über die Kapselung
-// hinaus und gehört, wenn überhaupt, in einen eigenen Schritt.
-//
-// Diese Datei lädt eigenständig — kein Top-Level-Initialisierer greift auf
-// ein anderes Modul zu.
-//
-// haversineMeter() wird durch die Kapsel modulintern. Das ist richtig so —
-// zeichneMassstabsleiste() ist ihr einziger Aufrufer, im selben Modul.
-// Der Querverweis in geo-projektion.js ("NICHT hier: haversineMeter")
-// bleibt gültig, ist dort aber um diesen Hinweis ergänzt.
+// haversineMeter wird dadurch modulintern — richtig so, ihr einziger
+// Aufrufer zeichneMassstabsleiste sitzt hier. Der Querverweis in
+// geo-projektion.js ist entsprechend ergänzt.
 (function () {
 
 // ---------------------------------------------------------------------------
@@ -209,9 +196,8 @@ function zeichneWindrose(x, y, groesse, alphaMultiplier = 1) {
 }
 
 
-// --- Öffentliche Schnittstelle -------------------------------------------
-// Zwei Zeichenfunktionen gehen nach aussen, beide nur von sketch.js
-// gerufen. Kein Export ist veränderlich, deshalb einfache Zuweisungen.
+// --- Export ------------------------------------------------------------
+// Zwei Zeichenfunktionen, beide nur von sketch.js gerufen.
 window.zeichneMassstabsleiste = zeichneMassstabsleiste;
 window.zeichneWindrose = zeichneWindrose;
 
