@@ -1,34 +1,18 @@
 /* =============================================================================
-   kartendekor.js — Kartografische Beigaben: Massstabsleiste und Windrose
+   kartendekor.js — Massstabsleiste und Windrose
 
-   Aus sketch.js herausgelöst (siehe docs/modularisierung-log.md). Beide
-   Funktionen sind reine Zeichenroutinen ohne Zugriff auf den Erzählzustand
-   des Sketches: sie kennen weder zoomedKapitel noch die Scroll-Meilensteine,
-   sondern bekommen alles, was sie brauchen, als Parameter übergeben — die
-   sichtbare Bbox, den Kartenoffset und einen Alpha-Multiplikator.
-
-   Abhängigkeiten: p5.js (width/height, push/pop, stroke/fill, textFont …,
-   drawingContext) sowie haversineMeter(), das hier gleich mitwohnt, weil
-   zeichneMassstabsleiste sein einziger Aufrufer ist.
-
-   Wird in index.html VOR sketch.js geladen.
+   Zwei reine Zeichenroutinen ohne Zugriff auf den Erzählzustand: sie bekommen
+   sichtbare Bbox, Kartenoffset und Alpha als Parameter. haversineMeter wohnt
+   hier mit, weil zeichneMassstabsleiste sein einziger Aufrufer ist.
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 2 von 4 Namen intern, 2 im Exportblock am Dateiende.
-// Konvention: docs/architektur.md. Lädt eigenständig.
-//
-// haversineMeter wird dadurch modulintern — richtig so, ihr einziger
-// Aufrufer zeichneMassstabsleiste sitzt hier. Der Querverweis in
-// geo-projektion.js ist entsprechend ergänzt.
+// 2 von 4 Namen intern, 2 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 // ---------------------------------------------------------------------------
-// Massstabsleiste (unten rechts) — Balken mit Meter-/Kilometerangabe, wie auf
-// klassischen Kartendarstellungen. Skaliert live mit der aktuell sichtbaren
-// Bbox (Übersicht bis Kapitel-Zoom), da lonLatToScreen Grad linear auf Pixel
-// abbildet — für die kurze Ost-West-Ausdehnung eines Kartenausschnitts reicht
-// die Haversine-Distanz bei mittlerer Breite als Näherung völlig aus.
+// Massstabsleiste unten rechts, skaliert live mit der sichtbaren Bbox.
+// Haversine bei mittlerer Breite reicht als Näherung für einen Ausschnitt.
 // ---------------------------------------------------------------------------
 
 function haversineMeter(lon1, lat1, lon2, lat2) {
@@ -40,8 +24,7 @@ function haversineMeter(lon1, lat1, lon2, lat2) {
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
-// "Schöne" Rundwerte für die Balkenlänge (Meter) — deckt Übersichtskarte
-// (mehrere km) bis engen Kapitel-Zoom (wenige hundert Meter) ab.
+// Rundwerte für die Balkenlänge in Metern, Übersicht bis Kapitel-Zoom.
 const MASSSTAB_SCHRITTE = [10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 20000, 25000, 50000, 100000];
 
 function zeichneMassstabsleiste(bbox, offsetX, alphaMultiplier = 1) {
@@ -79,14 +62,13 @@ function zeichneMassstabsleiste(bbox, offsetX, alphaMultiplier = 1) {
   textStyle(NORMAL);
   textSize(11);
   textAlign(CENTER, BOTTOM);
-  drawingContext.fillText(label, (x1 + x2) / 2, y - tickHoehe - 4); // p5s text() bleibt bei laufender Animation manchmal unsichtbar, siehe zeichneSpineHorizontal
+  drawingContext.fillText(label, (x1 + x2) / 2, y - tickHoehe - 4); // fillText: p5s text() bleibt bei Animation manchmal unsichtbar
   pop();
 }
 
 // ---------------------------------------------------------------------------
-// Windrose (oben rechts) — Haussmann-Paris Farbpalette. Läuft im p5-
-// Standard-Winkelmodus (Grad, kein angleMode(RADIANS) im Projekt), daher
-// hier bewusst ohne radians()-Umwandlung: cos()/sin() erwarten Grad.
+// Windrose oben rechts. Winkel werden in Grad notiert (0 = Norden) und mit
+// radians(winkel - 90) auf p5s Radiant-Modus und 0°=Osten umgerechnet.
 // ---------------------------------------------------------------------------
 
 function zeichneWindrose(x, y, groesse, alphaMultiplier = 1) {
@@ -98,8 +80,7 @@ function zeichneWindrose(x, y, groesse, alphaMultiplier = 1) {
   const cafeRot = '#212B2E';
   const messingGold = '#212B2E';
 
-  // Hilfsfunktion: zweigeteilter Zacken (Kite-Form). winkel: 0 = Norden
-  // (oben), im Uhrzeigersinn — die -90 richtet das an p5s 0°=Osten aus.
+  // Zweigeteilter Zacken. winkel: 0 = Norden, im Uhrzeigersinn.
   function zeichneZacke(winkel, radius, basisBreite, farbeLinks, farbeRechts) {
     const w = radians(winkel - 90);
     const spitzeX = radius * cos(w);
@@ -110,9 +91,8 @@ function zeichneWindrose(x, y, groesse, alphaMultiplier = 1) {
     const basis2Y = basisBreite * sin(w - HALF_PI);
     
 
-    // Helle, dünne Kontur — sonst verschwindet z.B. schmiedeeisenSchwarz auf
-    // der dunklen Startseiten-Karte fast komplett (nur die helle Zackenhälfte
-    // bliebe sichtbar, die Zacke wirkt dann einseitig/"verzogen").
+    // Helle Kontur, sonst wirkt die Zacke auf der dunklen Startkarte
+    // einseitig — die dunkle Hälfte verschwindet.
     stroke('#9DA69D');
     strokeWeight(0.75);
     fill(farbeLinks);
@@ -130,7 +110,7 @@ function zeichneWindrose(x, y, groesse, alphaMultiplier = 1) {
 
  // Äussere Ringe
   noStroke();
-  fill(226, 230, 225, 40); // zinkgrau mit Transparenz (0–255, z.B. 40 = sehr leicht)
+  fill(226, 230, 225, 40); // #E2E6E1, sehr leicht
   circle(0, 0, rHaupt * 2 + 20);
   circle(0, 0, rHaupt * 2);
 
@@ -158,13 +138,8 @@ function zeichneWindrose(x, y, groesse, alphaMultiplier = 1) {
   fill(schmiedeeisenSchwarz);
   circle(0, 0, groesse * 0.05);
 
-  // Beschriftung Haupthimmelsrichtungen — schmiedeeisenSchwarz/zinkgrau sind
-  // inzwischen helle Zacken-Farben (siehe oben) und taugen als Text-Füllung
-  // nicht mehr, daher eigene beschriftungsFarbe.
-  // p5s text() bleibt bei laufender Animation manchmal unsichtbar (siehe
-  // zeichneSpineHorizontal) — Fill hier direkt über den Canvas-Context, die
-  // p5-Aufrufe oben (fill/textAlign/textSize/textFont/textStyle) setzen die
-  // dafür nötigen Context-Eigenschaften weiterhin wie gewohnt.
+  // Eigene Farbe, weil die Zacken-Konstanten dafür zu hell sind.
+  // fillText direkt: p5s text() bleibt bei Animation manchmal unsichtbar.
   function zeichneBeschriftung(label, x, y) {
     drawingContext.fillText(label, x, y);
   }
@@ -181,8 +156,7 @@ function zeichneWindrose(x, y, groesse, alphaMultiplier = 1) {
   zeichneBeschriftung('S', 0, rHaupt + 16);
   zeichneBeschriftung('W', -rHaupt - 16, 0);
 
-  // Beschriftung Nebenrichtungen — dieselbe -90-Ausrichtung wie die Zacken,
-  // sonst landet z.B. "NO" geometrisch auf der SO-Position.
+  // Dieselbe -90-Ausrichtung wie die Zacken, sonst landet "NO" auf SO.
   fill(beschriftungsFarbe);
   textSize(groesse * 0.1);
   const offsetNeben = rNeben + 14;
@@ -197,7 +171,7 @@ function zeichneWindrose(x, y, groesse, alphaMultiplier = 1) {
 
 
 // --- Export ------------------------------------------------------------
-// Zwei Zeichenfunktionen, beide nur von sketch.js gerufen.
+// Zwei Zeichenfunktionen. Leser: docs/architektur.md.
 window.zeichneMassstabsleiste = zeichneMassstabsleiste;
 window.zeichneWindrose = zeichneWindrose;
 
