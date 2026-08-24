@@ -3,6 +3,33 @@
    Datenaufbereitung und Darstellung sind getrennt gehalten.
 ============================================================================= */
 
+// --- Modulkapselung ------------------------------------------------------
+// Das letzte der zwölf Module. Alles bis zum Exportblock am Dateiende ist
+// modulintern: 35 der 70 Top-Level-Namen werden von keinem anderen Modul
+// gelesen (siehe docs/best-practices-review.md, Punkt "Globale Variablen").
+//
+// Der Rumpf ist bewusst NICHT eingerückt. Bei über 900 Zeilen würde eine
+// Einrückung jede einzelne Zeile als geändert markieren — der Diff wäre
+// nicht mehr prüfbar und git blame für die ganze Datei wertlos. Die
+// schliessende Klammer steht ganz unten, direkt nach dem Export.
+//
+// Kein 'use strict': Das wäre eine Verhaltensänderung über die Kapselung
+// hinaus und gehört, wenn überhaupt, in einen eigenen Schritt.
+//
+// DIE FÜNF p5-HOOKS: preload, setup, draw, mousePressed und windowResized
+// MÜSSEN am window liegen — p5 sucht sie dort, um den Lebenszyklus zu
+// starten. Sie stehen trotzdem hier drinnen und werden unten wie jeder
+// andere Name exportiert. Kein Sonderfall in der Struktur, nur eine
+// zwingende Notwendigkeit statt einer Wahl. Fehlte einer der fünf im
+// Exportblock, bliebe das Bild schwarz — ohne Fehlermeldung.
+//
+// FAST ALLE let-EXPORTE BRAUCHEN EINE LESEBINDUNG: Anders als in den
+// übrigen Modulen wird hier fast jeder exportierte let erst in
+// preload()/setup()/draw() gesetzt — also NACH dem Lauf dieser IIFE. Eine
+// Zuweisung window.x = x würde den Startwert kopieren und die Leser für
+// immer auf undefined festnageln. Siehe den Exportblock unten.
+(function () {
+
 let stage, heroText, begleitTexte, kapitelEinstiegsTexte;
 let annotationBoxEl; // #annotationBox — trägt die Positionsklasse (pos-oben-links etc.), siehe annotationBoxPosition()
 let schlusstextEl;   // #schlusstext — Gegenstück zum Einstiegstext, blendet im Schlussakt ein
@@ -910,3 +937,57 @@ function zeichneRoute(punkte, upToIndex, bbox, strichstaerke = 2, offsetX = mapO
   }
 }
 
+
+
+// --- Öffentliche Schnittstelle -------------------------------------------
+// 35 Namen gehen hinaus: 13 als Wert, 17 als Lesebindung, 5 p5-Hooks.
+
+// Konstanten, Funktionen und die vier nur befüllten Container — die
+// Bindung ändert sich nie, deshalb einfache Zuweisung.
+window.WEITERE_KAPITEL_NUMMERN = WEITERE_KAPITEL_NUMMERN;
+window.KAPITEL_EINSTIEG_SCROLL_ENDE = KAPITEL_EINSTIEG_SCROLL_ENDE;
+window.LEGENDE_VALENZ_OBEN_UNTEN = LEGENDE_VALENZ_OBEN_UNTEN;
+window.LEGENDE_FWERT_OBEN_UNTEN = LEGENDE_FWERT_OBEN_UNTEN;
+window.kapitelRegisterEintraege = kapitelRegisterEintraege;
+window.markierungsEintraege = markierungsEintraege;
+window.stationsMarker = stationsMarker;
+window.zwischenMarker = zwischenMarker;
+window.datenFuerKapitel = datenFuerKapitel;
+window.kapitelHatEigeneAnsicht = kapitelHatEigeneAnsicht;
+window.zeichneRoute = zeichneRoute;
+window.setzeAnsichtsModus = setzeAnsichtsModus;
+window.starteKapitelEinstieg = starteKapitelEinstieg;
+
+// Die fünf p5-Hooks. NICHT optional: p5 findet den Lebenszyklus nur, wenn
+// diese Namen am window liegen.
+window.preload = preload;
+window.setup = setup;
+window.draw = draw;
+window.mousePressed = mousePressed;
+window.windowResized = windowResized;
+
+// Lesebindungen für alles, was erst NACH dem Lauf dieser IIFE gesetzt wird
+// — die geladenen Daten aus preload(), die DOM-Handles aus setup(), der
+// Zoomstand aus draw(). Eine Wertkopie wäre hier durchweg undefined.
+function lesebindung(name, lies) {
+  Object.defineProperty(window, name, { get: lies, configurable: true });
+}
+lesebindung('stationenData', () => stationenData);
+lesebindung('uebersichtsRouten', () => uebersichtsRouten);
+lesebindung('kapitelAnsichtsModus', () => kapitelAnsichtsModus);
+lesebindung('kapitel1ZoomAmount', () => kapitel1ZoomAmount);
+lesebindung('annotationText', () => annotationText);
+lesebindung('kartenMarkierungenEl', () => kartenMarkierungenEl);
+lesebindung('kapitelRegister', () => kapitelRegister);
+lesebindung('legendeInhalt', () => legendeInhalt);
+lesebindung('registerTabs', () => registerTabs);
+lesebindung('modusZeile', () => modusZeile);
+lesebindung('planEintrag', () => planEintrag);
+lesebindung('graphEintrag', () => graphEintrag);
+lesebindung('leerzeile', () => leerzeile);
+lesebindung('alleEintrag', () => alleEintrag);
+lesebindung('legendeValenzText', () => legendeValenzText);
+lesebindung('legendeValenzKreis', () => legendeValenzKreis);
+lesebindung('legendeFwertHinweis', () => legendeFwertHinweis);
+
+})(); // Ende der Modulkapselung, siehe Kommentar oben

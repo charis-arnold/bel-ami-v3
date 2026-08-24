@@ -7,14 +7,37 @@ verbesserungswürdig ist, steht getrennt davon in
 
 **Randbedingung, aus der sich alles Weitere ergibt:** Das Projekt nutzt **keine
 ES-Module**. Jede Datei ist ein eigenes `<script>`-Tag, alle Funktionen und
-Variablen landen im globalen Scope — mit acht Ausnahmen. Diese Module stehen
-in einer IIFE und geben nur die genannten Namen über `window.*` heraus:
-`datenbereinigung.js` (26 Exporte), `spine-horizontal.js` (elf),
-`uebersichtsrouten.js` (zehn), `ortsveraenderung.js` (acht),
-`kreisgrafik.js` (fünf), `sonifikation.js` (vier), `annotationsbox.js`
-(zwei) und `kartendekor.js` (zwei). Ungekapselt sind nur noch
-`geo-projektion.js`, `fotomarker.js` und `dom-aufbau.js` (dort ist nichts zu
-kapseln, alle Namen gehen nach aussen) sowie `sketch.js`.
+Variablen landen im globalen Scope — **ausser dort, wo eine IIFE sie hält.**
+Neun der zwölf Module sind gekapselt und geben nur die genannten Namen über
+`window.*` heraus:
+
+| Modul | Exporte |
+|---|---|
+| `sketch.js` | 35 (13 Wert, 17 Lesebindung, **5 p5-Hooks**) |
+| `datenbereinigung.js` | 26 |
+| `spine-horizontal.js` | 11 (3 Lesebindungen) |
+| `uebersichtsrouten.js` | 10 (3 Lesebindungen) |
+| `ortsveraenderung.js` | 8 |
+| `kreisgrafik.js` | 5 |
+| `sonifikation.js` | 4 (1 Lesebindung) |
+| `annotationsbox.js`, `kartendekor.js` | je 2 |
+
+Die drei übrigen — `geo-projektion.js`, `fotomarker.js`, `dom-aufbau.js` —
+sind bewusst ungekapselt: Bei ihnen wird **jeder** Top-Level-Name von aussen
+gelesen, eine Kapsel brächte null.
+
+**Zwei Regeln, die dabei gelten:**
+
+1. Ist ein exportierter Name **veränderlich** und wird im Modul umgeschaltet,
+   steht statt einer Wertzuweisung eine **Lesebindung**
+   (`Object.defineProperty` mit `get`). Eine Kopie würde den Startwert
+   einfrieren. Bei `sketch.js` betrifft das 17 von 35 Exporten — dort wird
+   fast jeder `let` erst in `preload`/`setup`/`draw` gesetzt, also nach dem
+   Lauf der IIFE.
+2. Die **fünf p5-Hooks** (`preload`, `setup`, `draw`, `mousePressed`,
+   `windowResized`) MÜSSEN am `window` liegen — p5 sucht sie dort. Sie stehen
+   in der Kapsel und werden wie jeder andere Name exportiert. Fehlte einer,
+   bliebe das Bild schwarz, ohne Fehlermeldung.
 
 Bei `datenbereinigung.js` hängt die Ladereihenfolge daran: Es ist Skript 1,
 und `kreisgrafik.js` (Skript 3) greift beim Laden auf `hexZuRgb` und
@@ -150,9 +173,9 @@ eigenen Header-Abschnitt aus.
 | 6 | `spine-horizontal.js` | 548 | `zeichneSpineHorizontal`, `toggleGrafikPlay`, `setzeKapitelAnsichtModus`, `setzeGrafikZurueck`, `stelleSpineDatenBereit`, `spineEintraegeFuer`, `aktuelleGrafikAnimationDauer`, `aktualisiereGrafikFortschritt` | `grafikSpielt`, `grafikFortschritt`, `grafikPlayAusblendStart` (Lesebindungen) — **gekapselt**, intern: beide Spine-Caches, alle `SPINE_*`, `spineLayout` |
 | 7 | `fotomarker.js` | 133 | `zeichneFotoMarker`, `merkeKartenlage`, `oeffneFotoPopup`, `schliesseFotoPopup` | `fotoMarkerListe`, `letzteActiveBbox`, `letzterFotoOffsetX/Y`, `FOTO_MARKER_TREFFER_RADIUS` |
 | 8 | `annotationsbox.js` | 152 | `annotationBoxPosition` | `ANNOTATION_BOX_POSITIONEN` — **gekapselt**, intern u. a. `annotationBoxPositionCache` |
-| 9 | `dom-aufbau.js` | 294 | `baueKapitelRegister`, `baueLegende`, `baueKartenMarkierungen`, `oeffneRegister` | — (baut nur DOM, hält keinen Zustand) |
+| 9 | `dom-aufbau.js` | 299 | `baueKapitelRegister`, `baueLegende`, `baueKartenMarkierungen`, `oeffneRegister` | — (baut nur DOM, hält keinen Zustand) |
 | 10 | `uebersichtsrouten.js` | 652 | `zeichneUebersichtsrouten`, `kapitelScheiben`, `aktualisiereKapitelZoom`, `springeZuKapitelZoom`, `scrolleZuKapitel1` | `zoomedKapitel`, `kapitelZoomAmount`, `kapitelHover` (alle drei als Lesebindung) — **gekapselt**, intern u. a. `kapitelHitze`, `oeffneKapitelZoom`, `scheibenCache` |
-| 11 | `sketch.js` | 913 | `preload`, `setup`, `draw`, `mousePressed`, `zeichneRoute`, `datenFuerKapitel`, `kapitelHatEigeneAnsicht`, `setzeAnsichtsModus`, `starteKapitelEinstieg` | `stationenData`, `kapitelKarten`, `bgImage`/`bgImage2`/`ch1Image`, 24 DOM-Handles |
+| 11 | `sketch.js` | 994 | `preload`, `setup`, `draw`, `mousePressed`, `windowResized`, `zeichneRoute`, `datenFuerKapitel`, `kapitelHatEigeneAnsicht`, `setzeAnsichtsModus`, `starteKapitelEinstieg` | `stationenData`, `uebersichtsRouten`, `kapitelAnsichtsModus`, 13 DOM-Handles (alle als Lesebindung) — **gekapselt**, intern u. a. `kapitelKarten`, `bgImage`/`bgImage2`/`ch1Image`, 12 weitere DOM-Handles |
 | 12 | `sonifikation.js` | 370 | `spieleSonifikationFuer`, `beendeSonifikationAudio` | `SONIFIKATION_GESAMTDAUER_SEK`, `sonifikationSpieltGerade` (als Lesebindung) — **gekapselt**, die übrigen 17 Namen (u. a. `baueSpielplan`, `baueGainFolge`, `sonifikationDaten`) sind modulintern |
 
 `dom-aufbau.js` ist das einzige Modul ohne eigene Top-Level-Variablen: es baut
