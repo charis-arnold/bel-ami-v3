@@ -51,27 +51,14 @@
    Wird in index.html VOR sketch.js geladen.
 ============================================================================= */
 
-// --- Modulkapselung ------------------------------------------------------
-// Alles bis zum Exportblock am Dateiende ist modulintern: 14 der 25
-// Top-Level-Namen werden von keinem anderen Modul gelesen (siehe
-// docs/best-practices-review.md, Punkt "Globale Variablen").
+// --- Modulkapselung ---------------------------------------------------
+// 14 von 25 Namen intern, 11 im Exportblock am Dateiende.
+// Konvention: docs/architektur.md. Lädt eigenständig.
 //
-// Der Rumpf ist bewusst NICHT eingerückt. Eine Einrückung würde jede
-// einzelne Zeile als geändert markieren — der Diff wäre nicht mehr prüfbar
-// und git blame für die ganze Datei wertlos. Die schliessende Klammer steht
-// ganz unten, direkt nach dem Export.
-//
-// Kein 'use strict': Das wäre eine Verhaltensänderung über die Kapselung
-// hinaus und gehört, wenn überhaupt, in einen eigenen Schritt.
-//
-// Diese Datei lädt eigenständig — kein Top-Level-Initialisierer greift auf
-// ein anderes Modul zu.
-//
-// Diese Kapselung war lange blockiert: uebersichtsrouten.js schrieb in
-// grafikSpielt/grafikFortschritt/grafikPlayAusblendStart hinein, was eine
-// Lesebindung wirkungslos gemacht hätte. Seit der Auflösung des
-// Handler-Dreiecks (setzeGrafikZurueck weiter unten) werden die drei von
-// aussen nur noch gelesen.
+// War lange blockiert: uebersichtsrouten.js schrieb in grafikSpielt,
+// grafikFortschritt und grafikPlayAusblendStart hinein — eine Lesebindung
+// wäre wirkungslos geblieben. Seit setzeGrafikZurueck() (unten) werden die
+// drei von aussen nur noch gelesen.
 (function () {
 
 // Zustand der Play-Animation — aus sketch.js mitgewandert, wo sie zwischen
@@ -512,7 +499,7 @@ function zeichneSpineHorizontal(eintraege, fortschritt, daten = stationenData) {
 }
 
 
-// --- Öffentliche Schnittstelle -------------------------------------------
+// --- Export ------------------------------------------------------------
 // Acht Funktionen als Wert.
 window.setzeKapitelAnsichtModus = setzeKapitelAnsichtModus;
 window.setzeGrafikZurueck = setzeGrafikZurueck;
@@ -523,15 +510,10 @@ window.stelleSpineDatenBereit = stelleSpineDatenBereit;
 window.spineEintraegeFuer = spineEintraegeFuer;
 window.zeichneSpineHorizontal = zeichneSpineHorizontal;
 
-// Die drei Play-Zustandsvariablen als LESEBINDUNG: Sie werden hier drinnen
-// laufend umgeschaltet (toggleGrafikPlay, aktualisiereGrafikFortschritt,
-// setzeGrafikZurueck). Eine Zuweisung window.x = x würde nur den Startwert
-// kopieren — draw() bekäme für immer false/0/null zu sehen und der
-// Play-Button bliebe wirkungslos.
-//
-// Schreiben von aussen ist damit unmöglich. Genau das war bis vor kurzem
-// noch nötig: uebersichtsrouten.js setzte alle drei direkt zurück. Dieser
-// Weg läuft jetzt über setzeGrafikZurueck() oben.
+// Die drei Play-Zustandsvariablen als Lesebindung — umgeschaltet in
+// toggleGrafikPlay, aktualisiereGrafikFortschritt und setzeGrafikZurueck.
+// Wertkopie hiesse: draw() sieht dauerhaft false/0/null, der Play-Button
+// bleibt wirkungslos.
 ['grafikSpielt', 'grafikFortschritt', 'grafikPlayAusblendStart'].forEach(function (name) {
   Object.defineProperty(window, name, {
     get: function () {
@@ -543,9 +525,8 @@ window.zeichneSpineHorizontal = zeichneSpineHorizontal;
   });
 });
 
-// spineEintraegep5 und spineEintraegeKapitel gehen NICHT mehr hinaus: Seit
-// spineEintraegeFuer() oben existiert, lesen sketch.js und sonifikation.js
-// über den Accessor. Das schliesst auch das Schlupfloch, dass eine
-// exportierte Objektreferenz von aussen beschreibbar bliebe.
+// spineEintraegep5/spineEintraegeKapitel gehen nicht hinaus — sketch.js und
+// sonifikation.js lesen über spineEintraegeFuer(). Schliesst nebenbei das
+// Schlupfloch, dass eine exportierte Objektreferenz beschreibbar bliebe.
 
 })(); // Ende der Modulkapselung, siehe Kommentar oben
