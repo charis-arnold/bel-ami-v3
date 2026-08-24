@@ -7,12 +7,16 @@ verbesserungswürdig ist, steht getrennt davon in
 
 **Randbedingung, aus der sich alles Weitere ergibt:** Das Projekt nutzt **keine
 ES-Module**. Jede Datei ist ein eigenes `<script>`-Tag, alle Funktionen und
-Variablen landen im globalen Scope — mit drei Ausnahmen: `ortsveraenderung.js`
-(acht Exporte), `kreisgrafik.js` (fünf) und `sonifikation.js` (vier) stehen in
-einer IIFE und geben nur diese Namen über `window.*` heraus. `sonifikation.js`
-exportiert `sonifikationSpieltGerade` dabei als **Lesebindung**
-(`Object.defineProperty`), weil eine Wertzuweisung die Flagge beim Laden
-einfrieren würde — siehe den Kommentar im Exportblock dort. Es gibt kein `import`/`export` — wer worauf
+Variablen landen im globalen Scope — mit vier Ausnahmen: `ortsveraenderung.js`
+(acht Exporte), `kreisgrafik.js` (fünf), `sonifikation.js` (vier) und
+`uebersichtsrouten.js` (zehn) stehen in einer IIFE und geben nur diese Namen
+über `window.*` heraus.
+
+Wo ein exportierter Name **veränderlich** ist und im Modul umgeschaltet wird,
+steht statt einer Wertzuweisung eine **Lesebindung** (`Object.defineProperty`
+mit `get`) — eine Kopie würde den Startwert einfrieren. Das betrifft
+`sonifikationSpieltGerade` sowie `zoomedKapitel`, `kapitelZoomAmount` und
+`kapitelHover`. Siehe die Kommentare in den jeweiligen Exportblöcken. Es gibt kein `import`/`export` — wer worauf
 zugreift, ist nirgends deklariert, sondern ergibt sich aus der Reihenfolge in
 `index.html` und dem Zeitpunkt des Zugriffs.
 
@@ -138,7 +142,7 @@ eigenen Header-Abschnitt aus.
 | 7 | `fotomarker.js` | 133 | `zeichneFotoMarker`, `merkeKartenlage`, `oeffneFotoPopup`, `schliesseFotoPopup` | `fotoMarkerListe`, `letzteActiveBbox`, `letzterFotoOffsetX/Y`, `FOTO_MARKER_TREFFER_RADIUS` |
 | 8 | `annotationsbox.js` | 124 | `annotationBoxPosition` | `ANNOTATION_BOX_POSITIONEN`, `annotationBoxPositionCache` |
 | 9 | `dom-aufbau.js` | 280 | `baueKapitelRegister`, `baueLegende`, `baueKartenMarkierungen`, `oeffneRegister` | — (baut nur DOM, hält keinen Zustand) |
-| 10 | `uebersichtsrouten.js` | 591 | `zeichneUebersichtsrouten`, `kapitelScheiben`, `kapitelHitze`, `aktualisiereKapitelZoom`, `oeffneKapitelZoom`, `springeZuKapitelZoom` | `zoomedKapitel`, `kapitelZoomAmount`, `kapitelHover`, `scheibenCache` |
+| 10 | `uebersichtsrouten.js` | 644 | `zeichneUebersichtsrouten`, `kapitelScheiben`, `aktualisiereKapitelZoom`, `springeZuKapitelZoom`, `scrolleZuKapitel1` | `zoomedKapitel`, `kapitelZoomAmount`, `kapitelHover` (alle drei als Lesebindung) — **gekapselt**, intern u. a. `kapitelHitze`, `oeffneKapitelZoom`, `scheibenCache` |
 | 11 | `sketch.js` | 887 | `preload`, `setup`, `draw`, `mousePressed`, `zeichneRoute`, `datenFuerKapitel`, `kapitelHatEigeneAnsicht` | `stationenData`, `kapitelKarten`, `bgImage`/`bgImage2`/`ch1Image`, 24 DOM-Handles |
 | 12 | `sonifikation.js` | 370 | `spieleSonifikationFuer`, `beendeSonifikationAudio` | `SONIFIKATION_GESAMTDAUER_SEK`, `sonifikationSpieltGerade` (als Lesebindung) — **gekapselt**, die übrigen 17 Namen (u. a. `baueSpielplan`, `baueGainFolge`, `sonifikationDaten`) sind modulintern |
 

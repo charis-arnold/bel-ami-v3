@@ -20,6 +20,10 @@
       Escape/Hochscrollen (schliesseKapitelZoom).
 
    --- Geteilter Zustand: WICHTIG ------------------------------------------
+   Seit der Kapselung ist das technisch erzwungen: Die drei Variablen liegen
+   in der Kapsel und gehen nur als LESEBINDUNG nach aussen (siehe Exportblock
+   am Dateiende). Schreiben von aussen ist wirkungslos.
+
    Alle drei Modulvariablen werden AUSSCHLIESSLICH hier geschrieben:
    kapitelZoomAmount über aktualisiereKapitelZoom() (von draw() einmal je
    Frame gerufen), kapitelHover in zeichneUebersichtsrouten(), zoomedKapitel
@@ -69,6 +73,23 @@
    Wird in index.html VOR sketch.js geladen. Kein Top-Level-Initialisierer
    wertet etwas aus.
 ============================================================================= */
+
+// --- Modulkapselung ------------------------------------------------------
+// Alles bis zum Exportblock am Dateiende ist modulintern: 6 der 16
+// Top-Level-Namen werden von keinem anderen Modul gelesen (siehe
+// docs/best-practices-review.md, Punkt "Globale Variablen").
+//
+// Der Rumpf ist bewusst NICHT eingerückt. Eine Einrückung würde jede
+// einzelne Zeile als geändert markieren — der Diff wäre nicht mehr prüfbar
+// und git blame für die ganze Datei wertlos. Die schliessende Klammer steht
+// ganz unten, direkt nach dem Export.
+//
+// Kein 'use strict': Das wäre eine Verhaltensänderung über die Kapselung
+// hinaus und gehört, wenn überhaupt, in einen eigenen Schritt.
+//
+// Diese Datei lädt eigenständig — kein Top-Level-Initialisierer greift auf
+// ein anderes Modul zu.
+(function () {
 
 let zoomedKapitel = null;      // z.B. '03', oder null (Übersicht)
 let kapitelZoomAmount = 0;     // 0 = Übersicht, 1 = voll in Kapitelausschnitt gezoomt
@@ -588,3 +609,39 @@ function springeZurUebersicht() {
   window.scrollTo(0, trackEl.offsetHeight * mitte);
   schliesseKapitelZoom();
 }
+
+
+// --- Öffentliche Schnittstelle -------------------------------------------
+// Sieben Funktionen gehen als Wert hinaus.
+window.kapitelScheiben = kapitelScheiben;
+window.zeichneUebersichtsrouten = zeichneUebersichtsrouten;
+window.aktualisiereKapitelZoom = aktualisiereKapitelZoom;
+window.scrolleZuKapitel1 = scrolleZuKapitel1;
+window.schliesseKapitelZoom = schliesseKapitelZoom;
+window.springeZuKapitelZoom = springeZuKapitelZoom;
+window.springeZurUebersicht = springeZurUebersicht;
+
+// Die drei Zustandsvariablen dagegen als LESEBINDUNG: Alle drei werden hier
+// drinnen laufend umgeschaltet — zoomedKapitel beim Öffnen/Schliessen,
+// kapitelZoomAmount jeden Frame per lerp, kapitelHover bei jedem
+// Treffertest. Eine Zuweisung window.x = x würde nur den Startwert kopieren
+// und die Leser für immer auf null bzw. 0 festnageln (siehe den
+// gleichgelagerten Fall in sonifikation.js).
+//
+// Schreiben von aussen ist damit wirkungslos — und das ist hier Absicht:
+// Bis vor kurzem schrieb draw() zwei dieser drei Variablen direkt, was
+// docs/best-practices-review.md als "die eigentliche Hürde vor jeder
+// Kapselung" führte. Diese Zugriffe sind aufgelöst; die Bindung hält den
+// Zustand jetzt technisch dort, wo er ohnehin hingehört.
+['zoomedKapitel', 'kapitelZoomAmount', 'kapitelHover'].forEach(function (name) {
+  Object.defineProperty(window, name, {
+    get: function () {
+      return name === 'zoomedKapitel' ? zoomedKapitel
+           : name === 'kapitelZoomAmount' ? kapitelZoomAmount
+           : kapitelHover;
+    },
+    configurable: true,
+  });
+});
+
+})(); // Ende der Modulkapselung, siehe Kommentar oben
