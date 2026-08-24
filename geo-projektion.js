@@ -34,6 +34,9 @@
    NICHT hier: haversineMeter(). Die Funktion sitzt in kartendekor.js, wo
    zeichneMassstabsleiste() ihr einziger Aufrufer ist — sie berechnet echte
    Meterdistanzen für die Balkenlänge, nicht die Bildschirmprojektion.
+   Seit der Kapselung von kartendekor.js ist sie dort modulintern und von
+   aussen nicht mehr aufrufbar. Wer sie anderswo braucht, muss sie dort
+   zuerst exportieren.
 ============================================================================= */
 
 // Georeferenz der beiden Übersichtskarten (Startseite und Überblickseite).

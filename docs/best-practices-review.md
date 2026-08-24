@@ -36,7 +36,7 @@ sondern nur: faktisch greift kein anderes Modul darauf zu.
 | **mittel** | ~~`draw()` schreibt in Variablen von drei fremden Modulen~~ — **erledigt**, alle fünf Zugriffe verlagert | Globale Variablen |
 | **mittel** | ~~`zeichneKreisLabels()` setzt sechs p5-Zeichenzustände und stellt keinen zurück~~ — **erledigt**, `push()`/`pop()` | Single Responsibility |
 | **mittel** | ~~`zeichneUebersichtsrouten()` zeichnet und setzt dabei `kapitelHover`~~ — **erledigt**, `draw()` zieht nichts mehr nach | Single Responsibility |
-| **mittel** | 124 der 262 Namen sind modulintern; davon 67 tatsächlich gekapselt (**4 von 12 Modulen**), 52 Kandidaten offen | Globale Variablen |
+| **mittel** | 124 der 262 Namen sind modulintern; davon 86 tatsächlich gekapselt (**7 von 12 Modulen**), 33 Kandidaten offen | Globale Variablen |
 | **mittel** | ~~Kapitel-1-Datenregeln stehen im Zeichenmodul `kreisgrafik.js`~~ — **erledigt**, jetzt `ortRunSichtbar()` in `datenbereinigung.js` | Single Responsibility |
 | **mittel** | ~~`zeichneHalbkreis`/`zeichneVollkreis` setzen `globalCompositeOperation` hart zurück~~ — **erledigt**, `push()`/`pop()` | Single Responsibility |
 | **niedrig** | `draw()` läuft mit 557 Zeilen als eine Funktion | Single Responsibility |
@@ -74,29 +74,36 @@ nichts mehr gefunden, was die Zuordnung noch verschieben würde.
 |---|---|---|---|---|---|
 | `ortsveraenderung.js` | **ja** (8 Exporte) | 44 | 36 | 8 | 81 % |
 | `sonifikation.js` | **ja** (4 Exporte) | 21 | 17 | 4 | 80 % |
-| `annotationsbox.js` | nein | 7 | 5 | 2 | 71 % |
+| `annotationsbox.js` | **ja** (2 Exporte) | 7 | 5 | 2 | 71 % |
 | `kreisgrafik.js` | **ja** (5 Exporte) | 13 | 8 | 5 | 61 % |
 | `spine-horizontal.js` | nein | 23 | 12 | 11 | 52 % |
-| `kartendekor.js` | nein | 4 | 2 | 2 | 50 % |
+| `kartendekor.js` | **ja** (2 Exporte) | 4 | 2 | 2 | 50 % |
 | `sketch.js` | nein | 67 | 26 | 41 | 39 % |
 | `uebersichtsrouten.js` | **ja** (10 Exporte) | 16 | 6 | 10 | 38 % |
-| `datenbereinigung.js` | nein | 38 | 12 | 26 | 32 % |
+| `datenbereinigung.js` | **ja** (26 Exporte) | 38 | 12 | 26 | 32 % |
 | `geo-projektion.js` | — *(geprüft, bewusst nicht)* | 9 | 0 | 9 | 0 % |
 | `fotomarker.js` | nein | 14 | 0 | 14 | 0 % |
 | `dom-aufbau.js` | nein | 6 | 0 | 6 | 0 % |
-| **Summe** | **4 von 12** | **262** | **124** | **138** | 47 % |
+| **Summe** | **7 von 12** | **262** | **124** | **138** | 47 % |
 
 Stand am Code erhoben, nicht aus dieser Doku fortgeschrieben: Die Prüfung
 sucht strukturell nach einer umschliessenden sofort ausgeführten Funktion
 (Klammertiefe auf kommentarbereinigtem Quelltext), nicht nach einer bestimmten
-Schreibweise. **Gekapselt sind `ortsveraenderung.js`, `kreisgrafik.js`, `sonifikation.js`
-und `uebersichtsrouten.js`** — bei den acht anderen stehen die Deklarationen
-weiterhin auf Datei-Toplevel.
+Schreibweise. **Gekapselt sind sieben Module**: `datenbereinigung.js`,
+`uebersichtsrouten.js`, `ortsveraenderung.js`, `kreisgrafik.js`,
+`sonifikation.js`, `annotationsbox.js` und `kartendekor.js`.
 
-Von den 124 modulinternen Namen sind damit **67 aus dem globalen Scope
-entfernt**. Von den verbleibenden 57 müssen fünf global bleiben (die
+Von den 124 modulinternen Namen sind damit **86 aus dem globalen Scope
+entfernt**. Von den verbleibenden 38 müssen fünf global bleiben (die
 p5-Hooks `preload`, `setup`, `draw`, `mousePressed`, `windowResized`) —
-**52 echte Kandidaten offen.**
+**33 echte Kandidaten offen.**
+
+Diese verteilen sich auf nur noch zwei Module: `sketch.js` (26, davon 5
+p5-Hooks) und `spine-horizontal.js` (12). **Beide sind durch
+Fremdschreibzugriffe blockiert** — sie brauchen zuerst die Auflösung des
+[Handler-Dreiecks](#wer-in-wessen-zustand-schreibt) bzw. des Init-Musters.
+Die Kapselung ist damit an dem Punkt angekommen, an dem sie ohne
+strukturelle Vorarbeit nicht weitergeht.
 
 **`geo-projektion.js` wurde geprüft und bewusst ausgelassen.** Alle neun
 Namen werden extern gelesen, keiner ist intern — eine Kapsel würde rund
@@ -175,9 +182,9 @@ ohnehin ansteht.
 | ~~`kreisgrafik.js:56-333`~~ | **Erledigt.** Die Datei steht in einer IIFE und gibt fünf Namen über `window.*` heraus; acht sind modulintern (`HATCH_SPACING`, `drawHatchedCircle`, `zeichneKreisLabels`, `zeichneHalbkreis`, `zeichneVollkreis`, `FWERT_PUNKT_FARBE_RGB` und die beiden `FWERT_PUNKT_*_ABSTAND`-Konstanten) | mittel | Zweites gekapseltes Modul, gleiche Bauart wie `ortsveraenderung.js`: Rumpf nicht eingerückt, Diff eine reine Einfügung. Anders als dort hat diese Datei eine **Ladezeit-Abhängigkeit** (`hexZuRgb` für `FWERT_PUNKT_FARBE_RGB`) — die IIFE läuft sofort, der Aufruf findet zum selben Zeitpunkt statt wie vorher, geprüft im Vorher/Nachher-Vergleich |
 | `sketch.js:6-158` | 26 Namen modulintern, u. a. `bgImage`, `bgImage2`, `ch1Image`, `kapitel03Data`, `weitereKapitelDaten`, `letzterZoomKapitel` und sechs DOM-Handles (`heroText`, `begleitTexte`, `kapitelEinstiegsTexte`, `annotationBoxEl`, `schlusstextEl`, `naechstesKapitelEl`) | niedrig | Hier ist der Nutzen am kleinsten: `sketch.js` muss die fünf p5-Hooks global lassen, eine IIFE ginge also nur um sie herum. Der Aufwand steht in schlechtem Verhältnis zum Gewinn |
 | ~~`uebersichtsrouten.js:87-513`~~ | **Erledigt.** Die Datei steht in einer IIFE und gibt zehn Namen heraus; sechs sind modulintern (`KAPITEL_SCHEIBE_GRUNDANTEIL`, `KAPITEL_NACHGLUEHEN`, `scheibenCache`, `kapitelHitze`, `setzeKapitelAnsichtZurueck`, `oeffneKapitelZoom`) | niedrig | Viertes gekapseltes Modul. Drei der zehn Exporte (`zoomedKapitel`, `kapitelZoomAmount`, `kapitelHover`) sind Lesebindungen — sie werden laufend umgeschaltet. **Erst möglich, weil `draw()` seine Schreibzugriffe darauf abgegeben hat**: Wären sie noch da, hätte die Bindung sie wirkungslos gemacht |
-| `datenbereinigung.js:92-352` | `WOHNUNG_SPLIT_ANNOTATION_ID`, `WOHNUNG_VOR_SPLIT_FILTER`, `RUE_NOTRE_DAME_FILTER`, `GEDANKEN_FILTER`, `GEDANKEN_ZIEL_ORT`, `valenzBucket` | niedrig | Zwölf von 38 — das Modul ist als gemeinsame Grundlage gedacht und gibt zu Recht fast alles heraus |
-| `annotationsbox.js:54-58` | Die vier Mass-Konstanten und `annotationBoxPositionCache` | niedrig | Nur fünf Namen; das Modul ist ohnehin das kleinste |
-| `kartendekor.js:25-36` | `haversineMeter`, `MASSSTAB_SCHRITTE` | niedrig | Zwei Namen. `geo-projektion.js:34` verweist ausdrücklich auf `haversineMeter` — beim Kapseln müsste dieser Kommentar mit |
+| ~~`datenbereinigung.js:92-352`~~ | **Erledigt.** Die Datei steht in einer IIFE und gibt 26 Namen heraus — die grösste Schnittstelle im Projekt; zwölf sind modulintern | niedrig | Siebtes gekapseltes Modul und das mit der grössten Exportliste. Kein Export wird intern mutiert, deshalb 26 einfache Zuweisungen und keine Lesebindung. Der kritische Punkt war die Ladereihenfolge: `kreisgrafik.js` greift beim Laden auf `hexZuRgb`/`FWERT_PUNKT_FARBE` zu — die IIFE läuft sofort und exportiert am Dateiende, geprüft durch Laden beider Dateien in Folge |
+| ~~`annotationsbox.js:54-58`~~ | **Erledigt.** Die Datei steht in einer IIFE und gibt zwei Namen heraus; fünf sind modulintern (die vier Mass-Konstanten und `annotationBoxPositionCache`) | niedrig | Fünftes gekapseltes Modul. Kein Export ist veränderlich — beide sind `const` bzw. `function`, deshalb einfache Zuweisungen ohne Lesebindung |
+| ~~`kartendekor.js:25-36`~~ | **Erledigt.** Die Datei steht in einer IIFE und gibt zwei Zeichenfunktionen heraus; `haversineMeter` und `MASSSTAB_SCHRITTE` sind modulintern | niedrig | Sechstes gekapseltes Modul. `haversineMeter` ist damit von aussen nicht mehr aufrufbar — richtig so, ihr einziger Aufrufer (`zeichneMassstabsleiste`) sitzt im selben Modul. Der Querverweis in `geo-projektion.js:34` ist um diesen Hinweis ergänzt |
 
 ### Zwei Befunde, die nicht nur Kosmetik sind
 

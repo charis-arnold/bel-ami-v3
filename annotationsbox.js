@@ -34,6 +34,23 @@
    ist new Map() für den Cache — kein Zugriff auf fremde Variablen beim Laden.
 ============================================================================= */
 
+// --- Modulkapselung ------------------------------------------------------
+// Alles bis zum Exportblock am Dateiende ist modulintern: 5 der 7
+// Top-Level-Namen werden von keinem anderen Modul gelesen (siehe
+// docs/best-practices-review.md, Punkt "Globale Variablen").
+//
+// Der Rumpf ist bewusst NICHT eingerückt. Eine Einrückung würde jede
+// einzelne Zeile als geändert markieren — der Diff wäre nicht mehr prüfbar
+// und git blame für die ganze Datei wertlos. Die schliessende Klammer steht
+// ganz unten, direkt nach dem Export.
+//
+// Kein 'use strict': Das wäre eine Verhaltensänderung über die Kapselung
+// hinaus und gehört, wenn überhaupt, in einen eigenen Schritt.
+//
+// Diese Datei lädt eigenständig — kein Top-Level-Initialisierer greift auf
+// ein anderes Modul zu.
+(function () {
+
 // ---------------------------------------------------------------------------
 // Position der Annotationsbox. Sie stand fest oben links und deckte dort je
 // nach Kapitel bis zu sechs Ortskreise zu. Statt die Kartenausschnitte dagegen
@@ -121,3 +138,14 @@ function annotationBoxPosition(kapitelNr, daten, bbox) {
   annotationBoxPositionCache.set(schluessel, bester);
   return bester;
 }
+
+
+// --- Öffentliche Schnittstelle -------------------------------------------
+// Zwei Namen gehen nach aussen, beide nur von sketch.js gelesen: draw()
+// ruft annotationBoxPosition() und schaltet die CSS-Klassen anhand von
+// ANNOTATION_BOX_POSITIONEN. Kein Export ist veränderlich, deshalb überall
+// einfache Zuweisungen und keine Lesebindung.
+window.ANNOTATION_BOX_POSITIONEN = ANNOTATION_BOX_POSITIONEN;
+window.annotationBoxPosition = annotationBoxPosition;
+
+})(); // Ende der Modulkapselung, siehe Kommentar oben

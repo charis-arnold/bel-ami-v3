@@ -5,6 +5,32 @@
    Enthält ausschliesslich reine Datenfunktionen — keine p5-Zeichenaufrufe.
 ============================================================================= */
 
+// --- Modulkapselung ------------------------------------------------------
+// Alles bis zum Exportblock am Dateiende ist modulintern: 12 der 38
+// Top-Level-Namen werden von keinem anderen Modul gelesen (siehe
+// docs/best-practices-review.md, Punkt "Globale Variablen").
+//
+// Der Rumpf ist bewusst NICHT eingerückt. Bei 500 Zeilen würde eine
+// Einrückung jede einzelne Zeile als geändert markieren — der Diff wäre
+// nicht mehr prüfbar und git blame für die ganze Datei wertlos. Die
+// schliessende Klammer steht ganz unten, direkt nach dem Export.
+//
+// Kein 'use strict': Das wäre eine Verhaltensänderung über die Kapselung
+// hinaus und gehört, wenn überhaupt, in einen eigenen Schritt.
+//
+// LADEREIHENFOLGE — hier besonders wichtig: Diese Datei ist Skript 1 in
+// index.html, und kreisgrafik.js (Skript 3) greift BEIM LADEN auf hexZuRgb
+// und FWERT_PUNKT_FARBE zu (const FWERT_PUNKT_FARBE_RGB = hexZuRgb(...)).
+// Die IIFE läuft sofort und der Exportblock steht am Dateiende — beide
+// Namen liegen also auf window, bevor Skript 2 überhaupt beginnt. Ein
+// Verschieben dieser Datei nach hinten bräche kreisgrafik.js sofort, genau
+// wie vor der Kapselung.
+//
+// Kein Export wird intern verändert; alle 26 sind const oder function.
+// Deshalb überall einfache Zuweisungen, keine Lesebindungen wie in
+// sonifikation.js oder uebersichtsrouten.js.
+(function () {
+
 const CATEGORY_COLORS = { gold_dunkel: '#63561F', gold_mittel: '#917712', gold_hell: '#BF9E16' };
 const CATEGORY_LABELS = { gold_dunkel: 'Raum & Umwelt', gold_mittel: 'Stimmung & Emotion', gold_hell: 'Soziales' };
 const ROUTE_COLOR = '#63561F';
@@ -497,3 +523,49 @@ function baueSpineDaten(daten, hauptorte) {
 
   return eintraege;
 }
+
+
+// --- Öffentliche Schnittstelle -------------------------------------------
+// 26 Namen gehen nach aussen — die grösste Schnittstelle im Projekt. Sechs
+// Module lesen daraus: kreisgrafik, ortsveraenderung, spine-horizontal,
+// annotationsbox, dom-aufbau, fotomarker, uebersichtsrouten und sketch.
+
+// Farben, Kategorien, Punktgrössen
+window.CATEGORY_COLORS = CATEGORY_COLORS;
+window.CATEGORY_LABELS = CATEGORY_LABELS;
+window.KREIS_KATEGORIEN = KREIS_KATEGORIEN;
+window.ROUTE_COLOR = ROUTE_COLOR;
+window.ROUTE_COLOR_RGB = ROUTE_COLOR_RGB;
+window.FWERT_COLOR = FWERT_COLOR;
+window.FWERT_COLOR_RGB = FWERT_COLOR_RGB;
+window.FWERT_COLORS = FWERT_COLORS;
+window.FWERT_PUNKTGROESSE = FWERT_PUNKTGROESSE;
+window.FWERT_PUNKT_FARBE = FWERT_PUNKT_FARBE;
+
+// Stammdaten: welche Kapitel, welche Scroll-Marken, welcher Sammelpunkt
+window.KAPITEL_MIT_SPINE_PANEL = KAPITEL_MIT_SPINE_PANEL;
+window.SCROLL_MEILENSTEINE = SCROLL_MEILENSTEINE;
+window.WOHNUNG_SAMMELPUNKT_ANKER = WOHNUNG_SAMMELPUNKT_ANKER;
+
+// Eingangsdaten bereinigen (nur preload/setup in sketch.js)
+window.bereinigeStationenDaten = bereinigeStationenDaten;
+window.bereinigeFotoMarker = bereinigeFotoMarker;
+window.bereinigeUebersichtsrouten = bereinigeUebersichtsrouten;
+
+// Annotationen sammeln und zählen (die heissen Pfade, siehe draw())
+window.sammleAnnotationenNachOrtBasis = sammleAnnotationenNachOrtBasis;
+window.zaehleBandCounts = zaehleBandCounts;
+window.zaehleAnnotationenLiveNachOrtBasis = zaehleAnnotationenLiveNachOrtBasis;
+
+// Kreisgeometrie und Farbumrechnung
+window.hexZuRgb = hexZuRgb;
+window.kreisRadius = kreisRadius;
+window.groessterKreisRadius = groessterKreisRadius;
+
+// Orte, Sichtbarkeit, Spine-Aufbau
+window.wohnungFilterFuerOrt = wohnungFilterFuerOrt;
+window.ortRunSichtbar = ortRunSichtbar;
+window.ortRunsFuerSpine = ortRunsFuerSpine;
+window.baueSpineDaten = baueSpineDaten;
+
+})(); // Ende der Modulkapselung, siehe Kommentar oben

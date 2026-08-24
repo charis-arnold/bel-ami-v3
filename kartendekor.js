@@ -14,6 +14,28 @@
    Wird in index.html VOR sketch.js geladen.
 ============================================================================= */
 
+// --- Modulkapselung ------------------------------------------------------
+// Alles bis zum Exportblock am Dateiende ist modulintern: 2 der 4
+// Top-Level-Namen werden von keinem anderen Modul gelesen (siehe
+// docs/best-practices-review.md, Punkt "Globale Variablen").
+//
+// Der Rumpf ist bewusst NICHT eingerückt. Eine Einrückung würde jede
+// einzelne Zeile als geändert markieren — der Diff wäre nicht mehr prüfbar
+// und git blame für die ganze Datei wertlos. Die schliessende Klammer steht
+// ganz unten, direkt nach dem Export.
+//
+// Kein 'use strict': Das wäre eine Verhaltensänderung über die Kapselung
+// hinaus und gehört, wenn überhaupt, in einen eigenen Schritt.
+//
+// Diese Datei lädt eigenständig — kein Top-Level-Initialisierer greift auf
+// ein anderes Modul zu.
+//
+// haversineMeter() wird durch die Kapsel modulintern. Das ist richtig so —
+// zeichneMassstabsleiste() ist ihr einziger Aufrufer, im selben Modul.
+// Der Querverweis in geo-projektion.js ("NICHT hier: haversineMeter")
+// bleibt gültig, ist dort aber um diesen Hinweis ergänzt.
+(function () {
+
 // ---------------------------------------------------------------------------
 // Massstabsleiste (unten rechts) — Balken mit Meter-/Kilometerangabe, wie auf
 // klassischen Kartendarstellungen. Skaliert live mit der aktuell sichtbaren
@@ -185,3 +207,12 @@ function zeichneWindrose(x, y, groesse, alphaMultiplier = 1) {
 
   pop();
 }
+
+
+// --- Öffentliche Schnittstelle -------------------------------------------
+// Zwei Zeichenfunktionen gehen nach aussen, beide nur von sketch.js
+// gerufen. Kein Export ist veränderlich, deshalb einfache Zuweisungen.
+window.zeichneMassstabsleiste = zeichneMassstabsleiste;
+window.zeichneWindrose = zeichneWindrose;
+
+})(); // Ende der Modulkapselung, siehe Kommentar oben

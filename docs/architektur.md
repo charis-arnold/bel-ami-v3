@@ -7,10 +7,16 @@ verbesserungswürdig ist, steht getrennt davon in
 
 **Randbedingung, aus der sich alles Weitere ergibt:** Das Projekt nutzt **keine
 ES-Module**. Jede Datei ist ein eigenes `<script>`-Tag, alle Funktionen und
-Variablen landen im globalen Scope — mit vier Ausnahmen: `ortsveraenderung.js`
-(acht Exporte), `kreisgrafik.js` (fünf), `sonifikation.js` (vier) und
-`uebersichtsrouten.js` (zehn) stehen in einer IIFE und geben nur diese Namen
-über `window.*` heraus.
+Variablen landen im globalen Scope — mit sieben Ausnahmen. Diese Module stehen
+in einer IIFE und geben nur die genannten Namen über `window.*` heraus:
+`datenbereinigung.js` (26 Exporte), `uebersichtsrouten.js` (zehn),
+`ortsveraenderung.js` (acht), `kreisgrafik.js` (fünf), `sonifikation.js`
+(vier), `annotationsbox.js` (zwei) und `kartendekor.js` (zwei).
+
+Bei `datenbereinigung.js` hängt die Ladereihenfolge daran: Es ist Skript 1,
+und `kreisgrafik.js` (Skript 3) greift beim Laden auf `hexZuRgb` und
+`FWERT_PUNKT_FARBE` zu. Die IIFE läuft sofort und exportiert am Dateiende —
+beide Namen liegen also auf `window`, bevor Skript 2 beginnt.
 
 Wo ein exportierter Name **veränderlich** ist und im Modul umgeschaltet wird,
 steht statt einer Wertzuweisung eine **Lesebindung** (`Object.defineProperty`
@@ -133,14 +139,14 @@ eigenen Header-Abschnitt aus.
 
 | # | Modul | Zeilen | Hauptfunktionen | Wichtigste eigene Variablen |
 |---|---|---|---|---|
-| 1 | `datenbereinigung.js` | 500 | `bereinigeStationenDaten`, `baueSpineDaten`, `sammleAnnotationenNachOrtBasis`, `zaehleBandCounts`, `zaehleAnnotationenLiveNachOrtBasis`, `ortRunsFuerSpine`, `ortRunSichtbar`, `kreisRadius`, `groessterKreisRadius`, `hexZuRgb` | `KREIS_KATEGORIEN`, `SCROLL_MEILENSTEINE`, `ROUTE_COLOR_RGB`, `FWERT_*`, `GEDANKEN_*`, `WOHNUNG_*` |
+| 1 | `datenbereinigung.js` | 572 | `bereinigeStationenDaten`, `baueSpineDaten`, `sammleAnnotationenNachOrtBasis`, `zaehleBandCounts`, `zaehleAnnotationenLiveNachOrtBasis`, `ortRunsFuerSpine`, `ortRunSichtbar`, `kreisRadius`, `groessterKreisRadius`, `hexZuRgb` | `KREIS_KATEGORIEN`, `SCROLL_MEILENSTEINE`, `ROUTE_COLOR_RGB`, alle `FWERT_*`, `KAPITEL_MIT_SPINE_PANEL`, `WOHNUNG_SAMMELPUNKT_ANKER` — **gekapselt**, 26 Exporte. Intern: alle drei `GEDANKEN_*`, die übrigen drei `WOHNUNG_*` und `valenzBucket` |
 | 2 | `geo-projektion.js` | 148 | `lonLatToScreen`, `coverCrop`, `cropToBbox`, `bboxToImgCrop` | `startBbox`, `uebersichtBbox`, `ch1ImgBbox`, `mapOffsetX`, `mapOffsetY` |
 | 3 | `kreisgrafik.js` | 497 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `leereBandCounts` | `FWERT_PUNKT_DURCHMESSER` — **gekapselt**, die übrigen acht Namen (u. a. `HATCH_SPACING`, `FWERT_PUNKT_FARBE_RGB`, `zeichneKreisLabels`) sind modulintern |
-| 4 | `kartendekor.js` | 188 | `zeichneMassstabsleiste`, `zeichneWindrose`, `haversineMeter` | `MASSSTAB_SCHRITTE` |
+| 4 | `kartendekor.js` | 219 | `zeichneMassstabsleiste`, `zeichneWindrose` | — **gekapselt**, intern: `haversineMeter`, `MASSSTAB_SCHRITTE` |
 | 5 | `ortsveraenderung.js` | 687 | `zeichneOrtsveraenderung`, `ovPhase`, `ovZoomBbox` | `OV_KARTE_AUS`/`OV_ZOOM`/`SK_*`-Phasenfenster — **als einziges Modul gekapselt**, alles Übrige ist modulintern |
 | 6 | `spine-horizontal.js` | 462 | `zeichneSpineHorizontal`, `toggleGrafikPlay`, `setzeKapitelAnsichtModus`, `stelleSpineDatenBereit`, `spineLayout`, `aktualisiereGrafikFortschritt` | `spineEintraegep5`, `spineEintraegeKapitel`, `grafikSpielt`, `grafikFortschritt`, `SPINE_*` |
 | 7 | `fotomarker.js` | 133 | `zeichneFotoMarker`, `merkeKartenlage`, `oeffneFotoPopup`, `schliesseFotoPopup` | `fotoMarkerListe`, `letzteActiveBbox`, `letzterFotoOffsetX/Y`, `FOTO_MARKER_TREFFER_RADIUS` |
-| 8 | `annotationsbox.js` | 124 | `annotationBoxPosition` | `ANNOTATION_BOX_POSITIONEN`, `annotationBoxPositionCache` |
+| 8 | `annotationsbox.js` | 152 | `annotationBoxPosition` | `ANNOTATION_BOX_POSITIONEN` — **gekapselt**, intern u. a. `annotationBoxPositionCache` |
 | 9 | `dom-aufbau.js` | 280 | `baueKapitelRegister`, `baueLegende`, `baueKartenMarkierungen`, `oeffneRegister` | — (baut nur DOM, hält keinen Zustand) |
 | 10 | `uebersichtsrouten.js` | 644 | `zeichneUebersichtsrouten`, `kapitelScheiben`, `aktualisiereKapitelZoom`, `springeZuKapitelZoom`, `scrolleZuKapitel1` | `zoomedKapitel`, `kapitelZoomAmount`, `kapitelHover` (alle drei als Lesebindung) — **gekapselt**, intern u. a. `kapitelHitze`, `oeffneKapitelZoom`, `scheibenCache` |
 | 11 | `sketch.js` | 887 | `preload`, `setup`, `draw`, `mousePressed`, `zeichneRoute`, `datenFuerKapitel`, `kapitelHatEigeneAnsicht` | `stationenData`, `kapitelKarten`, `bgImage`/`bgImage2`/`ch1Image`, 24 DOM-Handles |
