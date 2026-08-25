@@ -104,6 +104,11 @@ function sichtbareFwertAnnotationen(annotationen) {
 // Zeilenabstand der Schraffur in den Gesamtkreisen (siehe drawHatchedCircle).
 const HATCH_SPACING = 3;
 
+// Dämpft NUR die neutrale Vollfläche, damit sie leiser wirkt als die
+// Valenz-Halbkreise. Nicht auf Schraffur reduziert — sonst verwechselbar
+// mit den Gesamtkreisen.
+const NEUTRAL_DAEMPFUNG = 0.35;
+
 // ---------------------------------------------------------------------------
 // Kreise
 // ---------------------------------------------------------------------------
@@ -360,7 +365,9 @@ function zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF
     // neutralR wird oben trotzdem berechnet und bc.neutral zählt weiterhin in
     // den schraffierten Gesamtkreis, der Kreis bleibt also gleich gross.
     // Unbewertete (bc.unrated) haben ohnehin nie eine eigene Fläche.
-    if (ZEIGE_NEUTRALE_WERTE && neutralR > 0) flaechenFormen.push({ r: neutralR, zeichne: () => zeichneVollkreis(cx, cy, neutralR, k.farbe, alphaSkala, blend) });
+    // NEUTRAL_DAEMPFUNG gilt im Normalzustand (Schalter an): die Fläche wird
+    // gezeichnet, aber leiser als die Valenz-Halbkreise.
+    if (ZEIGE_NEUTRALE_WERTE && neutralR > 0) flaechenFormen.push({ r: neutralR, zeichne: () => zeichneVollkreis(cx, cy, neutralR, k.farbe, alphaSkala * NEUTRAL_DAEMPFUNG, blend) });
   });
 
   hatchFormen.sort((a, b) => b.r - a.r).forEach(f => f.zeichne());
