@@ -5,7 +5,7 @@
    Enthält ausschliesslich reine Datenfunktionen — keine p5-Zeichenaufrufe.
 ============================================================================= */
 
-const CATEGORY_COLORS = { gold_dunkel: '#63561F', gold_mittel: '#917712', gold_hell: '#BF9E16' };
+const CATEGORY_COLORS = { gold_dunkel: '#DEB031', gold_mittel: '#DEB831', gold_hell: '#DEC131' };
 const CATEGORY_LABELS = { gold_dunkel: 'Raum & Umwelt', gold_mittel: 'Stimmung & Emotion', gold_hell: 'Soziales' };
 const ROUTE_COLOR = '#63561F';
 
@@ -46,9 +46,9 @@ const FWERT_PUNKTGROESSE = {
 const FWERT_PUNKT_FARBE = '#AB3F0C';
 
 const KREIS_KATEGORIEN = [
-  { key: 'gold_dunkel', farbe: [142, 117, 42] },
-  { key: 'gold_mittel', farbe: [206, 169, 62] },
-  { key: 'gold_hell', farbe: [202, 179, 122] },
+  { key: 'gold_dunkel', farbe: [222, 176, 49] },
+  { key: 'gold_mittel', farbe: [222, 184, 49] },
+  { key: 'gold_hell', farbe: [222, 193, 49] },
 ];
 
 // Kapitel 1s Spine zeigt jeden ortRun, der auch auf der Karte einen eigenen
