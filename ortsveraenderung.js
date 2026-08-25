@@ -425,12 +425,12 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
     let stand = null;
     if (kreisAlpha > 0) {
       stand = ovStand(i, maxKapitel);
-      // Innerhalb des Blocks: bei unsichtbarem Kreis muss radius 0 bleiben,
-      // daran hängt der Abstand der Beschriftung darunter.
-      radius = groessterKreisRadius(stand.bandCounts, Infinity, layout.kreisSkala);
-      zeichneKreiseFuerRun(anker.x, cy, stand.bandCounts, (alpha / 255) * kreisAlpha,
-        -HALF_PI, layout.kreisSkala, Infinity);
-      zeichneFwertPunkte(anker.x, cy, radius, stand.fwerte, (alpha / 255) * kreisAlpha);
+        // Innerhalb des Blocks: bei unsichtbarem Kreis muss radius 0 bleiben,
+        // daran hängt der Abstand der Beschriftung darunter.
+        radius = groessterKreisRadius(stand.bandCounts, Infinity, layout.kreisSkala);
+        zeichneKreiseFuerRun(anker.x, cy, stand.bandCounts, (alpha / 255) * kreisAlpha,
+          PI, layout.kreisSkala, Infinity);
+        zeichneFwertPunkte(anker.x, cy, radius, stand.fwerte, (alpha / 255) * kreisAlpha, 'obenUnten');
     }
 
     // Reihenfolge von oben nach unten: Kreis, Ortsbeschriftung, Kapitelzähler.

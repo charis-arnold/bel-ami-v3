@@ -110,8 +110,10 @@ function baueLegende() {
   valenzText.className = 'legende-valenz-text';
   valenzText.textContent = LEGENDE_VALENZ_OBEN_UNTEN;
   valenzZeile.appendChild(valenzText);
-  // Gehen als Rückgabewert hinaus: die Halbkreise stehen im Schlussakt
-  // links/rechts statt oben/unten, die Legende muss das mitmachen.
+      // Gehen als Rückgabewert hinaus; draw() setzt die Legende jeden Frame.
+      legendeValenzText = valenzText;
+      legendeValenzKreis = valenzKreis;
+
   legendeInhalt.appendChild(valenzZeile);
 
   // Die Zeile zum neutralen Vollkreis entfällt ganz, wenn dieser gar nicht

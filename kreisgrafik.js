@@ -219,6 +219,7 @@ function zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF
     }
 
     // gold_mittel als deckende Basis, die beiden anderen im Multiply.
+    // Alle drei Ansichten übergeben winkel PI: positiv oben, negativ unten.
     let blend = k.key !== 'gold_mittel';
     let negR = kreisRadius(bc.neg || 0, maxRadius) * radiusSkala;
     let posR = kreisRadius(bc.pos || 0, maxRadius) * radiusSkala;
