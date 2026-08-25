@@ -154,11 +154,12 @@ function ortRunsFuerSpine(daten) {
 const SCROLL_MEILENSTEINE = {
   heroFadeStart: 0.011829, heroFadeEnd: 0.035485,
   // 960vh davor für den zwölfteiligen Intro-Crawl (.begleittext in
-  // index.html), 80vh je Text. Zoomdauer unverändert 440vh.
-  zoomStart: 0.137227, zoomEnd: 0.184539,
+  // index.html), 80vh je Text, danach 434vh Kreisgrafik-Erklärung.
+  // Zoomdauer unverändert 440vh.
+  zoomStart: 0.183872, zoomEnd: 0.231184,
   // Spine blendet gleichzeitig mit dem Zoom-Beginn ein.
   spineFadeStart: 0.113118, spineFadeEnd: 0.16043,
-  // 550vh Lesezeit davor für den Kapitel-Einstiegstext.
+  // 200vh Lesezeit davor für den Kapitel-Einstiegstext.
   routeStart: 0.252689, routeEnd: 0.370968,
   // Akt: nach Abschluss der Route zurück auf die Gesamtkarte zoomen.
   zoomOutStart: 0.370968, zoomOutEnd: 0.418279,
