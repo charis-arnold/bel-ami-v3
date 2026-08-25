@@ -235,6 +235,12 @@ const FWERT_PUNKT_FARBE_RGB = hexZuRgb(FWERT_PUNKT_FARBE);
 const FWERT_PUNKT_RAND_ABSTAND = 6; // Luft zwischen Kreisrand und erstem Punkte-Ring
 const FWERT_PUNKT_RING_ABSTAND = 8; // Abstand zwischen zwei Punkte-Ringen, falls ein Drittel nicht in einen Ring passt
 
+// Mitte des 120°-Drittels je Valenzgruppe: neg unten, pos oben, neutral rechts.
+// Einzige Quelle dieser Konvention — zeichneFwertPunkte() setzt die Punkte
+// danach, demoBeschriftungen() zeigt mit den Hilfslinien darauf.
+// Math.PI statt HALF_PI: siehe ACHTUNG zur Ladezeit oben.
+const FWERT_GRUPPEN_WINKEL = { neg: Math.PI / 2, pos: -Math.PI / 2, neutral: 0 };
+
 // Ein Punkt je Annotation mit F-Wert, Grösse nach Typ, Lage im 120°-Drittel
 // der eigenen Valenz. Bei Andrang wachsen weitere Ringe nach aussen.
 function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1) {
@@ -242,9 +248,9 @@ function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1) {
 
   push(); // noStroke() plus direkte fillStyle-Schreibzugriffe
   const DRITTEL = TWO_PI / 3;
-  // Gruppenmitten [neg, pos, neutral], passend zur Halbkreis-Teilung.
+  // Reihenfolge [neg, pos, neutral] — gruppen[0..2] unten wird so indiziert.
   // Fest notiert: 180° lassen sich nicht in 120°-Drittel drehen.
-  let mitten = [HALF_PI, -HALF_PI, 0];
+  let mitten = [FWERT_GRUPPEN_WINKEL.neg, FWERT_GRUPPEN_WINKEL.pos, FWERT_GRUPPEN_WINKEL.neutral];
   let gruppen = mitten.map(mitte => ({ mitte, formen: [] }));
   fwertAnnotationen.forEach(a => {
     let gruppe = a.valenz === -1 ? gruppen[0] : a.valenz === 1 ? gruppen[1] : gruppen[2];
@@ -318,10 +324,6 @@ const DEMO_VALENZ = { pos: 1, neg: -1, neutral: 0, unrated: undefined };
 // Ein F-Wert je Valenzgruppe, damit oben, unten und rechts je ein Punkt sitzt.
 const DEMO_FWERTE = { pos: 'ort_loest_emotion_aus', neg: 'emotion_faerbt_raum', neutral: 'koerper_als_sensor' };
 
-// Gruppenmitten der F-Wert-Punkte, wie mitten in zeichneFwertPunkte().
-// Math.PI statt HALF_PI: siehe ACHTUNG zur Ladezeit oben.
-const DEMO_FWERT_WINKEL = { pos: -Math.PI / 2, neg: Math.PI / 2, neutral: 0 };
-
 // Die Demo steht allein auf der Karte und darf grösser sein als die Kreise
 // entlang der Route. maxRadius ist der Vorgabewert von kreisRadius().
 const DEMO_RADIUS_SKALA = 2.2;
@@ -380,7 +382,7 @@ function demoBeschriftungen(cx, cy, sichtbar, aussen, gruppenAlpha) {
     eintrag(1, 'Kreis = neutral', aussen * 0.45, 0.32),
 
     ...Object.keys(DEMO_FWERTE).map(bucket => eintrag(2, FWERT_LABELS[DEMO_FWERTE[bucket]],
-      aussen + FWERT_PUNKT_RAND_ABSTAND, DEMO_FWERT_WINKEL[bucket])),
+      aussen + FWERT_PUNKT_RAND_ABSTAND, FWERT_GRUPPEN_WINKEL[bucket])),
   ];
 }
 
