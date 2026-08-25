@@ -162,9 +162,6 @@ const SCROLL_MEILENSTEINE = {
   // Demo-Kreisgrafik: wächst bis demoVoll an, blendet ab zoomStart zusammen
   // mit dem Zoom in Kapitel 1 wieder aus.
   demoStart: 0.145829, demoVoll: 0.154431, demoEnde: 0.194000,
-  // Legende-Reiter hervorgehoben, solange die Erklärungstexte laufen.
-  // Zurück auf seine Position bei zoomStart.
-  legendeHervorStart: 0.154431,
   // Spine blendet gleichzeitig mit dem Zoom-Beginn ein.
   spineFadeStart: 0.113118, spineFadeEnd: 0.16043,
   // 200vh Lesezeit davor für den Kapitel-Einstiegstext.

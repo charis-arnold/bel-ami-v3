@@ -531,14 +531,10 @@ function draw() {
 
   // Über visibility statt display geschaltet, damit der Prolog an seinem
   // Platz bleibt, wenn die Legende darüber verschwindet.
-  // Ab dem Kartenwechsel, nicht erst ab dem Zoom: die Kreisgrafik-Erklärung
-  // davor verweist auf die Legende.
-  let aufStartkarte = progress < SCROLL_MEILENSTEINE.kartenwechselStart;
+  let aufStartkarte = progress < SCROLL_MEILENSTEINE.zoomStart;
   let aufSchlusskarte = progress >= SCROLL_MEILENSTEINE.startkarteStart;
   legendeBox.classList.toggle('sichtbar', !aufStartkarte && !aufSchlusskarte);
   prologBox.classList.toggle('sichtbar', !aufStartkarte);
-  legendeTab.classList.toggle('hervorgehoben',
-    progress >= SCROLL_MEILENSTEINE.legendeHervorStart && progress < SCROLL_MEILENSTEINE.zoomStart);
 
   // Ausgefahrener Inhalt fährt ein, wenn sein Register verschwindet — es
   // taucht später eingefahren wieder auf, nicht im letzten Stand.
