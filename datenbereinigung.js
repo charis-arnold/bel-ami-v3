@@ -1,18 +1,22 @@
 /* =============================================================================
-   datenbereinigung.js — Datenbereinigung (D3)
+   datenbereinigung.js — Datenbereinigung (reines JS)
    CAS Generative Data Design: Datenaufbereitung (Python, siehe data-prep/)
-   → Datenbereinigung (hier, D3) → Zeichnen (sketch.js, p5).
+   → Datenbereinigung (hier, reines JS) → Zeichnen (sketch.js, p5).
    Enthält ausschliesslich reine Datenfunktionen — keine p5-Zeichenaufrufe.
 ============================================================================= */
 
-const CATEGORY_COLORS = { gold_dunkel: '#63561F', gold_mittel: '#917712', gold_hell: '#BF9E16' };
+// --- Modulkapselung ---------------------------------------------------
+// 12 von 40 Namen intern, 28 exportiert. Konvention: docs/architektur.md.
+// ACHTUNG Skript 1 in index.html. kreisgrafik.js liest hexZuRgb beim Laden
+// — diese Datei nach hinten schieben bricht kreisgrafik.js.
+(function () {
+
+const CATEGORY_COLORS = { gold_dunkel: '#DEB031', gold_mittel: '#DEB831', gold_hell: '#DEC131' };
 const CATEGORY_LABELS = { gold_dunkel: 'Raum & Umwelt', gold_mittel: 'Stimmung & Emotion', gold_hell: 'Soziales' };
 const ROUTE_COLOR = '#63561F';
 
-// Wandelt einen Hex-Farbstring ('#rrggbb') in einzelne r/g/b-Komponenten um —
-// wird gebraucht, damit ROUTE_COLOR (ein Hex-String) auch dort als einzige
-// Quelle dient, wo die Route mit variablem Alpha gezeichnet wird (p5's
-// stroke() nimmt Hex+Alpha nicht gemeinsam entgegen).
+// Hex-Farbstring zu r/g/b. Nötig, weil p5s stroke() Hex und Alpha nicht
+// gemeinsam annimmt, die Route aber variables Alpha braucht.
 function hexZuRgb(hex) {
   let bereinigt = hex.replace('#', '');
   return {
@@ -24,76 +28,49 @@ function hexZuRgb(hex) {
 const ROUTE_COLOR_RGB = hexZuRgb(ROUTE_COLOR);
 
 const FWERT_COLOR = '#C2511C';
-const FWERT_COLOR_RGB = hexZuRgb(FWERT_COLOR); // z.B. für den Fotomarker-Asterisk (fill() mit variablem Alpha, siehe zeichneFotoMarker)
+const FWERT_COLOR_RGB = hexZuRgb(FWERT_COLOR); // z.B. Fotomarker-Asterisk
 const FWERT_COLORS = {
   ort_loest_emotion_aus: '#AB3F0C',
   emotion_faerbt_raum: '#C2511C',
   koerper_als_sensor: '#A03705',
 };
 
-// Punktgrösse (1 = klein … 3 = gross) der F-Wert-Punkte ausserhalb des
-// Kreisdiagramms je F-Wert-Typ (siehe zeichneFwertPunkte in sketch.js). Ein
-// vierter, sehr seltener Typ (persoenliche_sehnsucht, gesamthaft nur 1
-// Annotation) hat keine eigene Grösse — fällt beim Aufrufer auf 1 zurück.
+// Punktgrösse 1..3 je F-Wert-Typ. Der seltene vierte Typ
+// (persoenliche_sehnsucht, 1 Annotation) fehlt und fällt auf 1 zurück.
 const FWERT_PUNKTGROESSE = {
   ort_loest_emotion_aus: 1, // Raum löst Emotion aus
   emotion_faerbt_raum: 2,   // Emotion färbt Raum
   koerper_als_sensor: 3,    // Körper als Sensor
 };
 
-// Farbe aller F-Wert-Punkte (einheitlich, unabhängig von Grösse/Typ) — nicht
-// zu verwechseln mit FWERT_COLORS oben, das für die Annotationsleiste bleibt.
+// Einheitlich für alle F-Wert-Punkte. Nicht FWERT_COLORS oben, das ist die
+// Annotationsleiste.
 const FWERT_PUNKT_FARBE = '#AB3F0C';
 
+// Schriften fürs Canvas. Spiegeln --sans/--serif in style.css; p5 kennt die
+// CSS-Variablen nicht, deshalb hier als Literal.
+const SCHRIFT_SANS = "'Source Sans 3', sans-serif";
+const SCHRIFT_SERIF = "'Source Serif 4', serif";
+
+// Harmonische Reihe: gleiche Sättigung und Helligkeit, Hue wandert 44°–50°.
+// Die Schlüssel bleiben, daran hängt zaehleBandCounts.
 const KREIS_KATEGORIEN = [
-  { key: 'gold_dunkel', farbe: [142, 117, 42] },
-  { key: 'gold_mittel', farbe: [206, 169, 62] },
-  { key: 'gold_hell', farbe: [202, 179, 122] },
+  { key: 'gold_dunkel', farbe: [222, 176, 49] },
+  { key: 'gold_mittel', farbe: [222, 184, 49] },
+  { key: 'gold_hell', farbe: [222, 193, 49] },
 ];
 
-const PARIS_ALLGEMEIN = new Set([
-  'Paris',
-  'Paris (allgemein)',
-  'unspezifisch',
-  'Strassenecken von Paris (allgemein)',
-]);
-
-// Kapitel 1s Spine zeigt jeden ortRun, der auch auf der Karte einen eigenen
-// Kreis bekommt — siehe ortRunsFuerSpine() weiter unten (dynamisch, nicht
-// mehr eine feste Liste, damit Karte und Spine nie auseinanderlaufen).
-
-// Hauptorte für das generische Spine-Panel eines gezoomten Kapitels (02–18)
-// beim Kapitel-Zoom (siehe sketch.js: oeffneKapitelZoom/draw) — dieselbe
-// dynamische Funktion wie Kapitel 1s eigenes, live wachsendes Panel
-// (ortRunsFuerSpine, siehe oben), NICHT mehr eine je Kapitel von Hand
-// gepflegte/generierte feste Liste: die driftete nach jeder weiteren
-// Datenbereinigung (Umbenennungen, Zusammenlegungen) rasch auseinander und
-// liess auf der Karte gezeigte Kreise in der Spine fehlen (z.B. Kapitel 3:
-// 4 echte Orte fehlten zuletzt) — jetzt kann Karte und Spine gar nicht mehr
-// auseinanderlaufen, weil beide direkt aus denselben ortRuns lesen.
-
-// Reine Existenz-Prüfung ("hat Kapitel X überhaupt ein Spine-Panel?", siehe
-// sketch.js: springeZuKapitelZoom/oeffneKapitelZoom/Kapitelregister) — Kapitel
-// 01 bewusst nicht enthalten, das hat sein eigenes Panel (siehe oben).
+// Hat Kapitel X ein Spine-Panel? Kapitel 01 fehlt, es hat sein eigenes.
+// Welche Orte darin stehen, entscheidet ortRunsFuerSpine() weiter unten.
 const KAPITEL_MIT_SPINE_PANEL = new Set([
   '02', '03', '04', '05', '06', '07', '08', '09', '10',
   '11', '12', '13', '14', '15', '16', '17', '18',
 ]);
 
-// "Wohnung Duroy" und mehrere Mini-Erwähnungen direkt daneben (Lokal mit
-// festen Preisen, Straße nahe, Boulevard, Rue Notre-Dame de Lorette / Paris)
-// werden zu einem gemeinsamen Punkt zusammengefasst, damit Route und Spine
-// nur einen wachsenden Kreis zeigen statt mehrerer fast übereinanderliegender
-// Mini-Kreise. "Rue Notre-Dame de Lorette" selbst bleibt bewusst ein eigener,
-// separater Punkt (bekommt seine eigene, leicht nach Osten versetzte
-// Koordinate).
-//
-// Die Zuordnung erfolgt NICHT über den ortBasis-Text, sondern über die
-// Position in der Erzählreihenfolge (ai): alle station-0-Annotationen VOR
-// der Annotation "Daraufhin ging er die Rue Notre-Dame de Lorette
-// hinunter." (id 8) lassen den Sammelpunkt wachsen, alle AB dieser
-// Annotation (auch "Rue Notre-Dame de Lorette / Paris", id 12, die textlich
-// erst danach kommt) lassen "Rue Notre-Dame de Lorette" wachsen.
+// "Wohnung Duroy" und vier Mini-Erwähnungen daneben werden zu einem Punkt
+// zusammengefasst; "Rue Notre-Dame de Lorette" bleibt ein eigener.
+// ACHTUNG die Zuordnung läuft über die Erzählposition (ai), nicht über den
+// ortBasis-Text: vor Annotation id 8 Sammelpunkt, ab id 8 die Strasse.
 const WOHNUNG_SAMMELPUNKT_ANKER = 'Lokal in der Nähe der Rue Notre-Dame de Lorette';
 const RUE_NOTRE_DAME_DE_LORETTE_ORT = 'Rue Notre-Dame de Lorette';
 const WOHNUNG_SPLIT_ANNOTATION_ID = 8; // "Daraufhin ging er die Rue Notre-Dame de Lorette hinunter."
@@ -104,8 +81,7 @@ const WOHNUNG_SAMMELPUNKT_ABSORBIERTE_ORTRUNS = new Set([
   'Rue Notre-Dame de Lorette / Paris',
 ]);
 
-// Reihenfolge-Position (ai) der Split-Annotation — alles davor gehört zum
-// Sammelpunkt, alles ab hier zu "Rue Notre-Dame de Lorette".
+// Erzählposition der Split-Annotation, siehe ACHTUNG oben.
 function wohnungSplitAi(daten = stationenData) {
   let ai = daten.annotationen.findIndex(a => a.id === WOHNUNG_SPLIT_ANNOTATION_ID);
   return ai === -1 ? Infinity : ai;
@@ -114,11 +90,8 @@ function wohnungSplitAi(daten = stationenData) {
 const WOHNUNG_VOR_SPLIT_FILTER = (a, ai) => a.station === 0 && ai < wohnungSplitAi();
 const RUE_NOTRE_DAME_FILTER = (a, ai) => a.station === 0 && ai >= wohnungSplitAi();
 
-// Wählt für "Lokal in der Nähe…" bzw. "Rue Notre-Dame de Lorette" den
-// passenden Positions-Filter; für einen Ort, bei dem laut GEDANKEN_ZIEL_ORT
-// noch ein oder mehrere gedachte Orte mitzählen sollen, ein Set aus ihm
-// selbst plus diesen; für alle anderen Orte den ortBasis-String selbst
-// (Standardverhalten von zaehleAnnotationenLiveNachOrtBasis).
+// Liefert je Ort den passenden Filter: Positions-Filter beim Wohnung-Split,
+// Set aus Ort plus zugehörigen Gedanken-Orten, sonst der ortBasis-String.
 function wohnungFilterFuerOrt(ort) {
   if (ort === WOHNUNG_SAMMELPUNKT_ANKER) return WOHNUNG_VOR_SPLIT_FILTER;
   if (ort === RUE_NOTRE_DAME_DE_LORETTE_ORT) return RUE_NOTRE_DAME_FILTER;
@@ -127,9 +100,8 @@ function wohnungFilterFuerOrt(ort) {
   return ort;
 }
 
-// Ordnet jedem Gedanken-Spalte-Eintrag genau die eine Annotation zu, die
-// dahintersteckt. Der ortBasis-Wert reicht dafür aus (er hat dort ohnehin
-// nur eine Annotation).
+// Die fünf gedachten Orte in Kapitel 1. Nur die Werte werden gelesen, die
+// Schlüssel nennen den ortBasis-Text im Datensatz.
 const GEDANKEN_FILTER = {
   'Champs-Élysées / Avenue du Bois de Boulogne': 'Champs-Élysées / Avenue du Bois de Boulogne',
   'Afrika (Erinnerung, Militärdienst)': 'Afrika',
@@ -138,29 +110,14 @@ const GEDANKEN_FILTER = {
   'imaginierter Sommergarten, Paris': 'imaginierter Sommergarten',
 };
 
-// Mehrere ortRuns tragen exakt den ortBasis-Wert, der oben schon einer
-// Gedanken-Spalte zugeordnet ist (Champs-Élysées/Bois de Boulogne, Afrika,
-// Bois de Boulogne, Parc Monceau, imaginierter Sommergarten) — diese ortRuns
-// bekommen deshalb keinen eigenen wachsenden Kreis auf der Karte/Spine
-// (siehe zeichneKreiseOrtRuns), sondern zählen stattdessen bei dem echten
-// Ort mit, an dem Duroy sich in diesem Moment tatsächlich aufhält (siehe
-// GEDANKEN_ZIEL_ORT/wohnungFilterFuerOrt) — nicht in einem separaten Kreis.
+// Diese fünf bekommen keinen eigenen Kreis; sie zählen beim echten Ort mit,
+// an dem Duroy gerade steht (GEDANKEN_ZIEL_ORT).
 const GEDANKEN_ORTRUN_UNTERDRUECKT = new Set(
   Object.values(GEDANKEN_FILTER).filter(v => typeof v === 'string')
 );
 
-// Wohin eine gedachte/erinnerte/erträumte Annotation für die Kreiszählung
-// zählt: der jeweils letzte ECHTE Ort vor ihr innerhalb derselben
-// "station"-Gruppe (aus kapitel01-stationen.json annotationen[].station
-// ermittelt) — Duroy ist an diesem Ort physisch anwesend, während ihm der
-// gedachte Ort durch den Kopf geht.
-//   'Champs-Élysées / Avenue du Bois de Boulogne' (station 100, ai 67):
-//     zwischen Rue La Fayette und Boulevard des Italiens → Boulevard
-//     Poissonnière (letzter echter Ort davor).
-//   'Afrika' (station 101, ai 145-147): zwischen Place de la Madeleine und
-//     Boulevard des Capucines → Place de la Madeleine.
-//   'Bois de Boulogne'/'Parc Monceau'/'imaginierter Sommergarten' (station 5,
-//     ai 245-247): zwischen Café Américain und Bal Musard → Café Américain.
+// Wohin eine gedachte Annotation zählt: zum letzten echten Ort davor in
+// derselben station-Gruppe, wo Duroy physisch steht.
 const GEDANKEN_ZIEL_ORT = {
   'Champs-Élysées / Avenue du Bois de Boulogne': 'Boulevard Poissonnière',
   'Afrika': 'Place de la Madeleine',
@@ -169,96 +126,49 @@ const GEDANKEN_ZIEL_ORT = {
   'imaginierter Sommergarten': 'Café Américain',
 };
 
-// Liefert die ortRun-Namen, die einen eigenen Spine-Eintrag bekommen: jeden
-// Kartenkreis (siehe zeichneKreiseOrtRuns in sketch.js), unter Ausschluss der
-// absorbierten Wohnung-Mini-Erwähnungen UND der Gedanken-Orte (siehe
-// GEDANKEN_ORTRUN_UNTERDRUECKT/GEDANKEN_ZIEL_ORT — die zählen bei ihrem
-// echten Ort mit, bekommen aber keinen eigenen Spine-Eintrag).
-// WOHNUNG_SAMMELPUNKT_ABSORBIERTE_ORTRUNS/GEDANKEN_ORTRUN_UNTERDRUECKT sind
-// reine Namens-Sets ohne Kapitelbezug (siehe deren eigene Kommentare) — nur
-// für Kapitel 1 (daten === stationenData) ausschliessen, sonst kann ein
-// automatisch gebautes Kapitel zufällig denselben ortBasis-Namen für einen
-// eigenen, echten Ort verwenden (z.B. Kapitel 3s "Parc Monceau") und würde
-// hier fälschlich mit unterdrückt — derselbe Fallstrick wie bei
-// zeichneKreiseOrtRuns in sketch.js, dort schon so gegated.
+// Unterdrückt dieser Ort seinen eigenen Auftritt? Betrifft die absorbierten
+// Wohnung-Erwähnungen und die Gedanken-Orte.
+
+// ACHTUNG das Gate daten === stationenData muss bleiben: beide Sets sind
+// reine Namenslisten ohne Kapitelbezug, sonst verschluckt z.B. Kapitel 3
+// seinen echten "Parc Monceau".
+function istKapitel1Unterdrueckt(ort, daten) {
+  if (daten !== stationenData) return false;
+  return WOHNUNG_SAMMELPUNKT_ABSORBIERTE_ORTRUNS.has(ort)
+      || GEDANKEN_ORTRUN_UNTERDRUECKT.has(ort);
+}
+
+// ortRun-Namen mit eigenem Spine-Eintrag: jeder Kartenkreis, ohne die oben
+// unterdrückten.
 function ortRunsFuerSpine(daten) {
-  let istKapitel1 = daten === stationenData;
   return new Set(
     (daten.ortRuns || [])
       .map(r => r.ort)
-      .filter(ort => !istKapitel1 || (!WOHNUNG_SAMMELPUNKT_ABSORBIERTE_ORTRUNS.has(ort) && !GEDANKEN_ORTRUN_UNTERDRUECKT.has(ort)))
+      .filter(ort => !istKapitel1Unterdrueckt(ort, daten))
   );
 }
 
-// Benannte Scroll-Meilensteine (Anteil 0..1 der gesamten Scrollstrecke) —
-// ersetzen die zuvor verstreuten Magic Numbers in sketch.js' draw().
-//
-// Die Scrollstrecke wurde von 2200vh über 2640vh auf jetzt 3080vh verlängert
-// (neue Akte: Rauszoomen auf die Gesamtkarte, danach Übersichtsrouten
-// zeichnen). Alle bisherigen Werte sind erneut umskaliert (Faktor 2640/3080),
-// damit sich an ihrer absoluten Scroll-Position (in vh) nichts ändert.
-// Scrollstrecke zuletzt von 3080vh auf 4080vh verlängert — alle Werte BIS
-// uebersichtRoutenStart wurden um den Faktor 3080/4080 (0.754902)
-// zurückskaliert, damit sich an ihrer absoluten vh-Position nichts ändert.
-// uebersichtRoutenEnd bleibt bewusst bei 1.0: der komplette gewonnene
-// Platz (1000vh) geht an diesen letzten Akt, macht das Ablaufen der
-// Kapitelrouten also entsprechend langsamer.
-//
-// (Zwischenzeitlich testweise auf 5880vh mit einem eigenen Kapitel-Zoom-
-// Scroll-Akt erweitert — wieder verworfen: Kapitel-Zoom soll sich sofort
-// mit voll sichtbarer Route öffnen (Klick), nicht per Scroll enthüllen.
-// Verlassen des Zooms geschieht durch Zurückscrollen VOR
-// uebersichtRoutenStart, siehe oeffneKapitelZoom/schliesseKapitelZoom in
-// sketch.js — dafür reicht der bestehende uebersichtRoutenFortschritt<=0-
-// Check, kein eigener Akt nötig.)
-//
-// Scrollstrecke NOCH EINMAL von 4080vh auf 6080vh verlängert (neuer,
-// letzter Akt: Kreisvergleich handverlesener, kapitelübergreifender Orte,
-// siehe kreisvergleich-orte.json/baue-kreisvergleich.py) — alle Werte BIS
-// uebersichtRoutenEnd wurden um den Faktor 4080/6080 (0.671053)
-// zurückskaliert. uebersichtRoutenEnd (jetzt 0.671053 statt 1.0) markiert
-// zugleich den Start des neuen Akts (kreisVergleichStart) — die
-// Übersichtskarte blendet dort aus, danach wachsen die Kreise der 8 Orte
-// mit jedem erreichten Kapitel (kreisVergleichAktuellesKapitel in
-// sketch.js).
+// Anteil 0..1 der Scrollstrecke (9300vh, .scroll-track in index.html).
+// ACHTUNG bei geänderter Streckenlänge alle Werte umrechnen, sonst
+// verschieben sich die Akte gegeneinander.
 const SCROLL_MEILENSTEINE = {
   heroFadeStart: 0.011829, heroFadeEnd: 0.035485,
-  // Zwischen heroFadeEnd und zoomStart 700vh zusätzliche Lesezeit — der
-  // Begleittext ("1885 wächst Paris…", data-von/data-bis in index.html)
-  // bleibt dadurch noch auf der Startseite lesbar und blendet erst während
-  // dieses Zoom-Übergangs wieder aus (sein data-bis fällt mit zoomEnd
-  // zusammen).
+  // 700vh Lesezeit davor: der Begleittext bleibt auf der Startseite lesbar.
   zoomStart: 0.110753, zoomEnd: 0.158065,
-  // Spine blendet gleichzeitig mit dem Zoom-Beginn ein (nicht mehr mit dem
-  // Begleittext synchron — der lebt jetzt bereits auf der Startseite).
+  // Spine blendet gleichzeitig mit dem Zoom-Beginn ein.
   spineFadeStart: 0.113118, spineFadeEnd: 0.16043,
-  // Zwischen zoomEnd und routeStart 550vh zusätzliche Lesezeit — der
-  // Kapitel-Einstiegstext (.begleittext-dunkel, eigenes data-von/data-bis
-  // pro Kapitel in index.html) blendet mit dem Kartenausschnitt ein
-  // (data-von = zoomEnd) und wieder aus, sobald Route/Annotationen
-  // beginnen (data-bis = routeStart).
+  // 550vh Lesezeit davor für den Kapitel-Einstiegstext.
   routeStart: 0.252689, routeEnd: 0.370968,
   // Akt: nach Abschluss der Route zurück auf die Gesamtkarte zoomen.
   zoomOutStart: 0.370968, zoomOutEnd: 0.418279,
-  // Akt: Übersichtsrouten (Kapitel 02–18) bauen sich auf. Breite (2933vh)
-  // so bemessen, dass auch das annotationsreichste Kapitel (Kapitel 8,
-  // 400 Annotationen) im gleichen Tempo (~7.3vh/Annotation) durchläuft wie
-  // Kapitel 1 (1100vh / 150 Annotationen) — vorher war der Akt mit 1440vh
-  // fest für alle Kapitel gleich lang, wodurch annotationsreiche Kapitel
-  // (5–9) beim Scrollen spürbar schneller wirkten als Kapitel 1.
+  // Übersichtsrouten 02–18. 2933vh breit, damit auch Kapitel 8 auf
+  // ~7.3vh/Annotation kommt wie Kapitel 1.
   uebersichtRoutenStart: 0.418279, uebersichtRoutenEnd: 0.733656,
-  // Neuer, letzter Akt (2000vh): Übersichtskarte blendet aus (erste 8% des
-  // Akts, kreisVergleichFadeEnd), danach wachsen die Kreise der 8
-  // handverlesenen Orte mit jedem erreichten Kapitel (1..18, linear über
-  // den Rest des Akts verteilt).
+  // Schlussakt Ortsveränderung (2000vh): Kreise der sieben VERGLEICHS_KNOTEN
+  // wachsen mit jedem Kapitel. kreisVergleichFadeEnd liest niemand.
   kreisVergleichStart: 0.733656, kreisVergleichFadeEnd: 0.750967,
   kreisVergleichEnd: 0.94871,
-  // Akt: die Startkarte kommt zurück. Sie blendet hinter den sieben Kreisen
-  // ein, danach fährt die Ansicht aus deren Ausschnitt auf die Gesamtkarte
-  // zurück — der Bogen schliesst dort, wo er begonnen hat. Dieser Akt wurde
-  // hinten angehängt: der Scroll-Track ist von 8823vh auf 9300vh gewachsen,
-  // alle vorherigen Werte sind mit 8823/9300 umgerechnet und behalten dadurch
-  // ihre Länge in Pixeln.
+  // Die Startkarte kommt zurück und zoomt auf die Gesamtkarte raus.
   startkarteStart: 0.94871,
 };
 
@@ -283,36 +193,8 @@ function bereinigeFotoMarker(rohdaten) {
   return Array.isArray(rohdaten) ? rohdaten : Object.values(rohdaten || {});
 }
 
-// kreisvergleich-orte.json (siehe baue-kreisvergleich.py) — wie bei
-// fotomarker.json kann p5s loadJSON ein Root-Array als Objekt mit
-// numerischen Keys statt als echtes Array zurückgeben; ebenso für das
-// verschachtelte "kapitel"-Array pro Ort.
-function bereinigeKreisVergleichOrte(rohdaten) {
-  return (Array.isArray(rohdaten) ? rohdaten : Object.values(rohdaten || {})).map(ort => ({
-    ...ort,
-    kapitel: Array.isArray(ort.kapitel) ? ort.kapitel : Object.values(ort.kapitel || {}),
-  }));
-}
-
-// Übersichtsrouten (Kapitel 02–18, echte Strassenrouten via OSMnx aus den
-// GeoJSONs berechnet, siehe data-prep/05 bereinigen/baue-uebersichtsrouten.py).
-// Kapitel ohne verwertbare Route (z.B. 15 — Empfang bei den Walters, ein
-// einziger Innenraum-Schauplatz ohne Koordinaten-Streuung) werden hier
-// herausgefiltert, damit sketch.js nur echte Linien zeichnet.
-// Behält jedes Kapitel mit mindestens EINEM Routenpunkt.
-//
-// Die Bedingung lautete früher "> 1" — ein Kapitel mit nur einem Punkt zeichnet
-// ja keine Linie. Damit fiel aber Kapitel 2 komplett aus uebersichtsRouten
-// heraus: es spielt an einem einzigen Ort (Wohnung Forestier), sein
-// routenPfadDetail hat genau einen Punkt. Und weil sich am selben Objekt nicht
-// nur die Linien, sondern auch der Kapitelpunkt mit Nummer, die Scheiben-
-// aufteilung des Übersichtsakts und die Einstiegstexte orientieren, fehlte
-// Kapitel 2 in der ganzen Übersicht — ohne dass es auffiel, weil die eine
-// fehlende Linie ohnehin unsichtbar gewesen wäre.
-//
-// Die Zeichenwege kommen mit einem einzelnen Punkt zurecht: die Linien-
-// schleife zeichnet einen Vertex und damit nichts, Badge und Hover greifen
-// auf punkte[0] zu.
+// Filtert Kapitel ohne Routenpunkte. Schwelle bei EINEM Punkt, nicht zwei —
+// am selben Objekt hängen auch Kapitelpunkt, Scheibe und Einstiegstext.
 function bereinigeUebersichtsrouten(rohdaten) {
   let bereinigt = {};
   Object.entries(rohdaten || {}).forEach(([kapitel, punkte]) => {
@@ -325,48 +207,49 @@ function bereinigeUebersichtsrouten(rohdaten) {
 // Kreis-Radius / Kreispunkte
 // ---------------------------------------------------------------------------
 
-// Flaechenproportional statt radiusproportional (Standard bei proportional
-// symbol maps): die Flaeche eines Kreises soll linear mit n wachsen, also
-// muss der Radius mit sqrt(n) wachsen. Verhindert, dass grosse Unterschiede
-// (z.B. 31 vs. 12 Annotationen) am Deckel optisch verschwinden, wie es bei
-// einer linearen r = BASIS + n*MULT-Formel mit niedrigem Deckel passiert.
-// maxRadius: Obergrenze, damit sehr grosse Kreise die Karte nicht sprengen.
-// Die Übersichtskarten-Knoten (zeichneVergleichsKnoten) übergeben bewusst
-// Infinity und skalieren stattdessen selbst — bei ihnen summieren sich alle
-// 18 Kapitel auf, fünf von sechs Orten liefen sonst in den Deckel und wären
-// am Ende gleich gross, genau dort wo der Vergleich Unterschiede zeigen soll.
+// Flächenproportional (sqrt), Standard bei proportional symbol maps: die
+// Fläche wächst linear mit n. maxRadius deckelt, der Schlussakt gibt Infinity.
 function kreisRadius(n, maxRadius = 100) {
   const BASIS = 6, K = 11.5;
   return n > 0 ? Math.min(maxRadius, BASIS + K * Math.sqrt(n)) : 0;
 }
 
-// Manche ortRuns-Einträge tragen den Namen eines späteren Halteorts, werden
-// aber schon an einer früheren Stelle im Text (mit deren revealIndex/Koordinate)
-// nur erwähnt/vorausgedacht, nicht real besucht (z.B. "Folies Bergère" wird im
-// Café Napolitain-Gespräch erwähnt, aber erst viel später real erreicht).
-// Solche vorzeitigen Erwähnungen bekommen auf der Route keinen eigenen Kreis,
-// da die Station an ihrem echten Halt ohnehin schon einen Kreis zeichnet.
+// Aussenradius des ganzen Kreisdiagramms, an dem die F-Wert-Punkte ansetzen.
+
+// ACHTUNG umgekehrte Parameterreihenfolge: zeichneKreiseFuerRun() nimmt
+// (…, radiusSkala, maxRadius), hier steht (…, maxRadius, radiusSkala).
+function groessterKreisRadius(bandCounts, maxRadius = 100, radiusSkala = 1) {
+  let groesster = 0;
+  KREIS_KATEGORIEN.forEach(kat => {
+    let b = bandCounts[kat.key] || {};
+    let n = (b.neg || 0) + (b.pos || 0) + (b.neutral || 0) + (b.unrated || 0);
+    groesster = Math.max(groesster, kreisRadius(n, maxRadius) * radiusSkala);
+  });
+  return groesster;
+}
+
+// Ein Ort, der im Text nur vorab erwähnt wird, bekommt noch keinen Kreis —
+// den zeichnet die Station an seinem echten Halt.
 function istVorzeitigeErwaehnung(r, daten = stationenData) {
   let halteort = (daten.halteorte || []).find(h => h.name === r.ort);
   return !!halteort && halteort.revealIndex !== r.revealIndex;
 }
 
-// Zählt (per d3.rollup), wie viele Annotationen zu ortBasis (String oder Set
-// mehrerer ortBasis-Werte, oder eine konkrete Annotations-id) bereits an
-// Reihenfolge-Position annIndex erreicht sind — dieselbe Logik, nach der die
-// Kreise in der Spine wachsen. Wird auch auf der Route (Hauptorte) und in
-// der Gedanken-Spalte verwendet, damit alle Darstellungen gleich schnell
-// wachsen statt sofort voll zu erscheinen.
-// Valenz (a.valenz: 1/-1/0/fehlt) auf denselben neg/pos/neutral/unrated-
-// Bucket abgebildet wie die Python-Pipeline (valenz_bucket() in
-// baue-kapitel-stationen.py) — musste bislang nirgends in JS nachgebildet
-// werden, da die (vorberechneten) bandCounts in den ortRuns/Kreisvergleich-
-// Daten bereits fertig gebucketed aus Python kommen. zaehleAnnotationenLive-
-// NachOrtBasis() ist die einzige Stelle, die bandCounts LIVE aus den rohen
-// Annotationen selbst zusammenzählt (fürs Live-Wachsen beim Scrollen) —
-// bucketed bislang fälschlich alles nach "unrated", ungeachtet der echten
-// Valenz (Bug: die neuen Valenz-Halbkreise auf der Karte blieben dadurch
-// immer bei Radius 0, weil bc.neg/bc.pos nie befüllt wurden).
+// Bekommt dieser ortRun beim aktuellen Scrollstand einen Kartenkreis?
+// punktIndex steuert das Erscheinen, annIndex den Wohnung-Split.
+function ortRunSichtbar(r, punktIndex, annIndex, daten = stationenData) {
+  if (punktIndex < r.revealIndex) return false;
+  if (istVorzeitigeErwaehnung(r, daten)) return false;
+  if (istKapitel1Unterdrueckt(r.ort, daten)) return false;
+  // Zeitabhängig, deshalb nicht in istKapitel1Unterdrueckt.
+  if (daten === stationenData && r.ort === RUE_NOTRE_DAME_DE_LORETTE_ORT
+      && annIndex < wohnungSplitAi(daten)) return false;
+  return true;
+}
+
+// ACHTUNG muss mit valenz_bucket() in baue-kapitel-stationen.py
+// übereinstimmen: vorberechnete bandCounts kommen von dort, live gezählte
+// entstehen hier.
 function valenzBucket(v) {
   if (v === 1) return 'pos';
   if (v === -1) return 'neg';
@@ -374,13 +257,8 @@ function valenzBucket(v) {
   return 'unrated';
 }
 
-// Rohe Annotationen (nicht aggregiert), die zu filter/annIndex passen —
-// dieselbe Trefferlogik wie zaehleAnnotationenLiveNachOrtBasis (die daraus
-// die bandCounts aufsummiert), aber als Liste statt als Zählung. Wird u.a.
-// für die F-Wert-Punkte gebraucht, die pro Annotation (nicht aggregiert)
-// ausserhalb des Kreisdiagramms sitzen (siehe zeichneFwertPunkte in
-// sketch.js) — jede Annotation dort braucht ihre eigene Valenz/ihren
-// eigenen fWertType, den eine reine Zählung nicht mehr hergibt.
+// Rohe Trefferliste statt Zählung. Die F-Wert-Punkte brauchen je Annotation
+// Valenz und fWertType, was eine Aggregation nicht mehr hergibt.
 function sammleAnnotationenNachOrtBasis(filter, annIndex, daten = stationenData) {
   let ortBasisWerte = filter instanceof Set ? filter : new Set([filter]);
   return daten.annotationen.filter((a, ai) => {
@@ -392,94 +270,96 @@ function sammleAnnotationenNachOrtBasis(filter, annIndex, daten = stationenData)
   });
 }
 
-function zaehleAnnotationenLiveNachOrtBasis(filter, annIndex, daten = stationenData) {
-  let sichtbareTreffer = sammleAnnotationenNachOrtBasis(filter, annIndex, daten);
+// Zählt eine bereits gefilterte Trefferliste zusammen. Getrennt vom Sammeln,
+// damit Aufrufer mit beidem nur einmal über daten.annotationen laufen.
+function zaehleBandCounts(annotationen) {
   let ergebnis = {
     gold_dunkel: { unrated: 0, neg: 0, pos: 0, neutral: 0 },
     gold_mittel: { unrated: 0, neg: 0, pos: 0, neutral: 0 },
     gold_hell: { unrated: 0, neg: 0, pos: 0, neutral: 0 },
   };
-  sichtbareTreffer.forEach(a => {
+  annotationen.forEach(a => {
     ergebnis[a.category][valenzBucket(a.valenz)]++;
   });
   return ergebnis;
+}
+
+// Sammeln und Zählen in einem Aufruf, für Stellen ohne Bedarf an der Liste.
+function zaehleAnnotationenLiveNachOrtBasis(filter, annIndex, daten = stationenData) {
+  return zaehleBandCounts(sammleAnnotationenNachOrtBasis(filter, annIndex, daten));
 }
 
 // ---------------------------------------------------------------------------
 // Spine-Daten
 // ---------------------------------------------------------------------------
 
-// daten: ein bereinigtes stationenData-Objekt (Kapitel 1 oder ein anderes
-// Kapitel). hauptorte: Set der ortRun-Namen, die einen Spine-Eintrag
-// bekommen sollen. opts.parisAllgemein (Default leer): Set von Ortsnamen,
-// die zu einem gemeinsamen "Paris allgemein"-Eintrag zusammengefasst werden
-// (siehe Kapitel 1).
-//
-// Läuft (anders als früher) direkt über daten.annotationen statt über die
-// bereits zu je einem Kreis pro Ort ZUSAMMENGEFÜHRTEN daten.ortRuns — nur
-// so lässt sich erkennen, ob ein Ort SPÄTER, nach einer Unterbrechung durch
-// andere Orte, noch einmal auftaucht (eine echte Rückkehr, siehe
-// zeichneSpineHorizontal in sketch.js: bekommt dort keinen zweiten Kreis,
-// sondern einen Bogen zurück zum ersten). Jeder ZUSAMMENHÄNGENDE Lauf
-// gleicher ortBasis wird zu genau einem Eintrag; alle bandCounts werden nur
-// noch live (über den jeweiligen annIndex zur Spielkopf-Position) gezählt,
-// nicht mehr aus einem vorberechneten Endstand.
-function baueSpineDaten(daten, hauptorte, opts = {}) {
-  let parisAllgemein = opts.parisAllgemein || new Set();
+// Ein Eintrag je zusammenhängendem Besuch. Läuft über daten.annotationen,
+// nicht über daten.ortRuns: nur dort ist eine Rückkehr erkennbar.
+function baueSpineDaten(daten, hauptorte) {
   let eintraege = [];
-  let indexNachSchluessel = new Map(); // Schlüssel (Ortsname oder Paris-Pseudo-Schlüssel) -> Index in eintraege
-  let laufenderSchluessel = null; // welcher zusammenhängende Besuch gerade läuft
+  let indexNachOrt = new Map(); // ortBasis-Name -> Index in eintraege
+  let laufenderOrt = null; // welcher zusammenhängende Besuch gerade läuft
 
   (daten.annotationen || []).forEach((a, ai) => {
     let ort = a.ortBasis || a.ort || '';
-    let istParis = parisAllgemein.has(ort);
-    if (!istParis && !hauptorte.has(ort)) { laufenderSchluessel = null; return; }
+    if (!hauptorte.has(ort)) { laufenderOrt = null; return; }
 
-    let schluessel = istParis ? ' PARIS_ALLGEMEIN' : ort;
-    if (laufenderSchluessel === schluessel) return; // derselbe Besuch läuft weiter, kein neuer Eintrag
-    laufenderSchluessel = schluessel;
+    if (laufenderOrt === ort) return; // derselbe Besuch läuft weiter, kein neuer Eintrag
+    laufenderOrt = ort;
 
-    if (indexNachSchluessel.has(schluessel)) {
-      // Paris allgemein bleibt bewusst EIN gemeinsamer Eintrag (zu vage für
-      // eine sinnvolle "Rückkehr" pro einzelner Wiederaufnahme) — jede
-      // Wiederaufnahme wird hier still absorbiert, statt einen Bogen zu
-      // bekommen.
-      if (istParis) return;
-      eintraege.push({ typ: 'rueckkehr', text: ort, rv: ai, zielIndex: indexNachSchluessel.get(schluessel) });
+    if (indexNachOrt.has(ort)) {
+      eintraege.push({ typ: 'rueckkehr', text: ort, rv: ai, zielIndex: indexNachOrt.get(ort) });
     } else {
-      indexNachSchluessel.set(schluessel, eintraege.length);
-      eintraege.push({
-        typ: istParis ? 'muted' : 'location',
-        text: istParis ? 'Paris allgemein' : ort,
-        rv: ai,
-        ortBasis: istParis ? parisAllgemein : ort,
-      });
+      indexNachOrt.set(ort, eintraege.length);
+      eintraege.push({ typ: 'location', text: ort, rv: ai, ortBasis: ort });
     }
   });
 
   return eintraege;
 }
 
-// ---------------------------------------------------------------------------
-// Wiederverwendbares Werkzeug (additiv, aktuell ungenutzt) — verteilt Punkte
-// mit (fast) identischen Koordinaten leicht versetzt auf einen kleinen Kreis,
-// damit künftige Kapitel überlappende Marker nicht händisch per
-// Ausschluss-Liste lösen müssen. Wird auf die bestehende Darstellung NICHT
-// angewendet (die ist bereits über WOHNUNG_SAMMELPUNKT_* / istVorzeitigeErwaehnung
-// gelöst) — reine Vorbereitung für spätere Kapitel.
-// ---------------------------------------------------------------------------
 
-function versetzeKollidierendePunkte(punkte, mindestabstandGrad = 0.00005) {
-  let gruppen = d3.group(punkte, p => `${Math.round(p.lon / mindestabstandGrad)}:${Math.round(p.lat / mindestabstandGrad)}`);
-  let ergebnis = [];
-  gruppen.forEach(gruppe => {
-    if (gruppe.length === 1) {
-      ergebnis.push({ ...gruppe[0], versatzWinkel: 0, versatzIndex: 0, versatzAnzahl: 1 });
-      return;
-    }
-    gruppe.forEach((p, i) => {
-      ergebnis.push({ ...p, versatzWinkel: (i / gruppe.length) * Math.PI * 2, versatzIndex: i, versatzAnzahl: gruppe.length });
-    });
-  });
-  return ergebnis;
-}
+// --- Export ------------------------------------------------------------
+// 28 Namen, die grösste Schnittstelle im Projekt. Leser: docs/architektur.md.
+
+// Farben, Kategorien, Punktgrössen
+window.CATEGORY_COLORS = CATEGORY_COLORS;
+window.CATEGORY_LABELS = CATEGORY_LABELS;
+window.KREIS_KATEGORIEN = KREIS_KATEGORIEN;
+window.ROUTE_COLOR = ROUTE_COLOR;
+window.ROUTE_COLOR_RGB = ROUTE_COLOR_RGB;
+window.FWERT_COLOR = FWERT_COLOR;
+window.FWERT_COLOR_RGB = FWERT_COLOR_RGB;
+window.FWERT_COLORS = FWERT_COLORS;
+window.FWERT_PUNKTGROESSE = FWERT_PUNKTGROESSE;
+window.FWERT_PUNKT_FARBE = FWERT_PUNKT_FARBE;
+window.SCHRIFT_SANS = SCHRIFT_SANS;
+window.SCHRIFT_SERIF = SCHRIFT_SERIF;
+
+// Stammdaten: welche Kapitel, welche Scroll-Marken, welcher Sammelpunkt
+window.KAPITEL_MIT_SPINE_PANEL = KAPITEL_MIT_SPINE_PANEL;
+window.SCROLL_MEILENSTEINE = SCROLL_MEILENSTEINE;
+window.WOHNUNG_SAMMELPUNKT_ANKER = WOHNUNG_SAMMELPUNKT_ANKER;
+
+// Eingangsdaten bereinigen (nur preload/setup in sketch.js)
+window.bereinigeStationenDaten = bereinigeStationenDaten;
+window.bereinigeFotoMarker = bereinigeFotoMarker;
+window.bereinigeUebersichtsrouten = bereinigeUebersichtsrouten;
+
+// Annotationen sammeln und zählen (die heissen Pfade, siehe draw())
+window.sammleAnnotationenNachOrtBasis = sammleAnnotationenNachOrtBasis;
+window.zaehleBandCounts = zaehleBandCounts;
+window.zaehleAnnotationenLiveNachOrtBasis = zaehleAnnotationenLiveNachOrtBasis;
+
+// Kreisgeometrie und Farbumrechnung
+window.hexZuRgb = hexZuRgb;
+window.kreisRadius = kreisRadius;
+window.groessterKreisRadius = groessterKreisRadius;
+
+// Orte, Sichtbarkeit, Spine-Aufbau
+window.wohnungFilterFuerOrt = wohnungFilterFuerOrt;
+window.ortRunSichtbar = ortRunSichtbar;
+window.ortRunsFuerSpine = ortRunsFuerSpine;
+window.baueSpineDaten = baueSpineDaten;
+
+})(); // Ende der Modulkapselung, siehe Kommentar oben

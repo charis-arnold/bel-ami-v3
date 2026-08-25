@@ -188,5 +188,11 @@ data-prep/export/*.gpkg
 data-prep/export/*.gpkg-shm
 data-prep/export/*.gpkg-wal
 data-prep/export/*.png
+
+# QGIS-Quelldokumente: die .qgz-Projektdateien werden versioniert (handgemacht,
+# nicht reproduzierbar), die grossen PNG-Vorlagen nicht (24-33 MB je Datei).
+# Sie bleiben lokal; BASIS in schneide-kapitelkarten.py erwartet die
+# Kapitelkarten-Vorlage dort.
+data-prep/00 qgis-quellen/*.png
 "final-paris-gross 2.png"
 *.DS_Store

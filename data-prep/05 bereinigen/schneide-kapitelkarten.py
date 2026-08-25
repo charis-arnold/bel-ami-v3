@@ -40,8 +40,8 @@ Image.MAX_IMAGE_PIXELS = None
 SKRIPT = os.path.dirname(os.path.abspath(__file__))
 DATA_PREP = os.path.dirname(SKRIPT)
 ROOT = os.path.dirname(DATA_PREP)
-KARTEN = os.path.join(ROOT, "kapitel karten")
-BASIS = os.path.join(DATA_PREP, "export", "cas scrollytelling - paris kapitelkarte.png")
+KARTEN = os.path.join(ROOT, "bilder-karten")
+BASIS = os.path.join(DATA_PREP, "00 qgis-quellen", "cas scrollytelling - paris kapitelkarte.png")
 
 # EPSG:3857, wie aus QGIS exportiert
 BASIS_3857 = {"xmin": 247907.651, "ymin": 6244994.107, "xmax": 270857.651, "ymax": 6256724.107}
@@ -101,7 +101,8 @@ def route_ausdehnung_3857(nr):
 
 
 def main():
-    # Kapitel 1 fehlt bewusst: es lädt ch1Image (kapitel01-qgis-karte-web.png)
+    # Kapitel 1 fehlt bewusst: es lädt ch1Image
+    # (bilder-karten/kapitel01-qgis-karte-web.png)
     # mit dem Literal ch1ImgBbox in sketch.js und steht nicht in kapitelKarten.
     kapitel = [f"{int(a):02d}" for a in sys.argv[1:]] or [f"{i:02d}" for i in range(2, 19)]
     basis = Image.open(BASIS)
