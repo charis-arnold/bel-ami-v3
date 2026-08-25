@@ -279,14 +279,17 @@ function draw() {
   }
   scrollFortschrittFuellung.style.width = (progress * 100) + '%';
 
-  // Kartenwechsel dort, wo bgImage ohnehin unsichtbar ist — kein Sprung.
+  // Startkarte blendet vor dem Zoom auf die helle Überblickskarte über.
   // Im Schlussakt kehrt die STARTkarte wieder, mit eigener Georeferenz.
   let imStartkarteAkt = progress >= SCROLL_MEILENSTEINE.startkarteStart;
-  let zeigeStartkarte = progress < SCROLL_MEILENSTEINE.zoomEnd || imStartkarteAkt;
-  let currentBgImage = zeigeStartkarte ? bgImage : bgImage2;
-  let currentBgBbox = zeigeStartkarte ? startBbox : uebersichtBbox;
-  let fullCrop = coverCrop(currentBgImage.width, currentBgImage.height, 0.5, 0.5, 0); // grosse Karte bleibt zentriert, unabhängig von mapOffsetX
-  let fullBbox = cropToBbox(fullCrop, currentBgBbox, currentBgImage.width, currentBgImage.height);
+  let kartenwechsel = imStartkarteAkt ? 0 : constrain(map(progress,
+    SCROLL_MEILENSTEINE.kartenwechselStart, SCROLL_MEILENSTEINE.kartenwechselEnd, 0, 1), 0, 1);
+  let fullCrop = coverCrop(bgImage.width, bgImage.height, 0.5, 0.5, 0); // grosse Karte bleibt zentriert, unabhängig von mapOffsetX
+  // ACHTUNG der Ausschnitt muss in BEIDE Karten passen: sonst klemmt
+  // bboxToImgCrop ihn an der Bildkante und streckt das Bild dabei um 2.5%.
+  // Deshalb in die Schnittmenge beider Georeferenzen eingepasst.
+  let fullBbox = passeBboxInRahmen(
+    cropToBbox(fullCrop, startBbox, bgImage.width, bgImage.height), UEBERSICHT_SCHNITT_BBOX);
 
   let zoomAmount = constrain(map(progress, SCROLL_MEILENSTEINE.zoomStart, SCROLL_MEILENSTEINE.zoomEnd, 0, 1), 0, 1);
   // Nach der Route zurück auf die Gesamtkarte. Route und Kreise bleiben
@@ -377,16 +380,25 @@ function draw() {
     };
   }
 
-  // currentBgImage steht oben fest; hier nur noch der Bildausschnitt dazu.
-  let bgCrop = bboxToImgCrop(activeBbox, currentBgBbox, currentBgImage.width, currentBgImage.height);
   // ch1Image zoomt nicht mit, es blendet an seiner festen Zielposition ein.
   // Ein dynamischer Ausschnitt würde geklemmt und dabei verzerrt.
   let ch1Crop = targetCrop;
 
   // (1 - kreisVergleichMapFade) blendet die Karte im Ortsveränderungs-Akt aus;
   // skEinblenden holt sie im allerletzten Akt zurück.
-  tint(255, 255 * (1 - zoomAmount) * Math.max(1 - kreisVergleichMapFade, skEinblenden));
-  image(currentBgImage, 0, 0, width, height, bgCrop.x, bgCrop.y, bgCrop.w, bgCrop.h);
+  let kartenAlpha = 255 * (1 - zoomAmount) * Math.max(1 - kreisVergleichMapFade, skEinblenden);
+  // Beide Karten auf dieselbe activeBbox, je aus der eigenen Georeferenz —
+  // so liegen sie im Crossfade deckungsgleich übereinander.
+  if (kartenwechsel < 1) {
+    let startCrop = bboxToImgCrop(activeBbox, startBbox, bgImage.width, bgImage.height);
+    tint(255, kartenAlpha);
+    image(bgImage, 0, 0, width, height, startCrop.x, startCrop.y, startCrop.w, startCrop.h);
+  }
+  if (kartenwechsel > 0) {
+    let uebersichtCrop = bboxToImgCrop(activeBbox, uebersichtBbox, bgImage2.width, bgImage2.height);
+    tint(255, kartenAlpha * kartenwechsel);
+    image(bgImage2, 0, 0, width, height, uebersichtCrop.x, uebersichtCrop.y, uebersichtCrop.w, uebersichtCrop.h);
+  }
   tint(255, 255 * zoomAmount * (1 - kreisVergleichMapFade));
   image(ch1Image, mapOffsetX, mapOffsetY, width - mapOffsetX, height, ch1Crop.x, ch1Crop.y, ch1Crop.w, ch1Crop.h);
   noTint();

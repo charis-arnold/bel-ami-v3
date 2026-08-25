@@ -20,6 +20,15 @@ let startBbox = { west: 2.221893023741224, east: 2.4280563814466545, south: 48.8
 // QGIS EPSG:3857: X 247907.651 .. 270857.651, Y 6244994.107 .. 6256724.107
 let uebersichtBbox = { west: 2.2269923194085774, east: 2.4331556771226127, south: 48.82366665448583, north: 48.892993566082404 };
 
+// Schnittmenge beider Georeferenzen. Der Ausschnitt vor dem Zoom bleibt darin,
+// damit der Crossfade beide Bilder deckungsgleich zeigt.
+const UEBERSICHT_SCHNITT_BBOX = {
+  west: Math.max(startBbox.west, uebersichtBbox.west),
+  east: Math.min(startBbox.east, uebersichtBbox.east),
+  south: Math.max(startBbox.south, uebersichtBbox.south),
+  north: Math.min(startBbox.north, uebersichtBbox.north),
+};
+
 // kapitel01-qgis-karte-web.png. Wert ist geprüft und korrekt, aber sein
 // QGIS-Ursprung ist nicht überliefert.
 
@@ -67,4 +76,21 @@ function cropToBbox(crop, refBbox, imgW, imgH) {
     north: map(crop.y, 0, imgH, refBbox.north, refBbox.south),
     south: map(crop.y + crop.h, 0, imgH, refBbox.north, refBbox.south),
   };
+}
+
+// Grösster Ausschnitt mit dem Seitenverhältnis von bbox, der ganz in rahmen
+// liegt: erst gleichmässig verkleinern, dann hineinschieben.
+function passeBboxInRahmen(bbox, rahmen) {
+  let breite = bbox.east - bbox.west;
+  let hoehe = bbox.north - bbox.south;
+  let f = Math.min(1, (rahmen.east - rahmen.west) / breite, (rahmen.north - rahmen.south) / hoehe);
+  let mitteX = (bbox.west + bbox.east) / 2;
+  let mitteY = (bbox.south + bbox.north) / 2;
+  breite *= f;
+  hoehe *= f;
+  let b = { west: mitteX - breite / 2, east: mitteX + breite / 2, south: mitteY - hoehe / 2, north: mitteY + hoehe / 2 };
+  // Nur so weit schieben, wie eine Kante übersteht.
+  let dx = Math.max(0, rahmen.west - b.west) - Math.max(0, b.east - rahmen.east);
+  let dy = Math.max(0, rahmen.south - b.south) - Math.max(0, b.north - rahmen.north);
+  return { west: b.west + dx, east: b.east + dx, south: b.south + dy, north: b.north + dy };
 }

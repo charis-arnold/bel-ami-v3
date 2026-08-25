@@ -157,6 +157,8 @@ const SCROLL_MEILENSTEINE = {
   // index.html), 80vh je Text, danach 434vh Kreisgrafik-Erklärung.
   // Zoomdauer unverändert 440vh.
   zoomStart: 0.183872, zoomEnd: 0.231184,
+  // Crossfade Startkarte -> helle Überblickskarte, 80vh.
+  kartenwechselStart: 0.137227, kartenwechselEnd: 0.145829,
   // Spine blendet gleichzeitig mit dem Zoom-Beginn ein.
   spineFadeStart: 0.113118, spineFadeEnd: 0.16043,
   // 200vh Lesezeit davor für den Kapitel-Einstiegstext.
