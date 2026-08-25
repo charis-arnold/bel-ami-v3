@@ -7,10 +7,11 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 35 von 70 Namen intern, 35 exportiert. Konvention: docs/architektur.md.
+// 37 von 72 Namen intern, 35 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 let stage, heroText, begleitTexte, kapitelEinstiegsTexte;
+let demoGruppenTexte; // die drei .begleittext mit data-demo-gruppe — ihre Fenster steuern auch die Beschriftungen am Demo-Kreis
 let annotationBoxEl; // #annotationBox — trägt die Positionsklasse (pos-oben-links etc.), siehe annotationBoxPosition()
 let schlusstextEl;   // #schlusstext — Gegenstück zum Einstiegstext, blendet im Schlussakt ein
 let naechstesKapitelEl; // #naechstesKapitel — Hinweis am Kapitelende, siehe draw()
@@ -187,6 +188,8 @@ function setup() {
   stage = document.getElementById('scrollyStage');
   heroText = document.querySelectorAll('h1, h2, .lead, .scroll-hinweis');
   begleitTexte = document.querySelectorAll('.begleittext');
+  demoGruppenTexte = [...begleitTexte].filter(el => el.dataset.demoGruppe)
+    .sort((a, b) => a.dataset.demoGruppe - b.dataset.demoGruppe);
   kapitelEinstiegsTexte = document.querySelectorAll('.kapitel-einstiegstext');
 
   kartenMarkierungenEl = document.getElementById('kartenMarkierungen');
@@ -253,6 +256,17 @@ function windowResized() {
 function getScrollProgress() {
   let trackEl = document.querySelector('.scroll-track');
   return constrain(window.scrollY / trackEl.offsetHeight, 0, 1);
+}
+
+// Deckkraft eines scrollgebundenen Fensters: Rampe rein, Plateau, Rampe raus.
+// Rampe höchstens 35% des Fensters, sonst erreicht ein kurzes Fenster nie
+// volle Deckkraft. Auch die Beschriftungen am Demo-Kreis hängen daran.
+function begleittextDeckkraft(progress, von, bis) {
+  let fadeDauerMax = 0.142857; // 0.2 auf die verlängerte Scrollstrecke umskaliert (2200/3080)
+  let fadeDauer = Math.min(fadeDauerMax, (bis - von) * 0.35);
+  return constrain(Math.min(
+    map(progress, von, von + fadeDauer, 0, 1),
+    map(progress, bis - fadeDauer, bis, 1, 0)), 0, 1);
 }
 
 // ---------------------------------------------------------------------------
@@ -416,9 +430,13 @@ function draw() {
 
   // Demo-Kreisgrafik auf der hellen Überblickskarte, oberhalb der
   // Erklärungstexte (.begleittext sitzt auf 64% Höhe).
-  let demoWachstum = constrain(map(progress, SCROLL_MEILENSTEINE.demoStart, SCROLL_MEILENSTEINE.demoVoll, 0, 1), 0, 1);
-  let demoAlpha = demoWachstum * constrain(map(progress, SCROLL_MEILENSTEINE.zoomStart, SCROLL_MEILENSTEINE.demoEnde, 1, 0), 0, 1);
-  zeichneDemoKreisgrafik(width * 0.5, height * 0.33, demoWachstum, demoAlpha);
+  let demoFortschritt = constrain(map(progress, SCROLL_MEILENSTEINE.demoStart, SCROLL_MEILENSTEINE.demoVoll, 0, 1), 0, 1);
+  let demoAlpha = progress < SCROLL_MEILENSTEINE.demoStart ? 0
+    : constrain(map(progress, SCROLL_MEILENSTEINE.zoomStart, SCROLL_MEILENSTEINE.demoEnde, 1, 0), 0, 1);
+  // Jede Beschriftungsgruppe folgt dem Fenster ihres Erklärungstextes.
+  let demoGruppenAlpha = demoGruppenTexte.map(el =>
+    begleittextDeckkraft(progress, parseFloat(el.dataset.von), parseFloat(el.dataset.bis)));
+  zeichneDemoKreisgrafik(width * 0.30, height * 0.34, demoFortschritt, demoAlpha, demoGruppenAlpha);
 
   let routeAmount = constrain(map(progress, SCROLL_MEILENSTEINE.routeStart, SCROLL_MEILENSTEINE.routeEnd, 0, 1), 0, 1);
 
@@ -611,19 +629,7 @@ function draw() {
   // Begleittexte: jedes <p class="begleittext"> blendet in seinem eigenen
   // data-von/data-bis-Fenster ein und aus. Neue Texte brauchen kein JS.
   begleitTexte.forEach(el => {
-    let von = parseFloat(el.dataset.von);
-    let bis = parseFloat(el.dataset.bis);
-    let fadeDauerMax = 0.142857; // 0.2 auf die verlängerte Scrollstrecke umskaliert (2200/3080)
-    // Höchstens 35% des Fensters, sonst überlappen sich die Rampen bei kurzen
-    // Fenstern und die Box erreicht nie volle Deckkraft.
-    let fadeDauer = Math.min(fadeDauerMax, (bis - von) * 0.35);
-    let opacity = constrain(
-      Math.min(
-        map(progress, von, von + fadeDauer, 0, 1),
-        map(progress, bis - fadeDauer, bis, 1, 0)
-      ),
-      0, 1
-    );
+    let opacity = begleittextDeckkraft(progress, parseFloat(el.dataset.von), parseFloat(el.dataset.bis));
     // Kapitel 1 hat keinen eigenen Einstiegstext — in der Graph-Ansicht
     // übernimmt der Begleittext dessen Play-Ausblendweg.
     if (inKapitelGrafikAnsicht && grafikPlayAusblendStart !== null) {

@@ -8,9 +8,11 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 11 von 17 Namen intern, 6 exportiert. Konvention: docs/architektur.md.
-// ACHTUNG Ladezeit: hexZuRgb() läuft schon in der IIFE — diese Datei muss
-// nach datenbereinigung.js stehen, sonst ReferenceError.
+// 18 von 24 Namen intern, 6 exportiert. Konvention: docs/architektur.md.
+// ACHTUNG Ladezeit: hexZuRgb() und baueDemoAnnotationen() laufen schon in der
+// IIFE — diese Datei muss nach datenbereinigung.js stehen, sonst ReferenceError.
+// p5s Konstanten (PI, HALF_PI) gibt es hier noch nicht, die setzt p5 erst beim
+// Start des Sketches. Auf Modulebene deshalb nur Math.PI.
 (function () {
 
 // ACHTUNG p5s text()/arc()/ellipse() bleiben bei laufender Animation
@@ -130,7 +132,8 @@ function zeichneKreisLabels(kandidaten) {
       platziert.push({ x: k.x, y, w: k.w });
 
       let alpha = k.alpha === undefined ? 1 : k.alpha;
-      if (Math.abs(y - k.y) > 1) {
+      // hilfslinie erzwingt die Linie auch ohne Ausweichen (Demo-Grafik).
+      if (k.hilfslinie || Math.abs(y - k.y) > 1) {
         stroke(0, 100 * alpha);
         strokeWeight(0.8);
         drawingContext.setLineDash([2, 3]);
@@ -299,38 +302,102 @@ function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1) {
 // Demo-Kreisgrafik (Erklärung vor dem Zoom in Kapitel 1)
 // ---------------------------------------------------------------------------
 
-// Erfundene Werte, keine Kapiteldaten. Drei klar unterscheidbare Bandgrössen
-// (16/12/8). ACHTUNG alle drei Bänder müssen in dieselbe Richtung
+// Erfundene Zielwerte, keine Kapiteldaten. Drei klar unterscheidbare
+// Bandgrössen (16/12/8). ACHTUNG alle drei Bänder müssen in dieselbe Richtung
 // überwiegen, sonst füllt das negative Band eines anderen die untere Hälfte
 // auf und die Ausbauchung ist nicht mehr zu sehen.
 const DEMO_BAND_COUNTS = {
-  gold_dunkel: { neg: 3, pos: 8, neutral: 3, unrated: 2 },
-  gold_mittel: { neg: 1, pos: 8, neutral: 2, unrated: 1 },
-  gold_hell: { neg: 2, pos: 4, neutral: 1, unrated: 1 },
+  gold_dunkel: { pos: 8, neg: 3, neutral: 3, unrated: 2 },
+  gold_mittel: { pos: 8, neg: 1, neutral: 2, unrated: 1 },
+  gold_hell: { pos: 4, neg: 2, neutral: 1, unrated: 1 },
 };
 
-// Ein Punkt je Valenzgruppe und je F-Wert-Typ, damit alle drei Grössen
-// gleichzeitig sichtbar sind.
-const DEMO_FWERTE = [
-  { valenz: 1, fWertType: 'ort_loest_emotion_aus' },
-  { valenz: -1, fWertType: 'emotion_faerbt_raum' },
-  { valenz: 0, fWertType: 'koerper_als_sensor' },
-];
+// Umkehrung von valenzBucket(); unrated hat keinen Zahlenwert.
+const DEMO_VALENZ = { pos: 1, neg: -1, neutral: 0, unrated: undefined };
+
+// Ein F-Wert je Valenzgruppe, damit oben, unten und rechts je ein Punkt sitzt.
+const DEMO_FWERTE = { pos: 'ort_loest_emotion_aus', neg: 'emotion_faerbt_raum', neutral: 'koerper_als_sensor' };
+
+// Gruppenmitten der F-Wert-Punkte, wie mitten in zeichneFwertPunkte().
+// Math.PI statt HALF_PI: siehe ACHTUNG zur Ladezeit oben.
+const DEMO_FWERT_WINKEL = { pos: -Math.PI / 2, neg: Math.PI / 2, neutral: 0 };
 
 // Die Demo steht allein auf der Karte und darf grösser sein als die Kreise
-// entlang der Route.
+// entlang der Route. maxRadius ist der Vorgabewert von kreisRadius().
 const DEMO_RADIUS_SKALA = 2.2;
+const DEMO_MAX_RADIUS = 100;
+const DEMO_LABEL_ABSTAND = 45;
 
-// wachstum 0..1 skaliert die Radien, alphaSkala blendet ein und aus.
-function zeichneDemoKreisgrafik(cx, cy, wachstum, alphaSkala) {
-  if (alphaSkala <= 0 || wachstum <= 0) return;
-  let radiusSkala = wachstum * DEMO_RADIUS_SKALA;
-  let maxRadius = 100; // Vorgabewert von kreisRadius(), hier zweimal gebraucht
-  // winkel PI wie alle anderen Ansichten: positiv oben, negativ unten.
-  zeichneKreiseFuerRun(cx, cy, DEMO_BAND_COUNTS, alphaSkala, PI, radiusSkala, maxRadius);
-  zeichneFwertPunkte(cx, cy, groessterKreisRadius(DEMO_BAND_COUNTS, maxRadius, radiusSkala), DEMO_FWERTE, alphaSkala);
+// Aufdeck-Reihenfolge: reihum durch die Bänder, damit alle drei gemeinsam
+// wachsen. Der Scroll-Fortschritt deckt davon einen Präfix auf, genau wie
+// annIndex bei den echten Kreisen.
+function baueDemoAnnotationen() {
+  let vorraete = KREIS_KATEGORIEN.map(kat =>
+    Object.keys(DEMO_VALENZ).flatMap(bucket =>
+      Array.from({ length: DEMO_BAND_COUNTS[kat.key][bucket] || 0 },
+        () => ({ category: kat.key, valenz: DEMO_VALENZ[bucket] }))));
+
+  let reihenfolge = [];
+  while (vorraete.some(v => v.length)) {
+    vorraete.forEach(v => { if (v.length) reihenfolge.push(v.shift()); });
+  }
+  // Die jeweils erste Annotation einer Valenzgruppe trägt deren F-Wert.
+  Object.keys(DEMO_FWERTE).forEach(bucket => {
+    let treffer = reihenfolge.find(a => a.valenz === DEMO_VALENZ[bucket]);
+    if (treffer) { treffer.hasFwert = true; treffer.fWertType = DEMO_FWERTE[bucket]; }
+  });
+  return reihenfolge;
 }
 
+const DEMO_ANNOTATIONEN = baueDemoAnnotationen();
+
+// Beschriftungen am Kreis, in drei Gruppen passend zu den Erklärungstexten in
+// index.html (data-demo-gruppe). Alle Labels stehen rechts, die Hilfslinien
+// zeigen auf die Stelle, die der Text meint.
+function demoBeschriftungen(cx, cy, sichtbar, aussen, gruppenAlpha) {
+  let labelX = cx + aussen + DEMO_LABEL_ABSTAND;
+  let eintrag = (gruppe, text, radius, winkel) => {
+    let ankerY = cy + Math.sin(winkel) * radius;
+    return {
+      ankerX: cx + Math.cos(winkel) * radius, ankerY,
+      x: labelX, y: ankerY, text, farbe: null,
+      hilfslinie: true, alpha: gruppenAlpha[gruppe],
+    };
+  };
+  // Fächer über die rechte Seite, damit sich die Hilfslinien nicht kreuzen.
+  let winkelBand = [-0.95, -0.35, 0.3];
+
+  return [
+    ...KREIS_KATEGORIEN.map((kat, i) => eintrag(0, CATEGORY_LABELS[kat.key],
+      kreisRadius(sichtbar.filter(a => a.category === kat.key).length, DEMO_MAX_RADIUS) * DEMO_RADIUS_SKALA,
+      winkelBand[i])),
+    eintrag(0, 'Kreisgrösse = Relevanz des Ortes für Duroys Empfindungen.', aussen, 0.85),
+
+    eintrag(1, 'Halbkreise (Wölbung gegen oben) = positiv', aussen * 0.7, -PI / 3),
+    eintrag(1, 'Halbkreise (Wölbung gegen unten) = negativ', aussen * 0.7, PI / 3),
+    // Nicht auf Winkel 0: dort sitzt der neutrale F-Wert-Punkt, die Hilfslinie
+    // liefe genau durch ihn.
+    eintrag(1, 'Kreis = neutral', aussen * 0.45, 0.32),
+
+    ...Object.keys(DEMO_FWERTE).map(bucket => eintrag(2, FWERT_LABELS[DEMO_FWERTE[bucket]],
+      aussen + FWERT_PUNKT_RAND_ABSTAND, DEMO_FWERT_WINKEL[bucket])),
+  ];
+}
+
+// fortschritt 0..1 deckt die erfundenen Annotationen auf, alphaSkala blendet
+// die ganze Grafik, gruppenAlpha die drei Beschriftungsgruppen.
+function zeichneDemoKreisgrafik(cx, cy, fortschritt, alphaSkala, gruppenAlpha) {
+  if (alphaSkala <= 0 || fortschritt <= 0) return;
+  let sichtbar = DEMO_ANNOTATIONEN.slice(0, Math.round(fortschritt * DEMO_ANNOTATIONEN.length));
+  if (!sichtbar.length) return;
+
+  let bandCounts = zaehleBandCounts(sichtbar);
+  let aussen = groessterKreisRadius(bandCounts, DEMO_MAX_RADIUS, DEMO_RADIUS_SKALA);
+  // winkel PI wie alle anderen Ansichten: positiv oben, negativ unten.
+  zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala, PI, DEMO_RADIUS_SKALA, DEMO_MAX_RADIUS);
+  zeichneFwertPunkte(cx, cy, aussen, sichtbar.filter(a => a.hasFwert), alphaSkala);
+  zeichneKreisLabels(demoBeschriftungen(cx, cy, sichtbar, aussen, gruppenAlpha.map(a => a * alphaSkala)));
+}
 
 // --- Export ------------------------------------------------------------
 // Sechs Namen. Leser: docs/architektur.md.

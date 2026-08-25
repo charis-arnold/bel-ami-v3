@@ -6,7 +6,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 12 von 40 Namen intern, 28 exportiert. Konvention: docs/architektur.md.
+// 12 von 41 Namen intern, 29 exportiert. Konvention: docs/architektur.md.
 // ACHTUNG Skript 1 in index.html. kreisgrafik.js liest hexZuRgb beim Laden
 // — diese Datei nach hinten schieben bricht kreisgrafik.js.
 (function () {
@@ -41,6 +41,13 @@ const FWERT_PUNKTGROESSE = {
   ort_loest_emotion_aus: 1, // Raum löst Emotion aus
   emotion_faerbt_raum: 2,   // Emotion färbt Raum
   koerper_als_sensor: 3,    // Körper als Sensor
+};
+
+// Ausformulierte Namen der drei F-Wert-Typen, Gegenstück zu CATEGORY_LABELS.
+const FWERT_LABELS = {
+  ort_loest_emotion_aus: 'Wechselwirkung: Der Raum löst Emotion aus.',
+  emotion_faerbt_raum: 'Wechselwirkung: Die Emotion beeinflusst die Raumwahrnehmung.',
+  koerper_als_sensor: 'Wechselwirkung: Der Körper spürt.',
 };
 
 // Einheitlich für alle F-Wert-Punkte. Nicht FWERT_COLORS oben, das ist die
@@ -339,6 +346,7 @@ window.FWERT_COLOR = FWERT_COLOR;
 window.FWERT_COLOR_RGB = FWERT_COLOR_RGB;
 window.FWERT_COLORS = FWERT_COLORS;
 window.FWERT_PUNKTGROESSE = FWERT_PUNKTGROESSE;
+window.FWERT_LABELS = FWERT_LABELS;
 window.FWERT_PUNKT_FARBE = FWERT_PUNKT_FARBE;
 window.SCHRIFT_SANS = SCHRIFT_SANS;
 window.SCHRIFT_SERIF = SCHRIFT_SERIF;
