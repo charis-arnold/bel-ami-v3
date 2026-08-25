@@ -430,7 +430,7 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
         radius = groessterKreisRadius(stand.bandCounts, Infinity, layout.kreisSkala);
         zeichneKreiseFuerRun(anker.x, cy, stand.bandCounts, (alpha / 255) * kreisAlpha,
           PI, layout.kreisSkala, Infinity);
-        zeichneFwertPunkte(anker.x, cy, radius, stand.fwerte, (alpha / 255) * kreisAlpha, 'obenUnten');
+        zeichneFwertPunkte(anker.x, cy, radius, stand.fwerte, (alpha / 255) * kreisAlpha);
     }
 
     // Reihenfolge von oben nach unten: Kreis, Ortsbeschriftung, Kapitelzähler.

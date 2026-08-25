@@ -18,22 +18,6 @@
 // gezeichnet. Das lässt p5s Farb-Zwischenspeicher veralten; nur pop()
 // gleicht ihn wieder ab, ctx.restore() nicht. Jede Zeichenfunktion klammert.
 
-// EIN/AUS für alle neutralen Teile: F-Wert-Punkte und Vollkreise. Rein
-// visuell — Daten, Zählungen und Kreisgrösse bleiben unberührt.
-const ZEIGE_NEUTRALE_WERTE = true;
-
-// Neutral meint die dritte F-Wert-Gruppe als Ganzes: valenz 0 und unbewertet.
-// Über !== 1 && !== -1, damit auch ein unerwarteter Wert neutral zählt.
-function istNeutraleValenz(valenz) {
-  return valenz !== 1 && valenz !== -1;
-}
-
-// Liefert eine gefilterte Kopie; die Liste des Aufrufers bleibt vollständig.
-function sichtbareFwertAnnotationen(annotationen) {
-  if (ZEIGE_NEUTRALE_WERTE) return annotationen;
-  return annotationen.filter(a => !istNeutraleValenz(a.valenz));
-}
-
 // Zeilenabstand der Schraffur in den Gesamtkreisen.
 const HATCH_SPACING = 3;
 
@@ -91,11 +75,11 @@ function zeichneKreiseOrtRuns(punktIndex, annIndex, activeBbox, offsetX = mapOff
     // die F-Wert-Punkte unten.
     let treffer = sammleAnnotationenNachOrtBasis(filter, annIndex, daten);
     let bandCounts = zaehleBandCounts(treffer);
-    // winkel PI und 'obenUnten' wie in der Graph-Ansicht.
+    // winkel PI wie in der Graph-Ansicht: positiv oben, negativ unten.
     let radius = groessterKreisRadius(bandCounts);
     zeichneKreiseFuerRun(pos.x, pos.y, bandCounts, 1, PI);
     let fwertAnnotationen = treffer.filter(a => a.hasFwert);
-    zeichneFwertPunkte(pos.x, pos.y, radius, fwertAnnotationen, 1, 'obenUnten');
+    zeichneFwertPunkte(pos.x, pos.y, radius, fwertAnnotationen, 1);
     if (radius > 0) {
       // Erst sammeln, Kollisionen nach der Schleife (zeichneKreisLabels).
       // Der Routen-Startpunkt blendet erst mit dem Kapitel-1-Ausschnitt ein.
@@ -227,7 +211,7 @@ function zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF
     if (negR > 0) flaechenFormen.push({ r: negR, zeichne: () => zeichneHalbkreis(cx, cy, negR, winkel - HALF_PI, k.farbe, alphaSkala, blend) });
     if (posR > 0) flaechenFormen.push({ r: posR, zeichne: () => zeichneHalbkreis(cx, cy, posR, winkel + HALF_PI, k.farbe, alphaSkala, blend) });
     // NEUTRAL_DAEMPFUNG macht die Fläche leiser als die Valenz-Halbkreise.
-    if (ZEIGE_NEUTRALE_WERTE && neutralR > 0) flaechenFormen.push({ r: neutralR, zeichne: () => zeichneVollkreis(cx, cy, neutralR, k.farbe, alphaSkala * NEUTRAL_DAEMPFUNG, blend) });
+    if (neutralR > 0) flaechenFormen.push({ r: neutralR, zeichne: () => zeichneVollkreis(cx, cy, neutralR, k.farbe, alphaSkala * NEUTRAL_DAEMPFUNG, blend) });
   });
 
   hatchFormen.sort((a, b) => b.r - a.r).forEach(f => f.zeichne());
@@ -251,18 +235,14 @@ const FWERT_PUNKT_RING_ABSTAND = 8; // Abstand zwischen zwei Punkte-Ringen, fall
 
 // Ein Punkt je Annotation mit F-Wert, Grösse nach Typ, Lage im 120°-Drittel
 // der eigenen Valenz. Bei Andrang wachsen weitere Ringe nach aussen.
-function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1, anordnung = 'seitlich') {
-  // Schalter am gemeinsamen Eingang aller drei Aufrufer, nicht in den Aufrufern.
-  fwertAnnotationen = sichtbareFwertAnnotationen(fwertAnnotationen);
+function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1) {
   if (!fwertAnnotationen.length || radius <= 0) return;
 
   push(); // noStroke() plus direkte fillStyle-Schreibzugriffe
   const DRITTEL = TWO_PI / 3;
   // Gruppenmitten [neg, pos, neutral], passend zur Halbkreis-Teilung.
-  // 'obenUnten' fest notiert: 180° lassen sich nicht in 120°-Drittel drehen.
-  let mitten = anordnung === 'obenUnten'
-    ? [HALF_PI, -HALF_PI, 0]
-    : [-HALF_PI - DRITTEL / 2, -HALF_PI + DRITTEL / 2, HALF_PI];
+  // Fest notiert: 180° lassen sich nicht in 120°-Drittel drehen.
+  let mitten = [HALF_PI, -HALF_PI, 0];
   let gruppen = mitten.map(mitte => ({ mitte, formen: [] }));
   fwertAnnotationen.forEach(a => {
     let gruppe = a.valenz === -1 ? gruppen[0] : a.valenz === 1 ? gruppen[1] : gruppen[2];
@@ -273,21 +253,9 @@ function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1, a
     });
   });
 
-  // Sektorbreite: im Normalzustand (ZEIGE_NEUTRALE_WERTE) bleibt sie hart bei
-  // einem Drittel — das gewohnte Bild mit allen drei Gruppen darf sich NICHT
-  // verändern, auch nicht an Orten, die zufällig nur zwei Gruppen belegen.
-  // Erst wenn die neutrale Gruppe per Toggle wegfällt, wird die Breite aus der
-  // Zahl der tatsächlich belegten Gruppen abgeleitet: zwei Gruppen bekommen je
-  // eine Halbebene (negativ unten, positiv oben — passend zu den
-  // Valenz-Halbkreisen darunter), eine einzelne den ganzen Kreis. Der freie
-  // Platz der ausgeblendeten Gruppe verfällt damit nicht mehr ungenutzt.
-  let neuVerteilen = !ZEIGE_NEUTRALE_WERTE;
-  let belegteGruppen = gruppen.filter(g => g.formen.length).length;
-  let sektorBreite = neuVerteilen && belegteGruppen > 0 ? TWO_PI / belegteGruppen : DRITTEL;
-  // Etwas schmaler als der volle Sektor, damit Punkte an der Sektorgrenze
-  // nicht in den Nachbarsektor hineinragen (bei zwei Gruppen: damit sich die
-  // untere und die obere Halbebene links und rechts nicht berühren).
-  let maxSpanne = sektorBreite * 0.8;
+  // Etwas schmaler als das volle Drittel, damit Punkte an der Grenze nicht
+  // ins Nachbar-Drittel ragen.
+  let maxSpanne = DRITTEL * 0.8;
 
   noStroke();
   gruppen.forEach(({ mitte, formen }) => {
@@ -295,13 +263,8 @@ function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1, a
     let ringRadius = radius + FWERT_PUNKT_RAND_ABSTAND;
     let rest = formen;
     while (rest.length) {
-      // Platzbudget eines Rings. Im Normalzustand weiterhin das volle Drittel
-      // (unverändert, siehe oben) — im neu verteilten Zustand dagegen genau
-      // der Bogen, der anschliessend auch bespielt wird (maxSpanne statt
-      // sektorBreite). Vorher standen hier zwei verschiedene Breiten: gepackt
-      // wurde nach 120°, verteilt aber über 96°, also 25% Überbelegung — die
-      // Punkte überlappten sich zwangsläufig.
-      let bogenlaenge = ringRadius * (neuVerteilen ? maxSpanne : DRITTEL);
+      // Platzbudget eines Rings: das volle Drittel.
+      let bogenlaenge = ringRadius * DRITTEL;
       let platz = 0;
       let anzahlImRing = 0;
       for (let f of rest) {
@@ -313,9 +276,7 @@ function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1, a
       let ringFormen = rest.slice(0, anzahlImRing);
       rest = rest.slice(anzahlImRing);
 
-      // Neu verteilt wächst der Bogen aus der Sektormitte mit der Punktzahl,
-      // gedeckelt bei maxSpanne. Im Normalzustand fest bei maxSpanne.
-      let spanne = neuVerteilen ? Math.min(maxSpanne, platz / ringRadius) : maxSpanne;
+      let spanne = maxSpanne;
       let n = ringFormen.length;
       ringFormen.forEach((f, i) => {
         let winkelPunkt = n === 1 ? mitte : mitte - spanne / 2 + (i / (n - 1)) * spanne;
