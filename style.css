@@ -585,7 +585,7 @@ h2 {
   text-transform: uppercase;
   padding: 18px 0;
   cursor: pointer;
-  transition: right 0.35s ease;
+  transition: right 0.35s ease, box-shadow 0.35s ease;
 }
 
 .legende-tab {
@@ -601,6 +601,15 @@ h2 {
 
 .legende-box.offen .legende-tab {
   right: 190px; /* an die linke Kante des ausgefahrenen Legende-Inhalts angeheftet */
+}
+
+/* Temporäre Hervorhebung während der Kreisgrafik-Erklärung vor dem Zoom.
+   draw() setzt und entfernt die Klasse, wie .offen ein reiner Zustand.
+   Spezifischer sind .legende-box.offen und #registerTabs.prolog-offen —
+   ein geöffnetes Register überschreibt die Hervorhebung also. */
+.legende-tab.hervorgehoben {
+  right: 16px;
+  box-shadow: 0 0 0 3px #212B2E, 0 20px 50px rgba(0, 0, 0, 0.35);
 }
 
 .prolog-box.offen .prolog-tab {

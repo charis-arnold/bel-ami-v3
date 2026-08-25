@@ -8,7 +8,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 8 von 13 Namen intern, 5 exportiert. Konvention: docs/architektur.md.
+// 11 von 17 Namen intern, 6 exportiert. Konvention: docs/architektur.md.
 // ACHTUNG Ladezeit: hexZuRgb() läuft schon in der IIFE — diese Datei muss
 // nach datenbereinigung.js stehen, sonst ReferenceError.
 (function () {
@@ -295,12 +295,50 @@ function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1) {
 }
 
 
+// ---------------------------------------------------------------------------
+// Demo-Kreisgrafik (Erklärung vor dem Zoom in Kapitel 1)
+// ---------------------------------------------------------------------------
+
+// Erfundene Werte, keine Kapiteldaten. Drei klar unterscheidbare Bandgrössen
+// (16/12/8). ACHTUNG alle drei Bänder müssen in dieselbe Richtung
+// überwiegen, sonst füllt das negative Band eines anderen die untere Hälfte
+// auf und die Ausbauchung ist nicht mehr zu sehen.
+const DEMO_BAND_COUNTS = {
+  gold_dunkel: { neg: 3, pos: 8, neutral: 3, unrated: 2 },
+  gold_mittel: { neg: 1, pos: 8, neutral: 2, unrated: 1 },
+  gold_hell: { neg: 2, pos: 4, neutral: 1, unrated: 1 },
+};
+
+// Ein Punkt je Valenzgruppe und je F-Wert-Typ, damit alle drei Grössen
+// gleichzeitig sichtbar sind.
+const DEMO_FWERTE = [
+  { valenz: 1, fWertType: 'ort_loest_emotion_aus' },
+  { valenz: -1, fWertType: 'emotion_faerbt_raum' },
+  { valenz: 0, fWertType: 'koerper_als_sensor' },
+];
+
+// Die Demo steht allein auf der Karte und darf grösser sein als die Kreise
+// entlang der Route.
+const DEMO_RADIUS_SKALA = 2.2;
+
+// wachstum 0..1 skaliert die Radien, alphaSkala blendet ein und aus.
+function zeichneDemoKreisgrafik(cx, cy, wachstum, alphaSkala) {
+  if (alphaSkala <= 0 || wachstum <= 0) return;
+  let radiusSkala = wachstum * DEMO_RADIUS_SKALA;
+  let maxRadius = 100; // Vorgabewert von kreisRadius(), hier zweimal gebraucht
+  // winkel PI wie alle anderen Ansichten: positiv oben, negativ unten.
+  zeichneKreiseFuerRun(cx, cy, DEMO_BAND_COUNTS, alphaSkala, PI, radiusSkala, maxRadius);
+  zeichneFwertPunkte(cx, cy, groessterKreisRadius(DEMO_BAND_COUNTS, maxRadius, radiusSkala), DEMO_FWERTE, alphaSkala);
+}
+
+
 // --- Export ------------------------------------------------------------
-// Fünf Namen. Leser: docs/architektur.md.
+// Sechs Namen. Leser: docs/architektur.md.
 window.FWERT_PUNKT_DURCHMESSER = FWERT_PUNKT_DURCHMESSER;
 window.leereBandCounts = leereBandCounts;
 window.zeichneKreiseOrtRuns = zeichneKreiseOrtRuns;
 window.zeichneKreiseFuerRun = zeichneKreiseFuerRun;
 window.zeichneFwertPunkte = zeichneFwertPunkte;
+window.zeichneDemoKreisgrafik = zeichneDemoKreisgrafik;
 
 })(); // Ende der Modulkapselung, siehe Kommentar oben
