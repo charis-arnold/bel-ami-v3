@@ -22,10 +22,10 @@
    Die Winkel-Konvention ist bewusst NICHT an die Laufrichtung der Route
    gebunden: In Karten- ("Plan") wie Graph-Ansicht teilt dieselbe waagrechte
    Linie positiv (oben) von negativ (unten) — beide Ansichten zeigen
-   dieselben Kreise und sollen sich gleich lesen lassen. Nur der Schlussakt
-   Ortsveränderung (ortsveraenderung.js) teilt weiterhin senkrecht (negativ
-   links, positiv rechts), weil dort unter jedem Kreis Beschriftung und
-   Kapitelzeile stehen. Steuerung über den winkel-Parameter von
+   dieselben Kreise und sollen sich gleich lesen lassen. Der Schlussakt
+   Ortsveränderung (ortsveraenderung.js) teilt seit der Vereinheitlichung
+   ebenso — alle drei Ansichten lesen sich gleich. Steuerung über den
+   winkel-Parameter von
    zeichneKreiseFuerRun() bzw. anordnung von zeichneFwertPunkte().
 
    --- Abhängigkeiten NACH AUSSEN (Laufzeit) --------------------------------
@@ -350,9 +350,8 @@ function zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF
     // (kapitel01-embed.js/addBand). winkel bewusst NICHT an die lokale
     // Laufrichtung der Route angelehnt, sondern fest: die Trennlinie
     // zwischen neg/pos dreht sich nie mit der Route mit. Karten- wie
-    // Graph-Ansicht (winkel PI): positiv oben, negativ unten. Nur die
-    // Ortsveränderung nutzt den Default -HALF_PI: negativ links, positiv
-    // rechts.
+    // Graph-Ansicht und Schlussakt übergeben alle winkel PI: positiv oben,
+    // negativ unten. Der Default -HALF_PI hat derzeit keinen Aufrufer.
     let blend = k.key !== 'gold_mittel';
     let negR = kreisRadius(bc.neg || 0, maxRadius) * radiusSkala;
     let posR = kreisRadius(bc.pos || 0, maxRadius) * radiusSkala;
@@ -414,9 +413,9 @@ function zeichneFwertPunkte(cx, cy, kreisRadius, fwertAnnotationen, alphaSkala =
   // Gruppenmitten [negativ, positiv, neutral/unbewertet] je Anordnung. Sie
   // folgen der Teilung der Halbkreise in zeichneKreiseFuerRun, damit die
   // Punkte einer Valenz auf DERSELBEN Seite liegen wie ihre Fläche:
-  //   'seitlich' (Ortsveränderung, Halbkreise links/rechts): negativ
-  //     oben-links, positiv oben-rechts, neutral unten — die beiden
-  //     Valenz-Gruppen liegen als Drittel-Paar symmetrisch um die Senkrechte.
+  //   'seitlich' (Halbkreise links/rechts): negativ oben-links, positiv
+  //     oben-rechts, neutral unten — die beiden Valenz-Gruppen liegen als
+  //     Drittel-Paar symmetrisch um die Senkrechte. Derzeit ohne Aufrufer.
   //   'obenUnten' (Karte UND Graph, Halbkreise oben/unten): positiv GENAU oben,
   //     negativ GENAU unten, neutral rechts daneben. Hier lassen sich die
   //     Mitten nicht aus einer gemeinsamen Drehung ableiten — oben und unten

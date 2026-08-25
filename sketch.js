@@ -75,18 +75,13 @@ let planEintrag, graphEintrag; // "Plan"/"Graph"-Hälften oben im Register, für
 let modusZeile, leerzeile, alleEintrag; // Plan/Graph-Zeile + Abstandshalter + "Alle" — in der Übersicht (kein Kapitel gezoomt) blendet draw() modusZeile/leerzeile aus und markiert alleEintrag als aktiv
 let legendeBox; // Register-Container (Tab+Inhalt), mitte rechts — sichtbar wie kapitelRegister (Plan UND Graph)
 let legendeValenzText, legendeValenzKreis; // Valenz-Zeile der Legende — Text/Symbol wechseln je Ansicht (siehe draw())
-// Benannt nach der TEILUNG, nicht nach der Ansicht: Plan- und Graph-Ansicht
-// teilen inzwischen beide oben/unten (siehe zeichneKreiseOrtRuns und
-// zeichneSpineHorizontal), links/rechts bleibt nur im Schlussakt
-// Ortsveränderung übrig.
-const LEGENDE_VALENZ_LINKS_RECHTS = 'Volltonfarbe: links negativ, rechts positiv bewertet';
+// Alle drei Ansichten (Plan, Graph, Schlussakt) teilen oben/unten — es gibt
+// keine Links/Rechts-Fassung mehr.
 const LEGENDE_VALENZ_OBEN_UNTEN = 'Volltonfarbe: oben positiv, unten negativ bewertet';
 let legendeFwertHinweis; // Positions-Hinweis der F-Wert-Punkte — ebenfalls ansichtsabhängig
 // Die dritte Gruppe (neutral/unbewertet) wird nur erwähnt, wenn sie überhaupt
 // gezeichnet wird — siehe ZEIGE_NEUTRALE_WERTE in kreisgrafik.js, das dafür
 // vor sketch.js geladen sein muss (in index.html der Fall).
-const LEGENDE_FWERT_LINKS_RECHTS = 'Position ausserhalb des Kreises: negativ oben links, positiv oben rechts'
-  + (ZEIGE_NEUTRALE_WERTE ? ', neutral/unbewertet unten.' : '.');
 const LEGENDE_FWERT_OBEN_UNTEN = 'Position ausserhalb des Kreises: positiv oben, negativ unten'
   + (ZEIGE_NEUTRALE_WERTE ? ', neutral/unbewertet rechts.' : '.');
 let legendeTab, legendeInhalt; // Tab (vertikal beschriftet, immer sichtbar solang legendeBox.sichtbar) + ausfahrender Inhalt (Farberklärung der Kreisgrafik)
@@ -691,9 +686,9 @@ function draw() {
   // nur noch ausserhalb davon, im Schlussakt Ortsveränderung (siehe
   // zeichneOrtsveraenderung), wo die Legende ebenfalls noch sichtbar ist.
   if (legendeValenzText) {
-    legendeValenzText.textContent = inKapitelAnsicht ? LEGENDE_VALENZ_OBEN_UNTEN : LEGENDE_VALENZ_LINKS_RECHTS;
-    legendeValenzKreis.classList.toggle('valenz-oben-unten', inKapitelAnsicht);
-    legendeFwertHinweis.textContent = inKapitelAnsicht ? LEGENDE_FWERT_OBEN_UNTEN : LEGENDE_FWERT_LINKS_RECHTS;
+    legendeValenzText.textContent = LEGENDE_VALENZ_OBEN_UNTEN;
+    legendeValenzKreis.classList.add('valenz-oben-unten');
+    legendeFwertHinweis.textContent = LEGENDE_FWERT_OBEN_UNTEN;
   }
 
   // DOM-Marker — Ortspunkte/Labels auf der Karte (Kapitel-1-Ansicht). Derzeit

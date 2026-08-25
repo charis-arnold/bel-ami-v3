@@ -126,8 +126,8 @@ function baueKapitelRegister() {
 // Halbkreise (nur negativ/positiv bewertete, per fester Position oben/unten
 // unterschieden — NICHT per Farbe, siehe "Kreise"-Kommentar bei
 // zeichneKreiseFuerRun). Valenz- und F-Wert-Zeile werden hier mit der
-// oben/unten-Fassung gebaut (Plan und Graph, der Normalfall) und von draw()
-// auf links/rechts umgestellt, sobald der Schlussakt Ortsveränderung läuft.
+// oben/unten-Fassung gebaut — alle drei Ansichten teilen oben/unten, draw()
+// schaltet nichts mehr um.
 function baueLegende() {
   let titel = document.createElement('div');
   titel.className = 'legende-titel';
@@ -169,10 +169,8 @@ function baueLegende() {
   valenzText.className = 'legende-valenz-text';
   valenzText.textContent = LEGENDE_VALENZ_OBEN_UNTEN;
   valenzZeile.appendChild(valenzText);
-  // Für die Umschaltung merken: die Halbkreise stehen in Plan- wie
-  // Graph-Ansicht oben/unten, im Schlussakt Ortsveränderung dagegen
-  // links/rechts (siehe zeichneOrtsveraenderung) — die Legende ist in allen
-  // dreien sichtbar und muss das mitmachen.
+  // Merken, weil draw() die Legende in jedem Frame neu setzt — die Halbkreise
+  // stehen inzwischen in allen drei Ansichten oben/unten.
   legendeValenzText = valenzText;
   legendeValenzKreis = valenzKreis;
 

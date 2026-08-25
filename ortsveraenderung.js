@@ -528,8 +528,8 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
     if (kreisAlpha > 0) {
       stand = ovStand(i, maxKapitel);
       radius = zeichneKreiseFuerRun(anker.x, cy, stand.bandCounts, (alpha / 255) * kreisAlpha,
-        -HALF_PI, layout.kreisSkala, Infinity);
-      zeichneFwertPunkte(anker.x, cy, radius, stand.fwerte, (alpha / 255) * kreisAlpha);
+        PI, layout.kreisSkala, Infinity);
+      zeichneFwertPunkte(anker.x, cy, radius, stand.fwerte, (alpha / 255) * kreisAlpha, 'obenUnten');
     }
 
     // Reihenfolge von oben nach unten: Kreis, Ortsbeschriftung, Kapitelzähler.
