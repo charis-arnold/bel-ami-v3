@@ -6,7 +6,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 12 von 38 Namen intern, 26 exportiert. Konvention: docs/architektur.md.
+// 12 von 40 Namen intern, 28 exportiert. Konvention: docs/architektur.md.
 // ACHTUNG Skript 1 in index.html. kreisgrafik.js liest hexZuRgb beim Laden
 // — diese Datei nach hinten schieben bricht kreisgrafik.js.
 (function () {
@@ -46,6 +46,11 @@ const FWERT_PUNKTGROESSE = {
 // Einheitlich für alle F-Wert-Punkte. Nicht FWERT_COLORS oben, das ist die
 // Annotationsleiste.
 const FWERT_PUNKT_FARBE = '#AB3F0C';
+
+// Schriften fürs Canvas. Spiegeln --sans/--serif in style.css; p5 kennt die
+// CSS-Variablen nicht, deshalb hier als Literal.
+const SCHRIFT_SANS = "'Source Sans 3', sans-serif";
+const SCHRIFT_SERIF = "'Source Serif 4', serif";
 
 const KREIS_KATEGORIEN = [
   { key: 'gold_dunkel', farbe: [142, 117, 42] },
@@ -313,7 +318,7 @@ function baueSpineDaten(daten, hauptorte) {
 
 
 // --- Export ------------------------------------------------------------
-// 26 Namen, die grösste Schnittstelle im Projekt. Leser: docs/architektur.md.
+// 28 Namen, die grösste Schnittstelle im Projekt. Leser: docs/architektur.md.
 
 // Farben, Kategorien, Punktgrössen
 window.CATEGORY_COLORS = CATEGORY_COLORS;
@@ -326,6 +331,8 @@ window.FWERT_COLOR_RGB = FWERT_COLOR_RGB;
 window.FWERT_COLORS = FWERT_COLORS;
 window.FWERT_PUNKTGROESSE = FWERT_PUNKTGROESSE;
 window.FWERT_PUNKT_FARBE = FWERT_PUNKT_FARBE;
+window.SCHRIFT_SANS = SCHRIFT_SANS;
+window.SCHRIFT_SERIF = SCHRIFT_SERIF;
 
 // Stammdaten: welche Kapitel, welche Scroll-Marken, welcher Sammelpunkt
 window.KAPITEL_MIT_SPINE_PANEL = KAPITEL_MIT_SPINE_PANEL;

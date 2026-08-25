@@ -143,7 +143,7 @@ function spineLayout(eintraege, daten, abstand, startX) {
   });
 
   // Dieselbe Schrift wie beim Zeichnen, sonst stimmen die Breiten nicht.
-  textFont("'Source Sans 3', sans-serif");
+  textFont(SCHRIFT_SANS);
   textStyle(BOLD);
   textSize(11);
 
@@ -266,7 +266,7 @@ function zeichneSpineHorizontal(eintraege, fortschritt, daten = stationenData) {
     radiusNachIndex.set(k.i, k.radius);
   });
 
-  textFont("'Source Sans 3', sans-serif");
+  textFont(SCHRIFT_SANS);
   textStyle(BOLD);
   textSize(11);
   textAlign(CENTER, TOP);

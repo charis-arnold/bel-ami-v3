@@ -51,7 +51,7 @@ function zeichneFotoMarker(activeBbox, offsetX = mapOffsetX, offsetY = mapOffset
     drawingContext.fillText('*', pos.x, pos.y - 3); // -3 korrigiert die Glyphe optisch nach oben
 
     if (hover) {
-      textFont("'Source Sans 3', sans-serif"); // wie .annotation-tag
+      textFont(SCHRIFT_SANS); // wie .annotation-tag
       textStyle(BOLD);
       textSize(11);
       let label = f.titel || 'Foto ansehen';

@@ -58,7 +58,7 @@ function zeichneMassstabsleiste(bbox, offsetX, alphaMultiplier = 1) {
   line(x2, y - tickHoehe, x2, y);
   noStroke();
   fill(26, 26, 26, 220 * alphaMultiplier);
-  textFont("'Source Sans 3', sans-serif");
+  textFont(SCHRIFT_SANS);
   textStyle(NORMAL);
   textSize(11);
   textAlign(CENTER, BOTTOM);
@@ -149,7 +149,7 @@ function zeichneWindrose(x, y, groesse, alphaMultiplier = 1) {
   fill(beschriftungsFarbe);
   textAlign(CENTER, CENTER);
   textSize(groesse * 0.2);
-  textFont("'Source Sans 3', sans-serif");
+  textFont(SCHRIFT_SANS);
   textStyle(BOLD);
   zeichneBeschriftung('N', 0, -rHaupt - 16);
   zeichneBeschriftung('O', rHaupt + 16, 0);

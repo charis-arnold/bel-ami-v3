@@ -14,7 +14,7 @@ Neun der zwölf Module sind gekapselt und geben nur die genannten Namen über
 | Modul | Exporte |
 |---|---|
 | `sketch.js` | 35 (13 Wert, 17 Lesebindung, **5 p5-Hooks**) |
-| `datenbereinigung.js` | 26 |
+| `datenbereinigung.js` | 28 |
 | `spine-horizontal.js` | 11 (3 Lesebindungen) |
 | `uebersichtsrouten.js` | 10 (3 Lesebindungen) |
 | `ortsveraenderung.js` | 8 |
@@ -189,7 +189,7 @@ eigenen Header-Abschnitt aus.
 
 | # | Modul | Zeilen | Hauptfunktionen | Wichtigste eigene Variablen |
 |---|---|---|---|---|
-| 1 | `datenbereinigung.js` | 572 | `bereinigeStationenDaten`, `baueSpineDaten`, `sammleAnnotationenNachOrtBasis`, `zaehleBandCounts`, `zaehleAnnotationenLiveNachOrtBasis`, `ortRunsFuerSpine`, `ortRunSichtbar`, `kreisRadius`, `groessterKreisRadius`, `hexZuRgb` | `KREIS_KATEGORIEN`, `SCROLL_MEILENSTEINE`, `ROUTE_COLOR_RGB`, alle `FWERT_*`, `KAPITEL_MIT_SPINE_PANEL`, `WOHNUNG_SAMMELPUNKT_ANKER` — **gekapselt**, 26 Exporte. Intern: alle drei `GEDANKEN_*`, die übrigen drei `WOHNUNG_*` und `valenzBucket` |
+| 1 | `datenbereinigung.js` | 572 | `bereinigeStationenDaten`, `baueSpineDaten`, `sammleAnnotationenNachOrtBasis`, `zaehleBandCounts`, `zaehleAnnotationenLiveNachOrtBasis`, `ortRunsFuerSpine`, `ortRunSichtbar`, `kreisRadius`, `groessterKreisRadius`, `hexZuRgb` | `KREIS_KATEGORIEN`, `SCROLL_MEILENSTEINE`, `ROUTE_COLOR_RGB`, alle `FWERT_*`, `KAPITEL_MIT_SPINE_PANEL`, `WOHNUNG_SAMMELPUNKT_ANKER`, `SCHRIFT_SANS`/`SCHRIFT_SERIF` — **gekapselt**, 28 Exporte. Intern: alle drei `GEDANKEN_*`, die übrigen drei `WOHNUNG_*` und `valenzBucket` |
 | 2 | `geo-projektion.js` | 148 | `lonLatToScreen`, `coverCrop`, `cropToBbox`, `bboxToImgCrop` | `startBbox`, `uebersichtBbox`, `ch1ImgBbox`, `mapOffsetX`, `mapOffsetY` |
 | 3 | `kreisgrafik.js` | 497 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `leereBandCounts` | `FWERT_PUNKT_DURCHMESSER` — **gekapselt**, die übrigen acht Namen (u. a. `HATCH_SPACING`, `FWERT_PUNKT_FARBE_RGB`, `zeichneKreisLabels`) sind modulintern |
 | 4 | `kartendekor.js` | 219 | `zeichneMassstabsleiste`, `zeichneWindrose` | — **gekapselt**, intern: `haversineMeter`, `MASSSTAB_SCHRITTE` |

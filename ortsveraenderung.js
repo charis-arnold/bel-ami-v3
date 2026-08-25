@@ -97,7 +97,6 @@ function ovVersatz(knoten, faktor) {
   let v = knoten.versatz;
   return v ? { x: (v.x || 0) * faktor, y: (v.y || 0) * faktor } : { x: 0, y: 0 };
 }
-const OV_TEXT_FONT = "'Source Serif 4', serif";
 // Datenzeile im Stil von .annotation-tag: serifenlos, fett, versal, gesperrt.
 const OV_DATEN_GROESSE = 9.5;
 const OV_DATEN_ZEILE = 14;
@@ -225,7 +224,7 @@ function ovBerechneLayout() {
 
   // Beschriftungsbreiten messen: sie können breiter sein als ihr Kreis und
   // bestimmen mit, wie weit ein Ort vom Rand weg muss.
-  textFont("'Source Sans 3', sans-serif");
+  textFont(SCHRIFT_SANS);
   textStyle(BOLD);
   textSize(13);
   let labelZeilen = VERGLEICHS_KNOTEN.map(k => ovLabelZeilen(k.label.toUpperCase()));
@@ -233,10 +232,10 @@ function ovBerechneLayout() {
   textStyle(NORMAL);
 
   // Erläuterungstexte umbrechen — in ihrer eigenen Schrift gemessen.
-  textFont(OV_TEXT_FONT);
+  textFont(SCHRIFT_SERIF);
   textSize(OV_TEXT_GROESSE);
   let textZeilen = VERGLEICHS_KNOTEN.map(k => ovTextUmbruch(k.text, OV_TEXT_BREITE));
-  textFont("'Source Sans 3', sans-serif");
+  textFont(SCHRIFT_SANS);
   textStyle(BOLD);
   textSize(OV_DATEN_GROESSE);
   // Zwei feste Zeilen: Kapitel/Annotationen oben, Valenz/F-Werte darunter —
@@ -248,7 +247,7 @@ function ovBerechneLayout() {
     return ovTextUmbruch(oben, OV_TEXT_BREITE).concat(unten ? ovTextUmbruch(unten, OV_TEXT_BREITE) : []);
   });
   textStyle(NORMAL);
-  textFont(OV_TEXT_FONT);
+  textFont(SCHRIFT_SERIF);
   textSize(OV_TEXT_GROESSE);
 
   // Höhe unter dem Kreis: nur Ortsbeschriftung und Kapitelzeile.
@@ -394,7 +393,7 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
 
   let n = VERGLEICHS_KNOTEN.length;
 
-  textFont("'Source Sans 3', sans-serif");
+  textFont(SCHRIFT_SANS);
   textAlign(CENTER, CENTER);
 
   VERGLEICHS_KNOTEN.forEach((k, i) => {
@@ -468,7 +467,7 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
     let pTextbox = constrain(map(pKapitel * 18, erstes - 1, erstes, 0, 1), 0, 1);
     let erlaeuterung = layout.textZeilen[i];
     if (pTextbox > 0 && erlaeuterung && erlaeuterung.length) {
-      textFont(OV_TEXT_FONT);
+      textFont(SCHRIFT_SERIF);
       textStyle(NORMAL);
       textSize(OV_TEXT_GROESSE);
       textAlign(LEFT, CENTER);
@@ -519,7 +518,7 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
       // fehlt wird es ignoriert.
       let daten = layout.datenZeilen[i];
       if (daten && daten.length) {
-        textFont("'Source Sans 3', sans-serif");
+        textFont(SCHRIFT_SANS);
         textStyle(BOLD);
         textSize(OV_DATEN_GROESSE);
         drawingContext.letterSpacing = '0.06em';
@@ -532,7 +531,7 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
         textStyle(NORMAL);
       }
 
-      textFont("'Source Sans 3', sans-serif");
+      textFont(SCHRIFT_SANS);
       textSize(11);
       textAlign(CENTER, CENTER);
       drawingContext.textAlign = 'center';

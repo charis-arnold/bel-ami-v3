@@ -102,7 +102,7 @@ function zeichneKreisLabels(kandidaten) {
   push(); // sechs Zeichenzustände plus direkte fillStyle-Schreibzugriffe
   noStroke();
   fill(33, 43, 46, 255); // #212B2E, wie die Kapitelnummern
-  textFont("'Source Sans 3', sans-serif"); // wie .annotation-tag (var(--sans)) und die Spine-Labels
+  textFont(SCHRIFT_SANS); // wie .annotation-tag (var(--sans)) und die Spine-Labels
   textSize(11);
   textStyle(BOLD); // .annotation-tag ist font-weight: 700
   textAlign(LEFT, CENTER);

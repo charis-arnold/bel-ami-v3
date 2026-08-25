@@ -153,7 +153,7 @@ function zeichneUebersichtsrouten(bbox, alpha, fortschritt) {
   // Startpunkt und Kapitelnummer je Route. Kapitel mit eigener Ansicht sind
   // klickbar (kapitelHatEigeneAnsicht).
   noStroke();
-  textFont("'Source Sans 3', sans-serif"); // wie .annotation-tag (var(--sans)) und die Kreis-Labels
+  textFont(SCHRIFT_SANS); // wie .annotation-tag (var(--sans)) und die Kreis-Labels
   textStyle(BOLD); // .annotation-tag ist font-weight: 700
   textAlign(LEFT, CENTER);
   textSize(11);
