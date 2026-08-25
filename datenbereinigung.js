@@ -153,8 +153,9 @@ function ortRunsFuerSpine(daten) {
 // verschieben sich die Akte gegeneinander.
 const SCROLL_MEILENSTEINE = {
   heroFadeStart: 0.011829, heroFadeEnd: 0.035485,
-  // 700vh Lesezeit davor: der Begleittext bleibt auf der Startseite lesbar.
-  zoomStart: 0.110753, zoomEnd: 0.158065,
+  // 960vh davor für den zwölfteiligen Intro-Crawl (.begleittext in
+  // index.html), 80vh je Text. Zoomdauer unverändert 440vh.
+  zoomStart: 0.137227, zoomEnd: 0.184539,
   // Spine blendet gleichzeitig mit dem Zoom-Beginn ein.
   spineFadeStart: 0.113118, spineFadeEnd: 0.16043,
   // 550vh Lesezeit davor für den Kapitel-Einstiegstext.
