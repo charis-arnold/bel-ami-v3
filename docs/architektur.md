@@ -78,6 +78,50 @@ zugreift, ist nirgends deklariert, sondern ergibt sich aus der Reihenfolge in
 
 ---
 
+## Kommentar-Konventionen
+
+Gilt für alle zwölf Module. Aufgestellt beim Kommentar-Durchgang im August
+2026, der die Kommentarzeilen projektweit von 2260 auf 752 gebracht hat.
+
+**Länge**
+
+- **Jeder Kommentar höchstens 1–2 Zeilen.** Braucht eine Erklärung mehr,
+  gehört sie nicht in den Code, sondern nach `docs/` — oder gar nicht
+  geschrieben.
+- **Ausnahme: Warnung vor einem echten Stolperstein.** Ein Fehler, der sonst
+  wiederkehrt, darf 3–4 Zeilen bekommen. Solche Blöcke beginnen mit
+  `ACHTUNG` und stehen als eigener Block, nicht mit beschreibendem Text
+  verklebt — sonst ist die Warnung im Fliesstext nicht mehr erkennbar.
+- **Kopfblock am Dateianfang: 4–5 Zeilen.** Was die Datei macht, grob wie.
+  Keine Abhängigkeitslisten — die stehen im Diagramm oben in dieser Datei.
+
+**Inhalt**
+
+- **Nur der Ist-Zustand.** Keine Historie („früher…", „vorher stand hier…"),
+  keine Bug-Geschichten, keine verworfenen Alternativen. Was einmal war,
+  steht in `docs/cleanup-log.md` und in der Git-Historie.
+- **Selbsterklärender Code bekommt keinen Kommentar.** Das Was steht im
+  Code; ein Kommentar begründet das Warum oder er entfällt.
+- **Offene Stellen ehrlich benennen** statt zu beschönigen — „Ursache
+  ungeklärt, nur umgangen" ist eine zulässige und erwünschte Aussage.
+- **Konkret statt abstrakt.** Zeilennummern, Funktionsnamen, echte Werte,
+  wo sie tragen.
+
+**Prüfbarkeit**
+
+Beim Kürzen zeigte sich wiederholt: Kommentare veralten schneller als Code.
+Zwei Dinge deshalb bei jeder Änderung mitprüfen —
+
+- **Dateiangaben.** Verweise wie „`zeichneKreiseFuerRun` in `sketch.js`" waren
+  an mehreren Stellen falsch, weil die Funktion längst in einem anderen Modul
+  lag. Ein Verweis nennt die Datei nur, wenn sie stimmt.
+- **Namen, die es nicht mehr gibt.** Der Durchgang fand rund fünfzehn tote
+  Namen in Kommentaren (`aktualisiereGrafik`, `zeichneVergleichsKnoten`,
+  `sonifikationSpieltAb`, `baue_kapitel03.py` …). Vor dem Umbenennen oder
+  Entfernen eines Namens auch die Kommentare mitsuchen, nicht nur den Code.
+
+---
+
 ## Ladereihenfolge
 
 `index.html` lädt zuerst zwei externe Bibliotheken, dann zwölf eigene Dateien:

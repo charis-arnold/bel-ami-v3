@@ -21,9 +21,8 @@
 // Zeilenabstand der Schraffur in den Gesamtkreisen.
 const HATCH_SPACING = 3;
 
-// Dämpft NUR die neutrale Vollfläche, damit sie leiser wirkt als die
-// Valenz-Halbkreise. Nicht auf Schraffur reduziert — sonst verwechselbar
-// mit den Gesamtkreisen.
+// Dämpft nur die neutrale Vollfläche, damit sie leiser wirkt als die
+// Valenz-Halbkreise. Schraffur wäre mit den Gesamtkreisen verwechselbar.
 const NEUTRAL_DAEMPFUNG = 0.35;
 
 // ---------------------------------------------------------------------------

@@ -554,8 +554,8 @@ function draw() {
   // aus, siehe .scrolly-stage.grafik-ansicht in style.css.
   stage.classList.toggle('grafik-ansicht', inKapitelGrafikAnsicht);
 
-  // In jeder Kapitel-Ansicht sind die Halbkreise oben/unten geteilt,
-  // links/rechts nur im Schlussakt.
+  // Alle Ansichten teilen die Halbkreise oben/unten, auch der Schlussakt —
+  // die Legende hat deshalb nur noch eine Fassung.
   if (legendeValenzText) {
     legendeValenzText.textContent = LEGENDE_VALENZ_OBEN_UNTEN;
     legendeValenzKreis.classList.add('valenz-oben-unten');

@@ -1,11 +1,10 @@
 /* =============================================================================
    uebersichtsrouten.js — Übersichtsakt und Kapitel-Navigation
 
-   Zeichnet im Übersichtsakt die Routen 02–18 nacheinander auf die
-   rausgezoomte Karte, bei geöffnetem Kapitel stattdessen dessen genaue
-   Route, Kreise und Annotation. Hält den Navigationszustand zoomedKapitel /
-   kapitelZoomAmount / kapitelHover — nur hier geschrieben, nach aussen
-   Lesebindung. Rest: docs/architektur.md.
+   Zeichnet im Übersichtsakt die Routen 02–18 nacheinander auf die rausgezoomte
+   Karte, bei geöffnetem Kapitel stattdessen dessen genaue Route, Kreise und
+   Annotation. Hält zoomedKapitel / kapitelZoomAmount / kapitelHover — nur hier
+   geschrieben, nach aussen Lesebindung. Rest: docs/architektur.md.
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
