@@ -374,7 +374,7 @@ function zeichneSpineHorizontal(eintraege, fortschritt, daten = stationenData) {
     // Canvas zeigt -HALF_PI nach oben). Die F-Wert-Punkte bekommen denselben
     // Winkel, damit sie auf der Seite ihrer Valenz bleiben.
     let radius = zeichneKreiseFuerRun(k.x, linieY, k.bc, 1, PI);
-    zeichneFwertPunkte(k.x, linieY, radius, k.fwertAnnotationen, 1, 'obenUnten');
+    zeichneFwertPunkte(k.x, linieY, radius, k.fwertAnnotationen, 1);
     radiusNachIndex.set(k.i, radius);
   });
 

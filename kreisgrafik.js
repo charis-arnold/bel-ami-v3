@@ -15,10 +15,6 @@
    gruppiert in 120°-Dritteln auf der Seite seiner Valenz, bei Bedarf in
    mehreren Ringen.
 
-   Ganz oben in dieser Datei steht ZEIGE_NEUTRALE_WERTE — der EIN/AUS-Schalter,
-   der neutrale F-Wert-Punkte und neutrale Vollkreise in allen Ansichten
-   ausblendet, ohne Daten oder Zählungen anzufassen.
-
    Die Winkel-Konvention ist bewusst NICHT an die Laufrichtung der Route
    gebunden: In Karten- ("Plan") wie Graph-Ansicht teilt dieselbe waagrechte
    Linie positiv (oben) von negativ (unten) — beide Ansichten zeigen
@@ -26,7 +22,7 @@
    Ortsveränderung (ortsveraenderung.js) teilt seit der Vereinheitlichung
    ebenso — alle drei Ansichten lesen sich gleich. Steuerung über den
    winkel-Parameter von
-   zeichneKreiseFuerRun() bzw. anordnung von zeichneFwertPunkte().
+   zeichneKreiseFuerRun().
 
    --- Abhängigkeiten NACH AUSSEN (Laufzeit) --------------------------------
    aus datenbereinigung.js (14): KREIS_KATEGORIEN, kreisRadius, FWERT_PUNKTGROESSE,
@@ -45,9 +41,6 @@
    Diese Zeile ruft eine fremde Funktion beim Laden auf. Diese Datei MUSS
    deshalb nach datenbereinigung.js stehen — sonst ReferenceError. Sie ist der
    einzige nicht-literale Top-Level-Initialisierer hier.
-   Umgekehrt liest sketch.js ZEIGE_NEUTRALE_WERTE (s.u.) schon beim Laden, für
-   die Legendentexte — diese Datei muss also auch VOR sketch.js stehen. In
-   index.html ist beides erfüllt (datenbereinigung → kreisgrafik → … → sketch).
 
    --- Wer von aussen hierher greift ----------------------------------------
    sketch.js              zeichneKreiseOrtRuns (Kapitel-1-Route und Kapitel-Zoom)
@@ -58,48 +51,6 @@
    Damit ist dies nach geo-projektion.js die zweite gemeinsame Grundlage
    mehrerer Module — es steht in index.html entsprechend weit vorne.
 ============================================================================= */
-
-// ---------------------------------------------------------------------------
-// EIN/AUS: neutrale Werte — HIER umschalten
-// ---------------------------------------------------------------------------
-
-// Zentraler Schalter für alle neutral bewerteten Teile der Kreisgrafik.
-//   true  — Normalzustand, alles wird gezeichnet
-//   false — neutrale F-Wert-Punkte UND neutrale Vollkreise werden übersprungen
-//
-// Wirkt in BEIDEN Ansichten (Karte/"Plan" und Graph/Spine) sowie im Schlussakt
-// Ortsveränderung, weil alle drei ihre Kreise über zeichneKreiseFuerRun() und
-// zeichneFwertPunkte() in DIESER Datei zeichnen — es gibt keinen zweiten
-// Renderer, der umgangen werden könnte.
-//
-// REIN VISUELL. Unberührt bleiben: die JSON-Daten (kapitelXX-stationen.json),
-// das Annotationsschema, die bandCounts/Zählungen (zaehleAnnotationenLive-
-// NachOrtBasis) und die Kreisgrösse. Ein Kreis behält also seinen Durchmesser,
-// auch wenn seine neutralen Anteile ausgeblendet sind: der schraffierte
-// Gesamtkreis zählt weiterhin neg+pos+neutral+unrated (siehe
-// zeichneKreiseFuerRun). Ausgeblendet wird nur, was gezeichnet wird.
-const ZEIGE_NEUTRALE_WERTE = true;
-
-// Gemeinsames Prädikat beider Renderer. "Neutral" meint hier die dritte
-// F-Wert-Gruppe ALS GANZES: echte Neutral-Annotationen (valenz === 0) und
-// unbewertete (valenz fehlt/null). Beide landen in zeichneFwertPunkte ohnehin
-// in derselben Gruppe und stehen in der Legende zusammen als
-// "neutral/unbewertet" — anders als valenzBucket() (datenbereinigung.js), das
-// sie für die bandCounts in zwei Buckets trennt.
-// Absichtlich über !== 1 && !== -1 formuliert statt über eine Aufzählung von
-// 0/null/undefined: so fällt auch ein unerwarteter Wert auf die neutrale Seite,
-// statt stillschweigend als bewertet durchzurutschen.
-function istNeutraleValenz(valenz) {
-  return valenz !== 1 && valenz !== -1;
-}
-
-// Filter für rohe Annotationslisten (F-Wert-Punkte). Liefert eine gefilterte
-// KOPIE — das übergebene Array bleibt unangetastet, damit Aufrufer, die
-// dieselbe Liste noch für Zählungen o.ä. brauchen, nichts davon merken.
-function sichtbareFwertAnnotationen(annotationen) {
-  if (ZEIGE_NEUTRALE_WERTE) return annotationen;
-  return annotationen.filter(a => !istNeutraleValenz(a.valenz));
-}
 
 // Zeilenabstand der Schraffur in den Gesamtkreisen (siehe drawHatchedCircle).
 const HATCH_SPACING = 3;
@@ -178,7 +129,7 @@ function zeichneKreiseOrtRuns(punktIndex, annIndex, activeBbox, offsetX = mapOff
     // Bildsprache neu lesen.
     let radius = zeichneKreiseFuerRun(pos.x, pos.y, bandCounts, 1, PI);
     let fwertAnnotationen = sammleAnnotationenNachOrtBasis(filter, annIndex, daten).filter(a => a.hasFwert);
-    zeichneFwertPunkte(pos.x, pos.y, radius, fwertAnnotationen, 1, 'obenUnten');
+    zeichneFwertPunkte(pos.x, pos.y, radius, fwertAnnotationen, 1);
     if (radius > 0) {
       // Label mit demselben Begriff wie in der Spine (r.ort) — erst
       // sammeln, Kollisionen erst nach der Schleife auflösen (siehe
@@ -359,14 +310,10 @@ function zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF
     if (negR > 0) flaechenFormen.push({ r: negR, zeichne: () => zeichneHalbkreis(cx, cy, negR, winkel - HALF_PI, k.farbe, alphaSkala, blend) });
     if (posR > 0) flaechenFormen.push({ r: posR, zeichne: () => zeichneHalbkreis(cx, cy, posR, winkel + HALF_PI, k.farbe, alphaSkala, blend) });
     // Neutrale Valenz: ganzer flächiger Kreis statt Halbkreis — hat keine
-    // Links/Rechts- bzw. Oben/Unten-Seite wie neg/pos. Bei
-    // ZEIGE_NEUTRALE_WERTE = false wird nur das ZEICHNEN übersprungen —
-    // neutralR wird oben trotzdem berechnet und bc.neutral zählt weiterhin in
-    // den schraffierten Gesamtkreis, der Kreis bleibt also gleich gross.
+    // Links/Rechts- bzw. Oben/Unten-Seite wie neg/pos. NEUTRAL_DAEMPFUNG macht
+    // die Fläche leiser als die Valenz-Halbkreise.
     // Unbewertete (bc.unrated) haben ohnehin nie eine eigene Fläche.
-    // NEUTRAL_DAEMPFUNG gilt im Normalzustand (Schalter an): die Fläche wird
-    // gezeichnet, aber leiser als die Valenz-Halbkreise.
-    if (ZEIGE_NEUTRALE_WERTE && neutralR > 0) flaechenFormen.push({ r: neutralR, zeichne: () => zeichneVollkreis(cx, cy, neutralR, k.farbe, alphaSkala * NEUTRAL_DAEMPFUNG, blend) });
+    if (neutralR > 0) flaechenFormen.push({ r: neutralR, zeichne: () => zeichneVollkreis(cx, cy, neutralR, k.farbe, alphaSkala * NEUTRAL_DAEMPFUNG, blend) });
   });
 
   hatchFormen.sort((a, b) => b.r - a.r).forEach(f => f.zeichne());
@@ -397,34 +344,21 @@ const FWERT_PUNKT_RING_ABSTAND = 8; // Abstand zwischen zwei Punkte-Ringen, fall
 // Emotion aus, 2 Emotion färbt Raum, 3 Körper als Sensor), Farbe einheitlich
 // (FWERT_PUNKT_FARBE). Position: eines von drei 120°-Dritteln rund um den
 // Kreis, auf derselben Seite wie der Valenz-Halbkreis derselben Bewertung
-// (siehe anordnung unten und zeichneKreiseFuerRun).
+// (siehe zeichneKreiseFuerRun).
 // Reichen die Punkte eines Drittels nicht auf einen Bogen, wachsen
 // weitere, weiter aussen liegende Ringe nach (z.B. "Cannes", Kapitel 8, mit
 // 87 F-Wert-Annotationen an einem einzigen Ort).
-function zeichneFwertPunkte(cx, cy, kreisRadius, fwertAnnotationen, alphaSkala = 1, anordnung = 'seitlich') {
-  // Der EIN/AUS-Schalter greift hier, am gemeinsamen Eingang aller drei
-  // Aufrufer (Karte, Graph, Ortsveränderung) — nicht in den Aufrufern selbst,
-  // damit keiner von ihnen vergessen werden kann. Gefiltert wird eine Kopie;
-  // die Liste des Aufrufers bleibt vollständig.
-  fwertAnnotationen = sichtbareFwertAnnotationen(fwertAnnotationen);
+function zeichneFwertPunkte(cx, cy, kreisRadius, fwertAnnotationen, alphaSkala = 1) {
   if (!fwertAnnotationen.length || kreisRadius <= 0) return;
 
   const DRITTEL = TWO_PI / 3;
-  // Gruppenmitten [negativ, positiv, neutral/unbewertet] je Anordnung. Sie
-  // folgen der Teilung der Halbkreise in zeichneKreiseFuerRun, damit die
-  // Punkte einer Valenz auf DERSELBEN Seite liegen wie ihre Fläche:
-  //   'seitlich' (Halbkreise links/rechts): negativ oben-links, positiv
-  //     oben-rechts, neutral unten — die beiden Valenz-Gruppen liegen als
-  //     Drittel-Paar symmetrisch um die Senkrechte. Derzeit ohne Aufrufer.
-  //   'obenUnten' (Karte UND Graph, Halbkreise oben/unten): positiv GENAU oben,
-  //     negativ GENAU unten, neutral rechts daneben. Hier lassen sich die
-  //     Mitten nicht aus einer gemeinsamen Drehung ableiten — oben und unten
-  //     liegen 180° auseinander, drei gleiche Drittel aber nur 120°. Darum
-  //     stehen sie hier fest, statt wie bei 'seitlich' aus einem Winkel
-  //     berechnet zu werden.
-  let mitten = anordnung === 'obenUnten'
-    ? [HALF_PI, -HALF_PI, 0]
-    : [-HALF_PI - DRITTEL / 2, -HALF_PI + DRITTEL / 2, HALF_PI];
+  // Gruppenmitten [negativ, positiv, neutral/unbewertet]. Sie folgen der
+  // Teilung der Halbkreise in zeichneKreiseFuerRun, damit die Punkte einer
+  // Valenz auf DERSELBEN Seite liegen wie ihre Fläche: positiv GENAU oben,
+  // negativ GENAU unten, neutral rechts daneben. Fest notiert statt aus einer
+  // Drehung abgeleitet — oben und unten liegen 180° auseinander, drei gleiche
+  // Drittel aber nur 120°.
+  let mitten = [HALF_PI, -HALF_PI, 0];
   let gruppen = mitten.map(mitte => ({ mitte, formen: [] }));
   fwertAnnotationen.forEach(a => {
     let gruppe = a.valenz === -1 ? gruppen[0] : a.valenz === 1 ? gruppen[1] : gruppen[2];
@@ -435,21 +369,9 @@ function zeichneFwertPunkte(cx, cy, kreisRadius, fwertAnnotationen, alphaSkala =
     });
   });
 
-  // Sektorbreite: im Normalzustand (ZEIGE_NEUTRALE_WERTE) bleibt sie hart bei
-  // einem Drittel — das gewohnte Bild mit allen drei Gruppen darf sich NICHT
-  // verändern, auch nicht an Orten, die zufällig nur zwei Gruppen belegen.
-  // Erst wenn die neutrale Gruppe per Toggle wegfällt, wird die Breite aus der
-  // Zahl der tatsächlich belegten Gruppen abgeleitet: zwei Gruppen bekommen je
-  // eine Halbebene (negativ unten, positiv oben — passend zu den
-  // Valenz-Halbkreisen darunter), eine einzelne den ganzen Kreis. Der freie
-  // Platz der ausgeblendeten Gruppe verfällt damit nicht mehr ungenutzt.
-  let neuVerteilen = !ZEIGE_NEUTRALE_WERTE;
-  let belegteGruppen = gruppen.filter(g => g.formen.length).length;
-  let sektorBreite = neuVerteilen && belegteGruppen > 0 ? TWO_PI / belegteGruppen : DRITTEL;
-  // Etwas schmaler als der volle Sektor, damit Punkte an der Sektorgrenze
-  // nicht in den Nachbarsektor hineinragen (bei zwei Gruppen: damit sich die
-  // untere und die obere Halbebene links und rechts nicht berühren).
-  let maxSpanne = sektorBreite * 0.8;
+  // Etwas schmaler als das volle Drittel, damit Punkte an der Grenze nicht
+  // ins Nachbar-Drittel ragen.
+  let maxSpanne = DRITTEL * 0.8;
 
   noStroke();
   gruppen.forEach(({ mitte, formen }) => {
@@ -457,13 +379,8 @@ function zeichneFwertPunkte(cx, cy, kreisRadius, fwertAnnotationen, alphaSkala =
     let ringRadius = kreisRadius + FWERT_PUNKT_RAND_ABSTAND;
     let rest = formen;
     while (rest.length) {
-      // Platzbudget eines Rings. Im Normalzustand weiterhin das volle Drittel
-      // (unverändert, siehe oben) — im neu verteilten Zustand dagegen genau
-      // der Bogen, der anschliessend auch bespielt wird (maxSpanne statt
-      // sektorBreite). Vorher standen hier zwei verschiedene Breiten: gepackt
-      // wurde nach 120°, verteilt aber über 96°, also 25% Überbelegung — die
-      // Punkte überlappten sich zwangsläufig.
-      let bogenlaenge = ringRadius * (neuVerteilen ? maxSpanne : DRITTEL);
+      // Platzbudget eines Rings: das volle Drittel.
+      let bogenlaenge = ringRadius * DRITTEL;
       let platz = 0;
       let anzahlImRing = 0;
       for (let f of rest) {
@@ -482,7 +399,7 @@ function zeichneFwertPunkte(cx, cy, kreisRadius, fwertAnnotationen, alphaSkala =
       // würden drei Punkte über 144° verschmiert, nur weil so viel Platz da
       // ist. platz ist die Summe der Punktbreiten dieses Rings, also genau der
       // Bogen, den sie nebeneinander brauchen.
-      let spanne = neuVerteilen ? Math.min(maxSpanne, platz / ringRadius) : maxSpanne;
+      let spanne = maxSpanne;
       let n = ringFormen.length;
       ringFormen.forEach((f, i) => {
         let winkelPunkt = n === 1 ? mitte : mitte - spanne / 2 + (i / (n - 1)) * spanne;

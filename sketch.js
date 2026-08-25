@@ -79,11 +79,7 @@ let legendeValenzText, legendeValenzKreis; // Valenz-Zeile der Legende — Text/
 // keine Links/Rechts-Fassung mehr.
 const LEGENDE_VALENZ_OBEN_UNTEN = 'Volltonfarbe: oben positiv, unten negativ bewertet';
 let legendeFwertHinweis; // Positions-Hinweis der F-Wert-Punkte — ebenfalls ansichtsabhängig
-// Die dritte Gruppe (neutral/unbewertet) wird nur erwähnt, wenn sie überhaupt
-// gezeichnet wird — siehe ZEIGE_NEUTRALE_WERTE in kreisgrafik.js, das dafür
-// vor sketch.js geladen sein muss (in index.html der Fall).
-const LEGENDE_FWERT_OBEN_UNTEN = 'Position ausserhalb des Kreises: positiv oben, negativ unten'
-  + (ZEIGE_NEUTRALE_WERTE ? ', neutral/unbewertet rechts.' : '.');
+const LEGENDE_FWERT_OBEN_UNTEN = 'Position ausserhalb des Kreises: positiv oben, negativ unten, neutral/unbewertet rechts.';
 let legendeTab, legendeInhalt; // Tab (vertikal beschriftet, immer sichtbar solang legendeBox.sichtbar) + ausfahrender Inhalt (Farberklärung der Kreisgrafik)
 let prologBox, prologTab; // Zweites Register direkt unter Legende (siehe #registerTabs in index.html) — gleiches Verhalten wie Legende, eigener (statischer, hart codierter) Inhalt Projekt-Hintergrund
 let registerTabs; // gemeinsamer Fixed-Container beider Register (siehe #registerTabs in index.html) — trägt die legende-offen/prolog-offen-Klasse, an der sich der jeweils GESCHLOSSENE Tab orientiert, um mit ausrücken zu können (siehe CSS)

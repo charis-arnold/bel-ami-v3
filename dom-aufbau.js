@@ -176,10 +176,7 @@ function baueLegende() {
 
   legendeInhalt.appendChild(valenzZeile);
 
-  // Die Zeile zum neutralen Vollkreis entfällt ganz, wenn dieser gar nicht
-  // gezeichnet wird (siehe ZEIGE_NEUTRALE_WERTE in kreisgrafik.js) — eine
-  // Legende soll nichts erklären, was im Bild nicht vorkommt.
-  if (ZEIGE_NEUTRALE_WERTE) {
+  {
     let neutralZeile = document.createElement('div');
     neutralZeile.className = 'legende-valenz legende-valenz-mehr';
 
