@@ -589,7 +589,8 @@ h2 {
 }
 
 .legende-tab {
-  background: #BF9E16;
+  /* neues gold_hell, wie KREIS_KATEGORIEN in datenbereinigung.js */
+  background: #DEC131;
   color: #212B2E;
 }
 
