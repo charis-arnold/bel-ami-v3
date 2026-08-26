@@ -1,16 +1,10 @@
 /* =============================================================================
    dom-aufbau.js — Aufbau der HTML-Bedienelemente
 
-   Alles, was beim Start EINMAL an DOM-Knoten erzeugt wird: Kapitelregister
-   links, Legendeninhalt rechts, die drei Marker-Ebenen der Kapitel-1-Ansicht,
-   dazu der Umschalter des Legendenregisters. Hier wird nur gebaut — die
+   Alles, was beim Start EINMAL an DOM-Knoten erzeugt wird: das Kapitelregister
+   und die drei Marker-Ebenen der Kapitel-1-Ansicht. Hier wird nur gebaut — die
    Bildschirmposition bekommen die Knoten erst in draw().
 ============================================================================= */
-
-// Fährt den Registerinhalt aus oder ein; der Tab wandert in style.css mit.
-function oeffneRegister(box) {
-  box.classList.toggle('offen');
-}
 
 // Kapitelregister links: Plan/Graph, Leerzeile, "Alle", dann 01–18.
 // 01 springt zurück in die Hauptgeschichte statt in einen Kapitel-Zoom.
@@ -60,115 +54,6 @@ function baueKapitelRegister() {
   });
 
   return { modusZeile, planEintrag, graphEintrag, leerzeile, alleEintrag };
-}
-
-// Legende rechts, aus KREIS_KATEGORIEN gebaut statt hart codiert, damit sie
-// nie von den echten Kreisfarben abweicht.
-function baueLegende() {
-  let titel = document.createElement('div');
-  titel.className = 'legende-titel';
-  titel.textContent = 'Legende';
-  legendeInhalt.appendChild(titel);
-
-  KREIS_KATEGORIEN.forEach(k => {
-    let zeile = document.createElement('div');
-    zeile.className = 'legende-zeile';
-
-    let kreis = document.createElement('span');
-    kreis.className = 'legende-kreis';
-    kreis.style.setProperty('--legende-farbe', `rgb(${k.farbe.join(', ')})`);
-    zeile.appendChild(kreis);
-
-    let label = document.createElement('span');
-    label.className = 'legende-label';
-    label.textContent = CATEGORY_LABELS[k.key] || k.key;
-    zeile.appendChild(label);
-
-    legendeInhalt.appendChild(zeile);
-  });
-
-  let hinweisSchraffur = document.createElement('p');
-  hinweisSchraffur.className = 'legende-hinweis';
-  hinweisSchraffur.textContent = 'Schraffur: alle Erwähnungen der Kategorie (auch neutral/unbewertet). Kreisgrösse = Anzahl.';
-  legendeInhalt.appendChild(hinweisSchraffur);
-
-  let valenzZeile = document.createElement('div');
-  valenzZeile.className = 'legende-valenz';
-
-  let valenzKreis = document.createElement('span');
-  valenzKreis.className = 'legende-valenz-kreis';
-  let beispielFarbe = KREIS_KATEGORIEN.find(k => k.key === 'gold_mittel') || KREIS_KATEGORIEN[0];
-  valenzKreis.style.setProperty('--legende-farbe', `rgb(${beispielFarbe.farbe.join(', ')})`);
-  valenzZeile.appendChild(valenzKreis);
-
-  let valenzText = document.createElement('span');
-  valenzText.className = 'legende-valenz-text';
-  valenzText.textContent = LEGENDE_VALENZ_OBEN_UNTEN;
-  valenzZeile.appendChild(valenzText);
-      // Gehen als Rückgabewert hinaus; draw() setzt die Legende jeden Frame.
-      legendeValenzText = valenzText;
-      legendeValenzKreis = valenzKreis;
-
-  legendeInhalt.appendChild(valenzZeile);
-
-  {
-    let neutralZeile = document.createElement('div');
-    neutralZeile.className = 'legende-valenz legende-valenz-mehr';
-
-    let neutralKreis = document.createElement('span');
-    neutralKreis.className = 'legende-valenz-kreis-voll';
-    neutralKreis.style.setProperty('--legende-farbe', `rgb(${beispielFarbe.farbe.join(', ')})`);
-    neutralZeile.appendChild(neutralKreis);
-
-    let neutralText = document.createElement('span');
-    neutralText.className = 'legende-valenz-text';
-    neutralText.textContent = 'Ganzer Kreis: neutral bewertet';
-    neutralZeile.appendChild(neutralText);
-
-    legendeInhalt.appendChild(neutralZeile);
-  }
-
-  let fwertTitel = document.createElement('div');
-  fwertTitel.className = 'legende-fwert-titel';
-  fwertTitel.textContent = 'F-Wert';
-  legendeInhalt.appendChild(fwertTitel);
-
-  // Reihenfolge = Grösse 1..3, siehe FWERT_PUNKTGROESSE.
-  [
-    { groesse: 1, text: 'Raum löst Emotion aus' },
-    { groesse: 2, text: 'Emotion färbt Raum' },
-    { groesse: 3, text: 'Körper als Sensor' },
-  ].forEach(({ groesse, text }) => {
-    let zeile = document.createElement('div');
-    zeile.className = 'legende-fwert-zeile';
-
-    let punkt = document.createElement('span');
-    punkt.className = 'legende-fwert-punkt';
-    let d = FWERT_PUNKT_DURCHMESSER[groesse];
-    punkt.style.width = d + 'px';
-    punkt.style.height = d + 'px';
-    punkt.style.backgroundColor = FWERT_PUNKT_FARBE;
-    zeile.appendChild(punkt);
-
-    let label = document.createElement('span');
-    label.className = 'legende-label';
-    label.textContent = text;
-    zeile.appendChild(label);
-
-    legendeInhalt.appendChild(zeile);
-  });
-
-  let fwertHinweis = document.createElement('p');
-  fwertHinweis.className = 'legende-hinweis';
-  fwertHinweis.textContent = LEGENDE_FWERT_OBEN_UNTEN;
-  legendeInhalt.appendChild(fwertHinweis);
-
-  // Drei Handles hinaus; alle drei wechseln mit der Ansicht.
-  return {
-    legendeValenzText: valenzText,
-    legendeValenzKreis: valenzKreis,
-    legendeFwertHinweis: fwertHinweis,
-  };
 }
 
 function baueKartenMarkierungen() {

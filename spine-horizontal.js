@@ -102,7 +102,7 @@ function aktualisiereGrafikFortschritt() {
 }
 
 // Fester Abstand je Ortspunkt, Gesamtbreite ist n * Abstand; reicht der
-// Platz nicht, wird gestaucht. Ränder halten Register und Legende frei.
+// Platz nicht, wird gestaucht. Die Ränder halten das Kapitelregister frei.
 const SPINE_PUNKT_ABSTAND = 70;
 const SPINE_RAND_LINKS = 200;
 const SPINE_RAND_RECHTS = 340;

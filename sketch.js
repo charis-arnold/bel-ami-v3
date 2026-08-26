@@ -7,7 +7,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 36 von 70 Namen intern, 34 exportiert. Konvention: docs/architektur.md.
+// 32 von 60 Namen intern, 28 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 let stage, heroText, begleitTexte, kapitelEinstiegsTexte;
@@ -71,14 +71,6 @@ let kapitelRegister; // Kapitelregister links (inkl. Plan/Graph + Alle), sichtba
 let kapitelRegisterEintraege = {}; // nr -> Eintrags-Element, fürs Aktiv-Highlighting in draw()
 let planEintrag, graphEintrag; // "Plan"/"Graph"-Hälften oben im Register, fürs Aktiv-Highlighting in draw()
 let modusZeile, leerzeile, alleEintrag; // Plan/Graph-Zeile + Abstandshalter + "Alle" — in der Übersicht (kein Kapitel gezoomt) blendet draw() modusZeile/leerzeile aus und markiert alleEintrag als aktiv
-let legendeBox; // Register-Container (Tab+Inhalt), mitte rechts — sichtbar wie kapitelRegister (Plan UND Graph)
-let legendeValenzText, legendeValenzKreis; // Valenz-Zeile der Legende — Text/Symbol wechseln je Ansicht (siehe draw())
-// Alle drei Ansichten (Plan, Graph, Schlussakt) teilen oben/unten — es gibt
-// keine Links/Rechts-Fassung mehr.
-const LEGENDE_VALENZ_OBEN_UNTEN = 'Volltonfarbe: oben positiv, unten negativ bewertet';
-let legendeFwertHinweis; // Positions-Hinweis der F-Wert-Punkte — ebenfalls ansichtsabhängig
-const LEGENDE_FWERT_OBEN_UNTEN = 'Position ausserhalb des Kreises: positiv oben, negativ unten, neutral/unbewertet rechts.';
-let legendeTab, legendeInhalt; // Tab (vertikal beschriftet, immer sichtbar solang legendeBox.sichtbar) + ausfahrender Inhalt (Farberklärung der Kreisgrafik)
 
 // Erklärungs-Ebene über der laufenden Ansicht, geöffnet per Klick aufs
 // Kreisgrafik-Icon oben rechts. Jeder weitere Klick schliesst sie wieder.
@@ -210,10 +202,6 @@ function setup() {
   annotationTag = document.getElementById('annotationTag');
   annotationBar = document.getElementById('annotationBar');
   kapitelRegister = document.getElementById('kapitelRegister');
-  legendeBox = document.getElementById('legendeBox');
-  legendeTab = document.getElementById('legendeTab');
-  legendeInhalt = document.getElementById('legendeInhalt');
-  legendeTab.addEventListener('click', () => oeffneRegister(legendeBox));
   scrollFortschritt = document.getElementById('scrollFortschritt');
   grafikPlayButton = document.getElementById('grafikPlayButton');
   grafikPlayButton.addEventListener('click', toggleGrafikPlay);
@@ -236,13 +224,12 @@ function setup() {
   baueKartenMarkierungen();
   // ACHTUNG Destrukturierungs-ZUWEISUNG ohne const/let: die Handles sind oben
   // auf Modulebene deklariert. Ein `const { … } =` legte funktionslokale
-  // Konstanten an, die Modulvariablen blieben undefined — Menübalken und
-  // Legende fielen still aus.
+  // Konstanten an, die Modulvariablen blieben undefined — der Menübalken
+  // fiele still aus.
   //
-  // Vorher schrieb dom-aufbau.js diese acht direkt von aussen; jetzt baut es
+  // Vorher schrieb dom-aufbau.js diese fünf direkt von aussen; jetzt baut es
   // und gibt zurück (siehe docs/best-practices-review.md, "Gruppe B").
   ({ modusZeile, planEintrag, graphEintrag, leerzeile, alleEintrag } = baueKapitelRegister());
-  ({ legendeValenzText, legendeValenzKreis, legendeFwertHinweis } = baueLegende());
   baueStationsMarker();
   baueZwischenMarker();
 }
@@ -537,15 +524,6 @@ function draw() {
   let inUebersichtRouten = uebersichtRoutenFortschritt > 0 && !zoomedKapitel && kreisVergleichMapFade <= 0;
   kapitelRegister.classList.toggle('sichtbar', inKapitelAnsicht || inUebersichtRouten);
 
-  // Legende überall ausser auf der Start- und der Schlusskarte; dort ist die
-  // Kreisgrafik nicht zu sehen, die sie erklärt.
-  let aufStartkarte = progress < SCROLL_MEILENSTEINE.zoomStart;
-  let aufSchlusskarte = progress >= SCROLL_MEILENSTEINE.startkarteStart;
-  legendeBox.classList.toggle('sichtbar', !aufStartkarte && !aufSchlusskarte);
-
-  // Ausgefahrener Inhalt fährt ein, wenn das Register verschwindet — es
-  // taucht später eingefahren wieder auf, nicht im letzten Stand.
-  if (aufStartkarte || aufSchlusskarte) legendeBox.classList.remove('offen');
   // Plan/Graph nur in einer echten Kapitel-Ansicht; in der Übersicht ist
   // "Alle" der aktive Eintrag.
   modusZeile.classList.toggle('versteckt', !inKapitelAnsicht);
@@ -571,14 +549,6 @@ function draw() {
   // Kartenbezogene DOM-Overlays blenden sich in der Graph-Ansicht per CSS
   // aus, siehe .scrolly-stage.grafik-ansicht in style.css.
   stage.classList.toggle('grafik-ansicht', inKapitelGrafikAnsicht);
-
-  // Alle Ansichten teilen die Halbkreise oben/unten, auch der Schlussakt —
-  // die Legende hat deshalb nur noch eine Fassung.
-  if (legendeValenzText) {
-    legendeValenzText.textContent = LEGENDE_VALENZ_OBEN_UNTEN;
-    legendeValenzKreis.classList.add('valenz-oben-unten');
-    legendeFwertHinweis.textContent = LEGENDE_FWERT_OBEN_UNTEN;
-  }
 
   // Stillgelegt, siehe KARTEN_MARKER_SICHTBAR oben.
   if (KARTEN_MARKER_SICHTBAR) {
@@ -737,14 +707,12 @@ function zeichneRoute(punkte, upToIndex, bbox, strichstaerke = 2, offsetX = mapO
 
 
 // --- Export ------------------------------------------------------------
-// 34 Namen: 13 als Wert, 5 p5-Hooks, 16 als Lesebindung.
+// 28 Namen: 11 als Wert, 5 p5-Hooks, 12 als Lesebindung.
 
 // Konstanten, Funktionen und die vier nur befüllten Container: Die Bindung
 // ändert sich nie, deshalb Wertzuweisung.
 window.WEITERE_KAPITEL_NUMMERN = WEITERE_KAPITEL_NUMMERN;
 window.KAPITEL_EINSTIEG_SCROLL_ENDE = KAPITEL_EINSTIEG_SCROLL_ENDE;
-window.LEGENDE_VALENZ_OBEN_UNTEN = LEGENDE_VALENZ_OBEN_UNTEN;
-window.LEGENDE_FWERT_OBEN_UNTEN = LEGENDE_FWERT_OBEN_UNTEN;
 window.kapitelRegisterEintraege = kapitelRegisterEintraege;
 window.markierungsEintraege = markierungsEintraege;
 window.stationsMarker = stationsMarker;
@@ -775,14 +743,10 @@ lesebindung('kapitel1ZoomAmount', () => kapitel1ZoomAmount);
 lesebindung('annotationText', () => annotationText);
 lesebindung('kartenMarkierungenEl', () => kartenMarkierungenEl);
 lesebindung('kapitelRegister', () => kapitelRegister);
-lesebindung('legendeInhalt', () => legendeInhalt);
 lesebindung('modusZeile', () => modusZeile);
 lesebindung('planEintrag', () => planEintrag);
 lesebindung('graphEintrag', () => graphEintrag);
 lesebindung('leerzeile', () => leerzeile);
 lesebindung('alleEintrag', () => alleEintrag);
-lesebindung('legendeValenzText', () => legendeValenzText);
-lesebindung('legendeValenzKreis', () => legendeValenzKreis);
-lesebindung('legendeFwertHinweis', () => legendeFwertHinweis);
 
 })(); // Ende der Modulkapselung, siehe Kommentar oben

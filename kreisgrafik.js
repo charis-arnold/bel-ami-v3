@@ -8,7 +8,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 32 von 42 Namen intern, 10 exportiert. Konvention: docs/architektur.md.
+// 33 von 42 Namen intern, 9 exportiert. Konvention: docs/architektur.md.
 // ACHTUNG Ladezeit: hexZuRgb() und baueDemoAnnotationen() laufen schon in der
 // IIFE — diese Datei muss nach datenbereinigung.js stehen, sonst ReferenceError.
 // p5s Konstanten (PI, HALF_PI) gibt es hier noch nicht, die setzt p5 erst beim
@@ -531,8 +531,7 @@ function zeichneKreisErklaerung() {
 }
 
 // --- Export ------------------------------------------------------------
-// Zehn Namen. Leser: docs/architektur.md.
-window.FWERT_PUNKT_DURCHMESSER = FWERT_PUNKT_DURCHMESSER;
+// Neun Namen. Leser: docs/architektur.md.
 window.leereBandCounts = leereBandCounts;
 window.zeichneKreiseOrtRuns = zeichneKreiseOrtRuns;
 window.zeichneKreiseFuerRun = zeichneKreiseFuerRun;
