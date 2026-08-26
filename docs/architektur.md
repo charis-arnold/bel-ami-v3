@@ -243,13 +243,13 @@ eigenen Header-Abschnitt aus.
 | 8 | `annotationsbox.js` | 152 | `annotationBoxPosition` | `ANNOTATION_BOX_POSITIONEN` — **gekapselt**, intern u. a. `annotationBoxPositionCache` |
 | 9 | `dom-aufbau.js` | 107 | `baueKapitelRegister`, `baueKartenMarkierungen`, `baueStationsMarker`, `baueZwischenMarker` | — (baut nur DOM, hält keinen Zustand) |
 | 10 | `uebersichtsrouten.js` | 372 | `zeichneUebersichtsrouten`, `kapitelScheiben`, `aktualisiereKapitelZoom`, `springeZuKapitelZoom`, `scrolleZuKapitel1` | `zoomedKapitel`, `kapitelZoomAmount`, `kapitelHover` (alle drei als Lesebindung) — **gekapselt**, intern u. a. `kapitelHitze`, `oeffneKapitelZoom`, `scheibenCache` |
-| 11 | `sketch.js` | 892 | `preload`, `setup`, `draw`, `mousePressed`, `windowResized`, `zeichneRoute`, `datenFuerKapitel`, `kapitelHatEigeneAnsicht`, `setzeAnsichtsModus`, `starteKapitelEinstieg` | `stationenData`, `uebersichtsRouten`, `kapitelAnsichtsModus`, `kreisErklaerungOffen` (Zustand der Erklärungs-Ebene), 8 DOM-Handles (als Lesebindung) — **gekapselt**, intern u. a. `kapitelKarten`, `bgImage`/`bgImage2`/`ch1Image`, die übrigen DOM-Handles |
+| 11 | `sketch.js` | 1004 | `preload`, `setup`, `draw`, `mousePressed`, `windowResized`, `zeichneRoute`, `datenFuerKapitel`, `kapitelHatEigeneAnsicht`, `setzeAnsichtsModus`, `starteKapitelEinstieg` | `stationenData`, `uebersichtsRouten`, `kapitelAnsichtsModus`, `kreisErklaerungOffen` (Zustand der Erklärungs-Ebene), 8 DOM-Handles (als Lesebindung) — **gekapselt**, intern u. a. `kapitelKarten`, `bgImage`/`bgImage2`/`ch1Image`, die übrigen DOM-Handles |
 | 12 | `sonifikation.js` | 370 | `spieleSonifikationFuer`, `beendeSonifikationAudio` | `SONIFIKATION_GESAMTDAUER_SEK`, `sonifikationSpieltGerade` (als Lesebindung) — **gekapselt**, die übrigen 17 Namen (u. a. `baueSpielplan`, `baueGainFolge`, `sonifikationDaten`) sind modulintern |
 
 `dom-aufbau.js` ist das einzige Modul ohne eigene Top-Level-Variablen: es baut
 DOM-Knoten und schreibt sie in Handles, die `sketch.js` hält.
 
-Von `sketch.js`' 57 Top-Level-Variablen werden **25 in `setup()` über
+Von `sketch.js`' 62 Top-Level-Variablen werden **25 in `setup()` über
 `document.getElementById()` befüllt** — fünf davon (`fotoPopup` und die vier
 `fotoPopup*`-Unterelemente) sind in `fotomarker.js` deklariert und werden hier
 nur gefüllt.
@@ -260,6 +260,24 @@ nur gefüllt.
 `data-demo-gruppe`-Texte steuern die Beschriftungen am Demo-Kreis, der
 `data-foto-hinweis`-Text steuert den Bedienhinweis am Fotomarker und nennt
 zugleich dessen Titel. So gibt es je Fenster nur eine Zahl, nicht zwei.
+
+**Die Route wird in einen eigenen Puffer gezeichnet, nicht direkt aufs
+Canvas.** Grund ist der Verlauf: halbdurchsichtige Striche addieren nach
+Porter-Duff ihre Deckkraft, wo sie einander berühren — an Stufengrenzen, an
+den Kappen und überall, wo die Route sich selbst kreuzt. Im Puffer
+(`routenPufferBereit`) wird stattdessen jede Stufe **deckend** gezogen und
+überschreibt die vorherige; den Verlauf macht ein Waschgang vor jeder Stufe
+(`erase`, also `destination-out`), der allem bisher Gezeichneten anteilig
+Deckkraft nimmt. Die Waschstärken leiten sich aus `routenStufenAlpha()` ab und
+bilden dieselbe lineare Rampe wie zuvor exakt nach.
+
+Die Stufen schneidet `routenStufenZuege()` nach **Bogenlänge in
+Bildschirmpixeln** (`ROUTE_SCHWEIF_PX`), nicht nach Wegpunkt-Indizes: an die
+Punktdichte gebunden schwankte die Schweiflänge zwischen den Kapiteln um
+Faktor 13. Grenzen werden ins Segment interpoliert, damit benachbarte Züge
+exakt aneinander anschliessen. Der Puffer trägt keinen `alphaMultiplier` — der
+kommt erst beim Auflegen als `tint()`, damit er die Einblendung eines Kapitels
+ohne Neuaufbau übersteht.
 
 **Kapitel 1 endet an einer Klemme.** `uebersichtRoutenStart` ist zugleich das
 Ende von Kapitel 1: `draw()` hält die Scrollposition dort fest
