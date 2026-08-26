@@ -296,6 +296,13 @@ h2 {
   color: #212B2E;
 }
 
+/* Höher als die übrigen Begleittexte: auf 64 % läge der Text genau dort, wo
+   während der Route der Bedienhinweis am Fotomarker steht (siehe
+   data-foto-hinweis in index.html und zeichneFotoMarker). */
+.begleittext.begleittext-hoch {
+  top: 42%;
+}
+
 
 /* =========================
    2) Ort-Marker (Wohnung Duroy)

@@ -7,11 +7,16 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 32 von 60 Namen intern, 28 exportiert. Konvention: docs/architektur.md.
+// 34 von 62 Namen intern, 28 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 let stage, heroText, begleitTexte, kapitelEinstiegsTexte;
 let demoGruppenTexte; // die drei .begleittext mit data-demo-gruppe — ihre Fenster steuern auch die Beschriftungen am Demo-Kreis
+let fotoHinweisText;  // der .begleittext mit data-foto-hinweis — sein Fenster und sein Zielmarker steuern den Bedienhinweis an der Karte
+
+// Text des Bedienhinweises am Fotomarker. Auf welchen Marker er zeigt und
+// wann, steht am Begleittext in index.html — hier nur der Wortlaut.
+const FOTO_HINWEIS_TEXT = 'Diese Punkte lassen sich anklicken, um ein historisches Foto zu sehen.';
 let annotationBoxEl; // #annotationBox — trägt die Positionsklasse (pos-oben-links etc.), siehe annotationBoxPosition()
 let schlusstextEl;   // #schlusstext — Gegenstück zum Einstiegstext, blendet im Schlussakt ein
 let naechstesKapitelEl; // #naechstesKapitel — Hinweis am Kapitelende, siehe draw()
@@ -184,6 +189,8 @@ function setup() {
   begleitTexte = document.querySelectorAll('.begleittext');
   demoGruppenTexte = [...begleitTexte].filter(el => el.dataset.demoGruppe)
     .sort((a, b) => a.dataset.demoGruppe - b.dataset.demoGruppe);
+  // Ein Begleittext trägt den Hinweis; sein data-Wert nennt den Fotomarker.
+  fotoHinweisText = [...begleitTexte].find(el => el.dataset.fotoHinweis);
   kapitelEinstiegsTexte = document.querySelectorAll('.kapitel-einstiegstext');
 
   kartenMarkierungenEl = document.getElementById('kartenMarkierungen');
@@ -632,9 +639,16 @@ function draw() {
   let fotoOffsetX = (zoomedKapitel && kapitelZoomAmount > 0.001) ? mapOffsetX : kartenOffsetX;
   let fotoOffsetY = (zoomedKapitel && kapitelZoomAmount > 0.001) ? mapOffsetY : kartenOffsetY;
   merkeKartenlage(activeBbox, fotoOffsetX, fotoOffsetY);
+  // Der Bedienhinweis teilt sich das Scroll-Fenster mit seinem Kommentartext,
+  // damit beide zusammen erscheinen und wieder gehen.
+  let fotoHinweis = fotoHinweisText ? {
+    titel: fotoHinweisText.dataset.fotoHinweis,
+    text: FOTO_HINWEIS_TEXT,
+    alpha: begleittextDeckkraft(progress,
+      parseFloat(fotoHinweisText.dataset.von), parseFloat(fotoHinweisText.dataset.bis)),
+  } : null;
   // In der Graph-Ansicht nicht zeichnen, sonst schweben sie über der Spine.
-  // kartenZoomFaktor skaliert die Sternchen: der grössere der beiden Zooms.
-  if (!inKapitelGrafikAnsicht) zeichneFotoMarker(activeBbox, fotoOffsetX, fotoOffsetY, 1 - kreisVergleichMapFade, Math.max(zoomAmount, kapitelZoomAmount));
+  if (!inKapitelGrafikAnsicht) zeichneFotoMarker(activeBbox, fotoOffsetX, fotoOffsetY, 1 - kreisVergleichMapFade, fotoHinweis);
 
   // Demo-Kreisgrafik: wächst über den Erklärungstexten heran, schrumpft mit
   // dem Zoom auf den Icon-Platz oben rechts und bleibt dort stehen. Ganz

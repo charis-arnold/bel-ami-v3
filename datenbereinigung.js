@@ -6,7 +6,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 12 von 41 Namen intern, 29 exportiert. Konvention: docs/architektur.md.
+// 14 von 46 Namen intern, 32 exportiert. Konvention: docs/architektur.md.
 // ACHTUNG Skript 1 in index.html. kreisgrafik.js liest hexZuRgb beim Laden
 // — diese Datei nach hinten schieben bricht kreisgrafik.js.
 (function () {
@@ -28,7 +28,7 @@ function hexZuRgb(hex) {
 const ROUTE_COLOR_RGB = hexZuRgb(ROUTE_COLOR);
 
 const FWERT_COLOR = '#C2511C';
-const FWERT_COLOR_RGB = hexZuRgb(FWERT_COLOR); // z.B. Fotomarker-Asterisk
+const FWERT_COLOR_RGB = hexZuRgb(FWERT_COLOR); // Kapitelpunkte und Routen-Hitze im Übersichtsakt
 const FWERT_COLORS = {
   ort_loest_emotion_aus: '#AB3F0C',
   emotion_faerbt_raum: '#C2511C',
@@ -43,6 +43,11 @@ const FWERT_PUNKTGROESSE = {
   koerper_als_sensor: 3,    // Körper als Sensor
 };
 
+// Pixel-Durchmesser je Punktgrösse. Steht hier neben FWERT_PUNKTGROESSE, weil
+// beide dasselbe Mass in zwei Schritten ausdrücken; gelesen von kreisgrafik.js
+// (die Punkte selbst) und fotomarker.js (leitet daraus seine Markergrösse ab).
+const FWERT_PUNKT_DURCHMESSER = { 1: 5, 2: 7.5, 3: 10 };
+
 // Ausformulierte Namen der drei F-Wert-Typen, Gegenstück zu CATEGORY_LABELS.
 const FWERT_LABELS = {
   ort_loest_emotion_aus: 'Wechselwirkung: Der Raum löst Emotion aus.',
@@ -53,6 +58,16 @@ const FWERT_LABELS = {
 // Einheitlich für alle F-Wert-Punkte. Nicht FWERT_COLORS oben, das ist die
 // Annotationsleiste.
 const FWERT_PUNKT_FARBE = '#AB3F0C';
+
+// Fotomarker: dunkles Blaugrau, bewusst NICHT aus der Orange-Reihe. Sonst
+// stünden auf derselben Karte drei runde orange Zeichen mit drei Bedeutungen
+// — F-Wert-Punkte, Kapitelpunkte und Fotomarker.
+const FOTO_MARKER_FARBE = '#3A5058';
+const FOTO_MARKER_FARBE_RGB = hexZuRgb(FOTO_MARKER_FARBE);
+// Heller Kern im Marker, damit er auch auf dunklem Untergrund als Ring liest.
+// Derselbe Ton wie der Grund der Graph-Ansicht, aber eine eigene Entscheidung.
+const FOTO_MARKER_KERN_FARBE = '#E2E6E1';
+const FOTO_MARKER_KERN_FARBE_RGB = hexZuRgb(FOTO_MARKER_KERN_FARBE);
 
 // Schriften fürs Canvas. Spiegeln --sans/--serif in style.css; p5 kennt die
 // CSS-Variablen nicht, deshalb hier als Literal.
@@ -334,7 +349,7 @@ function baueSpineDaten(daten, hauptorte) {
 
 
 // --- Export ------------------------------------------------------------
-// 28 Namen, die grösste Schnittstelle im Projekt. Leser: docs/architektur.md.
+// 32 Namen, die grösste Schnittstelle im Projekt. Leser: docs/architektur.md.
 
 // Farben, Kategorien, Punktgrössen
 window.CATEGORY_COLORS = CATEGORY_COLORS;
@@ -346,8 +361,11 @@ window.FWERT_COLOR = FWERT_COLOR;
 window.FWERT_COLOR_RGB = FWERT_COLOR_RGB;
 window.FWERT_COLORS = FWERT_COLORS;
 window.FWERT_PUNKTGROESSE = FWERT_PUNKTGROESSE;
+window.FWERT_PUNKT_DURCHMESSER = FWERT_PUNKT_DURCHMESSER;
 window.FWERT_LABELS = FWERT_LABELS;
 window.FWERT_PUNKT_FARBE = FWERT_PUNKT_FARBE;
+window.FOTO_MARKER_FARBE_RGB = FOTO_MARKER_FARBE_RGB;
+window.FOTO_MARKER_KERN_FARBE_RGB = FOTO_MARKER_KERN_FARBE_RGB;
 window.SCHRIFT_SANS = SCHRIFT_SANS;
 window.SCHRIFT_SERIF = SCHRIFT_SERIF;
 

@@ -1,9 +1,10 @@
 /* =============================================================================
    fotomarker.js — Foto-Marker (Fotobank Huma-Num/FNP) und Bild-Popup
 
-   Additive Ebene über der Karte: an jeder Fotokoordinate ein Sternchen, das
-   bei Hover den Titel zeigt und beim Klick ein Popup öffnet. Hängt an keinem
-   Erzählzustand — Bbox und Kartenoffset kommen als Parameter.
+   Additive Ebene über der Karte: an jeder Fotokoordinate ein Punkt mit hellem
+   Kern, der bei Hover den Titel zeigt und beim Klick ein Popup öffnet. Hängt
+   an keinem Erzählzustand — Bbox, Kartenoffset und der optionale Hinweis
+   kommen als Parameter.
 
    ACHTUNG letzterFotoOffsetX/Y lesen mapOffsetX/Y BEIM LADEN — diese Datei
    muss nach geo-projektion.js stehen, sonst ReferenceError.
@@ -32,38 +33,74 @@ function merkeKartenlage(bbox, offsetX, offsetY) {
   letzterFotoOffsetY = offsetY;
 }
 
-function zeichneFotoMarker(activeBbox, offsetX = mapOffsetX, offsetY = mapOffsetY, alphaMultiplier = 1, kartenZoomFaktor = 0) {
+// hinweis (optional): { titel, text, alpha } — hängt ein beschriftetes Label
+// mit Zuführungslinie an genau den Marker mit diesem Titel. Zeitpunkt und
+// Deckkraft bestimmt der Aufrufer, siehe draw() in sketch.js.
+function zeichneFotoMarker(activeBbox, offsetX = mapOffsetX, offsetY = mapOffsetY, alphaMultiplier = 1, hinweis = null) {
   if (alphaMultiplier <= 0) return; // keine Karte, also auch keine Marker
-  // Grösse skaliert mit dem Zoom: 11 wie die Kapitelnummern in der Übersicht,
-  // 20 im Kartenausschnitt — sonst wirkt das Sternchen dort winzig.
-  let sternGroesse = lerp(11, 20, constrain(kartenZoomFaktor, 0, 1));
+  // Aussen so gross wie der grösste F-Wert-Punkt, der Kern so gross wie der
+  // kleinste. Abgeleitet statt fest, damit der Marker mitwandert, wenn sich
+  // die Punktgrössen ändern. Wie jene skaliert er nicht mit dem Zoom.
+  let punktGroessen = Object.values(FWERT_PUNKT_DURCHMESSER);
+  let aussenRadius = Math.max(...punktGroessen) / 2;
+  let kernRadius = Math.min(...punktGroessen) / 2;
+  // Tooltip und Hinweis erst nach der Schleife, sonst überzeichnet sie ein
+  // später gezeichneter Marker.
+  let unterCursor = null;
+  let hinweisLabel = null;
+
+  push(); // schreibt fillStyle direkt, wie zeichneFwertPunkte in kreisgrafik.js
+  noStroke();
+  let scheibe = (x, y, r, rgb) => {
+    drawingContext.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alphaMultiplier})`;
+    drawingContext.beginPath();
+    drawingContext.arc(x, y, r, 0, TWO_PI);
+    drawingContext.fill();
+  };
   fotoMarkerListe.forEach(f => {
     let pos = lonLatToScreen(f.lon, f.lat, activeBbox, offsetX, offsetY);
     let hover = dist(mouseX, mouseY, pos.x, pos.y) < FOTO_MARKER_TREFFER_RADIUS;
+    // Farbe bleibt beim Hover gleich — ein Wechsel ins Orange brächte genau
+    // die Verwechslung zurück, die FOTO_MARKER_FARBE vermeidet.
+    let skala = hover ? 1.5 : 1;
+    scheibe(pos.x, pos.y, aussenRadius * skala, FOTO_MARKER_FARBE_RGB);
+    scheibe(pos.x, pos.y, kernRadius * skala, FOTO_MARKER_KERN_FARBE_RGB);
 
-    noStroke();
-    fill(hover
-      ? color(FWERT_COLOR_RGB.r, FWERT_COLOR_RGB.g, FWERT_COLOR_RGB.b, 255 * alphaMultiplier) // #C2511C
-      : color(33, 43, 46, 255 * alphaMultiplier)); // #212B2E
-    textAlign(CENTER, CENTER);
-    textStyle(BOLD);
-    textSize(hover ? sternGroesse * 1.2 : sternGroesse);
-    drawingContext.fillText('*', pos.x, pos.y - 3); // -3 korrigiert die Glyphe optisch nach oben
-
-    if (hover) {
-      textFont(SCHRIFT_SANS); // wie .annotation-tag
-      textStyle(BOLD);
-      textSize(11);
-      let label = f.titel || 'Foto ansehen';
-      let tw = textWidth(label) + 16;
-      fill(0, 200 * alphaMultiplier);
-      rect(pos.x + 10, pos.y - 12, tw, 20, 4);
-      fill(255, 255 * alphaMultiplier);
-      textAlign(LEFT, CENTER);
-      drawingContext.fillText(label, pos.x + 18, pos.y - 2);
+    if (hover) unterCursor = { titel: f.titel, pos };
+    if (hinweis && f.titel === hinweis.titel) {
+      // Auf die Seite mit mehr Platz, sonst läuft der Hinweis aus dem Bild.
+      let links = pos.x > width / 2;
+      hinweisLabel = {
+        ankerX: pos.x, ankerY: pos.y,
+        x: pos.x + (links ? -40 : 40), y: pos.y,
+        text: hinweis.text, farbe: null,
+        hilfslinie: true, links, alpha: hinweis.alpha,
+      };
     }
   });
-  textStyle(NORMAL);
+  pop();
+
+  // Dieselbe Beschriftungsroutine wie die Ortsnamen und die
+  // Kreisgrafik-Erklärung: gestrichelte Zuführungslinie inklusive.
+  if (hinweisLabel) zeichneKreisLabels([hinweisLabel]);
+
+  if (unterCursor) {
+    push();
+    noStroke();
+    textFont(SCHRIFT_SANS); // wie .annotation-tag
+    textStyle(BOLD);
+    textSize(11);
+    let label = unterCursor.titel || 'Foto ansehen';
+    let tw = textWidth(label) + 16;
+    // Dieselbe Farbe wie der Marker selbst, damit Punkt und Infobox als ein
+    // Element lesen.
+    fill(FOTO_MARKER_FARBE_RGB.r, FOTO_MARKER_FARBE_RGB.g, FOTO_MARKER_FARBE_RGB.b, 200 * alphaMultiplier);
+    rect(unterCursor.pos.x + 10, unterCursor.pos.y - 12, tw, 20, 4);
+    fill(255, 255 * alphaMultiplier);
+    textAlign(LEFT, CENTER);
+    drawingContext.fillText(label, unterCursor.pos.x + 18, unterCursor.pos.y - 2);
+    pop();
+  }
 }
 
 function oeffneFotoPopup(f) {

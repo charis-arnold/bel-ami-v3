@@ -8,7 +8,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 34 von 43 Namen intern, 9 exportiert. Konvention: docs/architektur.md.
+// 32 von 42 Namen intern, 10 exportiert. Konvention: docs/architektur.md.
 // ACHTUNG Ladezeit: hexZuRgb() und baueDemoAnnotationen() laufen schon in der
 // IIFE — diese Datei muss nach datenbereinigung.js stehen, sonst ReferenceError.
 // p5s Konstanten (PI, HALF_PI) gibt es hier noch nicht, die setzt p5 erst beim
@@ -262,8 +262,9 @@ function zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF
   pop();
 }
 
-// Pixel-Durchmesser je Punktgrösse (FWERT_PUNKTGROESSE), plus Ringabstände.
-const FWERT_PUNKT_DURCHMESSER = { 1: 5, 2: 7.5, 3: 10 };
+// Ringabstände der F-Wert-Punkte; die Durchmesser selbst stehen als
+// FWERT_PUNKT_DURCHMESSER in datenbereinigung.js, weil fotomarker.js sie
+// ebenfalls liest.
 const FWERT_PUNKT_FARBE_RGB = hexZuRgb(FWERT_PUNKT_FARBE);
 const FWERT_PUNKT_RAND_ABSTAND = 6; // Luft zwischen Kreisrand und erstem Punkte-Ring
 const FWERT_PUNKT_RING_ABSTAND = 8; // Abstand zwischen zwei Punkte-Ringen, falls ein Drittel nicht in einen Ring passt
@@ -540,8 +541,9 @@ function zeichneKreisErklaerung() {
 }
 
 // --- Export ------------------------------------------------------------
-// Neun Namen. Leser: docs/architektur.md.
+// Zehn Namen. Leser: docs/architektur.md.
 window.leereBandCounts = leereBandCounts;
+window.zeichneKreisLabels = zeichneKreisLabels;
 window.zeichneKreiseOrtRuns = zeichneKreiseOrtRuns;
 window.zeichneKreiseFuerRun = zeichneKreiseFuerRun;
 window.zeichneFwertPunkte = zeichneFwertPunkte;

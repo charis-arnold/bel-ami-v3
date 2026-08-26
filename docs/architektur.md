@@ -13,11 +13,11 @@ Neun der zwölf Module sind gekapselt und geben nur die genannten Namen über
 
 | Modul | Exporte |
 |---|---|
+| `datenbereinigung.js` | 32 |
 | `sketch.js` | 28 (11 Wert, 12 Lesebindung, **5 p5-Hooks**) |
-| `datenbereinigung.js` | 29 |
 | `spine-horizontal.js` | 11 (3 Lesebindungen) |
+| `kreisgrafik.js` | 10 |
 | `uebersichtsrouten.js` | 10 (3 Lesebindungen) |
-| `kreisgrafik.js` | 9 |
 | `ortsveraenderung.js` | 8 |
 | `sonifikation.js` | 4 (1 Lesebindung) |
 | `annotationsbox.js`, `kartendekor.js` | je 2 |
@@ -189,7 +189,7 @@ graph TD
 
     DB -.-> KG & OV & SH & FM & AB & DOM & UR & SK
     GEO -.-> KG & OV & FM & AB & UR & SK
-    KG -.-> OV & SH & DOM & UR & SK
+    KG -.-> OV & SH & FM & UR & SK
     KD -.-> SK
     OV -.-> SK
     SH -.-> DOM & UR & SK & SO
@@ -233,26 +233,33 @@ eigenen Header-Abschnitt aus.
 
 | # | Modul | Zeilen | Hauptfunktionen | Wichtigste eigene Variablen |
 |---|---|---|---|---|
-| 1 | `datenbereinigung.js` | 380 | `bereinigeStationenDaten`, `baueSpineDaten`, `sammleAnnotationenNachOrtBasis`, `zaehleBandCounts`, `zaehleAnnotationenLiveNachOrtBasis`, `ortRunsFuerSpine`, `ortRunSichtbar`, `kreisRadius`, `groessterKreisRadius`, `hexZuRgb` | `KREIS_KATEGORIEN`, `SCROLL_MEILENSTEINE`, `ROUTE_COLOR_RGB`, alle `FWERT_*`, `KAPITEL_MIT_SPINE_PANEL`, `WOHNUNG_SAMMELPUNKT_ANKER`, `SCHRIFT_SANS`/`SCHRIFT_SERIF`, `FWERT_LABELS` — **gekapselt**, 29 Exporte. Intern: alle drei `GEDANKEN_*`, die übrigen drei `WOHNUNG_*` und `valenzBucket` |
+| 1 | `datenbereinigung.js` | 398 | `bereinigeStationenDaten`, `baueSpineDaten`, `sammleAnnotationenNachOrtBasis`, `zaehleBandCounts`, `zaehleAnnotationenLiveNachOrtBasis`, `ortRunsFuerSpine`, `ortRunSichtbar`, `kreisRadius`, `groessterKreisRadius`, `hexZuRgb` | `KREIS_KATEGORIEN`, `SCROLL_MEILENSTEINE`, `ROUTE_COLOR_RGB`, alle `FWERT_*` (auch `FWERT_PUNKT_DURCHMESSER`), beide `FOTO_MARKER_*_RGB`, `KAPITEL_MIT_SPINE_PANEL`, `WOHNUNG_SAMMELPUNKT_ANKER`, `SCHRIFT_SANS`/`SCHRIFT_SERIF` — **gekapselt**, 32 Exporte. Intern: alle drei `GEDANKEN_*`, die übrigen drei `WOHNUNG_*`, die beiden Fotomarker-Hexwerte und `valenzBucket` |
 | 2 | `geo-projektion.js` | 96 | `lonLatToScreen`, `coverCrop`, `cropToBbox`, `bboxToImgCrop`, `passeBboxInRahmen` | `startBbox`, `uebersichtBbox`, `ch1ImgBbox`, `UEBERSICHT_SCHNITT_BBOX`, `mapOffsetX`, `mapOffsetY` |
-| 3 | `kreisgrafik.js` | 545 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `zeichneDemoKreisgrafik`, `zeichneKreisErklaerung`, `demoIkonGetroffen`, `merkeKreis`, `vergissGezeichneteKreise`, `leereBandCounts` | **gekapselt**, 9 Exporte; die übrigen 33 Namen (u. a. `HATCH_SPACING`, `FWERT_PUNKT_DURCHMESSER`, `kreisBeschriftungen`, `zeichneKreisLabels`, alle `DEMO_*`, `IKON_*` und `ERKLAERUNG_*`) sind modulintern |
+| 3 | `kreisgrafik.js` | 556 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `zeichneKreisLabels`, `zeichneDemoKreisgrafik`, `zeichneKreisErklaerung`, `demoIkonGetroffen`, `merkeKreis`, `vergissGezeichneteKreise`, `leereBandCounts` | **gekapselt**, 10 Exporte; die übrigen 32 Namen (u. a. `HATCH_SPACING`, `kreisBeschriftungen`, alle `DEMO_*`, `IKON_*` und `ERKLAERUNG_*`) sind modulintern |
 | 4 | `kartendekor.js` | 182 | `zeichneMassstabsleiste`, `zeichneWindrose` | — **gekapselt**, intern: `haversineMeter`, `MASSSTAB_SCHRITTE`. `zeichneWindrose` hat derzeit keinen Aufrufer: der Aufruf in `draw()` ist auskommentiert, oben rechts steht das Kreisgrafik-Icon |
 | 5 | `ortsveraenderung.js` | 687 | `zeichneOrtsveraenderung`, `ovPhase`, `ovZoomBbox` | `OV_KARTE_AUS`/`OV_ZOOM`/`SK_*`-Phasenfenster — **als einziges Modul gekapselt**, alles Übrige ist modulintern |
 | 6 | `spine-horizontal.js` | 548 | `zeichneSpineHorizontal`, `toggleGrafikPlay`, `setzeKapitelAnsichtModus`, `setzeGrafikZurueck`, `stelleSpineDatenBereit`, `spineEintraegeFuer`, `aktuelleGrafikAnimationDauer`, `aktualisiereGrafikFortschritt` | `grafikSpielt`, `grafikFortschritt`, `grafikPlayAusblendStart` (Lesebindungen) — **gekapselt**, intern: beide Spine-Caches, alle `SPINE_*`, `spineLayout` |
-| 7 | `fotomarker.js` | 133 | `zeichneFotoMarker`, `merkeKartenlage`, `oeffneFotoPopup`, `schliesseFotoPopup` | `fotoMarkerListe`, `letzteActiveBbox`, `letzterFotoOffsetX/Y`, `FOTO_MARKER_TREFFER_RADIUS` |
+| 7 | `fotomarker.js` | 115 | `zeichneFotoMarker`, `merkeKartenlage`, `oeffneFotoPopup`, `schliesseFotoPopup` | `fotoMarkerListe`, `letzteActiveBbox`, `letzterFotoOffsetX/Y`, `FOTO_MARKER_TREFFER_RADIUS`. Zeichnet einen Punkt mit hellem Kern; Grösse abgeleitet aus `FWERT_PUNKT_DURCHMESSER`, Beschriftung über `zeichneKreisLabels` |
 | 8 | `annotationsbox.js` | 152 | `annotationBoxPosition` | `ANNOTATION_BOX_POSITIONEN` — **gekapselt**, intern u. a. `annotationBoxPositionCache` |
 | 9 | `dom-aufbau.js` | 107 | `baueKapitelRegister`, `baueKartenMarkierungen`, `baueStationsMarker`, `baueZwischenMarker` | — (baut nur DOM, hält keinen Zustand) |
 | 10 | `uebersichtsrouten.js` | 652 | `zeichneUebersichtsrouten`, `kapitelScheiben`, `aktualisiereKapitelZoom`, `springeZuKapitelZoom`, `scrolleZuKapitel1` | `zoomedKapitel`, `kapitelZoomAmount`, `kapitelHover` (alle drei als Lesebindung) — **gekapselt**, intern u. a. `kapitelHitze`, `oeffneKapitelZoom`, `scheibenCache` |
-| 11 | `sketch.js` | 752 | `preload`, `setup`, `draw`, `mousePressed`, `windowResized`, `zeichneRoute`, `datenFuerKapitel`, `kapitelHatEigeneAnsicht`, `setzeAnsichtsModus`, `starteKapitelEinstieg` | `stationenData`, `uebersichtsRouten`, `kapitelAnsichtsModus`, `kreisErklaerungOffen` (Zustand der Erklärungs-Ebene), 8 DOM-Handles (als Lesebindung) — **gekapselt**, intern u. a. `kapitelKarten`, `bgImage`/`bgImage2`/`ch1Image`, die übrigen DOM-Handles |
+| 11 | `sketch.js` | 766 | `preload`, `setup`, `draw`, `mousePressed`, `windowResized`, `zeichneRoute`, `datenFuerKapitel`, `kapitelHatEigeneAnsicht`, `setzeAnsichtsModus`, `starteKapitelEinstieg` | `stationenData`, `uebersichtsRouten`, `kapitelAnsichtsModus`, `kreisErklaerungOffen` (Zustand der Erklärungs-Ebene), 8 DOM-Handles (als Lesebindung) — **gekapselt**, intern u. a. `kapitelKarten`, `bgImage`/`bgImage2`/`ch1Image`, die übrigen DOM-Handles |
 | 12 | `sonifikation.js` | 370 | `spieleSonifikationFuer`, `beendeSonifikationAudio` | `SONIFIKATION_GESAMTDAUER_SEK`, `sonifikationSpieltGerade` (als Lesebindung) — **gekapselt**, die übrigen 17 Namen (u. a. `baueSpielplan`, `baueGainFolge`, `sonifikationDaten`) sind modulintern |
 
 `dom-aufbau.js` ist das einzige Modul ohne eigene Top-Level-Variablen: es baut
 DOM-Knoten und schreibt sie in Handles, die `sketch.js` hält.
 
-Von `sketch.js`' 45 Top-Level-Variablen werden **19 in `setup()` über
+Von `sketch.js`' 47 Top-Level-Variablen werden **19 in `setup()` über
 `document.getElementById()` befüllt** — fünf davon (`fotoPopup` und die vier
 `fotoPopup*`-Unterelemente) sind in `fotomarker.js` deklariert und werden hier
 nur gefüllt.
+
+**Scrollgebundene Canvas-Beschriftungen hängen an einem Begleittext.** Ein
+`<p class="begleittext">` in `index.html` trägt das Scroll-Fenster, ein
+`data-*`-Attribut macht daraus zusätzlich eine Zeichenanweisung: die drei
+`data-demo-gruppe`-Texte steuern die Beschriftungen am Demo-Kreis, der
+`data-foto-hinweis`-Text steuert den Bedienhinweis am Fotomarker und nennt
+zugleich dessen Titel. So gibt es je Fenster nur eine Zahl, nicht zwei.
 
 **Die Erklärungs-Ebene der Kreisgrafik** liegt ganz in `kreisgrafik.js`:
 `merkeKreis()` sammelt je Frame, was Karte (`zeichneKreiseOrtRuns`) und
