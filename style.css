@@ -425,14 +425,15 @@ h2 {
 
 
 /* =========================
-   9) Kapitelregister (linker Rand, inkl. Plan/Graph + Alle oben drin)
+   9) Kapitelregister (rechter Rand, inkl. Plan/Graph + Alle oben drin)
    ========================= */
 
-/* Breite = Raum zwischen linkem Rand und der Annotationsbox (.annotation-box
-   beginnt bei left:5%, siehe oben). */
+/* Breite = Raum zwischen rechtem Rand und der Annotationsbox (.annotation-box
+   endet bei right:5%, siehe oben). Rechtsbündige Beschriftung, damit die
+   Einträge an der Bildschirmkante abschliessen. */
 .kapitel-register {
   position: fixed;
-  left: 0;
+  right: 0;
   top: 50%;
   transform: translateY(-50%);
   width: 5vw;
@@ -460,7 +461,7 @@ h2 {
   font-weight: 300;
   color: var(--ink);
   cursor: pointer;
-  text-align: left;
+  text-align: right;
   white-space: nowrap;
   transition: background 0.2s ease, color 0.2s ease;
 }
@@ -496,7 +497,7 @@ h2 {
   font-weight: 300;
   color: var(--ink);
   cursor: pointer;
-  text-align: left;
+  text-align: right;
   white-space: nowrap;
   transition: background 0.2s ease, color 0.2s ease;
 }

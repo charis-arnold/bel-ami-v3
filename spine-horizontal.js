@@ -102,10 +102,12 @@ function aktualisiereGrafikFortschritt() {
 }
 
 // Fester Abstand je Ortspunkt, Gesamtbreite ist n * Abstand; reicht der
-// Platz nicht, wird gestaucht. Die Ränder halten das Kapitelregister frei.
+// Platz nicht, wird gestaucht. Rechts hält der Rand das Kapitelregister frei
+// (5vw), links steht nur Luft — beide gleich breit, damit die Spine mittig
+// im Bild bleibt.
 const SPINE_PUNKT_ABSTAND = 70;
 const SPINE_RAND_LINKS = 200;
-const SPINE_RAND_RECHTS = 340;
+const SPINE_RAND_RECHTS = 200;
 // Vertikale Linie vom Ortspunkt nach unten zur (horizontalen) Beschriftung.
 const SPINE_LABEL_LINIE_LAENGE = 16;
 const SPINE_LABEL_TEXT_ABSTAND = 6;
