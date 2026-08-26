@@ -69,6 +69,10 @@ function zeichneMassstabsleiste(bbox, offsetX, alphaMultiplier = 1) {
 // ---------------------------------------------------------------------------
 // Windrose oben rechts. Winkel werden in Grad notiert (0 = Norden) und mit
 // radians(winkel - 90) auf p5s Radiant-Modus und 0°=Osten umgerechnet.
+//
+// ACHTUNG derzeit ohne Aufrufer: der Aufruf in draw() (sketch.js) ist
+// auskommentiert, weil oben rechts das Kreisgrafik-Icon steht. Funktion und
+// Export bleiben absichtlich stehen.
 // ---------------------------------------------------------------------------
 
 function zeichneWindrose(x, y, groesse, alphaMultiplier = 1) {

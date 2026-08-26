@@ -420,7 +420,9 @@ function draw() {
 
   let massstabOffsetX = (kapitelCrop && kapitelZoomAmount > 0.5) ? mapOffsetX : kartenOffsetX;
   zeichneMassstabsleiste(activeBbox, massstabOffsetX, 1 - kreisVergleichMapFade);
-  zeichneWindrose(width - 90, 150, 50, 1 - kreisVergleichMapFade);
+  // Windrose stillgelegt; der Platz oben rechts gehört jetzt dem
+  // Kreisgrafik-Icon. Zum Wiedereinschalten diese Zeile entkommentieren.
+  // zeichneWindrose(width - 90, 150, 50, 1 - kreisVergleichMapFade);
 
   // Demo-Kreisgrafik auf der hellen Überblickskarte, oberhalb der
   // Erklärungstexte (.begleittext sitzt auf 64% Höhe).
