@@ -174,31 +174,38 @@ function ortRunsFuerSpine(daten) {
 // ACHTUNG bei geänderter Streckenlänge alle Werte umrechnen, sonst
 // verschieben sich die Akte gegeneinander.
 const SCROLL_MEILENSTEINE = {
-  heroFadeStart: 0.011829, heroFadeEnd: 0.035485,
+  heroFadeStart: 0.012089, heroFadeEnd: 0.036265,
   // 960vh davor für den zwölfteiligen Intro-Crawl (.begleittext in
   // index.html), 80vh je Text, danach 434vh Kreisgrafik-Erklärung.
   // Zoomdauer unverändert 440vh.
-  zoomStart: 0.183872, zoomEnd: 0.231184,
+  zoomStart: 0.187913, zoomEnd: 0.236265,
   // Crossfade Startkarte -> helle Überblickskarte, 80vh.
-  kartenwechselStart: 0.137227, kartenwechselEnd: 0.145829,
+  kartenwechselStart: 0.140243, kartenwechselEnd: 0.149034,
   // Demo-Kreisgrafik: wächst bis demoVoll an, schrumpft ab zoomStart auf den
   // Icon-Platz oben rechts.
-  demoStart: 0.145829, demoVoll: 0.154431,
+  demoStart: 0.149034, demoVoll: 0.157825,
   // Spine blendet gleichzeitig mit dem Zoom-Beginn ein.
-  spineFadeStart: 0.113118, spineFadeEnd: 0.16043,
+  spineFadeStart: 0.115604, spineFadeEnd: 0.163956,
   // 200vh Lesezeit davor für den Kapitel-Einstiegstext.
-  routeStart: 0.252689, routeEnd: 0.370968,
-  // Akt: nach Abschluss der Route zurück auf die Gesamtkarte zoomen.
-  zoomOutStart: 0.370968, zoomOutEnd: 0.418279,
+  routeStart: 0.258243, routeEnd: 0.379121,
+  // Kapitel-1-Ende: ab routeEnd der Projekttext-Einblender (140vh), ab
+  // kapitelEndeStart die Kartenansicht mit Hinweis und den beiden Buttons
+  // (100vh bis zur Klemme).
+  kapitelEndeStart: 0.394505,
   // Übersichtsrouten 02–18. 2933vh breit, damit auch Kapitel 8 auf
   // ~7.3vh/Annotation kommt wie Kapitel 1.
-  uebersichtRoutenStart: 0.418279, uebersichtRoutenEnd: 0.733656,
+
+  // ACHTUNG uebersichtRoutenStart ist zugleich die Klemme am Ende von
+  // Kapitel 1: weiter scrollt draw() nicht. Einen Rauszoom-Akt gibt es nicht
+  // mehr, in den Übersichtsakt führt nur noch ein Klick auf "Übersicht" oder
+  // "Alle".
+  uebersichtRoutenStart: 0.405494, uebersichtRoutenEnd: 0.727802,
   // Schlussakt Ortsveränderung (2000vh): Kreise der sieben VERGLEICHS_KNOTEN
   // wachsen mit jedem Kapitel. kreisVergleichFadeEnd liest niemand.
-  kreisVergleichStart: 0.733656, kreisVergleichFadeEnd: 0.750967,
-  kreisVergleichEnd: 0.94871,
+  kreisVergleichStart: 0.727802, kreisVergleichFadeEnd: 0.745494,
+  kreisVergleichEnd: 0.947583,
   // Die Startkarte kommt zurück und zoomt auf die Gesamtkarte raus.
-  startkarteStart: 0.94871,
+  startkarteStart: 0.947583,
 };
 
 // ---------------------------------------------------------------------------

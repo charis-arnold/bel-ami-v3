@@ -50,7 +50,8 @@ body {
    überdeckt (zeichneSpineHorizontal) — diese kartenbezogenen DOM-Overlays
    passen thematisch nicht mehr dazu und würden ohne Bezugspunkt frei über
    der Grafik schweben, daher hier ausgeblendet. */
-.scrolly-stage.grafik-ansicht #naechstesKapitel,
+.scrolly-stage.grafik-ansicht #kapitelEnde,
+.scrolly-stage.grafik-ansicht #kapitelEndeText,
 .scrolly-stage.grafik-ansicht #kartenMarkierungen,
 .scrolly-stage.grafik-ansicht #annotationBox {
   display: none;
@@ -73,7 +74,11 @@ body {
 body.erklaerung-offen #scrollyStage > *:not(canvas),
 body.erklaerung-offen #kapitelRegister,
 body.erklaerung-offen #scrollFortschritt,
-body.erklaerung-offen #grafikPlayButton {
+body.erklaerung-offen #grafikPlayButton,
+body.projekttext-offen #scrollyStage > *:not(canvas),
+body.projekttext-offen #kapitelRegister,
+body.projekttext-offen #scrollFortschritt,
+body.projekttext-offen #grafikPlayButton {
   visibility: hidden;
   pointer-events: none;
 }
@@ -179,54 +184,54 @@ h2 {
   color: #ffffff;
 }
 
-/* Hinweis am Ende eines Kapitels (02–18): erscheint unten am Fensterrand,
-   sobald Route und Annotationen durchgelaufen sind, und führt per Klick ins
-   nächste Kapitel. Weiterscrollen ist am Kapitelende bewusst gesperrt (siehe
-   die progress-Klemmung in draw()), deshalb ist dies ein Klickziel und kein
-   reiner Scroll-Hinweis. Position, Aufbau und Bounce sind bewusst identisch
-   mit .scroll-hinweis auf der Startseite — dieselbe Geste an derselben
-   Stelle. */
-.naechstes-kapitel {
+/* Kapitelende: zwei Klickziele am Ende jedes Kapitels — weiter ins nächste
+   oder zurück in die Übersicht. Position und Typografie wie zuvor der einzelne
+   Hinweis, also wie .scroll-hinweis auf der Startseite. Der Bounce entfällt:
+   er gehörte zur Scroll-Geste eines einzelnen Hinweises, ein wippendes
+   Buttonpaar läse sich als Zappeln. */
+.kapitel-ende {
   position: absolute;
   top: 88%;
   left: 50%;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0px;
-  text-align: center;
+  gap: 10px;
   transform: translate(-50%, -50%);
   z-index: 6;
-  color: #212B2E;
-  cursor: pointer;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.6s;
-  animation: scroll-hinweis-bounce 1.8s ease-in-out infinite;
 }
 
-.naechstes-kapitel.sichtbar {
+.kapitel-ende.sichtbar {
   opacity: 1;
   visibility: visible;
 }
 
 /* Farbe wie die Kapitelnummern und die Kreis-Labels (#212B2E) — anders als
    der weisse "Scrollen"-Hinweis der Startseite, der auf dem dunklen
-   Startbild steht. Der Kapitelhinweis liegt dagegen über der hellen
-   Kapitelkarte. */
-.naechstes-kapitel-arrow {
-  font-size: 50px;
-  line-height: 1.5;
-  font-weight: 300;
-  color: #212B2E;
-}
-
-.naechstes-kapitel-text {
+   Startbild steht. Das Kapitelende liegt über der hellen Kapitelkarte. */
+.kapitel-ende-knopf {
+  border: 1px solid rgba(33, 43, 46, 0.35);
+  background: rgba(226, 230, 225, 0.85);
+  padding: 10px 20px;
+  font-family: var(--sans);
   font-size: 14px;
   font-weight: 300;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #212B2E;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.kapitel-ende-knopf:hover {
+  background: #212B2E;
+  color: #E2E6E1;
+}
+
+/* Kapitel 18 hat kein nächstes Kapitel — dort bleibt nur "Übersicht". */
+.kapitel-ende-knopf.versteckt {
+  display: none;
 }
 
 @keyframes scroll-hinweis-bounce {
@@ -248,7 +253,8 @@ h2 {
    ========================= */
 
 .begleittext,
-.kapitel-einstiegstext {
+.kapitel-einstiegstext,
+.kapitel-ende-text {
   position: absolute;
   top: 64%;
   left: 50%;
@@ -292,8 +298,16 @@ h2 {
    Einstiegstext, scroll-gebunden) und .kapitel-einstiegstext (Kapitel
    02–18, zeitbasiert, siehe draw() in sketch.js). */
 .begleittext.begleittext-dunkel,
-.kapitel-einstiegstext {
+.kapitel-einstiegstext,
+.kapitel-ende-text {
   color: #212B2E;
+}
+
+/* Der Kapitelende-Hinweis blendet über diese Klasse ein, nicht über ein
+   Scroll-Fenster: hinter der Klemme am Kapitelende gibt es keine Strecke
+   mehr, über die er ausblenden könnte (siehe draw()). */
+.kapitel-ende-text.sichtbar {
+  opacity: 1;
 }
 
 /* Höher als die übrigen Begleittexte: auf 64 % läge der Text genau dort, wo
@@ -389,10 +403,14 @@ h2 {
   right: 5%;
 }
 
+/* Übergang wie beim Buttonpaar am Kapitelende (.kapitel-ende), damit die Box
+   dort im selben Takt geht, wie Hinweis und Buttons kommen. Ohne ihn fiele
+   die Fläche schlagartig weg, während der Text darin noch ausblendet. */
 .annotation-inner {
   border-radius: 0;
   overflow: hidden;
   backdrop-filter: blur(10px);
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .annotation-bar {
@@ -427,7 +445,7 @@ h2 {
   background: none;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
   opacity: 0;
-  transition: opacity 0.4s ease;
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 
@@ -536,6 +554,98 @@ h2 {
 .kapitel-register-modus-zeile.versteckt,
 .kapitel-register-leerzeile.versteckt {
   display: none;
+}
+
+
+/* =========================
+   9c) Projekttext-Einblender und das geteilte Schliesskreuz
+
+   Die dunkle Fläche selbst liegt im Canvas (zeichneSchleier in
+   kreisgrafik.js) — hier steht nur der Text darauf. Der Container fängt
+   bewusst KEINE Klicks (pointer-events: none), damit ein Klick neben den
+   Text bei p5 ankommt und den Einblender schliesst; nur die Textspalte
+   selbst nimmt Klicks an, damit man darin scrollen und markieren kann.
+   ========================= */
+.projekttext {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 22;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10vh 8vw;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.35s ease, visibility 0.35s;
+}
+
+.projekttext.offen {
+  opacity: 1;
+  visibility: visible;
+}
+
+.projekttext-inner {
+  max-width: 58ch;
+  max-height: 80vh;
+  overflow-y: auto;
+  pointer-events: auto;
+}
+
+/* Helle Serifenschrift auf dunklem Grund — derselbe Ton wie der Intro-Crawl
+   am Anfang, auf den der Projekttext bewusst zurückverweist. */
+.projekttext-inner p {
+  font-family: var(--serif-text);
+  font-size: clamp(16px, 1.5vw, 22px);
+  line-height: 1.65;
+  color: #E2E6E1;
+}
+
+.projekttext-inner p + p {
+  margin-top: 1.1em;
+}
+
+/* Ein Kreuz für beide Einblender. Oben LINKS, weil oben rechts die beiden
+   Icons stehen, die sie öffnen. Die Farbe folgt dem offenen Einblender:
+   dunkel auf der hellen Legendenfläche, hell auf dem dunklen Projekttext. */
+.einblender-schliessen {
+  position: fixed;
+  top: 28px;
+  left: 28px;
+  width: 36px;
+  height: 36px;
+  z-index: 23;
+  border: none;
+  border-radius: 50%;
+  background: rgba(33, 43, 46, 0.08);
+  font-size: 22px;
+  line-height: 1;
+  color: #212B2E;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s, background 0.2s ease;
+}
+
+.einblender-schliessen.sichtbar {
+  opacity: 1;
+  visibility: visible;
+}
+
+.einblender-schliessen:hover {
+  background: rgba(33, 43, 46, 0.18);
+}
+
+body.projekttext-offen .einblender-schliessen {
+  background: rgba(226, 230, 225, 0.14);
+  color: #E2E6E1;
+}
+
+body.projekttext-offen .einblender-schliessen:hover {
+  background: rgba(226, 230, 225, 0.28);
 }
 
 

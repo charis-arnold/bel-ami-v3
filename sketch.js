@@ -7,7 +7,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 34 von 62 Namen intern, 28 exportiert. Konvention: docs/architektur.md.
+// 47 von 76 Namen intern, 29 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 let stage, heroText, begleitTexte, kapitelEinstiegsTexte;
@@ -19,7 +19,8 @@ let fotoHinweisText;  // der .begleittext mit data-foto-hinweis — sein Fenster
 const FOTO_HINWEIS_TEXT = 'Diese Punkte lassen sich anklicken, um ein historisches Foto zu sehen.';
 let annotationBoxEl; // #annotationBox — trägt die Positionsklasse (pos-oben-links etc.), siehe annotationBoxPosition()
 let schlusstextEl;   // #schlusstext — Gegenstück zum Einstiegstext, blendet im Schlussakt ein
-let naechstesKapitelEl; // #naechstesKapitel — Hinweis am Kapitelende, siehe draw()
+let kapitelEndeEl, kapitelEndeWeiterEl, kapitelEndeTextEl; // Kapitelende: Buttonpaar und der Hinweis darüber (nur Kapitel 1), siehe draw()
+let projekttextEl, einblenderSchliessenEl; // #projekttext (dunkle Textfläche) und das Schliesskreuz, das sich beide Einblender teilen
 
 
 // Nummer des folgenden Kapitels, oder null bei 18. Gilt für 02–18; Kapitel 1
@@ -33,6 +34,17 @@ function naechstesKapitel(nr) {
 // data-von/data-bis, sondern ein Zeitfenster-Fade ab dem Klick.
 let kapitelEinstiegsStartMillis = null;
 const KAPITEL_EINSTIEG_FADE_MS = 800;
+
+// Hält einen Klick beim DOM-Element und lässt ihn nicht zu p5 durch.
+
+// ACHTUNG stopPropagation muss am mousedown hängen, nicht am click: p5 löst
+// mousePressed schon beim mousedown aus, der click kommt erst danach. Am
+// click abgefangen liefe der Klick trotzdem durch die Prüfungen in
+// mousePressed — er schlösse etwa den Einblender, in dem gerade gelesen wird.
+function haltKlickAuf(el, beiKlick) {
+  el.addEventListener('mousedown', ev => ev.stopPropagation());
+  if (beiKlick) el.addEventListener('click', beiKlick);
+}
 
 // Setzt die Einstiegstext-Uhr neu, gerufen von uebersichtsrouten.js beim
 // Kapitelwechsel.
@@ -77,9 +89,37 @@ let kapitelRegisterEintraege = {}; // nr -> Eintrags-Element, fürs Aktiv-Highli
 let planEintrag, graphEintrag; // "Plan"/"Graph"-Hälften oben im Register, fürs Aktiv-Highlighting in draw()
 let modusZeile, leerzeile, alleEintrag; // Plan/Graph-Zeile + Abstandshalter + "Alle" — in der Übersicht (kein Kapitel gezoomt) blendet draw() modusZeile/leerzeile aus und markiert alleEintrag als aktiv
 
+// Kapitel 1 endet, wo der Übersichtsakt beginnt: dort ist die Scrollposition
+// festgehalten, die Überblickskarte kommt nur noch per Klick. Jeder Sprung
+// dahinter löst die Klemme, ein Zurückscrollen in Kapitel 1 setzt sie neu.
+let kapitel1Geklemmt = true;
+
+// Gerufen von uebersichtsrouten.js aus den beiden Sprungzielen hinter
+// Kapitel 1 ("Übersicht"/"Alle" und jeder Kapitel-Zoom).
+function loeseKapitel1Klemme() {
+  kapitel1Geklemmt = false;
+}
+
 // Erklärungs-Ebene über der laufenden Ansicht, geöffnet per Klick aufs
 // Kreisgrafik-Icon oben rechts. Jeder weitere Klick schliesst sie wieder.
 let kreisErklaerungOffen = false;
+
+// Der Projekttext-Einblender hat zwei Wege hinein: am Ende der Route geht er
+// von selbst auf, und das zweite Icon holt ihn jederzeit zurück. Deshalb zwei
+// Merker statt einem — sonst liesse sich der automatische nicht wegklicken,
+// ohne den per Icon geöffneten mitzuschliessen.
+let projekttextPerIkon = false;   // per Icon geholt, bleibt bis zum nächsten Klick
+let projekttextWeggeklickt = false; // der automatische wurde von Hand geschlossen
+let projekttextOffen = false;     // je Frame aus den beiden abgeleitet
+const PROJEKTTEXT_SCHLEIER = '#212B2E';
+const PROJEKTTEXT_SCHLEIER_ALPHA = 0.94;
+
+// Zu heisst je nach Weg etwas anderes: den per Icon geholten einfach wieder
+// weg, den automatischen für diesen Durchlauf abhaken.
+function schliesseProjekttext() {
+  if (projekttextPerIkon) projekttextPerIkon = false;
+  else projekttextWeggeklickt = true;
+}
 
 // Zwei Modi je Kapitel-Ansicht: 'karte' (Ausschnitt und Route) und 'grafik'
 // (horizontale Spine mit Play). Umschalten über "Plan"/"Graph" im Menübalken.
@@ -194,13 +234,23 @@ function setup() {
   kapitelEinstiegsTexte = document.querySelectorAll('.kapitel-einstiegstext');
 
   kartenMarkierungenEl = document.getElementById('kartenMarkierungen');
-  naechstesKapitelEl = document.getElementById('naechstesKapitel');
-  naechstesKapitelEl.addEventListener('click', (ev) => {
-    // stopPropagation: p5 hört mousePressed am Fenster ab — ohne das liefe
-    // derselbe Klick zusätzlich durch die Foto-Marker-Treffprüfung dort.
-    ev.stopPropagation();
-    let ziel = naechstesKapitel(zoomedKapitel);
+  kapitelEndeEl = document.getElementById('kapitelEnde');
+  kapitelEndeTextEl = document.getElementById('kapitelEndeText');
+  kapitelEndeWeiterEl = document.getElementById('kapitelEndeWeiter');
+  haltKlickAuf(kapitelEndeWeiterEl, () => {
+    // Kapitel 1 ist kein Zoom, hat aber dasselbe Kapitelende.
+    let ziel = naechstesKapitel(zoomedKapitel || '01');
     if (ziel) springeZuKapitelZoom(ziel);
+  });
+  haltKlickAuf(document.getElementById('kapitelEndeUebersicht'), springeZurUebersicht);
+
+  projekttextEl = document.getElementById('projekttext');
+  // Klicks im Text bleiben im Text — daneben schliesst p5 den Einblender.
+  haltKlickAuf(document.getElementById('projekttextInner'));
+  einblenderSchliessenEl = document.getElementById('einblenderSchliessen');
+  haltKlickAuf(einblenderSchliessenEl, () => {
+    if (projekttextOffen) schliesseProjekttext();
+    kreisErklaerungOffen = false;
   });
   annotationBoxEl = document.getElementById('annotationBox');
   schlusstextEl = document.getElementById('schlusstext');
@@ -222,7 +272,12 @@ function setup() {
   document.getElementById('fotoPopupClose').addEventListener('click', schliesseFotoPopup);
   fotoPopup.addEventListener('click', e => { if (e.target === fotoPopup) schliesseFotoPopup(); });
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { kreisErklaerungOffen = false; schliesseFotoPopup(); schliesseKapitelZoom(); }
+    if (e.key === 'Escape') {
+      kreisErklaerungOffen = false;
+      schliesseProjekttext();
+      schliesseFotoPopup();
+      schliesseKapitelZoom();
+    }
   });
 
   let cnv = createCanvas(stage.offsetWidth, stage.offsetHeight);
@@ -243,6 +298,14 @@ function setup() {
 
 function windowResized() {
   resizeCanvas(stage.offsetWidth, stage.offsetHeight);
+}
+
+// Hält die Scrollposition an einer Marke fest und gibt sie zurück. Nach oben
+// bleibt sie frei — der Weg zurück.
+function klemmeScroll(marke) {
+  let trackEl = document.querySelector('.scroll-track');
+  window.scrollTo(0, trackEl.offsetHeight * marke);
+  return marke;
 }
 
 function getScrollProgress() {
@@ -279,9 +342,13 @@ function draw() {
   // Ein offenes Kapitel endet mit seiner letzten Annotation: Scrollposition
   // wird nach unten festgehalten, nach oben bleibt sie frei — der Weg zurück.
   if (zoomedKapitel && progress > SCROLL_MEILENSTEINE.uebersichtRoutenEnd) {
-    progress = SCROLL_MEILENSTEINE.uebersichtRoutenEnd;
-    let trackEl = document.querySelector('.scroll-track');
-    window.scrollTo(0, trackEl.offsetHeight * progress);
+    progress = klemmeScroll(SCROLL_MEILENSTEINE.uebersichtRoutenEnd);
+  }
+  // Kapitel 1 endet genauso, nur liegt seine Grenze am Anfang des
+  // Übersichtsakts. Zurück in Kapitel 1 gescrollt, steht die Klemme wieder.
+  if (progress < SCROLL_MEILENSTEINE.uebersichtRoutenStart) kapitel1Geklemmt = true;
+  if (!zoomedKapitel && kapitel1Geklemmt && progress > SCROLL_MEILENSTEINE.uebersichtRoutenStart) {
+    progress = klemmeScroll(SCROLL_MEILENSTEINE.uebersichtRoutenStart);
   }
   scrollFortschrittFuellung.style.width = (progress * 100) + '%';
 
@@ -298,9 +365,12 @@ function draw() {
     cropToBbox(fullCrop, startBbox, bgImage.width, bgImage.height), UEBERSICHT_SCHNITT_BBOX);
 
   let zoomAmount = constrain(map(progress, SCROLL_MEILENSTEINE.zoomStart, SCROLL_MEILENSTEINE.zoomEnd, 0, 1), 0, 1);
-  // Nach der Route zurück auf die Gesamtkarte. Route und Kreise bleiben
+  // Solange Kapitel 1s Klemme steht, liegt die Karte in Kapitel 1; ein Klick
+  // hinter das Kapitel schaltet auf die Überblickskarte um. Einen Rauszoom-Akt
+  // gibt es nicht mehr, und der Sprung ist ohnehin ein Schnitt — deshalb
+  // schaltet der Wert hart um, statt zu rampen. Route und Kreise bleiben
   // sichtbar: routeAmount hängt nicht am Zoom.
-  let zoomOutAmount = constrain(map(progress, SCROLL_MEILENSTEINE.zoomOutStart, SCROLL_MEILENSTEINE.zoomOutEnd, 0, 1), 0, 1);
+  let zoomOutAmount = kapitel1Geklemmt ? 0 : 1;
   zoomAmount *= (1 - zoomOutAmount);
   kapitel1ZoomAmount = zoomAmount;
 
@@ -493,21 +563,55 @@ function draw() {
     ANNOTATION_BOX_POSITIONEN.forEach(p => annotationBoxEl.classList.toggle('pos-' + p, p === position));
   }
 
-  // Hinweis "Nächstes Kapitel", sobald die letzte Annotation erreicht ist.
+  // Die Icons blenden erst im Schlussakt wieder aus; ohne sie gibt es auch
+  // keine Einblender. Steht hier oben, weil das Kapitelende darauf aufbaut.
+  let demoAlpha = progress < SCROLL_MEILENSTEINE.demoStart ? 0 : 1 - skEinblenden;
+
+  // Der Projekttext geht am Ende der Route von selbst auf und bleibt, bis er
+  // weggeklickt oder durchgescrollt ist. Zurückgescrollt zählt als neuer
+  // Durchlauf, dann geht er wieder auf.
+  let imProjekttextFenster = !zoomedKapitel
+    && progress >= SCROLL_MEILENSTEINE.routeEnd
+    && progress < SCROLL_MEILENSTEINE.kapitelEndeStart;
+  if (progress < SCROLL_MEILENSTEINE.routeEnd) projekttextWeggeklickt = false;
+  // Ohne Icons keine Einblender: auf Start- und Schlusskarte gibt es beide nicht.
+  if (demoAlpha <= 0.01) { kreisErklaerungOffen = false; projekttextPerIkon = false; }
+  projekttextOffen = projekttextPerIkon || (imProjekttextFenster && !projekttextWeggeklickt);
+
+  // Kapitelende, in jedem Kapitel: die beiden Klickziele. In 02–18 steht der
+  // Scroll dort geklemmt, Kapitel 1 hat dafür seine eigene Strecke zwischen
+  // Projekttext und Klemme.
+
+  // Nicht an eine Scrollmarke allein gebunden, sondern an "der Projekttext ist
+  // zu": sonst zeigte der X-Weg die Kartenansicht ohne Hinweis und Buttons,
+  // bis man bis zur Klemme durchgescrollt hätte.
+  let kapitel1AmEnde = !zoomedKapitel && kapitel1Geklemmt && !projekttextOffen
+    && progress >= SCROLL_MEILENSTEINE.routeEnd;
+  let kapitelLokalerFortschritt = constrain(
+    map(uebersichtRoutenFortschritt, KAPITEL_EINSTIEG_SCROLL_ENDE, 1, 0, 1), 0, 1);
+  // Schwelle aus der Annotationszahl, nicht fest: dieselbe Rechnung wie
+  // annIndexZoom. Ein fester Wert läge je nach Kapitellänge daneben.
+  let endDaten = datenFuerKapitel(zoomedKapitel);
+  let anzahl = endDaten && endDaten.annotationen ? endDaten.annotationen.length : 0;
+  let zoomAmEnde = !!zoomedKapitel && kapitelZoomAmount > 0.5
+    && anzahl > 0 && kapitelLokalerFortschritt >= (anzahl - 1) / anzahl;
   // Nur in der Kartenansicht — in der Graph-Ansicht sitzt dort der Play-Button.
-  if (naechstesKapitelEl) {
-    let kapitelLokalerFortschritt = constrain(
-      map(uebersichtRoutenFortschritt, KAPITEL_EINSTIEG_SCROLL_ENDE, 1, 0, 1), 0, 1);
-    // Schwelle aus der Annotationszahl, nicht fest: dieselbe Rechnung wie
-    // annIndexZoom. Ein fester Wert läge je nach Kapitellänge daneben.
-    let endDaten = datenFuerKapitel(zoomedKapitel);
-    let anzahl = endDaten && endDaten.annotationen ? endDaten.annotationen.length : 0;
-    let amEnde = !!zoomedKapitel && kapitelZoomAmount > 0.5
-      && kapitelAnsichtsModus === 'karte'
-      && anzahl > 0 && kapitelLokalerFortschritt >= (anzahl - 1) / anzahl
-      && !!naechstesKapitel(zoomedKapitel);
-    naechstesKapitelEl.classList.toggle('sichtbar', amEnde);
+  // Ein Wert für beide Leser: das Buttonpaar und die Annotationsbox unten.
+  let amKapitelEnde = (kapitel1AmEnde || zoomAmEnde) && kapitelAnsichtsModus === 'karte';
+  if (kapitelEndeEl) {
+    kapitelEndeEl.classList.toggle('sichtbar', amKapitelEnde);
+    // Kapitel 18 hat keinen Nachfolger, dort bleibt nur "Übersicht".
+    kapitelEndeWeiterEl.classList.toggle('versteckt', !naechstesKapitel(zoomedKapitel || '01'));
   }
+  // Der Hinweis darüber gilt nur für Kapitel 1. Er hängt an derselben Klasse
+  // wie das Buttonpaar statt an einem eigenen Scroll-Fenster — beide kommen
+  // und gehen zusammen.
+  if (kapitelEndeTextEl) kapitelEndeTextEl.classList.toggle('sichtbar', kapitel1AmEnde);
+
+  // Am Kapitelende schweigt die Annotationsbox. Sie lüde zum Weiterlesen ein,
+  // während Hinweis und Buttons daneben das Kapitel abschliessen — zwei
+  // Signale, die sich widersprechen.
+  if (amKapitelEnde) aktuelleAnnotation = null;
 
   if (aktuelleAnnotation) {
     annotationText.textContent = '«' + aktuelleAnnotation.text + '»';
@@ -656,22 +760,29 @@ function draw() {
   // über der Graph-Ansicht, die den Rest des Frames überdeckt.
   let demoFortschritt = constrain(map(progress, SCROLL_MEILENSTEINE.demoStart, SCROLL_MEILENSTEINE.demoVoll, 0, 1), 0, 1);
   let demoIkon = constrain(map(progress, SCROLL_MEILENSTEINE.zoomStart, SCROLL_MEILENSTEINE.zoomEnd, 0, 1), 0, 1);
-  // Erst im Schlussakt wieder weg: dort ist die Kreisgrafik verblasst, das
-  // Icon hätte nichts mehr zu erklären.
-  let demoAlpha = progress < SCROLL_MEILENSTEINE.demoStart ? 0 : 1 - skEinblenden;
   // Jede Beschriftungsgruppe folgt dem Fenster ihres Erklärungstextes.
   let demoGruppenAlpha = demoGruppenTexte.map(el =>
     begleittextDeckkraft(progress, parseFloat(el.dataset.von), parseFloat(el.dataset.bis)));
 
-  // Erklärungs-Ebene unter das Icon, aber über alles andere: das Icon bleibt
-  // sichtbar, weil es als Nächstes gezeichnet wird. Ohne Icon keine Ebene.
-  if (demoAlpha <= 0.01) kreisErklaerungOffen = false;
+  // Beide Ebenen unter die Icons, aber über alles andere: die Icons bleiben
+  // sichtbar, weil sie als Nächstes gezeichnet werden.
   if (kreisErklaerungOffen) zeichneKreisErklaerung();
+  else if (projekttextOffen) zeichneSchleier(PROJEKTTEXT_SCHLEIER, PROJEKTTEXT_SCHLEIER_ALPHA);
   document.body.classList.toggle('erklaerung-offen', kreisErklaerungOffen);
+  document.body.classList.toggle('projekttext-offen', projekttextOffen);
+  projekttextEl.classList.toggle('offen', projekttextOffen);
+  einblenderSchliessenEl.classList.toggle('sichtbar', kreisErklaerungOffen || projekttextOffen);
 
-  zeichneDemoKreisgrafik(demoFortschritt, demoAlpha, demoGruppenAlpha, demoIkon);
+  // Ruhezustand beider Icons ist schwarzgrau, erst der Zeiger holt das Gold.
+  // Auf dem dunklen Schleier des Projekttextes ginge Schwarzgrau unter — dort
+  // zeigt die Kreisgrafik ihre echten Farben, das Textzeichen wird hell.
+  let legendeIkonHover = demoIkonGetroffen(mouseX, mouseY);
+  let projekttextIkonHover = projekttextIkonGetroffen(mouseX, mouseY);
+  zeichneDemoKreisgrafik(demoFortschritt, demoAlpha, demoGruppenAlpha, demoIkon,
+    demoIkon > 0.99 && !legendeIkonHover && !projekttextOffen);
+  zeichneProjekttextIkon(demoAlpha * demoIkon, projekttextIkonHover, projekttextOffen);
   // Nach zeichneUebersichtsrouten, das den Cursor jeden Frame selbst setzt.
-  if (demoIkonGetroffen(mouseX, mouseY)) cursor(HAND);
+  if (legendeIkonHover || projekttextIkonHover) cursor(HAND);
 }
 
 // ---------------------------------------------------------------------------
@@ -681,9 +792,23 @@ function draw() {
 // Play-Schalter und Animationsdauer liegen in spine-horizontal.js.
 
 function mousePressed() {
-  // Die Erklärungs-Ebene fängt jeden Klick ab — daneben wie aufs Icon.
+  // Zuerst die beiden Icons: ein Klick darauf schaltet direkt um, statt nur
+  // den offenen Einblender zu schliessen. Die beiden schliessen sich aus.
+  if (demoIkonGetroffen(mouseX, mouseY)) {
+    let aufmachen = !kreisErklaerungOffen;
+    if (projekttextOffen) schliesseProjekttext();
+    kreisErklaerungOffen = aufmachen;
+    return;
+  }
+  if (projekttextIkonGetroffen(mouseX, mouseY)) {
+    kreisErklaerungOffen = false;
+    if (projekttextOffen) schliesseProjekttext();
+    else projekttextPerIkon = true;
+    return;
+  }
+  // Sonst fängt ein offener Einblender jeden Klick ab.
+  if (projekttextOffen) { schliesseProjekttext(); return; }
   if (kreisErklaerungOffen) { kreisErklaerungOffen = false; return; }
-  if (demoIkonGetroffen(mouseX, mouseY)) { kreisErklaerungOffen = true; return; }
   if (kapitelHover === '01') { scrolleZuKapitel1(); return; }
   // ACHTUNG über springeZuKapitelZoom, nicht direkt über oeffneKapitelZoom:
   // die Startpunkte sind erst weit im Akt sichtbar, ein Klick dort öffnete
@@ -721,7 +846,7 @@ function zeichneRoute(punkte, upToIndex, bbox, strichstaerke = 2, offsetX = mapO
 
 
 // --- Export ------------------------------------------------------------
-// 28 Namen: 11 als Wert, 5 p5-Hooks, 12 als Lesebindung.
+// 29 Namen: 12 als Wert, 5 p5-Hooks, 12 als Lesebindung.
 
 // Konstanten, Funktionen und die vier nur befüllten Container: Die Bindung
 // ändert sich nie, deshalb Wertzuweisung.
@@ -735,6 +860,7 @@ window.datenFuerKapitel = datenFuerKapitel;
 window.kapitelHatEigeneAnsicht = kapitelHatEigeneAnsicht;
 window.zeichneRoute = zeichneRoute;
 window.setzeAnsichtsModus = setzeAnsichtsModus;
+window.loeseKapitel1Klemme = loeseKapitel1Klemme;
 window.starteKapitelEinstieg = starteKapitelEinstieg;
 
 // Die fünf p5-Hooks. Nicht optional: p5 sucht sie am window. Fehlt einer,

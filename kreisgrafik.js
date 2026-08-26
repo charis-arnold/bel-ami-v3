@@ -8,7 +8,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 32 von 42 Namen intern, 10 exportiert. Konvention: docs/architektur.md.
+// 42 von 55 Namen intern, 13 exportiert. Konvention: docs/architektur.md.
 // ACHTUNG Ladezeit: hexZuRgb() und baueDemoAnnotationen() laufen schon in der
 // IIFE — diese Datei muss nach datenbereinigung.js stehen, sonst ReferenceError.
 // p5s Konstanten (PI, HALF_PI) gibt es hier noch nicht, die setzt p5 erst beim
@@ -369,23 +369,92 @@ const DEMO_RADIUS_SKALA = 2.2;
 const DEMO_MAX_RADIUS = 100;
 const DEMO_LABEL_ABSTAND = 45;
 
-// Ruheplatz als Icon: oben rechts, links neben dem Kapitelregister (5vw
-// breit, siehe .kapitel-register in style.css).
-const IKON_REGISTER_BREITE = 0.05; // Anteil der Fensterbreite
-const IKON_ABSTAND_RAND = 46;      // Luft zwischen Register und Icon-Mitte
-const IKON_ABSTAND_OBEN = 78;
+// Ruheplatz der beiden Icons: nebeneinander direkt über dem Kapitelregister,
+// rechtsbündig zum Bildschirmrand. Links die Kreisgrafik (Legende), rechts
+// der Projekttext.
+const IKON_RAND_RECHTS = 46;       // Mitte des rechten Icons zum Bildschirmrand
+const IKON_ABSTAND_PAAR = 80;      // Mitte zu Mitte der beiden Icons
+const IKON_ABSTAND_REGISTER = 44;  // Luft zwischen Icon-Mitte und Registerkante
+const IKON_ABSTAND_OBEN_MIN = 50;  // damit die Zeile nie oben herausfällt
 const IKON_RADIUS_SKALA = 0.45;
 
-// Lage der zuletzt gezeichneten Demo-Grafik, für den Treffertest des Icons.
+// Ruhezustand schwarzgrau, erst der Zeiger holt das Gold hervor. Der Filter
+// entsättigt die ganze Miniatur, statt jede Bandfarbe einzeln umzurechnen.
+const IKON_GRAUFILTER = 'grayscale(1) brightness(0.45)';
+const IKON_RUHE_FARBE = '#212B2E';       // wie die Kreis-Labels
+const IKON_RUHE_FARBE_DUNKEL = '#E2E6E1'; // auf dem Schleier des Projekttextes
+const IKON_GOLD = CATEGORY_COLORS.gold_mittel;
+
+// Zweites Icon: ein Kreis mit waagrechten Zeilen — dieselbe Geste wie die
+// Schraffur der Gesamtkreise, hier als Zeichen für Text. Wohnt hier, weil es
+// sich Zeile und Treffertest mit dem Kreisgrafik-Icon teilt.
+const IKON_TEXT_RADIUS = 23;
+const IKON_TEXT_ZEILEN = [0.72, 0.94, 0.88, 0.56]; // Zeilenlängen, Anteil am Radius
+
+// Lage der zuletzt gezeichneten Icons, für die Treffertests.
 let letzteDemoLage = null;
+let letzteProjekttextIkonLage = null;
+
+// Höhe der Icon-Zeile, gemessen an der Oberkante des Kapitelregisters — das
+// sitzt vertikal zentriert und wandert mit der Fensterhöhe.
+
+// ACHTUNG getBoundingClientRect() erzwingt ein Layout. Deshalb gecacht und nur
+// neu gelesen, wenn sich Fenstergrösse oder Registerhöhe geändert haben
+// (Plan/Graph-Zeile fällt in der Übersicht weg, siehe draw()).
+let ikonZeileCache = null;
+function ikonZeileY() {
+  let schluessel = `${width}|${height}|${!!(modusZeile && modusZeile.classList.contains('versteckt'))}`;
+  if (!ikonZeileCache || ikonZeileCache.schluessel !== schluessel) {
+    let oben = kapitelRegister ? kapitelRegister.getBoundingClientRect().top : height * 0.14;
+    ikonZeileCache = { schluessel, y: Math.max(IKON_ABSTAND_OBEN_MIN, oben - IKON_ABSTAND_REGISTER) };
+  }
+  return ikonZeileCache.y;
+}
 
 // ikon 0 = Erklärplatz über den Begleittexten, 1 = Ruheplatz als Icon.
 function demoKreisLage(ikon) {
   return {
-    cx: lerp(width * 0.30, width * (1 - IKON_REGISTER_BREITE) - IKON_ABSTAND_RAND, ikon),
-    cy: lerp(height * 0.34, IKON_ABSTAND_OBEN, ikon),
+    cx: lerp(width * 0.30, width - IKON_RAND_RECHTS - IKON_ABSTAND_PAAR, ikon),
+    cy: lerp(height * 0.34, ikonZeileY(), ikon),
     skala: lerp(DEMO_RADIUS_SKALA, IKON_RADIUS_SKALA, ikon),
   };
+}
+
+// alphaSkala blendet mit dem Kreisgrafik-Icon ein, hover holt das Gold.
+// aufDunkel dreht den Ruheton hell, solange der Projekttext offen ist.
+function zeichneProjekttextIkon(alphaSkala, hover, aufDunkel = false) {
+  letzteProjekttextIkonLage = null;
+  if (alphaSkala <= 0.01) return;
+  let cx = width - IKON_RAND_RECHTS, cy = ikonZeileY(), r = IKON_TEXT_RADIUS;
+
+  push(); // schreibt strokeStyle direkt, siehe ACHTUNG oben
+  drawingContext.globalAlpha = alphaSkala;
+  drawingContext.strokeStyle = hover ? IKON_GOLD
+    : (aufDunkel ? IKON_RUHE_FARBE_DUNKEL : IKON_RUHE_FARBE);
+  drawingContext.lineWidth = 1.8;
+  drawingContext.beginPath();
+  drawingContext.arc(cx, cy, r, 0, TWO_PI);
+  drawingContext.stroke();
+
+  let abstand = r * 0.4;
+  let obenY = cy - abstand * (IKON_TEXT_ZEILEN.length - 1) / 2;
+  IKON_TEXT_ZEILEN.forEach((anteil, i) => {
+    let halb = r * anteil * 0.72;
+    let y = obenY + i * abstand;
+    drawingContext.beginPath();
+    drawingContext.moveTo(cx - halb, y);
+    drawingContext.lineTo(cx + halb, y);
+    drawingContext.stroke();
+  });
+  pop();
+
+  letzteProjekttextIkonLage = { cx, cy, r, alpha: alphaSkala };
+}
+
+function projekttextIkonGetroffen(mx, my) {
+  let l = letzteProjekttextIkonLage;
+  if (!l || l.alpha <= 0.5) return false; // erst am Ruheplatz anklickbar
+  return dist(mx, my, l.cx, l.cy) <= l.r + 8;
 }
 
 // Aufdeck-Reihenfolge: reihum durch die Bänder, damit alle drei gemeinsam
@@ -474,12 +543,14 @@ function kreisBeschriftungen(cx, cy, bandCounts, aussen, skala, maxRadius, grupp
 // fortschritt 0..1 deckt die erfundenen Annotationen auf, alphaSkala blendet
 // die ganze Grafik, gruppenAlpha die drei Beschriftungsgruppen, ikon 0..1
 // schiebt sie vom Erklärplatz auf den Icon-Platz oben rechts.
-function zeichneDemoKreisgrafik(fortschritt, alphaSkala, gruppenAlpha, ikon = 0) {
+function zeichneDemoKreisgrafik(fortschritt, alphaSkala, gruppenAlpha, ikon = 0, grau = false) {
   letzteDemoLage = null;
   if (alphaSkala <= 0 || fortschritt <= 0) return;
   let sichtbar = DEMO_ANNOTATIONEN.slice(0, Math.round(fortschritt * DEMO_ANNOTATIONEN.length));
   if (!sichtbar.length) return;
 
+  push(); // trägt den Graufilter; die inneren push/pop erben ihn
+  if (grau) drawingContext.filter = IKON_GRAUFILTER;
   let { cx, cy, skala } = demoKreisLage(ikon);
   let bandCounts = zaehleBandCounts(sichtbar);
   let aussen = groessterKreisRadius(bandCounts, DEMO_MAX_RADIUS, skala);
@@ -488,6 +559,7 @@ function zeichneDemoKreisgrafik(fortschritt, alphaSkala, gruppenAlpha, ikon = 0)
   let fwertPunkte = zeichneFwertPunkte(cx, cy, aussen, sichtbar.filter(a => a.hasFwert), alphaSkala);
   zeichneKreisLabels(kreisBeschriftungen(cx, cy, bandCounts, aussen, skala, DEMO_MAX_RADIUS,
     gruppenAlpha.map(a => a * alphaSkala), fwertPunkte, false));
+  pop();
   letzteDemoLage = { cx, cy, r: aussen, ikon, alpha: alphaSkala };
 }
 
@@ -512,13 +584,19 @@ const ERKLAERUNG_LABEL_BREITE = 360; // Platzbedarf des längsten Labels
 // Legt den Schleier über die Ansicht und beschriftet den grössten Kreis des
 // Frames mit allen drei Erklärungen zugleich. Steht keiner im Bild
 // (Übersichts- und Schlussakt), erklärt die Demo-Grafik an ihrem alten Platz.
-function zeichneKreisErklaerung() {
+// Deckt die ganze Fläche ein. Auch der Projekttext-Einblender nutzt sie,
+// nur mit dunkler Farbe (siehe draw() in sketch.js).
+function zeichneSchleier(farbe, alphaSkala) {
   push();
   noStroke();
-  drawingContext.globalAlpha = ERKLAERUNG_SCHLEIER_ALPHA;
-  drawingContext.fillStyle = ERKLAERUNG_SCHLEIER;
+  drawingContext.globalAlpha = alphaSkala;
+  drawingContext.fillStyle = farbe;
   drawingContext.fillRect(0, 0, width, height);
   pop();
+}
+
+function zeichneKreisErklaerung() {
+  zeichneSchleier(ERKLAERUNG_SCHLEIER, ERKLAERUNG_SCHLEIER_ALPHA);
 
   // Ein angeschnittener Kreis taugt nicht als Bezug: seine Beschriftungen
   // zeigten auf Stellen ausserhalb des Bildes. Nur wenn gar keiner ganz
@@ -541,8 +619,11 @@ function zeichneKreisErklaerung() {
 }
 
 // --- Export ------------------------------------------------------------
-// Zehn Namen. Leser: docs/architektur.md.
+// Dreizehn Namen. Leser: docs/architektur.md.
 window.leereBandCounts = leereBandCounts;
+window.zeichneSchleier = zeichneSchleier;
+window.zeichneProjekttextIkon = zeichneProjekttextIkon;
+window.projekttextIkonGetroffen = projekttextIkonGetroffen;
 window.zeichneKreisLabels = zeichneKreisLabels;
 window.zeichneKreiseOrtRuns = zeichneKreiseOrtRuns;
 window.zeichneKreiseFuerRun = zeichneKreiseFuerRun;

@@ -329,6 +329,7 @@ function springeZuKapitelZoom(nr) {
   let trackEl = document.querySelector('.scroll-track');
   let start = SCROLL_MEILENSTEINE.uebersichtRoutenStart
     + 0.01 * (SCROLL_MEILENSTEINE.uebersichtRoutenEnd - SCROLL_MEILENSTEINE.uebersichtRoutenStart);
+  loeseKapitel1Klemme(); // sonst zöge draw() sofort ans Kapitel-1-Ende zurück
   window.scrollTo(0, trackEl.offsetHeight * start);
   oeffneKapitelZoom(nr);
 }
@@ -338,6 +339,7 @@ function springeZuKapitelZoom(nr) {
 function springeZurUebersicht() {
   let trackEl = document.querySelector('.scroll-track');
   let mitte = (SCROLL_MEILENSTEINE.uebersichtRoutenStart + SCROLL_MEILENSTEINE.uebersichtRoutenEnd) / 2;
+  loeseKapitel1Klemme(); // sonst zöge draw() sofort ans Kapitel-1-Ende zurück
   window.scrollTo(0, trackEl.offsetHeight * mitte);
   schliesseKapitelZoom();
 }
