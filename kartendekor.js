@@ -1,13 +1,14 @@
 /* =============================================================================
-   kartendekor.js — Massstabsleiste und Windrose
+   kartendekor.js — Route, Massstabsleiste und Windrose
 
-   Zwei reine Zeichenroutinen ohne Zugriff auf den Erzählzustand: sie bekommen
-   sichtbare Bbox, Kartenoffset und Alpha als Parameter. haversineMeter wohnt
-   hier mit, weil zeichneMassstabsleiste sein einziger Aufrufer ist.
+   Reine Zeichenroutinen ohne Zugriff auf den Erzählzustand: sie bekommen
+   sichtbare Bbox, Kartenoffset, Alpha und beim Routenzug den Endindex als
+   Parameter. haversineMeter wohnt hier mit, weil zeichneMassstabsleiste sein
+   einziger Aufrufer ist.
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 2 von 4 Namen intern, 2 exportiert. Konvention: docs/architektur.md.
+// 10 von 13 Namen intern, 3 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 // ---------------------------------------------------------------------------
@@ -174,9 +175,139 @@ function zeichneWindrose(x, y, groesse, alphaMultiplier = 1) {
 }
 
 
+
+// ---------------------------------------------------------------------------
+// Die Route: eine Farbe, nach hinten verblassend. Gezeichnet wird in einen
+// eigenen Puffer, weil nur dort Deckkraft geschrieben statt gemischt wird.
+
+// Jede Stufe wird DECKEND gezogen und überschreibt die vorherige; den Verlauf
+// macht ein Waschgang davor (erase = destination-out).
+
+// ACHTUNG nicht mit halbdurchsichtigen Strichen direkt aufs Canvas: wo zwei
+// einander berühren, addiert Porter-Duff ihre Deckkraft — an Stufengrenzen,
+// an den Kappen und überall, wo die Route sich selbst kreuzt.
+const ROUTE_STUFEN = 20;
+const ROUTE_MIN_ALPHA = 45;
+const ROUTE_MAX_ALPHA = 255;
+
+// Schweiflänge in Bildschirmpixeln, nicht in Wegpunkten: an Indizes gebunden
+// hängt sie an der Abtastung des Pfads und fällt je Kapitel um Faktor 13
+// verschieden aus. 400px lassen auch im kürzesten Kapitel (18, rund 770px
+// Route) noch eine Hälfte auf der Mindestdeckkraft stehen.
+const ROUTE_SCHWEIF_PX = 400;
+
+let routenPuffer = null; // Vollbildpuffer, siehe zeichneRoute
+
+// Zielwert der Stufe k (0 = älteste, ROUTE_STUFEN-1 = Spitze). Linear wie
+// bisher; die Waschstärken unten leiten sich daraus ab.
+function routenStufenAlpha(k) {
+  return ROUTE_MIN_ALPHA + (ROUTE_MAX_ALPHA - ROUTE_MIN_ALPHA) * k / (ROUTE_STUFEN - 1);
+}
+
+function routenPufferBereit() {
+  if (routenPuffer && (routenPuffer.width !== width || routenPuffer.height !== height)) {
+    routenPuffer.remove();
+    routenPuffer = null;
+  }
+  if (!routenPuffer) routenPuffer = createGraphics(width, height);
+  routenPuffer.clear();
+  return routenPuffer;
+}
+
+// Zerlegt den projizierten Pfad von der Spitze rückwärts in ROUTE_STUFEN Züge
+// gleicher Bogenlänge; alles jenseits des Schweifs bildet die älteste Stufe.
+// Grenzen werden ins Segment interpoliert, damit benachbarte Züge exakt
+// aneinander anschliessen.
+function routenStufenZuege(p, letzterPunkt) {
+  let abstand = new Array(letzterPunkt + 1);
+  abstand[letzterPunkt] = 0;
+  for (let i = letzterPunkt - 1; i >= 0; i--) {
+    abstand[i] = abstand[i + 1] + dist(p[i].x, p[i].y, p[i + 1].x, p[i + 1].y);
+  }
+  let stufenLaenge = ROUTE_SCHWEIF_PX / (ROUTE_STUFEN - 1);
+  let zuege = new Array(ROUTE_STUFEN);
+  let stufe = ROUTE_STUFEN - 1;
+  let zug = [p[letzterPunkt]];
+  for (let i = letzterPunkt - 1; i >= 0; i--) {
+    let grenze = (ROUTE_STUFEN - stufe) * stufenLaenge;
+    while (stufe > 0 && abstand[i] >= grenze) {
+      let segLaenge = abstand[i] - abstand[i + 1];
+      let t = segLaenge > 0 ? (grenze - abstand[i + 1]) / segLaenge : 0;
+      let gp = { x: lerp(p[i + 1].x, p[i].x, t), y: lerp(p[i + 1].y, p[i].y, t) };
+      zug.push(gp);
+      zuege[stufe] = zug;
+      stufe--;
+      zug = [gp];
+      grenze = (ROUTE_STUFEN - stufe) * stufenLaenge;
+    }
+    zug.push(p[i]);
+  }
+  zuege[stufe] = zug;
+  return zuege;
+}
+
+function zeichneRoute(punkte, upToIndex, bbox, strichstaerke = 2, offsetX = mapOffsetX, offsetY = mapOffsetY, alphaMultiplier = 1) {
+  if (upToIndex < 1 || alphaMultiplier <= 0) return;
+  let letzterPunkt = Math.min(upToIndex, punkte.length - 1);
+  if (letzterPunkt < 1) return;
+
+  let p = [];
+  let links = Infinity, oben = Infinity, rechts = -Infinity, unten = -Infinity;
+  for (let i = 0; i <= letzterPunkt; i++) {
+    let q = lonLatToScreen(punkte[i][0], punkte[i][1], bbox, offsetX, offsetY);
+    p.push(q);
+    links = Math.min(links, q.x); rechts = Math.max(rechts, q.x);
+    oben = Math.min(oben, q.y); unten = Math.max(unten, q.y);
+  }
+  let rand = strichstaerke + 2;
+  let zuege = routenStufenZuege(p, letzterPunkt);
+
+  let pg = routenPufferBereit();
+  let schonGezeichnet = false;
+  for (let k = 0; k < ROUTE_STUFEN; k++) {
+    if (!zuege[k] || zuege[k].length < 2) continue;
+    // Kurze Routen fangen erst bei einer höheren Stufe an; bis dahin ist der
+    // Puffer leer und es gibt nichts zu waschen.
+    if (schonGezeichnet) {
+      // Nimmt allem bisher Gezeichneten den Anteil, der die vorige Stufe auf
+      // ihren Zielwert bringt. Nur über dem Routenrahmen statt Vollbild.
+
+      // ACHTUNG fill() muss VOR erase() stehen: erase() tauscht nur den
+      // Farbwert, es schaltet die Füllung nicht ein. Sonst malt das Rechteck
+      // nichts und der Verlauf bleibt ganz aus.
+      pg.push();
+      pg.noStroke();
+      pg.fill(255);
+      pg.erase(255 * (1 - routenStufenAlpha(k - 1) / routenStufenAlpha(k)));
+      pg.rect(links - rand, oben - rand, rechts - links + 2 * rand, unten - oben + 2 * rand);
+      pg.noErase();
+      pg.pop();
+    }
+    pg.push();
+    pg.noFill();
+    pg.strokeWeight(strichstaerke);
+    pg.strokeCap(ROUND);
+    pg.strokeJoin(ROUND);
+    pg.stroke(ROUTE_COLOR_RGB.r, ROUTE_COLOR_RGB.g, ROUTE_COLOR_RGB.b, ROUTE_MAX_ALPHA);
+    pg.beginShape();
+    zuege[k].forEach(q => pg.vertex(q.x, q.y));
+    pg.endShape();
+    pg.pop();
+    schonGezeichnet = true;
+  }
+
+  // alphaMultiplier erst beim Auflegen, nicht im Puffer: so übersteht der
+  // Puffer die Einblendung eines Kapitels ohne Neuaufbau.
+  if (alphaMultiplier < 1) tint(255, 255 * alphaMultiplier);
+  image(pg, 0, 0);
+  if (alphaMultiplier < 1) noTint();
+}
+
+
 // --- Export ------------------------------------------------------------
-// Zwei Zeichenfunktionen. Leser: docs/architektur.md.
+// Drei Zeichenfunktionen. Leser: docs/architektur.md.
 window.zeichneMassstabsleiste = zeichneMassstabsleiste;
 window.zeichneWindrose = zeichneWindrose;
+window.zeichneRoute = zeichneRoute;
 
 })(); // Ende der Modulkapselung, siehe Kommentar oben
