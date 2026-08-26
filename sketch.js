@@ -7,7 +7,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 35 von 69 Namen intern, 34 exportiert. Konvention: docs/architektur.md.
+// 36 von 70 Namen intern, 34 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 let stage, heroText, begleitTexte, kapitelEinstiegsTexte;
@@ -79,6 +79,10 @@ const LEGENDE_VALENZ_OBEN_UNTEN = 'Volltonfarbe: oben positiv, unten negativ bew
 let legendeFwertHinweis; // Positions-Hinweis der F-Wert-Punkte — ebenfalls ansichtsabhängig
 const LEGENDE_FWERT_OBEN_UNTEN = 'Position ausserhalb des Kreises: positiv oben, negativ unten, neutral/unbewertet rechts.';
 let legendeTab, legendeInhalt; // Tab (vertikal beschriftet, immer sichtbar solang legendeBox.sichtbar) + ausfahrender Inhalt (Farberklärung der Kreisgrafik)
+
+// Erklärungs-Ebene über der laufenden Ansicht, geöffnet per Klick aufs
+// Kreisgrafik-Icon oben rechts. Jeder weitere Klick schliesst sie wieder.
+let kreisErklaerungOffen = false;
 
 // Zwei Modi je Kapitel-Ansicht: 'karte' (Ausschnitt und Route) und 'grafik'
 // (horizontale Spine mit Play). Umschalten über "Plan"/"Graph" im Menübalken.
@@ -223,7 +227,7 @@ function setup() {
   document.getElementById('fotoPopupClose').addEventListener('click', schliesseFotoPopup);
   fotoPopup.addEventListener('click', e => { if (e.target === fotoPopup) schliesseFotoPopup(); });
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { schliesseFotoPopup(); schliesseKapitelZoom(); }
+    if (e.key === 'Escape') { kreisErklaerungOffen = false; schliesseFotoPopup(); schliesseKapitelZoom(); }
   });
 
   let cnv = createCanvas(stage.offsetWidth, stage.offsetHeight);
@@ -471,6 +475,9 @@ function draw() {
   // (zeichneSpineHorizontal, aktualisiereGrafikFortschritt).
   if (inKapitelGrafikAnsicht) {
     background(226, 230, 225); // #E2E6E1
+    // Die Karte samt ihren Kreisen ist damit übermalt; die Spine meldet
+    // gleich ihre eigenen an.
+    vergissGezeichneteKreise();
     let grafikEintraege = spineEintraegeFuer(zoomedKapitel);
     let grafikDaten = zoomedKapitel ? datenFuerKapitel(zoomedKapitel) : stationenData;
     aktualisiereGrafikFortschritt();
@@ -671,7 +678,16 @@ function draw() {
   // Jede Beschriftungsgruppe folgt dem Fenster ihres Erklärungstextes.
   let demoGruppenAlpha = demoGruppenTexte.map(el =>
     begleittextDeckkraft(progress, parseFloat(el.dataset.von), parseFloat(el.dataset.bis)));
+
+  // Erklärungs-Ebene unter das Icon, aber über alles andere: das Icon bleibt
+  // sichtbar, weil es als Nächstes gezeichnet wird. Ohne Icon keine Ebene.
+  if (demoAlpha <= 0.01) kreisErklaerungOffen = false;
+  if (kreisErklaerungOffen) zeichneKreisErklaerung();
+  document.body.classList.toggle('erklaerung-offen', kreisErklaerungOffen);
+
   zeichneDemoKreisgrafik(demoFortschritt, demoAlpha, demoGruppenAlpha, demoIkon);
+  // Nach zeichneUebersichtsrouten, das den Cursor jeden Frame selbst setzt.
+  if (demoIkonGetroffen(mouseX, mouseY)) cursor(HAND);
 }
 
 // ---------------------------------------------------------------------------
@@ -681,6 +697,9 @@ function draw() {
 // Play-Schalter und Animationsdauer liegen in spine-horizontal.js.
 
 function mousePressed() {
+  // Die Erklärungs-Ebene fängt jeden Klick ab — daneben wie aufs Icon.
+  if (kreisErklaerungOffen) { kreisErklaerungOffen = false; return; }
+  if (demoIkonGetroffen(mouseX, mouseY)) { kreisErklaerungOffen = true; return; }
   if (kapitelHover === '01') { scrolleZuKapitel1(); return; }
   // ACHTUNG über springeZuKapitelZoom, nicht direkt über oeffneKapitelZoom:
   // die Startpunkte sind erst weit im Akt sichtbar, ein Klick dort öffnete

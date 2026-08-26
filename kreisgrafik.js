@@ -8,7 +8,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 23 von 29 Namen intern, 6 exportiert. Konvention: docs/architektur.md.
+// 32 von 42 Namen intern, 10 exportiert. Konvention: docs/architektur.md.
 // ACHTUNG Ladezeit: hexZuRgb() und baueDemoAnnotationen() laufen schon in der
 // IIFE — diese Datei muss nach datenbereinigung.js stehen, sonst ReferenceError.
 // p5s Konstanten (PI, HALF_PI) gibt es hier noch nicht, die setzt p5 erst beim
@@ -22,6 +22,29 @@
 
 // Zeilenabstand der Schraffur in den Gesamtkreisen.
 const HATCH_SPACING = 3;
+
+// Zeilenmass der Kreis-Labels; zeichneKreisLabels rutscht damit aus, die
+// Erklärungs-Ebene rechnet damit ihren Platzbedarf aus.
+const LABEL_HOEHE = 14;
+const LABEL_ABSTAND = 4;
+
+// Die echten Ortskreise dieses Frames — Grundlage der Erklärungs-Ebene, die
+// sich an den grössten davon hängt. frameCount setzt die Liste selbst
+// zurück, damit kein Aufrufer daran denken muss.
+let gezeichneteKreise = [];
+let kreisRegisterFrame = -1;
+
+function merkeKreis(cx, cy, bandCounts, radius, fwertPunkte, skala = 1, maxRadius = 100) {
+  if (kreisRegisterFrame !== frameCount) { gezeichneteKreise = []; kreisRegisterFrame = frameCount; }
+  if (radius > 0) gezeichneteKreise.push({ cx, cy, bandCounts, radius, fwertPunkte, skala, maxRadius });
+}
+
+// Ein background()-Aufruf übermalt den bisherigen Frame — was vorher
+// gemerkt wurde, ist nicht mehr zu sehen.
+function vergissGezeichneteKreise() {
+  gezeichneteKreise = [];
+  kreisRegisterFrame = frameCount;
+}
 
 // Dämpft nur die neutrale Vollfläche, damit sie leiser wirkt als die
 // Valenz-Halbkreise. Schraffur wäre mit den Gesamtkreisen verwechselbar.
@@ -80,7 +103,8 @@ function zeichneKreiseOrtRuns(punktIndex, annIndex, activeBbox, offsetX = mapOff
     let radius = groessterKreisRadius(bandCounts);
     zeichneKreiseFuerRun(pos.x, pos.y, bandCounts, 1, PI);
     let fwertAnnotationen = treffer.filter(a => a.hasFwert);
-    zeichneFwertPunkte(pos.x, pos.y, radius, fwertAnnotationen, 1);
+    merkeKreis(pos.x, pos.y, bandCounts, radius,
+      zeichneFwertPunkte(pos.x, pos.y, radius, fwertAnnotationen, 1));
     if (radius > 0) {
       // Erst sammeln, Kollisionen nach der Schleife (zeichneKreisLabels).
       // Der Routen-Startpunkt blendet erst mit dem Kapitel-1-Ausschnitt ein.
@@ -113,21 +137,22 @@ function zeichneKreisLabels(kandidaten) {
   textStyle(BOLD); // .annotation-tag ist font-weight: 700
   textAlign(LEFT, CENTER);
 
-  let labelHoehe = 14, padding = 4;
   let platziert = [];
 
   kandidaten
     .map(k => ({ ...k, w: textWidth(k.text) }))
+    // links: der Text endet am Ankerplatz, statt dort zu beginnen.
+    .map(k => k.links ? { ...k, x: k.x - k.w } : k)
     .sort((a, b) => a.y - b.y)
     .forEach(k => {
       let y = k.y;
       let ueberlappt = true;
       while (ueberlappt) {
         ueberlappt = platziert.some(p =>
-          y < p.y + labelHoehe + padding && y + labelHoehe + padding > p.y &&
+          y < p.y + LABEL_HOEHE + LABEL_ABSTAND && y + LABEL_HOEHE + LABEL_ABSTAND > p.y &&
           k.x < p.x + p.w && k.x + k.w > p.x
         );
-        if (ueberlappt) y += labelHoehe + padding;
+        if (ueberlappt) y += LABEL_HOEHE + LABEL_ABSTAND;
       }
       platziert.push({ x: k.x, y, w: k.w });
 
@@ -137,7 +162,7 @@ function zeichneKreisLabels(kandidaten) {
         stroke(0, 100 * alpha);
         strokeWeight(0.8);
         drawingContext.setLineDash([2, 3]);
-        line(k.ankerX, k.ankerY, k.x - 4, y);
+        line(k.ankerX, k.ankerY, k.links ? k.x + k.w + 4 : k.x - 4, y);
         drawingContext.setLineDash([]);
         noStroke();
       }
@@ -243,8 +268,10 @@ const FWERT_GRUPPEN_WINKEL = { neg: Math.PI / 2, pos: -Math.PI / 2, neutral: 0 }
 
 // Ein Punkt je Annotation mit F-Wert, Grösse nach Typ, Lage im 120°-Drittel
 // der eigenen Valenz. Bei Andrang wachsen weitere Ringe nach aussen.
+// Rückgabe: die gesetzten Punkte, an die sich die Erklärungs-Ebene hängt.
 function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1) {
-  if (!fwertAnnotationen.length || radius <= 0) return;
+  let gesetzt = [];
+  if (!fwertAnnotationen.length || radius <= 0) return gesetzt;
 
   push(); // noStroke() plus direkte fillStyle-Schreibzugriffe
   const DRITTEL = TWO_PI / 3;
@@ -258,6 +285,7 @@ function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1) {
     gruppe.formen.push({
       d: FWERT_PUNKT_DURCHMESSER[groesse],
       rgb: FWERT_PUNKT_FARBE_RGB,
+      typ: a.fWertType,
     });
   });
 
@@ -290,6 +318,7 @@ function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1) {
         let winkelPunkt = n === 1 ? mitte : mitte - spanne / 2 + (i / (n - 1)) * spanne;
         let x = cx + Math.cos(winkelPunkt) * ringRadius;
         let y = cy + Math.sin(winkelPunkt) * ringRadius;
+        gesetzt.push({ x, y, typ: f.typ });
         // Canvas-Pfad, siehe ACHTUNG oben.
         drawingContext.fillStyle = `rgba(${f.rgb.r}, ${f.rgb.g}, ${f.rgb.b}, ${alphaSkala})`;
         drawingContext.beginPath();
@@ -301,6 +330,7 @@ function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1) {
     }
   });
   pop();
+  return gesetzt;
 }
 
 
@@ -337,6 +367,9 @@ const IKON_ABSTAND_RAND = 46;      // Luft zwischen Register und Icon-Mitte
 const IKON_ABSTAND_OBEN = 78;
 const IKON_RADIUS_SKALA = 0.45;
 
+// Lage der zuletzt gezeichneten Demo-Grafik, für den Treffertest des Icons.
+let letzteDemoLage = null;
+
 // ikon 0 = Erklärplatz über den Begleittexten, 1 = Ruheplatz als Icon.
 function demoKreisLage(ikon) {
   return {
@@ -370,42 +403,70 @@ function baueDemoAnnotationen() {
 const DEMO_ANNOTATIONEN = baueDemoAnnotationen();
 
 // Beschriftungen am Kreis, in drei Gruppen passend zu den Erklärungstexten in
-// index.html (data-demo-gruppe). Alle Labels stehen rechts, die Hilfslinien
-// zeigen auf die Stelle, die der Text meint.
-function demoBeschriftungen(cx, cy, sichtbar, aussen, skala, gruppenAlpha) {
-  let labelX = cx + aussen + DEMO_LABEL_ABSTAND;
+// index.html (data-demo-gruppe): Grösse, Wölbung, F-Wert-Punkte. Alle Labels
+// stehen auf einer Seite, die Hilfslinien zeigen auf die Stelle, die der Text
+// meint. Gilt für die Demo-Grafik wie für jeden echten Ortskreis — was ein
+// Kreis nicht zeigt (fehlendes Band, fehlende Valenz), bekommt kein Label.
+function kreisBeschriftungen(cx, cy, bandCounts, aussen, skala, maxRadius, gruppenAlpha, fwertPunkte, links) {
+  let labelX = links ? cx - aussen - DEMO_LABEL_ABSTAND : cx + aussen + DEMO_LABEL_ABSTAND;
   let eintrag = (gruppe, text, radius, winkel) => {
     let ankerY = cy + Math.sin(winkel) * radius;
     return {
       ankerX: cx + Math.cos(winkel) * radius, ankerY,
       x: labelX, y: ankerY, text, farbe: null,
-      hilfslinie: true, alpha: gruppenAlpha[gruppe],
+      hilfslinie: true, links, alpha: gruppenAlpha[gruppe],
     };
   };
-  // Fächer über die rechte Seite, damit sich die Hilfslinien nicht kreuzen.
+  // Fächer über eine Kreisseite, damit sich die Hilfslinien nicht kreuzen.
   let winkelBand = [-0.95, -0.35, 0.3];
+  let bandAnzahl = key => {
+    let b = bandCounts[key] || {};
+    return (b.neg || 0) + (b.pos || 0) + (b.neutral || 0) + (b.unrated || 0);
+  };
+  let valenzAnzahl = bucket => KREIS_KATEGORIEN.reduce(
+    (n, kat) => n + ((bandCounts[kat.key] || {})[bucket] || 0), 0);
 
-  return [
-    ...KREIS_KATEGORIEN.map((kat, i) => eintrag(0, CATEGORY_LABELS[kat.key],
-      kreisRadius(sichtbar.filter(a => a.category === kat.key).length, DEMO_MAX_RADIUS) * skala,
-      winkelBand[i])),
-    eintrag(0, 'Kreisgrösse = Relevanz des Ortes für Duroys Empfindungen.', aussen, 0.85),
+  let labels = [];
+  KREIS_KATEGORIEN.forEach((kat, i) => {
+    let n = bandAnzahl(kat.key);
+    if (n > 0) labels.push(eintrag(0, CATEGORY_LABELS[kat.key],
+      kreisRadius(n, maxRadius) * skala, winkelBand[i]));
+  });
+  labels.push(eintrag(0, 'Kreisgrösse = Relevanz des Ortes für Duroys Empfindungen.', aussen, 0.85));
 
-    eintrag(1, 'Halbkreise (Wölbung gegen oben) = positiv', aussen * 0.7, -PI / 3),
-    eintrag(1, 'Halbkreise (Wölbung gegen unten) = negativ', aussen * 0.7, PI / 3),
-    // Nicht auf Winkel 0: dort sitzt der neutrale F-Wert-Punkt, die Hilfslinie
-    // liefe genau durch ihn.
-    eintrag(1, 'Kreis = neutral', aussen * 0.45, 0.32),
+  if (valenzAnzahl('pos') > 0) labels.push(eintrag(1, 'Halbkreise (Wölbung gegen oben) = positiv', aussen * 0.7, -PI / 3));
+  if (valenzAnzahl('neg') > 0) labels.push(eintrag(1, 'Halbkreise (Wölbung gegen unten) = negativ', aussen * 0.7, PI / 3));
+  // Nicht auf Winkel 0: dort sitzt der neutrale F-Wert-Punkt, die Hilfslinie
+  // liefe genau durch ihn.
+  if (valenzAnzahl('neutral') > 0) labels.push(eintrag(1, 'Kreis = neutral', aussen * 0.45, 0.32));
 
-    ...Object.keys(DEMO_FWERTE).map(bucket => eintrag(2, FWERT_LABELS[DEMO_FWERTE[bucket]],
-      aussen + FWERT_PUNKT_RAND_ABSTAND, FWERT_GRUPPEN_WINKEL[bucket])),
-  ];
+  // Je F-Wert-Typ ein Label, angeheftet an einen wirklich gesetzten Punkt
+  // dieses Typs — die Punktgrösse ist es, die den Typ unterscheidet.
+  let schonBeschriftet = new Set();
+  (fwertPunkte || []).forEach(p => {
+    if (!p.typ || schonBeschriftet.has(p.typ)) return;
+    schonBeschriftet.add(p.typ);
+    labels.push({
+      ankerX: p.x, ankerY: p.y, x: labelX, y: p.y,
+      text: FWERT_LABELS[p.typ], farbe: null,
+      hilfslinie: true, links, alpha: gruppenAlpha[2],
+    });
+  });
+
+  // zeichneKreisLabels weicht nur nach unten aus: liegt der Kreis tief im
+  // Bild, muss der Stapel vorher hoch, sonst fällt er unten heraus.
+  let stapel = labels.length * (LABEL_HOEHE + LABEL_ABSTAND);
+  let obenRaus = LABEL_HOEHE;
+  let untenRaus = Math.max(obenRaus, height - stapel);
+  labels.forEach(l => l.y = constrain(l.y, obenRaus, untenRaus));
+  return labels;
 }
 
 // fortschritt 0..1 deckt die erfundenen Annotationen auf, alphaSkala blendet
 // die ganze Grafik, gruppenAlpha die drei Beschriftungsgruppen, ikon 0..1
 // schiebt sie vom Erklärplatz auf den Icon-Platz oben rechts.
 function zeichneDemoKreisgrafik(fortschritt, alphaSkala, gruppenAlpha, ikon = 0) {
+  letzteDemoLage = null;
   if (alphaSkala <= 0 || fortschritt <= 0) return;
   let sichtbar = DEMO_ANNOTATIONEN.slice(0, Math.round(fortschritt * DEMO_ANNOTATIONEN.length));
   if (!sichtbar.length) return;
@@ -415,17 +476,71 @@ function zeichneDemoKreisgrafik(fortschritt, alphaSkala, gruppenAlpha, ikon = 0)
   let aussen = groessterKreisRadius(bandCounts, DEMO_MAX_RADIUS, skala);
   // winkel PI wie alle anderen Ansichten: positiv oben, negativ unten.
   zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala, PI, skala, DEMO_MAX_RADIUS);
-  zeichneFwertPunkte(cx, cy, aussen, sichtbar.filter(a => a.hasFwert), alphaSkala);
-  zeichneKreisLabels(demoBeschriftungen(cx, cy, sichtbar, aussen, skala, gruppenAlpha.map(a => a * alphaSkala)));
+  let fwertPunkte = zeichneFwertPunkte(cx, cy, aussen, sichtbar.filter(a => a.hasFwert), alphaSkala);
+  zeichneKreisLabels(kreisBeschriftungen(cx, cy, bandCounts, aussen, skala, DEMO_MAX_RADIUS,
+    gruppenAlpha.map(a => a * alphaSkala), fwertPunkte, false));
+  letzteDemoLage = { cx, cy, r: aussen, ikon, alpha: alphaSkala };
+}
+
+// Trefferfläche des Icons — nur wenn es auch wirklich als Icon dasteht und
+// nicht gerade noch auf dem Weg dorthin ist.
+function demoIkonGetroffen(mx, my) {
+  let l = letzteDemoLage;
+  if (!l || l.ikon < 0.99 || l.alpha <= 0.01) return false;
+  return dist(mx, my, l.cx, l.cy) <= l.r + FWERT_PUNKT_RAND_ABSTAND + 8;
+}
+
+// ---------------------------------------------------------------------------
+// Erklärungs-Ebene (Klick aufs Icon)
+// ---------------------------------------------------------------------------
+
+// Heller Schleier über der ganzen Ansicht; die Kreisgrafik bleibt darunter
+// erkennbar, tritt aber hinter die Beschriftungen zurück.
+const ERKLAERUNG_SCHLEIER = '#E2E6E1';
+const ERKLAERUNG_SCHLEIER_ALPHA = 0.6;
+const ERKLAERUNG_LABEL_BREITE = 360; // Platzbedarf des längsten Labels
+
+// Legt den Schleier über die Ansicht und beschriftet den grössten Kreis des
+// Frames mit allen drei Erklärungen zugleich. Steht keiner im Bild
+// (Übersichts- und Schlussakt), erklärt die Demo-Grafik an ihrem alten Platz.
+function zeichneKreisErklaerung() {
+  push();
+  noStroke();
+  drawingContext.globalAlpha = ERKLAERUNG_SCHLEIER_ALPHA;
+  drawingContext.fillStyle = ERKLAERUNG_SCHLEIER;
+  drawingContext.fillRect(0, 0, width, height);
+  pop();
+
+  // Ein angeschnittener Kreis taugt nicht als Bezug: seine Beschriftungen
+  // zeigten auf Stellen ausserhalb des Bildes. Nur wenn gar keiner ganz
+  // drinsteht, zählt wieder das ganze Feld.
+  let groesster = (liste) => liste.reduce((bisher, k) =>
+    !bisher || k.radius > bisher.radius ? k : bisher, null);
+  let ganzImBild = gezeichneteKreise.filter(k =>
+    k.cx - k.radius > 0 && k.cx + k.radius < width &&
+    k.cy - k.radius > 0 && k.cy + k.radius < height);
+  let kreis = groesster(ganzImBild) || groesster(gezeichneteKreise);
+  if (!kreis) {
+    zeichneDemoKreisgrafik(1, 1, [1, 1, 1], 0);
+    return;
+  }
+  // Passen die Labels rechts nicht mehr aufs Bild, klappen sie nach links.
+  let links = kreis.cx + kreis.radius + DEMO_LABEL_ABSTAND + ERKLAERUNG_LABEL_BREITE > width;
+  zeichneKreisLabels(kreisBeschriftungen(kreis.cx, kreis.cy, kreis.bandCounts, kreis.radius,
+    kreis.skala, kreis.maxRadius, [1, 1, 1], kreis.fwertPunkte, links));
 }
 
 // --- Export ------------------------------------------------------------
-// Sechs Namen. Leser: docs/architektur.md.
+// Zehn Namen. Leser: docs/architektur.md.
 window.FWERT_PUNKT_DURCHMESSER = FWERT_PUNKT_DURCHMESSER;
 window.leereBandCounts = leereBandCounts;
 window.zeichneKreiseOrtRuns = zeichneKreiseOrtRuns;
 window.zeichneKreiseFuerRun = zeichneKreiseFuerRun;
 window.zeichneFwertPunkte = zeichneFwertPunkte;
 window.zeichneDemoKreisgrafik = zeichneDemoKreisgrafik;
+window.merkeKreis = merkeKreis;
+window.vergissGezeichneteKreise = vergissGezeichneteKreise;
+window.demoIkonGetroffen = demoIkonGetroffen;
+window.zeichneKreisErklaerung = zeichneKreisErklaerung;
 
 })(); // Ende der Modulkapselung, siehe Kommentar oben

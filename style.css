@@ -60,6 +60,25 @@ body {
   pointer-events: none;
 }
 
+/* Erklärungs-Ebene (Klick aufs Kreisgrafik-Icon, siehe zeichneKreisErklaerung
+   in kreisgrafik.js): Der Schleier liegt im Canvas — alles DOM darüber stünde
+   sonst unverschleiert im Bild. Auf der Bühne trifft es jedes Kind ausser dem
+   Canvas selbst (Begleit- und Einstiegstexte, Annotationsbox, Marker),
+   dazu die fixen Bedienelemente daneben. pointer-events aus, damit jeder
+   Klick bei p5 ankommt und die Ebene wieder schliesst.
+
+   ACHTUNG visibility statt opacity: draw() schreibt die Deckkraft der
+   Begleit- und Einstiegstexte jeden Frame als Inline-Stil: eine
+   opacity-Regel im Stylesheet käme dagegen nicht an. */
+body.erklaerung-offen #scrollyStage > *:not(canvas),
+body.erklaerung-offen #kapitelRegister,
+body.erklaerung-offen #legendeBox,  /* am Wrapper, nicht an #registerTabs: dessen Kind setzt visibility selbst */
+body.erklaerung-offen #scrollFortschritt,
+body.erklaerung-offen #grafikPlayButton {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 h1,
 h2,
 .lead,
