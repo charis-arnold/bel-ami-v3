@@ -8,7 +8,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 33 von 42 Namen intern, 9 exportiert. Konvention: docs/architektur.md.
+// 34 von 43 Namen intern, 9 exportiert. Konvention: docs/architektur.md.
 // ACHTUNG Ladezeit: hexZuRgb() und baueDemoAnnotationen() laufen schon in der
 // IIFE — diese Datei muss nach datenbereinigung.js stehen, sonst ReferenceError.
 // p5s Konstanten (PI, HALF_PI) gibt es hier noch nicht, die setzt p5 erst beim
@@ -31,8 +31,16 @@ const LABEL_ABSTAND = 4;
 // Die echten Ortskreise dieses Frames — Grundlage der Erklärungs-Ebene, die
 // sich an den grössten davon hängt. frameCount setzt die Liste selbst
 // zurück, damit kein Aufrufer daran denken muss.
+
+// ACHTUNG die Liste wird nur beim ersten merkeKreis() eines Frames geleert.
+// Wird in einem Frame gar keiner gezeichnet, steht noch der Stand des
+// letzten drin — deshalb liest kreiseDiesesFrames() den Zähler mit.
 let gezeichneteKreise = [];
 let kreisRegisterFrame = -1;
+
+function kreiseDiesesFrames() {
+  return kreisRegisterFrame === frameCount ? gezeichneteKreise : [];
+}
 
 function merkeKreis(cx, cy, bandCounts, radius, fwertPunkte, skala = 1, maxRadius = 100) {
   if (kreisRegisterFrame !== frameCount) { gezeichneteKreise = []; kreisRegisterFrame = frameCount; }
@@ -516,10 +524,11 @@ function zeichneKreisErklaerung() {
   // drinsteht, zählt wieder das ganze Feld.
   let groesster = (liste) => liste.reduce((bisher, k) =>
     !bisher || k.radius > bisher.radius ? k : bisher, null);
-  let ganzImBild = gezeichneteKreise.filter(k =>
+  let imBild = kreiseDiesesFrames();
+  let ganzImBild = imBild.filter(k =>
     k.cx - k.radius > 0 && k.cx + k.radius < width &&
     k.cy - k.radius > 0 && k.cy + k.radius < height);
-  let kreis = groesster(ganzImBild) || groesster(gezeichneteKreise);
+  let kreis = groesster(ganzImBild) || groesster(imBild);
   if (!kreis) {
     zeichneDemoKreisgrafik(1, 1, [1, 1, 1], 0);
     return;
