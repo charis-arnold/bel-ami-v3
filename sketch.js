@@ -7,7 +7,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 37 von 72 Namen intern, 35 exportiert. Konvention: docs/architektur.md.
+// 35 von 69 Namen intern, 34 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 let stage, heroText, begleitTexte, kapitelEinstiegsTexte;
@@ -79,8 +79,6 @@ const LEGENDE_VALENZ_OBEN_UNTEN = 'Volltonfarbe: oben positiv, unten negativ bew
 let legendeFwertHinweis; // Positions-Hinweis der F-Wert-Punkte — ebenfalls ansichtsabhängig
 const LEGENDE_FWERT_OBEN_UNTEN = 'Position ausserhalb des Kreises: positiv oben, negativ unten, neutral/unbewertet rechts.';
 let legendeTab, legendeInhalt; // Tab (vertikal beschriftet, immer sichtbar solang legendeBox.sichtbar) + ausfahrender Inhalt (Farberklärung der Kreisgrafik)
-let prologBox, prologTab; // Zweites Register direkt unter Legende (siehe #registerTabs in index.html) — gleiches Verhalten wie Legende, eigener (statischer, hart codierter) Inhalt Projekt-Hintergrund
-let registerTabs; // gemeinsamer Fixed-Container beider Register (siehe #registerTabs in index.html) — trägt die legende-offen/prolog-offen-Klasse, an der sich der jeweils GESCHLOSSENE Tab orientiert, um mit ausrücken zu können (siehe CSS)
 
 // Zwei Modi je Kapitel-Ansicht: 'karte' (Ausschnitt und Route) und 'grafik'
 // (horizontale Spine mit Play). Umschalten über "Plan"/"Graph" im Menübalken.
@@ -208,14 +206,10 @@ function setup() {
   annotationTag = document.getElementById('annotationTag');
   annotationBar = document.getElementById('annotationBar');
   kapitelRegister = document.getElementById('kapitelRegister');
-  registerTabs = document.getElementById('registerTabs');
   legendeBox = document.getElementById('legendeBox');
   legendeTab = document.getElementById('legendeTab');
   legendeInhalt = document.getElementById('legendeInhalt');
-  legendeTab.addEventListener('click', () => oeffneRegister(legendeBox, prologBox, 'legende-offen', 'prolog-offen'));
-  prologBox = document.getElementById('prologBox');
-  prologTab = document.getElementById('prologTab');
-  prologTab.addEventListener('click', () => oeffneRegister(prologBox, legendeBox, 'prolog-offen', 'legende-offen'));
+  legendeTab.addEventListener('click', () => oeffneRegister(legendeBox));
   scrollFortschritt = document.getElementById('scrollFortschritt');
   grafikPlayButton = document.getElementById('grafikPlayButton');
   grafikPlayButton.addEventListener('click', toggleGrafikPlay);
@@ -544,26 +538,15 @@ function draw() {
   let inUebersichtRouten = uebersichtRoutenFortschritt > 0 && !zoomedKapitel && kreisVergleichMapFade <= 0;
   kapitelRegister.classList.toggle('sichtbar', inKapitelAnsicht || inUebersichtRouten);
 
-  // Legende und Prolog überall ausser auf der Startkarte; auf der
-  // Schlusskarte bleibt nur der Prolog, die Kreisgrafik ist dann verblasst.
-
-  // Über visibility statt display geschaltet, damit der Prolog an seinem
-  // Platz bleibt, wenn die Legende darüber verschwindet.
+  // Legende überall ausser auf der Start- und der Schlusskarte; dort ist die
+  // Kreisgrafik nicht zu sehen, die sie erklärt.
   let aufStartkarte = progress < SCROLL_MEILENSTEINE.zoomStart;
   let aufSchlusskarte = progress >= SCROLL_MEILENSTEINE.startkarteStart;
   legendeBox.classList.toggle('sichtbar', !aufStartkarte && !aufSchlusskarte);
-  prologBox.classList.toggle('sichtbar', !aufStartkarte);
 
-  // Ausgefahrener Inhalt fährt ein, wenn sein Register verschwindet — es
+  // Ausgefahrener Inhalt fährt ein, wenn das Register verschwindet — es
   // taucht später eingefahren wieder auf, nicht im letzten Stand.
-  if (aufStartkarte || aufSchlusskarte) {
-    legendeBox.classList.remove('offen');
-    registerTabs.classList.remove('legende-offen');
-  }
-  if (aufStartkarte) {
-    prologBox.classList.remove('offen');
-    registerTabs.classList.remove('prolog-offen');
-  }
+  if (aufStartkarte || aufSchlusskarte) legendeBox.classList.remove('offen');
   // Plan/Graph nur in einer echten Kapitel-Ansicht; in der Übersicht ist
   // "Alle" der aktive Eintrag.
   modusZeile.classList.toggle('versteckt', !inKapitelAnsicht);
@@ -729,7 +712,7 @@ function zeichneRoute(punkte, upToIndex, bbox, strichstaerke = 2, offsetX = mapO
 
 
 // --- Export ------------------------------------------------------------
-// 35 Namen: 13 als Wert, 5 p5-Hooks, 17 als Lesebindung.
+// 34 Namen: 13 als Wert, 5 p5-Hooks, 16 als Lesebindung.
 
 // Konstanten, Funktionen und die vier nur befüllten Container: Die Bindung
 // ändert sich nie, deshalb Wertzuweisung.
@@ -768,7 +751,6 @@ lesebindung('annotationText', () => annotationText);
 lesebindung('kartenMarkierungenEl', () => kartenMarkierungenEl);
 lesebindung('kapitelRegister', () => kapitelRegister);
 lesebindung('legendeInhalt', () => legendeInhalt);
-lesebindung('registerTabs', () => registerTabs);
 lesebindung('modusZeile', () => modusZeile);
 lesebindung('planEintrag', () => planEintrag);
 lesebindung('graphEintrag', () => graphEintrag);

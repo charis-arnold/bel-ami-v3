@@ -3,18 +3,13 @@
 
    Alles, was beim Start EINMAL an DOM-Knoten erzeugt wird: Kapitelregister
    links, Legendeninhalt rechts, die drei Marker-Ebenen der Kapitel-1-Ansicht,
-   dazu der Akkordeon-Umschalter der Register. Hier wird nur gebaut — die
+   dazu der Umschalter des Legendenregisters. Hier wird nur gebaut — die
    Bildschirmposition bekommen die Knoten erst in draw().
 ============================================================================= */
 
-// Öffnet ein Register exklusiv (Akkordeon). Die Klasse am gemeinsamen
-// Container lässt in style.css den geschlossenen Tab mit ausfahren.
-function oeffneRegister(box, andererBox, eigeneKlasse, andereKlasse) {
-  const warOffen = box.classList.contains('offen');
-  box.classList.toggle('offen', !warOffen);
-  andererBox.classList.remove('offen');
-  registerTabs.classList.toggle(eigeneKlasse, !warOffen);
-  registerTabs.classList.remove(andereKlasse);
+// Fährt den Registerinhalt aus oder ein; der Tab wandert in style.css mit.
+function oeffneRegister(box) {
+  box.classList.toggle('offen');
 }
 
 // Kapitelregister links: Plan/Graph, Leerzeile, "Alle", dann 01–18.

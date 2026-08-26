@@ -514,39 +514,28 @@ h2 {
 
 
 /* =========================
-   9b) Register am rechten Rand: Legende (Farberklärung der Kreisgrafik,
-   Plan- UND Graph-Ansicht) und Prolog (Projekt-Hintergrund), als
-   gestapeltes Tab-Paar. .register-tabs ist der einzige fixed-positionierte,
-   vertikal zentrierte Container für BEIDE Tabs (Flex-Spalte) — Legende
-   oben, Prolog direkt darunter. Die eigentlichen Inhalte (.legende-inhalt/
-   .prolog-inhalt) bleiben wie zuvor UNABHÄNGIG fixed-positioniert (fahren
-   randbündig über die volle Bildschirmhöhe aus, ignorieren also die
-   Flex-Stapelung der Tabs) — als position:fixed-Nachfahren eines
-   Flex-Items tragen sie nichts zu dessen Grösse bei, das Tab-Paar stapelt
-   sich also unabhängig davon, ob/wie weit ein Inhalt gerade ausgefahren ist.
-   Im Ruhezustand ragen nur die schmalen, vertikal beschrifteten Tabs
-   randbündig in den Bildschirm, Klick darauf fährt den jeweiligen Inhalt
-   (Stil an .foto-popup-inner angelehnt — weisse Fläche mit Schatten) von
-   rechts nach links aus, der eigene Tab wandert dabei mit an dessen linke
-   Kante (.offen right-Wert = Inhaltsbreite, siehe unten je Tab).
-   Sichtbarkeit jedes Registers (Tab + Inhalt) wie .kapitel-register
-   (dieselbe inKapitelAnsicht-Logik in sketch.js) — dafür genügt Opacity/
-   Visibility auf dem jeweiligen unpositionierten Wrapper (.legende-box/
-   .prolog-box), die sich ganz normal auf die fixed-positionierten Kinder
-   vererbt. Das Ausfahren selbst läuft über die zusätzliche .offen-Klasse
-   auf demselben Wrapper (Klick auf legendeTab/prologTab, siehe sketch.js).
-   Legende-Inhalt wird dynamisch aus KREIS_KATEGORIEN/CATEGORY_LABELS
-   gebaut (baueLegende in sketch.js), nicht hier hart codiert, damit
+   9b) Legende am rechten Rand (Farberklärung der Kreisgrafik, Plan- UND
+   Graph-Ansicht). .register-tabs ist der fixed-positionierte, vertikal
+   zentrierte Container des Tabs; der Inhalt (.legende-inhalt) ist
+   UNABHÄNGIG fixed-positioniert und fährt randbündig über die volle
+   Bildschirmhöhe aus. Im Ruhezustand ragt nur der schmale, vertikal
+   beschriftete Tab in den Bildschirm, ein Klick fährt den Inhalt (Stil an
+   .foto-popup-inner angelehnt) von rechts nach links aus, der Tab wandert
+   an dessen linke Kante mit (.offen right-Wert = Inhaltsbreite).
+   Sichtbarkeit wie .kapitel-register (dieselbe Logik in sketch.js) über
+   Opacity/Visibility auf dem unpositionierten Wrapper .legende-box, das
+   Ausfahren über dessen zusätzliche .offen-Klasse (siehe baueLegende und
+   oeffneRegister in dom-aufbau.js). Der Inhalt wird dynamisch aus
+   KREIS_KATEGORIEN/CATEGORY_LABELS gebaut, nicht hier hart codiert, damit
    Legende und tatsächliche Kreisfarben nie auseinanderlaufen.
    ========================= */
 .register-tabs {
   /* Zentrierung bewusst über Flex (justify-content), NICHT über
      transform:translateY(-50%) — ein transform auf einem Vorfahren macht
      ihn zum containing block für position:fixed-Nachfahren, wodurch
-     .legende-inhalt/.prolog-inhalt (fixed, top:0/bottom:0) sich nur noch
-     auf DIESE Box statt auf den Viewport bezögen und dadurch auf deren
-     kleine Tab-Stapel-Höhe zusammenschrumpften, statt über die volle
-     Bildschirmhöhe auszufahren. */
+     .legende-inhalt (fixed, top:0/bottom:0) sich nur noch auf DIESE Box
+     statt auf den Viewport bezöge und dadurch auf deren kleine Tab-Höhe
+     zusammenschrumpfte, statt über die volle Bildschirmhöhe auszufahren. */
   position: fixed;
   top: 0;
   bottom: 0;
@@ -557,18 +546,18 @@ h2 {
   justify-content: center;
 }
 
-.legende-box, .prolog-box {
+.legende-box {
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
-.legende-box.sichtbar, .prolog-box.sichtbar {
+.legende-box.sichtbar {
   opacity: 1;
   visibility: visible;
 }
 
-.legende-tab, .prolog-tab {
+.legende-tab {
   position: relative;
   right: 0;
   transform: rotate(180deg);
@@ -594,40 +583,17 @@ h2 {
   color: #212B2E;
 }
 
-.prolog-tab {
-  background: #CDD5CF;
-  color: #212B2E;
-}
-
 .legende-box.offen .legende-tab {
   right: 190px; /* an die linke Kante des ausgefahrenen Legende-Inhalts angeheftet */
 }
 
-.prolog-box.offen .prolog-tab {
-  right: 66.6667vw; /* an die linke Kante des ausgefahrenen Prolog-Inhalts angeheftet */
-}
-
-/* Akkordeon-Kopplung: ist ein Register offen, ist das andere (per JS-Logik
-   in oeffneRegister, sketch.js) immer zu — sein Inhalt bleibt eingefahren,
-   aber sein TAB fährt trotzdem an dieselbe Kante mit, statt am
-   Bildschirmrand stehen zu bleiben. Sonst würden die beiden gestapelten
-   Tabs optisch auseinanderreissen, sobald einer von beiden aufklappt.
-   #registerTabs.<x>-offen wird beim Klick zusätzlich zu .offen auf der Box
-   selbst gesetzt (siehe oeffneRegister) — Selektor braucht die ID, weil ein
-   allgemeiner Geschwister-Selektor (~) den Legende-Tab (steht im DOM VOR
-   der Prolog-Box) nicht auf einen Prolog-Zustand reagieren lassen könnte. */
-#registerTabs.legende-offen .prolog-tab {
-  right: 190px;
-}
-
-#registerTabs.prolog-offen .legende-tab {
-  right: 66.6667vw;
-}
-
-.legende-inhalt, .prolog-inhalt {
+.legende-inhalt {
   position: fixed;
   top: 0;
   bottom: 0;
+  right: -190px; /* komplett ausserhalb des Bildschirms, wenn eingefahren */
+  width: 190px;
+  padding: 18px;
   z-index: 20;
   background: #fff;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
@@ -635,82 +601,8 @@ h2 {
   transition: right 0.35s ease;
 }
 
-.legende-inhalt {
-  right: -190px; /* komplett ausserhalb des Bildschirms, wenn eingefahren */
-  width: 190px;
-  padding: 18px;
-}
-
 .legende-box.offen .legende-inhalt {
   right: 0;
-}
-
-.prolog-inhalt {
-  right: -66.6667vw; /* komplett ausserhalb des Bildschirms, wenn eingefahren */
-  width: 66.6667vw;
-  padding: 48px 6vw;
-}
-
-.prolog-box.offen .prolog-inhalt {
-  right: 0;
-}
-
-/* .prolog-titel/-untertitel sitzen auf <h1>/<h2> (semantisch korrekt für
-   einen Panel-Titel) — die globalen, bare h1/h2-Regeln weiter oben sind
-   aber fürs absolut positionierte, weisse Startseiten-Hero gedacht
-   (position:absolute, color:#fff, pointer-events:none, …) und müssen hier
-   explizit zurückgesetzt werden, sonst würde der Prolog-Titel unsichtbar
-   (weiss auf weiss) über der ganzen Seite schweben statt im Panel-Textfluss
-   zu stehen. */
-.prolog-titel {
-  position: static;
-  top: auto; left: auto; transform: none;
-  text-align: left;
-  z-index: auto;
-  pointer-events: auto;
-  width: auto; max-width: none;
-  text-transform: none;
-  font-family: var(--serif);
-  font-size: clamp(28px, 3.2vw, 46px);
-  font-weight: 400;
-  letter-spacing: normal;
-  line-height: 1.15;
-  color: var(--ink);
-  margin-bottom: 8px;
-}
-
-.prolog-untertitel {
-  position: static;
-  top: auto; left: auto; transform: none;
-  text-align: left;
-  z-index: auto;
-  pointer-events: auto;
-  width: auto; max-width: none;
-  text-transform: none;
-  font-family: var(--sans);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: normal;
-  line-height: 1.4;
-  color: var(--grey);
-  margin-bottom: 24px;
-}
-
-.prolog-lead {
-  font-family: var(--sans);
-  font-size: 17px;
-  line-height: 1.55;
-  color: var(--ink);
-  margin-bottom: 24px;
-  max-width: 56ch;
-}
-
-.prolog-lauftext {
-  font-family: var(--sans);
-  font-size: 15px;
-  line-height: 1.7;
-  color: rgba(0, 0, 0, 0.75);
-  max-width: 56ch;
 }
 
 .legende-titel {
