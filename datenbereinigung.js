@@ -166,9 +166,9 @@ const SCROLL_MEILENSTEINE = {
   zoomStart: 0.183872, zoomEnd: 0.231184,
   // Crossfade Startkarte -> helle Überblickskarte, 80vh.
   kartenwechselStart: 0.137227, kartenwechselEnd: 0.145829,
-  // Demo-Kreisgrafik: wächst bis demoVoll an, blendet ab zoomStart zusammen
-  // mit dem Zoom in Kapitel 1 wieder aus.
-  demoStart: 0.145829, demoVoll: 0.154431, demoEnde: 0.194000,
+  // Demo-Kreisgrafik: wächst bis demoVoll an, schrumpft ab zoomStart auf den
+  // Icon-Platz oben rechts.
+  demoStart: 0.145829, demoVoll: 0.154431,
   // Spine blendet gleichzeitig mit dem Zoom-Beginn ein.
   spineFadeStart: 0.113118, spineFadeEnd: 0.16043,
   // 200vh Lesezeit davor für den Kapitel-Einstiegstext.

@@ -424,16 +424,6 @@ function draw() {
   // Kreisgrafik-Icon. Zum Wiedereinschalten diese Zeile entkommentieren.
   // zeichneWindrose(width - 90, 150, 50, 1 - kreisVergleichMapFade);
 
-  // Demo-Kreisgrafik auf der hellen Überblickskarte, oberhalb der
-  // Erklärungstexte (.begleittext sitzt auf 64% Höhe).
-  let demoFortschritt = constrain(map(progress, SCROLL_MEILENSTEINE.demoStart, SCROLL_MEILENSTEINE.demoVoll, 0, 1), 0, 1);
-  let demoAlpha = progress < SCROLL_MEILENSTEINE.demoStart ? 0
-    : constrain(map(progress, SCROLL_MEILENSTEINE.zoomStart, SCROLL_MEILENSTEINE.demoEnde, 1, 0), 0, 1);
-  // Jede Beschriftungsgruppe folgt dem Fenster ihres Erklärungstextes.
-  let demoGruppenAlpha = demoGruppenTexte.map(el =>
-    begleittextDeckkraft(progress, parseFloat(el.dataset.von), parseFloat(el.dataset.bis)));
-  zeichneDemoKreisgrafik(width * 0.30, height * 0.34, demoFortschritt, demoAlpha, demoGruppenAlpha);
-
   let routeAmount = constrain(map(progress, SCROLL_MEILENSTEINE.routeStart, SCROLL_MEILENSTEINE.routeEnd, 0, 1), 0, 1);
 
   let annListe = stationenData.annotationen;
@@ -668,6 +658,20 @@ function draw() {
   // In der Graph-Ansicht nicht zeichnen, sonst schweben sie über der Spine.
   // kartenZoomFaktor skaliert die Sternchen: der grössere der beiden Zooms.
   if (!inKapitelGrafikAnsicht) zeichneFotoMarker(activeBbox, fotoOffsetX, fotoOffsetY, 1 - kreisVergleichMapFade, Math.max(zoomAmount, kapitelZoomAmount));
+
+  // Demo-Kreisgrafik: wächst über den Erklärungstexten heran, schrumpft mit
+  // dem Zoom auf den Icon-Platz oben rechts und bleibt dort stehen. Ganz
+  // zuletzt gezeichnet, damit das Icon über allen Ansichten liegt — auch
+  // über der Graph-Ansicht, die den Rest des Frames überdeckt.
+  let demoFortschritt = constrain(map(progress, SCROLL_MEILENSTEINE.demoStart, SCROLL_MEILENSTEINE.demoVoll, 0, 1), 0, 1);
+  let demoIkon = constrain(map(progress, SCROLL_MEILENSTEINE.zoomStart, SCROLL_MEILENSTEINE.zoomEnd, 0, 1), 0, 1);
+  // Erst im Schlussakt wieder weg: dort ist die Kreisgrafik verblasst, das
+  // Icon hätte nichts mehr zu erklären.
+  let demoAlpha = progress < SCROLL_MEILENSTEINE.demoStart ? 0 : 1 - skEinblenden;
+  // Jede Beschriftungsgruppe folgt dem Fenster ihres Erklärungstextes.
+  let demoGruppenAlpha = demoGruppenTexte.map(el =>
+    begleittextDeckkraft(progress, parseFloat(el.dataset.von), parseFloat(el.dataset.bis)));
+  zeichneDemoKreisgrafik(demoFortschritt, demoAlpha, demoGruppenAlpha, demoIkon);
 }
 
 // ---------------------------------------------------------------------------

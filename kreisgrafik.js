@@ -8,7 +8,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 18 von 24 Namen intern, 6 exportiert. Konvention: docs/architektur.md.
+// 23 von 29 Namen intern, 6 exportiert. Konvention: docs/architektur.md.
 // ACHTUNG Ladezeit: hexZuRgb() und baueDemoAnnotationen() laufen schon in der
 // IIFE — diese Datei muss nach datenbereinigung.js stehen, sonst ReferenceError.
 // p5s Konstanten (PI, HALF_PI) gibt es hier noch nicht, die setzt p5 erst beim
@@ -330,6 +330,22 @@ const DEMO_RADIUS_SKALA = 2.2;
 const DEMO_MAX_RADIUS = 100;
 const DEMO_LABEL_ABSTAND = 45;
 
+// Ruheplatz als Icon: oben rechts, links neben dem Kapitelregister (5vw
+// breit, siehe .kapitel-register in style.css).
+const IKON_REGISTER_BREITE = 0.05; // Anteil der Fensterbreite
+const IKON_ABSTAND_RAND = 46;      // Luft zwischen Register und Icon-Mitte
+const IKON_ABSTAND_OBEN = 78;
+const IKON_RADIUS_SKALA = 0.45;
+
+// ikon 0 = Erklärplatz über den Begleittexten, 1 = Ruheplatz als Icon.
+function demoKreisLage(ikon) {
+  return {
+    cx: lerp(width * 0.30, width * (1 - IKON_REGISTER_BREITE) - IKON_ABSTAND_RAND, ikon),
+    cy: lerp(height * 0.34, IKON_ABSTAND_OBEN, ikon),
+    skala: lerp(DEMO_RADIUS_SKALA, IKON_RADIUS_SKALA, ikon),
+  };
+}
+
 // Aufdeck-Reihenfolge: reihum durch die Bänder, damit alle drei gemeinsam
 // wachsen. Der Scroll-Fortschritt deckt davon einen Präfix auf, genau wie
 // annIndex bei den echten Kreisen.
@@ -356,7 +372,7 @@ const DEMO_ANNOTATIONEN = baueDemoAnnotationen();
 // Beschriftungen am Kreis, in drei Gruppen passend zu den Erklärungstexten in
 // index.html (data-demo-gruppe). Alle Labels stehen rechts, die Hilfslinien
 // zeigen auf die Stelle, die der Text meint.
-function demoBeschriftungen(cx, cy, sichtbar, aussen, gruppenAlpha) {
+function demoBeschriftungen(cx, cy, sichtbar, aussen, skala, gruppenAlpha) {
   let labelX = cx + aussen + DEMO_LABEL_ABSTAND;
   let eintrag = (gruppe, text, radius, winkel) => {
     let ankerY = cy + Math.sin(winkel) * radius;
@@ -371,7 +387,7 @@ function demoBeschriftungen(cx, cy, sichtbar, aussen, gruppenAlpha) {
 
   return [
     ...KREIS_KATEGORIEN.map((kat, i) => eintrag(0, CATEGORY_LABELS[kat.key],
-      kreisRadius(sichtbar.filter(a => a.category === kat.key).length, DEMO_MAX_RADIUS) * DEMO_RADIUS_SKALA,
+      kreisRadius(sichtbar.filter(a => a.category === kat.key).length, DEMO_MAX_RADIUS) * skala,
       winkelBand[i])),
     eintrag(0, 'Kreisgrösse = Relevanz des Ortes für Duroys Empfindungen.', aussen, 0.85),
 
@@ -387,18 +403,20 @@ function demoBeschriftungen(cx, cy, sichtbar, aussen, gruppenAlpha) {
 }
 
 // fortschritt 0..1 deckt die erfundenen Annotationen auf, alphaSkala blendet
-// die ganze Grafik, gruppenAlpha die drei Beschriftungsgruppen.
-function zeichneDemoKreisgrafik(cx, cy, fortschritt, alphaSkala, gruppenAlpha) {
+// die ganze Grafik, gruppenAlpha die drei Beschriftungsgruppen, ikon 0..1
+// schiebt sie vom Erklärplatz auf den Icon-Platz oben rechts.
+function zeichneDemoKreisgrafik(fortschritt, alphaSkala, gruppenAlpha, ikon = 0) {
   if (alphaSkala <= 0 || fortschritt <= 0) return;
   let sichtbar = DEMO_ANNOTATIONEN.slice(0, Math.round(fortschritt * DEMO_ANNOTATIONEN.length));
   if (!sichtbar.length) return;
 
+  let { cx, cy, skala } = demoKreisLage(ikon);
   let bandCounts = zaehleBandCounts(sichtbar);
-  let aussen = groessterKreisRadius(bandCounts, DEMO_MAX_RADIUS, DEMO_RADIUS_SKALA);
+  let aussen = groessterKreisRadius(bandCounts, DEMO_MAX_RADIUS, skala);
   // winkel PI wie alle anderen Ansichten: positiv oben, negativ unten.
-  zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala, PI, DEMO_RADIUS_SKALA, DEMO_MAX_RADIUS);
+  zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala, PI, skala, DEMO_MAX_RADIUS);
   zeichneFwertPunkte(cx, cy, aussen, sichtbar.filter(a => a.hasFwert), alphaSkala);
-  zeichneKreisLabels(demoBeschriftungen(cx, cy, sichtbar, aussen, gruppenAlpha.map(a => a * alphaSkala)));
+  zeichneKreisLabels(demoBeschriftungen(cx, cy, sichtbar, aussen, skala, gruppenAlpha.map(a => a * alphaSkala)));
 }
 
 // --- Export ------------------------------------------------------------
