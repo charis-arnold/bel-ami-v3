@@ -252,11 +252,15 @@ h2 {
    Scroll-Fenster über data-von / data-bis)
    ========================= */
 
+/* ACHTUNG top wird in kreisgrafik.js gespiegelt (BEGLEITTEXT_MITTE): der
+   Legendenaufbau setzt seine Blöcke über die Oberkante dieses Texts, ohne sie
+   messen zu können. Wird der Wert hier geändert, muss er dort mit. */
+
 .begleittext,
 .kapitel-einstiegstext,
 .kapitel-ende-text {
   position: absolute;
-  top: 64%;
+  top: 72%;
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
@@ -278,7 +282,7 @@ h2 {
    steht. Die Deckkraft steuert draw() über den Schlussakt. */
 .schlusstext {
   position: absolute;
-  top: 64%;
+  top: 72%;
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
@@ -308,6 +312,15 @@ h2 {
    mehr, über die er ausblenden könnte (siehe draw()). */
 .kapitel-ende-text.sichtbar {
   opacity: 1;
+}
+
+/* Tiefer als die übrigen Begleittexte: der Legendenaufbau steht als Ganzes
+   über seinem Text, und alles darüber leitet sich von dessen Oberkante ab
+   (siehe begleittextOben in kreisgrafik.js). Auf 72 % blieb unten ein
+   Streifen leer. Die Kapiteltexte bleiben bei 72 % — mehrere von ihnen sind
+   deutlich länger und fielen sonst unten heraus. */
+.begleittext[data-demo-gruppe] {
+  top: 78%;
 }
 
 /* Höher als die übrigen Begleittexte: auf 64 % läge der Text genau dort, wo
@@ -418,11 +431,14 @@ h2 {
   width: 100%;
 }
 
+/* ACHTUNG font-size führt LABEL_GROESSE in kreisgrafik.js als denselben Wert:
+   die Ortsnamen auf der Karte und die Legende zeichnen mit ihm im Canvas,
+   diese Zeile hier ist DOM. Wird der eine geändert, muss der andere mit. */
 .annotation-tag {
   display: block;
   padding: 14px 26px 0 26px;
   font-family: var(--sans);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;

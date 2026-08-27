@@ -8,7 +8,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 42 von 55 Namen intern, 13 exportiert. Konvention: docs/architektur.md.
+// 86 von 99 Namen intern, 13 exportiert. Konvention: docs/architektur.md.
 // ACHTUNG Ladezeit: hexZuRgb() und baueDemoAnnotationen() laufen schon in der
 // IIFE — diese Datei muss nach datenbereinigung.js stehen, sonst ReferenceError.
 // p5s Konstanten (PI, HALF_PI) gibt es hier noch nicht, die setzt p5 erst beim
@@ -27,6 +27,12 @@ const HATCH_SPACING = 3;
 // Erklärungs-Ebene rechnet damit ihren Platzbedarf aus.
 const LABEL_HOEHE = 14;
 const LABEL_ABSTAND = 4;
+// Schriftgrad aller Beschriftungen im Canvas: Ortsnamen, Legendentitel,
+// Blockzeilen, Valenz- und Wahrnehmungslabels.
+// ACHTUNG .annotation-tag in style.css führt denselben Wert als font-size —
+// die Kategorienzeile der Annotationsbox ist DOM, nicht Canvas. Wird der Wert
+// hier geändert, muss er dort mit, sonst laufen die beiden auseinander.
+const LABEL_GROESSE = 13;
 
 // Die echten Ortskreise dieses Frames — Grundlage der Erklärungs-Ebene, die
 // sich an den grössten davon hängt. frameCount setzt die Liste selbst
@@ -54,8 +60,9 @@ function vergissGezeichneteKreise() {
   kreisRegisterFrame = frameCount;
 }
 
-// Dämpft nur die neutrale Vollfläche, damit sie leiser wirkt als die
-// Valenz-Halbkreise. Schraffur wäre mit den Gesamtkreisen verwechselbar.
+// ACHTUNG gehört zur stillgelegten neutralen Vollfläche in
+// zeichneKreiseFuerRun und hat solange keinen Leser. Bleibt stehen, weil der
+// Aufruf nur auskommentiert ist — wie zeichneWindrose in kartendekor.js.
 const NEUTRAL_DAEMPFUNG = 0.35;
 
 // ---------------------------------------------------------------------------
@@ -140,9 +147,7 @@ function zeichneKreisLabels(kandidaten) {
   push(); // sechs Zeichenzustände plus direkte fillStyle-Schreibzugriffe
   noStroke();
   fill(33, 43, 46, 255); // #212B2E, wie die Kapitelnummern
-  textFont(SCHRIFT_SANS); // wie .annotation-tag (var(--sans)) und die Spine-Labels
-  textSize(11);
-  textStyle(BOLD); // .annotation-tag ist font-weight: 700
+  beschriftungsSchrift(LABEL_GROESSE);
   textAlign(LEFT, CENTER);
 
   let platziert = [];
@@ -186,13 +191,16 @@ function zeichneKreisLabels(kandidaten) {
 }
 
 // winkelMitte = Bildschirmwinkel der Wölbungsmitte (0 = rechts, im
-// Uhrzeigersinn). blend=true (Multiply) für gold_hell/gold_dunkel.
-function zeichneHalbkreis(cx, cy, r, winkelMitte, farbeRgb, alphaSkala = 1, blend = false) {
+// Uhrzeigersinn).
+// ACHTUNG deckend gezeichnet, ohne Multiply und ohne festen Alpha-Abschlag.
+// Beides zusammen verschob die Farbe gegenüber KREIS_KATEGORIEN — die Legende
+// zeigte daneben einen anderen Ton als der Kreis. alphaSkala bleibt: es blendet
+// die ganze Grafik ein und aus.
+function zeichneHalbkreis(cx, cy, r, winkelMitte, farbeRgb, alphaSkala = 1) {
   if (r <= 0) return;
   push();
   let ctx = drawingContext;
-  if (blend) ctx.globalCompositeOperation = 'multiply';
-  ctx.fillStyle = `rgba(${farbeRgb[0]}, ${farbeRgb[1]}, ${farbeRgb[2]}, ${0.75 * alphaSkala})`;
+  ctx.fillStyle = `rgba(${farbeRgb[0]}, ${farbeRgb[1]}, ${farbeRgb[2]}, ${alphaSkala})`;
   ctx.beginPath();
   ctx.moveTo(cx, cy);
   ctx.arc(cx, cy, r, winkelMitte - HALF_PI, winkelMitte + HALF_PI);
@@ -202,12 +210,13 @@ function zeichneHalbkreis(cx, cy, r, winkelMitte, farbeRgb, alphaSkala = 1, blen
 }
 
 // Neutral hat keine Seite, deshalb ganze Fläche statt Halbkreis.
-function zeichneVollkreis(cx, cy, r, farbeRgb, alphaSkala = 1, blend = false) {
+// ACHTUNG derzeit ohne Aufrufer, siehe die stillgelegte neutrale Vollfläche in
+// zeichneKreiseFuerRun.
+function zeichneVollkreis(cx, cy, r, farbeRgb, alphaSkala = 1) {
   if (r <= 0) return;
   push();
   let ctx = drawingContext;
-  if (blend) ctx.globalCompositeOperation = 'multiply';
-  ctx.fillStyle = `rgba(${farbeRgb[0]}, ${farbeRgb[1]}, ${farbeRgb[2]}, ${0.75 * alphaSkala})`;
+  ctx.fillStyle = `rgba(${farbeRgb[0]}, ${farbeRgb[1]}, ${farbeRgb[2]}, ${alphaSkala})`;
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, TWO_PI);
   ctx.fill();
@@ -233,20 +242,20 @@ function zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF
     let n = (bc.neg || 0) + (bc.pos || 0) + (bc.neutral || 0) + (bc.unrated || 0);
     let hatchR = kreisRadius(n, maxRadius) * radiusSkala;
     if (hatchR > 0) {
-      let hex = '#' + k.farbe.map(v => v.toString(16).padStart(2, '0')).join('');
+      let hex = rgbZuHex(k.farbe);
       hatchFormen.push({ r: hatchR, zeichne: () => drawHatchedCircle(cx, cy, hatchR, hex, alphaSkala) });
     }
 
-    // gold_mittel als deckende Basis, die beiden anderen im Multiply.
     // Alle drei Ansichten übergeben winkel PI: positiv oben, negativ unten.
-    let blend = k.key !== 'gold_mittel';
     let negR = kreisRadius(bc.neg || 0, maxRadius) * radiusSkala;
     let posR = kreisRadius(bc.pos || 0, maxRadius) * radiusSkala;
-    let neutralR = kreisRadius(bc.neutral || 0, maxRadius) * radiusSkala;
-    if (negR > 0) flaechenFormen.push({ r: negR, zeichne: () => zeichneHalbkreis(cx, cy, negR, winkel - HALF_PI, k.farbe, alphaSkala, blend) });
-    if (posR > 0) flaechenFormen.push({ r: posR, zeichne: () => zeichneHalbkreis(cx, cy, posR, winkel + HALF_PI, k.farbe, alphaSkala, blend) });
-    // NEUTRAL_DAEMPFUNG macht die Fläche leiser als die Valenz-Halbkreise.
-    if (neutralR > 0) flaechenFormen.push({ r: neutralR, zeichne: () => zeichneVollkreis(cx, cy, neutralR, k.farbe, alphaSkala * NEUTRAL_DAEMPFUNG, blend) });
+    if (negR > 0) flaechenFormen.push({ r: negR, zeichne: () => zeichneHalbkreis(cx, cy, negR, winkel - HALF_PI, k.farbe, alphaSkala) });
+    if (posR > 0) flaechenFormen.push({ r: posR, zeichne: () => zeichneHalbkreis(cx, cy, posR, winkel + HALF_PI, k.farbe, alphaSkala) });
+    // Die neutrale Vollfläche ist stillgelegt: sie legte sich als geschlossene
+    // Scheibe über beide Hälften und machte die Mitte unlesbar. Neutrales zählt
+    // weiterhin in die Schraffur und damit in den Aussenradius.
+    // let neutralR = kreisRadius(bc.neutral || 0, maxRadius) * radiusSkala;
+    // if (neutralR > 0) flaechenFormen.push({ r: neutralR, zeichne: () => zeichneVollkreis(cx, cy, neutralR, k.farbe, alphaSkala * NEUTRAL_DAEMPFUNG) });
   });
 
   hatchFormen.sort((a, b) => b.r - a.r).forEach(f => f.zeichne());
@@ -265,15 +274,24 @@ function zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF
 // Ringabstände der F-Wert-Punkte; die Durchmesser selbst stehen als
 // FWERT_PUNKT_DURCHMESSER in datenbereinigung.js, weil fotomarker.js sie
 // ebenfalls liest.
-const FWERT_PUNKT_FARBE_RGB = hexZuRgb(FWERT_PUNKT_FARBE);
 const FWERT_PUNKT_RAND_ABSTAND = 6; // Luft zwischen Kreisrand und erstem Punkte-Ring
-const FWERT_PUNKT_RING_ABSTAND = 8; // Abstand zwischen zwei Punkte-Ringen, falls ein Drittel nicht in einen Ring passt
+const FWERT_PUNKT_RING_ABSTAND = 8; // Abstand zwischen zwei Punkte-Ringen, falls ein Abschnitt nicht in einen Ring passt
+const FWERT_PUNKT_LUECKE = 2;       // Mindestabstand zwischen benachbarten Punkten
 
 // Mitte des 120°-Drittels je Valenzgruppe: neg unten, pos oben, neutral rechts.
 // Einzige Quelle dieser Konvention — zeichneFwertPunkte() setzt die Punkte
 // danach, demoBeschriftungen() zeigt mit den Hilfslinien darauf.
 // Math.PI statt HALF_PI: siehe ACHTUNG zur Ladezeit oben.
-const FWERT_GRUPPEN_WINKEL = { neg: Math.PI / 2, pos: -Math.PI / 2, neutral: 0 };
+// Jede Valenzgruppe bekommt einen Bogenabschnitt von 100°, dazwischen 20°
+// Luft — 3 × 100° + 3 × 20° ergeben die vollen 360°. Neutral zeigt nach
+// rechts, positiv nach links oben, negativ nach links unten (Bildschirmwinkel:
+// 0 = rechts, im Uhrzeigersinn). Siehe docs/topografie-der-gefuehle-grafik.pdf.
+// Math.PI statt radians(): die Konstanten entstehen beim Laden des Moduls,
+// p5-Globals stehen da noch nicht sicher bereit.
+const FWERT_GRUPPEN_SPANNE = Math.PI * 100 / 180;
+const FWERT_GRUPPEN_LUECKE = Math.PI * 20 / 180;
+const FWERT_GRUPPEN_VERSATZ = FWERT_GRUPPEN_SPANNE + FWERT_GRUPPEN_LUECKE;
+const FWERT_GRUPPEN_WINKEL = { neg: FWERT_GRUPPEN_VERSATZ, pos: -FWERT_GRUPPEN_VERSATZ, neutral: 0 };
 
 // Ein Punkt je Annotation mit F-Wert, Grösse nach Typ, Lage im 120°-Drittel
 // der eigenen Valenz. Bei Andrang wachsen weitere Ringe nach aussen.
@@ -283,9 +301,7 @@ function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1) {
   if (!fwertAnnotationen.length || radius <= 0) return gesetzt;
 
   push(); // noStroke() plus direkte fillStyle-Schreibzugriffe
-  const DRITTEL = TWO_PI / 3;
   // Reihenfolge [neg, pos, neutral] — gruppen[0..2] unten wird so indiziert.
-  // Fest notiert: 180° lassen sich nicht in 120°-Drittel drehen.
   let mitten = [FWERT_GRUPPEN_WINKEL.neg, FWERT_GRUPPEN_WINKEL.pos, FWERT_GRUPPEN_WINKEL.neutral];
   let gruppen = mitten.map(mitte => ({ mitte, formen: [] }));
   fwertAnnotationen.forEach(a => {
@@ -293,14 +309,10 @@ function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1) {
     let groesse = FWERT_PUNKTGROESSE[a.fWertType] || 1;
     gruppe.formen.push({
       d: FWERT_PUNKT_DURCHMESSER[groesse],
-      rgb: FWERT_PUNKT_FARBE_RGB,
+      rgb: FWERT_COLOR_RGB,
       typ: a.fWertType,
     });
   });
-
-  // Etwas schmaler als das volle Drittel, damit Punkte an der Grenze nicht
-  // ins Nachbar-Drittel ragen.
-  let maxSpanne = DRITTEL * 0.8;
 
   noStroke();
   gruppen.forEach(({ mitte, formen }) => {
@@ -308,12 +320,13 @@ function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1) {
     let ringRadius = radius + FWERT_PUNKT_RAND_ABSTAND;
     let rest = formen;
     while (rest.length) {
-      // Platzbudget eines Rings: das volle Drittel.
-      let bogenlaenge = ringRadius * DRITTEL;
+      // Platzbudget eines Rings: der ganze Bogenabschnitt. Die 20° Luft zu
+      // den Nachbarn hält die Gruppen auseinander, auch wenn er voll wird.
+      let bogenlaenge = ringRadius * FWERT_GRUPPEN_SPANNE;
       let platz = 0;
       let anzahlImRing = 0;
       for (let f of rest) {
-        let breite = f.d + 2; // Mindestabstand zwischen benachbarten Punkten
+        let breite = f.d + FWERT_PUNKT_LUECKE;
         if (anzahlImRing > 0 && platz + breite > bogenlaenge) break;
         platz += breite;
         anzahlImRing++;
@@ -321,10 +334,17 @@ function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1) {
       let ringFormen = rest.slice(0, anzahlImRing);
       rest = rest.slice(anzahlImRing);
 
-      let spanne = maxSpanne;
-      let n = ringFormen.length;
+      // Die Punkte wachsen aus der Mitte ihres Abschnitts heraus: die Reihe ist
+      // nur so breit, wie sie sein muss, und sitzt mittig auf `mitte`. Früher
+      // spannte sie sich über die vollen 100° — schon zwei Punkte standen dann
+      // an den Rändern und stiessen an die Nachbargruppe. So bleibt zwischen
+      // den drei Gruppen sichtbar Platz, auch wenn eine gut gefüllt ist.
+      let winkelBreiten = ringFormen.map(f => (f.d + FWERT_PUNKT_LUECKE) / ringRadius);
+      let reiheBreite = winkelBreiten.reduce((a, b) => a + b, 0);
+      let kante = mitte - reiheBreite / 2;
       ringFormen.forEach((f, i) => {
-        let winkelPunkt = n === 1 ? mitte : mitte - spanne / 2 + (i / (n - 1)) * spanne;
+        let winkelPunkt = kante + winkelBreiten[i] / 2;
+        kante += winkelBreiten[i];
         let x = cx + Math.cos(winkelPunkt) * ringRadius;
         let y = cy + Math.sin(winkelPunkt) * ringRadius;
         gesetzt.push({ x, y, typ: f.typ });
@@ -348,12 +368,19 @@ function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1) {
 // ---------------------------------------------------------------------------
 
 // Erfundene Zielwerte, keine Kapiteldaten. Drei klar unterscheidbare
-// Bandgrössen (16/12/8). ACHTUNG alle drei Bänder müssen in dieselbe Richtung
-// überwiegen, sonst füllt das negative Band eines anderen die untere Hälfte
-// auf und die Ausbauchung ist nicht mehr zu sehen.
+// Bandgrössen (16/10/8).
+//
+// ACHTUNG alle drei Bänder müssen in dieselbe Richtung überwiegen, sonst füllt
+// das negative Band eines anderen die untere Hälfte auf und die Ausbauchung
+// ist nicht mehr zu sehen.
+//
+// ACHTUNG auch die pos-Werte müssen sich unterscheiden (8/6/4). Der
+// Legendenaufbau zeigt je Kategorie nur die beiden Valenzhälften, und deren
+// Radius hängt allein an pos bzw. neg — bei gleichem pos-Wert läge der neue
+// Halbkreis genau auf dem vorigen, und der Schritt wäre nicht zu sehen.
 const DEMO_BAND_COUNTS = {
   gold_dunkel: { pos: 8, neg: 3, neutral: 3, unrated: 2 },
-  gold_mittel: { pos: 8, neg: 1, neutral: 2, unrated: 1 },
+  gold_mittel: { pos: 6, neg: 1, neutral: 2, unrated: 1 },
   gold_hell: { pos: 4, neg: 2, neutral: 1, unrated: 1 },
 };
 
@@ -365,7 +392,6 @@ const DEMO_FWERTE = { pos: 'ort_loest_emotion_aus', neg: 'emotion_faerbt_raum', 
 
 // Die Demo steht allein auf der Karte und darf grösser sein als die Kreise
 // entlang der Route. maxRadius ist der Vorgabewert von kreisRadius().
-const DEMO_RADIUS_SKALA = 2.2;
 const DEMO_MAX_RADIUS = 100;
 const DEMO_LABEL_ABSTAND = 45;
 
@@ -411,12 +437,66 @@ function ikonZeileY() {
   return ikonZeileCache.y;
 }
 
-// ikon 0 = Erklärplatz über den Begleittexten, 1 = Ruheplatz als Icon.
+// Oberkante des Begleittexts. Aus seinen CSS-Werten gerechnet, nicht gemessen:
+// getBoundingClientRect() je Frame wäre ein erzwungenes Layout, und die
+// Zeilenzahl wechselt ohnehin mit jeder Stufe — gerechnet wird darum immer mit
+// der längsten (vierzeiligen).
+// ACHTUNG spiegelt .begleittext[data-demo-gruppe] in style.css (top 78 %,
+// translateY(-50 %), font-size clamp(16px, 3vw, 30px), line-height 1.5).
+// Ändert sich dort etwas, muss es hier nachgezogen werden, sonst rutscht die
+// Legende in den Text.
+const LEGENDE_TEXT_MITTE = 0.78;
+const BEGLEITTEXT_ZEILENHOEHE = 1.5;
+const BEGLEITTEXT_ZEILEN_MAX = 4;
+function begleittextHalbeHoehe() {
+  let schrift = Math.min(30, Math.max(16, width * 0.03));
+  return schrift * BEGLEITTEXT_ZEILENHOEHE * BEGLEITTEXT_ZEILEN_MAX / 2;
+}
+function begleittextOben() {
+  return height * LEGENDE_TEXT_MITTE - begleittextHalbeHoehe();
+}
+
+// Luft über der Kopfzeile des Legendenaufbaus. Genauso viel, wie unter dem
+// Begleittext frei bleibt — dadurch sitzt die ganze Komposition aus Titel,
+// Kreis, Blockzeile und Text mittig im Fenster.
+function legendenKopfraum() {
+  return height - (height * LEGENDE_TEXT_MITTE + begleittextHalbeHoehe());
+}
+
+// Höhe, die die Blockzeile über dem Begleittext belegt: Überschrift, drei
+// Zeilen und die Luft darunter.
+function blockZeileHoehe() {
+  return LEGENDE_TITEL_ABSTAND + 2 * LEGENDE_ZEILE + LEGENDE_BLOCK_LUFT;
+}
+
+// Radius des fertig aufgebauten Demo-Kreises bei Massstab 1. Hängt nur an
+// DEMO_BAND_COUNTS, wird deshalb einmal berechnet und gemerkt.
+let einheitsRadiusCache = null;
+function demoEinheitsRadius() {
+  if (einheitsRadiusCache === null) {
+    einheitsRadiusCache = groessterKreisRadius(DEMO_BAND_COUNTS, DEMO_MAX_RADIUS, 1);
+  }
+  return einheitsRadiusCache;
+}
+
+// ikon 0 = Legendenplatz in der Bildmitte, 1 = Ruheplatz als Icon.
+// Auf dem Legendenplatz steht der Kreis im Viewport zentriert. Der Massstab
+// fällt auf kleinen Fenstern mit, sonst reicht der Platz unter dem Kreis nicht
+// mehr für die beiden Legendenblöcke.
 function demoKreisLage(ikon) {
+  // Über dem Begleittext liegen von oben nach unten: der Kreisgrössen-Text,
+  // der Kreis mit seinem Bogen und der Kategorienblock. Der Kreis nimmt, was
+  // dazwischen frei bleibt — kein fester Massstab, sondern der Zielradius
+  // geteilt durch den Radius, den derselbe Kreis bei Massstab 1 hätte.
+  let raum = begleittextOben() - legendenKopfraum() - blockZeileHoehe();
+  // Zweimal LEGENDE_BOGEN_ABSTAND: einmal für den Bogen selbst, einmal als
+  // Luft zwischen ihm und dem Kategorienblock darunter.
+  let ziel = Math.min(width * 0.26,
+    Math.max(40, (raum - LEGENDE_ECKE - 2 * LEGENDE_BOGEN_ABSTAND) / 2));
   return {
-    cx: lerp(width * 0.30, width - IKON_RAND_RECHTS - IKON_ABSTAND_PAAR, ikon),
-    cy: lerp(height * 0.34, ikonZeileY(), ikon),
-    skala: lerp(DEMO_RADIUS_SKALA, IKON_RADIUS_SKALA, ikon),
+    cx: lerp(width * 0.5, width - IKON_RAND_RECHTS - IKON_ABSTAND_PAAR, ikon),
+    cy: lerp(legendenKopfraum() + LEGENDE_ECKE + ziel, ikonZeileY(), ikon),
+    skala: lerp(ziel / demoEinheitsRadius(), IKON_RADIUS_SKALA, ikon),
   };
 }
 
@@ -510,13 +590,15 @@ function kreisBeschriftungen(cx, cy, bandCounts, aussen, skala, maxRadius, grupp
     if (n > 0) labels.push(eintrag(0, CATEGORY_LABELS[kat.key],
       kreisRadius(n, maxRadius) * skala, winkelBand[i]));
   });
-  labels.push(eintrag(0, 'Kreisgrösse = Relevanz des Ortes für Duroys Empfindungen.', aussen, 0.85));
+  // Einzeilig, deshalb die ersten drei der fünf PDF-Zeilen zusammengezogen.
+  labels.push(eintrag(0, LEGENDE_KREISGROESSE.slice(0, 3).join(' '), aussen, 0.85));
 
-  if (valenzAnzahl('pos') > 0) labels.push(eintrag(1, 'Halbkreise (Wölbung gegen oben) = positiv', aussen * 0.7, -PI / 3));
-  if (valenzAnzahl('neg') > 0) labels.push(eintrag(1, 'Halbkreise (Wölbung gegen unten) = negativ', aussen * 0.7, PI / 3));
+  if (valenzAnzahl('pos') > 0) labels.push(eintrag(1, LEGENDE_VALENZ.pos, aussen * 0.7, -PI / 3));
+  if (valenzAnzahl('neg') > 0) labels.push(eintrag(1, LEGENDE_VALENZ.neg, aussen * 0.7, PI / 3));
   // Nicht auf Winkel 0: dort sitzt der neutrale F-Wert-Punkt, die Hilfslinie
-  // liefe genau durch ihn.
-  if (valenzAnzahl('neutral') > 0) labels.push(eintrag(1, 'Kreis = neutral', aussen * 0.45, 0.32));
+  // liefe genau durch ihn. Für neutrale Gefühle kennt das PDF keine Klammer —
+  // der Wortlaut setzt deshalb das Muster der beiden anderen fort.
+  if (valenzAnzahl('neutral') > 0) labels.push(eintrag(1, 'Anteil neutraler Gefühle', aussen * 0.45, 0.32));
 
   // Je F-Wert-Typ ein Label, angeheftet an einen wirklich gesetzten Punkt
   // dieses Typs — die Punktgrösse ist es, die den Typ unterscheidet.
@@ -540,25 +622,404 @@ function kreisBeschriftungen(cx, cy, bandCounts, aussen, skala, maxRadius, grupp
   return labels;
 }
 
+// ---------------------------------------------------------------------------
+// Legendenaufbau (Onboarding)
+// ---------------------------------------------------------------------------
+
+// Aufbau und Wortlaut nach docs/topografie-der-gefuehle-grafik.pdf. Neun
+// Stufen, eine je PDF-Seite, jede am Deckkraftfenster ihres
+// data-demo-gruppe-Textes in index.html:
+//   0 Ortsbeschriftung (noch ohne Kreis)   5 Gesellschaft und Soziales
+//   1 Kreisgrösse                          6 Positive Wahrnehmung
+//   2 Anteil positiver Gefühle             7 Negative Wahrnehmung
+//     (mit Raum und Umwelt)                8 Neutrale Wahrnehmung
+//   3 Anteil negativer Gefühle
+//   4 Stimmung und Emotion
+// Nicht nur die
+// Beschriftungen kommen gestaffelt — der Kreis differenziert sich mit
+// (siehe stufenBandCounts).
+//
+// ACHTUNG das PDF setzt eigene Goldtöne und ordnet die mittlere und die kleine
+// F-Wert-Punktgrösse anders als die Karte. Hier gilt beides Mal die Karte —
+// eine Legende, die andere Farben und Grössen zeigt als die Kreise daneben,
+// erklärt nichts. Nur der Wortlaut kommt wörtlich aus dem PDF.
+const LEGENDE_ZEILE = 22;           // Zeilenabstand in den beiden Blöcken
+const LEGENDE_TITEL_ABSTAND = 26;   // Überschrift zur ersten Zeile
+const LEGENDE_FELD = 15;            // Kantenlänge der Kategorienfelder
+const LEGENDE_MARKE_SPALTE = 26;    // Feld- bzw. Punktspalte zum Text
+const LEGENDE_BLOCK_LUECKE = 40;    // Luft zwischen den beiden Blöcken
+const LEGENDE_BLOCK_LUFT = 22;      // Blockzeile zur Oberkante des Begleittexts
+const LEGENDE_RAND_LINKS = 46;      // Titel und linker Block zum Fensterrand
+const LEGENDE_TITEL_OBEN = 84;      // Mitte der Titelzeile — unterhalb des
+                                    // Schliessknopfs der Erklärungs-Ebene
+                                    // (.einblender-schliessen, 28px + 36px)
+const LEGENDE_TEXTZEILE = 17;       // Zeilenabstand im Kreisgrössen-Block
+const LEGENDE_TEXT_ABSTAND = 60;    // Kreisrand zum Text rechts
+const LEGENDE_ECKE = 46;            // Höhe des Knicks über dem Kreisscheitel
+const LEGENDE_KLAMMER_TIEFE = 90;   // Wie weit die Valenzklammern nach links greifen
+const LEGENDE_BOGEN_ABSTAND = 30;   // Bogenradius über dem Kreisrand
+const LEGENDE_RING_RADIUS = 7;      // offene Ringe auf dem Bogen
+const LEGENDE_MITTELPUNKT = 4;      // dunkler Punkt in der Kreismitte, wie in zeichneKreiseFuerRun
+const LEGENDE_STRICHEL = [3, 4];    // Strichelmass von Klammern und Bogen
+const LEGENDE_SICHTBAR = 0.002;     // darunter lohnt das Zeichnen nicht
+const LEGENDE_TINTE_RGB = hexZuRgb(IKON_RUHE_FARBE);
+
+// Zeilen des Blocks «Körper und Raum», gross nach klein wie im PDF — die
+// Grössen selbst kommen aus der Karte (siehe ACHTUNG oben), deshalb sortiert
+// statt fest verdrahtet.
+const LEGENDE_FWERT_ZEILEN = Object.keys(FWERT_PUNKTGROESSE)
+  .sort((a, b) => FWERT_PUNKTGROESSE[b] - FWERT_PUNKTGROESSE[a])
+  .map(typ => ({ text: FWERT_LABELS[typ], punkt: FWERT_PUNKT_DURCHMESSER[FWERT_PUNKTGROESSE[typ]] }));
+
+// Der Kreis differenziert sich mit der Legende (PDF-Seiten 2 bis 6): erst
+// schlicht und gestreift, dann mit Valenzhälften, dann mit den drei Bändern.
+// Alle drei Zustände haben denselben Aussenradius — es wächst nichts mehr, es
+// sortiert sich nur. Dafür werden die Mengen auf das grösste Band
+// heruntergerechnet statt summiert: die Summe ergäbe einen grösseren Kreis.
+function stufenBandCounts(bandCounts, mitKategorie, valenzen) {
+  // Was noch keine Stufe benannt hat, bleibt Schraffur: der Kreis wächst nicht
+  // mehr, es füllt sich nur, was schon erklärt ist.
+  let aufteilen = bc => {
+    let raus = { neg: 0, pos: 0, neutral: 0, unrated: 0 };
+    Object.keys(raus).forEach(bucket => {
+      let n = bc[bucket] || 0;
+      if (bucket !== 'unrated' && valenzen.includes(bucket)) raus[bucket] = n;
+      else raus.unrated += n;
+    });
+    return raus;
+  };
+
+  // Ohne Kategorie: ein einziges Band. Die Mengen werden
+  // auf das grösste Band heruntergerechnet statt summiert — die Summe ergäbe
+  // einen grösseren Kreis, und der Aussenradius soll über alle Stufen stehen
+  // bleiben. gold_mittel, weil zeichneKreiseFuerRun genau dieses Band deckend
+  // zeichnet statt im Multiply; ein einzelnes Band soll nicht nachdunkeln.
+  if (!mitKategorie) {
+    let summe = { neg: 0, pos: 0, neutral: 0, unrated: 0 };
+    let groesstesBand = 0;
+    KREIS_KATEGORIEN.forEach(kat => {
+      let b = bandCounts[kat.key] || {};
+      let n = 0;
+      Object.keys(summe).forEach(bucket => {
+        summe[bucket] += b[bucket] || 0;
+        n += b[bucket] || 0;
+      });
+      groesstesBand = Math.max(groesstesBand, n);
+    });
+    let gesamt = summe.neg + summe.pos + summe.neutral + summe.unrated;
+    if (!gesamt) return {};
+    let f = groesstesBand / gesamt;
+    return { gold_mittel: aufteilen({
+      neg: summe.neg * f, pos: summe.pos * f,
+      neutral: summe.neutral * f, unrated: summe.unrated * f,
+    }) };
+  }
+
+  // Mit Kategorie: das erste Band echt. Die weiteren kommen nicht hierher,
+  // sondern als blosse Valenzhälften dazu (zeichneKategorieHaelften) — bei
+  // DEMO_BAND_COUNTS ist das erste zugleich das grösste, der Aussenradius
+  // bleibt dadurch über alle Stufen stehen.
+  let erste = KREIS_KATEGORIEN[0];
+  return bandCounts[erste.key] ? { [erste.key]: aufteilen(bandCounts[erste.key]) } : {};
+}
+
+// Ein weiteres Band bringt nur seine beiden Valenzhälften mit: kein
+// Schraffurkreis, keine neutrale Fläche. Ein voller Ring je Kategorie machte
+// die Mitte zu dicht — mit drei Bändern lägen dort acht Kreise übereinander.
+// Dieselbe Regel gilt über VALENZEN auch für das erste Band.
+// Winkel wie in zeichneKreiseFuerRun (winkel PI): positiv oben, negativ unten.
+function zeichneKategorieHaelften(cx, cy, bc, kat, alphaSkala, skala) {
+  if (!bc) return;
+  let negR = kreisRadius(bc.neg || 0, DEMO_MAX_RADIUS) * skala;
+  let posR = kreisRadius(bc.pos || 0, DEMO_MAX_RADIUS) * skala;
+  if (negR > 0) zeichneHalbkreis(cx, cy, negR, HALF_PI, kat.farbe, alphaSkala);
+  if (posR > 0) zeichneHalbkreis(cx, cy, posR, -HALF_PI, kat.farbe, alphaSkala);
+}
+
+// Ein Zustand des Demo-Kreises: das erste Band ganz, jedes weitere nur mit
+// seinen Valenzhälften. kategorien 0 = noch gar keine, dann ein tonloses Band.
+function zeichneDemoStufe(cx, cy, bandCounts, kategorien, valenzen, alphaSkala, skala) {
+  if (alphaSkala <= LEGENDE_SICHTBAR) return;
+  zeichneKreiseFuerRun(cx, cy, stufenBandCounts(bandCounts, kategorien > 0, valenzen),
+    alphaSkala, PI, skala, DEMO_MAX_RADIUS);
+  KREIS_KATEGORIEN.slice(1, kategorien).forEach(kat =>
+    zeichneKategorieHaelften(cx, cy, bandCounts[kat.key], kat, alphaSkala, skala));
+}
+
+// Schrift aller Canvas-Beschriftungen: wie .annotation-tag (var(--sans)),
+// font-weight 700. Messen und Zeichnen müssen dieselbe nehmen, sonst stimmen
+// Blockbreite und Titelkante nicht mehr mit dem überein, was danebensteht —
+// deshalb an einer Stelle.
+function beschriftungsSchrift(groesse) {
+  textFont(SCHRIFT_SANS);
+  textSize(groesse);
+  textStyle(BOLD);
+}
+
+// Gestrichelte Linien der Legende. Kapselt das setLineDash-Paar, das sonst in
+// jeder der drei Zeichenroutinen stünde.
+function legendenStrich(farbe, alpha, zeichnen) {
+  push();
+  noFill();
+  stroke(farbe.r, farbe.g, farbe.b, 255 * alpha);
+  strokeWeight(0.9);
+  drawingContext.setLineDash(LEGENDE_STRICHEL);
+  zeichnen();
+  drawingContext.setLineDash([]);
+  pop();
+}
+
+// Breite eines Texts in der Beschriftungsschrift. Kapselt das push/pop, damit
+// Messen und Zeichnen denselben Zustand sehen.
+function beschriftungsBreite(text, groesse = LABEL_GROESSE) {
+  push();
+  beschriftungsSchrift(groesse);
+  let breite = textWidth(text);
+  pop();
+  return breite;
+}
+
+// Kopf der Legende, im PDF auf jeder Seite gleich. Lage gibt der Aufrufer vor — im Legendenaufbau steht er auf der Zeile von
+// «Anteil positiver Gefühle», in der Erklärungs-Ebene unter dem Schliessknopf.
+function zeichneLegendenTitel(x, y, alpha) {
+  if (alpha <= LEGENDE_SICHTBAR) return;
+  push();
+  noStroke();
+  textAlign(LEFT, CENTER);
+  beschriftungsSchrift(LABEL_GROESSE);
+  fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b, 255 * alpha);
+  text(LEGENDE_TITEL, x, y);
+  // Zurückgenommen wie im PDF: der Untertitel benennt nur, was das Bild ist.
+  // Gleiche Grösse, unterschieden über Gewicht und Deckkraft.
+  textStyle(NORMAL);
+  fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b, 140 * alpha);
+  text(LEGENDE_UNTERTITEL, x, y + LEGENDE_TEXTZEILE);
+  pop();
+}
+
+// Schritt 1: der Kreisgrössen-Text rechts oben, angebunden mit einem Knick
+// über dem Kreisscheitel. Steht ausserhalb von zeichneKreisLabels, weil er
+// mehrzeilig ist — dort bekäme jede Zeile eine eigene Hilfslinie.
+function zeichneKreisgroessenBlock(cx, cy, aussen, alpha) {
+  let x = cx + aussen + LEGENDE_TEXT_ABSTAND;
+  let ecke = cy - aussen - LEGENDE_ECKE;
+  legendenStrich(LEGENDE_TINTE_RGB, alpha, () => {
+    line(cx, cy - aussen, cx, ecke);
+    line(cx, ecke, x - 8, ecke);
+  });
+  push();
+  noStroke();
+  textAlign(LEFT, CENTER);
+  beschriftungsSchrift(LABEL_GROESSE);
+  LEGENDE_KREISGROESSE.forEach((zeile, i) => {
+    // Die ersten drei Zeilen benennen die Regel, die letzten beiden erläutern
+    // sie — im PDF derselbe Gewichtswechsel.
+    textStyle(i < 3 ? BOLD : NORMAL);
+    fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b, 255 * alpha);
+    text(zeile, x, ecke + i * LEGENDE_TEXTZEILE);
+  });
+  pop();
+}
+
+// Schritte 2 und 3: je eine nach rechts offene Klammer über einer Kreishälfte.
+// richtung -1 = obere (positiv), +1 = untere (negativ). Die Mittellinie
+// gehört beiden und wird von demoLegende einmal gezogen — zweimal übereinander
+// dunkelte sie nach, solange sich die beiden Schritte überblenden.
+function zeichneValenzKlammer(cx, cy, aussen, richtung, alpha) {
+  let links = cx - aussen - LEGENDE_KLAMMER_TIEFE;
+  let y = cy + richtung * aussen;
+  legendenStrich(LEGENDE_TINTE_RGB, alpha, () => {
+    line(links, y, cx, y);
+    line(links, y, links, cy);
+  });
+}
+
+// Breite eines Blocks: Markenspalte plus längste Zeile. Nur der rechte Block
+// braucht sie, um am Fensterrand zu enden.
+function legendenBlockBreite(titel, zeilen) {
+  return Math.max(beschriftungsBreite(titel),
+    ...zeilen.map(z => LEGENDE_MARKE_SPALTE + beschriftungsBreite(z.text)));
+}
+
+// Schritte 4 und 5: ein Block mit Überschrift und Zeilen. Eine Zeile trägt
+// entweder ein Farbfeld (Kategorien) oder einen Punkt (Körper und Raum).
+// alpha gilt für die Überschrift; eine Zeile kann mit z.alpha ihre eigene
+// mitbringen — die Kategorien kommen einzeln, mit dem Band, das sie benennen.
+function zeichneLegendenBlock(x, y, titel, zeilen, alpha) {
+  if (alpha <= LEGENDE_SICHTBAR) return;
+  push();
+  noStroke();
+  textAlign(LEFT, CENTER);
+  beschriftungsSchrift(LABEL_GROESSE);
+  fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b, 255 * alpha);
+  text(titel, x, y);
+  zeilen.forEach((z, i) => {
+    let a = z.alpha === undefined ? alpha : z.alpha;
+    if (a <= LEGENDE_SICHTBAR) return;
+    let zy = y + LEGENDE_TITEL_ABSTAND + i * LEGENDE_ZEILE;
+    if (z.feld) {
+      fill(z.feld[0], z.feld[1], z.feld[2], 255 * a);
+      rect(x, zy - LEGENDE_FELD / 2, LEGENDE_FELD, LEGENDE_FELD);
+    } else {
+      fill(FWERT_COLOR_RGB.r, FWERT_COLOR_RGB.g, FWERT_COLOR_RGB.b, 255 * a);
+      circle(x + LEGENDE_FELD / 2, zy, z.punkt);
+    }
+    fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b, 255 * a);
+    text(z.text, x + LEGENDE_MARKE_SPALTE, zy);
+  });
+  pop();
+}
+
+// Stufen 6 bis 8 (PDF-Seiten 7 bis 9): je ein gestrichelter Bogenabschnitt mit
+// einem offenen Ring in seiner Mitte — genau dort sitzen die F-Wert-Punkte
+// (FWERT_GRUPPEN_WINKEL). Ein Bogen je Gruppe statt eines vollen Kreises: die
+// Lücken zeigen, dass die Punkte in drei Abschnitten liegen, nicht rundum.
+// alphas nennt je Valenzgruppe die Deckkraft; gibt die sichtbaren Ringe für
+// die Beschriftung zurück.
+function zeichneWahrnehmungsbogen(cx, cy, aussen, alphas) {
+  let r = aussen + LEGENDE_BOGEN_ABSTAND;
+  let ringe = Object.entries(FWERT_GRUPPEN_WINKEL)
+    .map(([bucket, winkel]) => ({
+      bucket, winkel, alpha: alphas[bucket] || 0,
+      x: cx + Math.cos(winkel) * r, y: cy + Math.sin(winkel) * r,
+    }))
+    .filter(ring => ring.alpha > LEGENDE_SICHTBAR);
+  ringe.forEach(ring => {
+    legendenStrich(FWERT_COLOR_RGB, ring.alpha, () => arc(cx, cy, r * 2, r * 2,
+      ring.winkel - FWERT_GRUPPEN_SPANNE / 2, ring.winkel + FWERT_GRUPPEN_SPANNE / 2, OPEN));
+    push();
+    noFill();
+    stroke(FWERT_COLOR_RGB.r, FWERT_COLOR_RGB.g, FWERT_COLOR_RGB.b, 255 * ring.alpha);
+    strokeWeight(1.4);
+    circle(ring.x, ring.y, LEGENDE_RING_RADIUS * 2);
+    pop();
+  });
+  return ringe;
+}
+
+// Baut die Legende um den Demo-Kreis auf. Zeichnet alles mit eigener Geometrie
+// selbst und gibt die Beschriftungen als Kandidaten zurück — zeichneKreisLabels
+// wird genau einmal aufgerufen, sonst weichen sich die Labels nicht aus.
+function demoLegende(cx, cy, aussen, gruppenAlpha, kreisDa) {
+  let [aOrt, aGroesse, aPos, aNeg, aMittel, aHell, aWpos, aWneg, aWneutral] = gruppenAlpha;
+  let labels = [];
+  let rechts = cx + aussen + LEGENDE_TEXT_ABSTAND;
+  let linksX = cx - aussen - LEGENDE_KLAMMER_TIEFE - 10;
+  let hinzu = (alpha, links, ankerX, ankerY, text, farbe, hilfslinie) => labels.push({
+    ankerX, ankerY, x: links ? linksX : rechts, y: ankerY,
+    text, farbe: farbe || null, hilfslinie, links, alpha,
+  });
+
+  // Schritt 0 (PDF-Seite 1): der Mittelpunkt und sein Name stehen da, bevor
+  // der Kreis wächst. Sobald er da ist, zeichnet zeichneKreiseFuerRun den
+  // Punkt selbst — hier bliebe er sonst ein zweites Mal darüberliegen.
+  // Über «Positive Wahrnehmung» und linksbündig zu dieser Beschriftung: deren
+  // Zeile ergibt sich aus dem Winkel und Radius, auf dem
+  // zeichneWahrnehmungsbogen ihren Ring setzt. Drei Zeilen darüber — zwei
+  // trägt der Kopf selbst (Titel und Unterzeile), die dritte ist der Abstand
+  // zur Beschriftung. Bei zwei Zeilen blieben darunter nur 9 px.
+  let obersteZeile = cy + Math.sin(FWERT_GRUPPEN_WINKEL.pos) * (aussen + LEGENDE_BOGEN_ABSTAND);
+  zeichneLegendenTitel(
+    Math.max(LEGENDE_RAND_LINKS, linksX - beschriftungsBreite(WAHRNEHMUNG_LABELS.pos)),
+    obersteZeile - 3 * LEGENDE_TEXTZEILE, aOrt);
+
+  if (aOrt > LEGENDE_SICHTBAR) {
+    if (!kreisDa) {
+      push();
+      noStroke();
+      fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b, 255 * aOrt);
+      circle(cx, cy, LEGENDE_MITTELPUNKT * 2);
+      pop();
+    }
+    hinzu(aOrt, false, cx, cy, LEGENDE_ORTSBESCHRIFTUNG, null, true);
+  }
+
+  if (aGroesse > LEGENDE_SICHTBAR) zeichneKreisgroessenBlock(cx, cy, aussen, aGroesse);
+
+  // Schritte 2 und 3: erst die obere Hälfte, dann die untere (PDF-Seiten 3
+  // und 4). Die Klammer ist die Hilfslinie; eine zweite liefe daneben her.
+  let klammer = cx - aussen - LEGENDE_KLAMMER_TIEFE;
+  let valenz = Math.max(aPos, aNeg);
+  if (valenz > LEGENDE_SICHTBAR) {
+    legendenStrich(LEGENDE_TINTE_RGB, valenz, () => line(klammer, cy, cx, cy));
+  }
+  if (aPos > LEGENDE_SICHTBAR) {
+    zeichneValenzKlammer(cx, cy, aussen, -1, aPos);
+    hinzu(aPos, true, klammer, cy - aussen / 2, LEGENDE_VALENZ.pos, null, false);
+  }
+  if (aNeg > LEGENDE_SICHTBAR) {
+    zeichneValenzKlammer(cx, cy, aussen, 1, aNeg);
+    hinzu(aNeg, true, klammer, cy + aussen / 2, LEGENDE_VALENZ.neg, null, false);
+  }
+
+  // Stufen 2, 4 und 5 (PDF-Seiten 3, 5 und 6): jede Bandzeile kommt mit dem
+  // Band, das sie benennt. Stufe 2 bringt zugleich die Überschrift mit.
+  let kategorieZeilen = KREIS_KATEGORIEN.map((kat, i) => ({
+    text: CATEGORY_LABELS[kat.key], feld: kat.farbe,
+    alpha: [aPos, aMittel, aHell][i],
+  }));
+  // Stufe 6 (PDF-Seite 7) bringt den zweiten Block ganz, mit allen drei Zeilen.
+  let fwertZeilen = LEGENDE_FWERT_ZEILEN.map(z => ({ ...z, alpha: aWpos }));
+
+  // Beide Blöcke nebeneinander auf einer Zeile zwischen Kreis und Begleittext
+  // — dort, wo die Bänder und Punkte liegen, die sie benennen. Die Breite des
+  // zweiten wird auch dann schon eingerechnet, wenn er noch gar nicht sichtbar
+  // ist; sonst spränge der erste zur Seite, sobald der zweite dazukommt.
+  let bKat = legendenBlockBreite(LEGENDE_BLOCK_TITEL.kategorien, kategorieZeilen);
+  let bFwert = legendenBlockBreite(LEGENDE_BLOCK_TITEL.fwerte, fwertZeilen);
+  let blockY = begleittextOben() - blockZeileHoehe();
+  let blockX = (width - (bKat + LEGENDE_BLOCK_LUECKE + bFwert)) / 2;
+  zeichneLegendenBlock(blockX, blockY, LEGENDE_BLOCK_TITEL.kategorien, kategorieZeilen, aPos);
+  zeichneLegendenBlock(blockX + bKat + LEGENDE_BLOCK_LUECKE, blockY,
+    LEGENDE_BLOCK_TITEL.fwerte, fwertZeilen, aWpos);
+
+  // Stufen 6 bis 8: ein Bogenabschnitt je Wahrnehmung. neutral sitzt rechts,
+  // positiv und negativ auf der Klammerseite.
+  zeichneWahrnehmungsbogen(cx, cy, aussen,
+    { pos: aWpos, neg: aWneg, neutral: aWneutral }).forEach(ring =>
+      hinzu(ring.alpha, ring.bucket !== 'neutral', ring.x, ring.y,
+        WAHRNEHMUNG_LABELS[ring.bucket],
+        `rgba(${FWERT_COLOR_RGB.r}, ${FWERT_COLOR_RGB.g}, ${FWERT_COLOR_RGB.b}, ${ring.alpha})`, true));
+  return labels;
+}
+
 // fortschritt 0..1 deckt die erfundenen Annotationen auf, alphaSkala blendet
-// die ganze Grafik, gruppenAlpha die drei Beschriftungsgruppen, ikon 0..1
-// schiebt sie vom Erklärplatz auf den Icon-Platz oben rechts.
-function zeichneDemoKreisgrafik(fortschritt, alphaSkala, gruppenAlpha, ikon = 0, grau = false) {
+// die ganze Grafik, schritte die neun Legendenstufen (monoton, siehe draw()),
+// schleier blendet allein die Beschriftungen wieder aus, ikon 0..1 schiebt
+// alles vom Legendenplatz auf den Icon-Platz oben rechts.
+function zeichneDemoKreisgrafik(fortschritt, alphaSkala, schritte, schleier, ikon = 0, grau = false) {
   letzteDemoLage = null;
-  if (alphaSkala <= 0 || fortschritt <= 0) return;
+  if (alphaSkala <= 0) return;
+  let [, , aPos, aNeg, aMittel, aHell] = schritte;
   let sichtbar = DEMO_ANNOTATIONEN.slice(0, Math.round(fortschritt * DEMO_ANNOTATIONEN.length));
-  if (!sichtbar.length) return;
+  let { cx, cy, skala } = demoKreisLage(ikon);
+  // Endradius, nicht der des halb aufgedeckten Kreises: sonst wanderte die
+  // ganze Legende mit, während der Kreis heranwächst.
+  let aussen = demoEinheitsRadius() * skala;
 
   push(); // trägt den Graufilter; die inneren push/pop erben ihn
   if (grau) drawingContext.filter = IKON_GRAUFILTER;
-  let { cx, cy, skala } = demoKreisLage(ikon);
-  let bandCounts = zaehleBandCounts(sichtbar);
-  let aussen = groessterKreisRadius(bandCounts, DEMO_MAX_RADIUS, skala);
-  // winkel PI wie alle anderen Ansichten: positiv oben, negativ unten.
-  zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala, PI, skala, DEMO_MAX_RADIUS);
-  let fwertPunkte = zeichneFwertPunkte(cx, cy, aussen, sichtbar.filter(a => a.hasFwert), alphaSkala);
-  zeichneKreisLabels(kreisBeschriftungen(cx, cy, bandCounts, aussen, skala, DEMO_MAX_RADIUS,
-    gruppenAlpha.map(a => a * alphaSkala), fwertPunkte, false));
+  if (sichtbar.length) {
+    let bandCounts = zaehleBandCounts(sichtbar);
+    // winkel PI wie alle anderen Ansichten: positiv oben, negativ unten.
+    // Höchstens zwei Stufen überblenden sich, deshalb reicht das Gegenpaar.
+    // Nur pos und neg: neutrale Nennungen zeichnet zeichneKreiseFuerRun als
+    // Vollkreis, und der legte sich beim Schritt «Anteil negativer Gefühle»
+    // als geschlossene Scheibe über beide Hälften. Sie bleiben deshalb in der
+    // Schraffur — der Aussenradius zählt sie ohnehin mit, er bleibt stehen.
+    const VALENZEN = ['pos', 'neg'];
+    let stufe = (kategorien, valenzen, a) => zeichneDemoStufe(cx, cy, bandCounts,
+      kategorien, valenzen, alphaSkala * a, skala);
+    stufe(0, [], 1 - aPos);
+    stufe(1, ['pos'], aPos * (1 - aNeg));
+    stufe(1, VALENZEN, aNeg * (1 - aMittel));
+    stufe(2, VALENZEN, aMittel * (1 - aHell));
+    stufe(3, VALENZEN, aHell);
+    // Keine gefüllten F-Wert-Punkte in der Demo: dort stehen die offenen Ringe
+    // des Wahrnehmungsbogens für dieselbe Sache und zeigen sie deutlicher.
+  }
+  zeichneKreisLabels(demoLegende(cx, cy, aussen,
+    schritte.map(a => a * alphaSkala * schleier), sichtbar.length > 0));
   pop();
   letzteDemoLage = { cx, cy, r: aussen, ikon, alpha: alphaSkala };
 }
@@ -609,9 +1070,10 @@ function zeichneKreisErklaerung() {
     k.cy - k.radius > 0 && k.cy + k.radius < height);
   let kreis = groesster(ganzImBild) || groesster(imBild);
   if (!kreis) {
-    zeichneDemoKreisgrafik(1, 1, [1, 1, 1], 0);
+    zeichneDemoKreisgrafik(1, 1, Array(9).fill(1), 1, 0); // bringt den Kopf mit
     return;
   }
+  zeichneLegendenTitel(LEGENDE_RAND_LINKS, LEGENDE_TITEL_OBEN, 1);
   // Passen die Labels rechts nicht mehr aufs Bild, klappen sie nach links.
   let links = kreis.cx + kreis.radius + DEMO_LABEL_ABSTAND + ERKLAERUNG_LABEL_BREITE > width;
   zeichneKreisLabels(kreisBeschriftungen(kreis.cx, kreis.cy, kreis.bandCounts, kreis.radius,

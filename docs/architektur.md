@@ -13,7 +13,7 @@ Neun der zwölf Module sind gekapselt und geben nur die genannten Namen über
 
 | Modul | Exporte |
 |---|---|
-| `datenbereinigung.js` | 32 |
+| `datenbereinigung.js` | 38 |
 | `sketch.js` | 28 (11 Wert, 12 Lesebindung, **5 p5-Hooks**) |
 | `kreisgrafik.js` | 13 |
 | `spine-horizontal.js` | 11 (3 Lesebindungen) |
@@ -234,9 +234,9 @@ eigenen Header-Abschnitt aus.
 
 | # | Modul | Zeilen | Hauptfunktionen | Wichtigste eigene Variablen |
 |---|---|---|---|---|
-| 1 | `datenbereinigung.js` | 405 | `bereinigeStationenDaten`, `baueSpineDaten`, `sammleAnnotationenNachOrtBasis`, `zaehleBandCounts`, `zaehleAnnotationenLiveNachOrtBasis`, `ortRunsFuerSpine`, `ortRunSichtbar`, `kreisRadius`, `groessterKreisRadius`, `hexZuRgb` | `KREIS_KATEGORIEN`, `SCROLL_MEILENSTEINE`, `ROUTE_COLOR_RGB`, alle `FWERT_*` (auch `FWERT_PUNKT_DURCHMESSER`), beide `FOTO_MARKER_*_RGB`, `KAPITEL_MIT_SPINE_PANEL`, `WOHNUNG_SAMMELPUNKT_ANKER`, `SCHRIFT_SANS`/`SCHRIFT_SERIF` — **gekapselt**, 32 Exporte. Intern: alle drei `GEDANKEN_*`, die übrigen drei `WOHNUNG_*`, die beiden Fotomarker-Hexwerte und `valenzBucket` |
+| 1 | `datenbereinigung.js` | 467 | `bereinigeStationenDaten`, `baueSpineDaten`, `sammleAnnotationenNachOrtBasis`, `zaehleBandCounts`, `zaehleAnnotationenLiveNachOrtBasis`, `ortRunsFuerSpine`, `ortRunSichtbar`, `kreisRadius`, `groessterKreisRadius`, `hexZuRgb` | `KREIS_KATEGORIEN`, `SCROLL_MEILENSTEINE`, `ROUTE_COLOR_RGB`, `FWERT_COLOR`/`FWERT_COLOR_RGB`, `FWERT_PUNKTGROESSE`, `FWERT_PUNKT_DURCHMESSER`, beide `FOTO_MARKER_*_RGB`, `KAPITEL_MIT_SPINE_PANEL`, `WOHNUNG_SAMMELPUNKT_ANKER`, `SCHRIFT_SANS`/`SCHRIFT_SERIF`, `hexZuRgb`/`rgbZuHex`, die Legendenbegriffe aus dem PDF (`WAHRNEHMUNG_LABELS`, `LEGENDE_BLOCK_TITEL`, `LEGENDE_KREISGROESSE`, `LEGENDE_VALENZ`, `LEGENDE_ORTSBESCHRIFTUNG`, `LEGENDE_TITEL`/`LEGENDE_UNTERTITEL`) — **gekapselt**, 39 Exporte. Intern: alle drei `GEDANKEN_*`, die übrigen drei `WOHNUNG_*`, die beiden Fotomarker-Hexwerte und `valenzBucket` |
 | 2 | `geo-projektion.js` | 96 | `lonLatToScreen`, `coverCrop`, `cropToBbox`, `bboxToImgCrop`, `passeBboxInRahmen` | `startBbox`, `uebersichtBbox`, `ch1ImgBbox`, `UEBERSICHT_SCHNITT_BBOX`, `mapOffsetX`, `mapOffsetY` |
-| 3 | `kreisgrafik.js` | 637 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `zeichneKreisLabels`, `zeichneDemoKreisgrafik`, `zeichneProjekttextIkon`, `zeichneKreisErklaerung`, `zeichneSchleier`, `demoIkonGetroffen`, `projekttextIkonGetroffen`, `merkeKreis`, `vergissGezeichneteKreise`, `leereBandCounts` | **gekapselt**, 13 Exporte; die übrigen 42 Namen (u. a. `HATCH_SPACING`, `kreisBeschriftungen`, alle `DEMO_*`, `IKON_*` und `ERKLAERUNG_*`) sind modulintern. Beherbergt auch das zweite Icon (Kreis mit Textzeilen): es teilt sich Zeile und Treffertest mit dem Kreisgrafik-Icon |
+| 3 | `kreisgrafik.js` | 1099 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `zeichneKreisLabels`, `zeichneDemoKreisgrafik`, `zeichneProjekttextIkon`, `zeichneKreisErklaerung`, `zeichneSchleier`, `demoIkonGetroffen`, `projekttextIkonGetroffen`, `merkeKreis`, `vergissGezeichneteKreise`, `leereBandCounts` | **gekapselt**, 13 Exporte; die übrigen 86 Namen (u. a. `HATCH_SPACING`, `kreisBeschriftungen`, alle `DEMO_*`, `IKON_*`, `LEGENDE_*` und `ERKLAERUNG_*`) sind modulintern. Beherbergt seit dem Onboarding-Umbau auch den vierstufigen Legendenaufbau (`demoLegende` und seine vier Zeichenroutinen). Beherbergt auch das zweite Icon (Kreis mit Textzeilen): es teilt sich Zeile und Treffertest mit dem Kreisgrafik-Icon |
 | 4 | `kartendekor.js` | 314 | `zeichneRoute`, `zeichneMassstabsleiste`, `zeichneWindrose` | — **gekapselt**, 3 Exporte; intern `haversineMeter`, `MASSSTAB_SCHRITTE`, der Routenpuffer und seine Helfer (`routenPufferBereit`, `routenStufenZuege`, `routenStufenAlpha`, alle `ROUTE_*`). `zeichneWindrose` hat derzeit keinen Aufrufer: der Aufruf in `draw()` ist auskommentiert, oben rechts steht das Kreisgrafik-Icon |
 | 5 | `ortsveraenderung.js` | 687 | `zeichneOrtsveraenderung`, `ovPhase`, `ovZoomBbox` | `OV_KARTE_AUS`/`OV_ZOOM`/`SK_*`-Phasenfenster — **als einziges Modul gekapselt**, alles Übrige ist modulintern |
 | 6 | `spine-horizontal.js` | 548 | `zeichneSpineHorizontal`, `toggleGrafikPlay`, `setzeKapitelAnsichtModus`, `setzeGrafikZurueck`, `stelleSpineDatenBereit`, `spineEintraegeFuer`, `aktuelleGrafikAnimationDauer`, `aktualisiereGrafikFortschritt` | `grafikSpielt`, `grafikFortschritt`, `grafikPlayAusblendStart` (Lesebindungen) — **gekapselt**, intern: beide Spine-Caches, alle `SPINE_*`, `spineLayout` |
@@ -244,7 +244,7 @@ eigenen Header-Abschnitt aus.
 | 8 | `annotationsbox.js` | 152 | `annotationBoxPosition` | `ANNOTATION_BOX_POSITIONEN` — **gekapselt**, intern u. a. `annotationBoxPositionCache` |
 | 9 | `dom-aufbau.js` | 107 | `baueKapitelRegister`, `baueKartenMarkierungen`, `baueStationsMarker`, `baueZwischenMarker` | — (baut nur DOM, hält keinen Zustand) |
 | 10 | `uebersichtsrouten.js` | 372 | `zeichneUebersichtsrouten`, `kapitelScheiben`, `aktualisiereKapitelZoom`, `springeZuKapitelZoom`, `scrolleZuKapitel1` | `zoomedKapitel`, `kapitelZoomAmount`, `kapitelHover` (alle drei als Lesebindung) — **gekapselt**, intern u. a. `kapitelHitze`, `oeffneKapitelZoom`, `scheibenCache` |
-| 11 | `sketch.js` | 878 | `preload`, `setup`, `draw`, `mousePressed`, `windowResized`, `datenFuerKapitel`, `kapitelHatEigeneAnsicht`, `setzeAnsichtsModus`, `starteKapitelEinstieg` | `stationenData`, `uebersichtsRouten`, `kapitelAnsichtsModus`, `kreisErklaerungOffen` (Zustand der Erklärungs-Ebene), 8 DOM-Handles (als Lesebindung) — **gekapselt**, intern u. a. `kapitelKarten`, `bgImage`/`bgImage2`/`ch1Image`, die übrigen DOM-Handles |
+| 11 | `sketch.js` | 907 | `preload`, `setup`, `draw`, `mousePressed`, `windowResized`, `datenFuerKapitel`, `kapitelHatEigeneAnsicht`, `setzeAnsichtsModus`, `starteKapitelEinstieg` | `stationenData`, `uebersichtsRouten`, `kapitelAnsichtsModus`, `kreisErklaerungOffen` (Zustand der Erklärungs-Ebene), 8 DOM-Handles (als Lesebindung) — **gekapselt**, intern u. a. `kapitelKarten`, `bgImage`/`bgImage2`/`ch1Image`, die übrigen DOM-Handles |
 | 12 | `sonifikation.js` | 370 | `spieleSonifikationFuer`, `beendeSonifikationAudio` | `SONIFIKATION_GESAMTDAUER_SEK`, `sonifikationSpieltGerade` (als Lesebindung) — **gekapselt**, die übrigen 17 Namen (u. a. `baueSpielplan`, `baueGainFolge`, `sonifikationDaten`) sind modulintern |
 
 `dom-aufbau.js` ist das einzige Modul ohne eigene Top-Level-Variablen: es baut
@@ -314,6 +314,130 @@ haben, `zeichneKreisErklaerung()` beschriftet daraus den grössten. `sketch.js`
 hält nur den Auf/Zu-Zustand (`kreisErklaerungOffen`) und ruft
 `demoIkonGetroffen()` in `mousePressed()`. Die Beschriftungen entstehen im
 selben `zeichneKreisLabels()`, das auch die Ortsnamen auf der Karte setzt.
+
+**Der Legendenaufbau im Onboarding** ist davon getrennt: `demoLegende()` baut
+die Legende nach `docs/topografie-der-gefuehle-grafik.pdf` in **neun Stufen**
+um den Demo-Kreis auf, eine je PDF-Seite: Ortsbeschriftung (noch ohne Kreis),
+Kreisgrösse, Anteil positiver Gefühle (mit «Raum und Umwelt»), Anteil negativer
+Gefühle, «Stimmung und Emotion», «Gesellschaft und Soziales», dann die drei
+Wahrnehmungen positiv, negativ, neutral. Jede Stufe hängt am Fenster ihres
+`data-demo-gruppe`-Textes in `index.html`, blendet über
+`legendenSchrittDeckkraft()` ein und bleibt dann stehen — der Aufbau ist
+kumulativ wie im PDF.
+
+Gestaffelt ist nicht nur die Beschriftung, sondern der Kreis selbst: `stufenBandCounts()`
+rechnet dieselben Mengen auf ein einziges Band herunter, einmal ganz als
+Schraffur `zeichneDemoStufe()` zeichnet dazu fünf Zustände derselben Mengen, von grob nach
+fein: ein tonloses Band ganz als Schraffur (PDF-Seite 2), dasselbe mit oberer
+Hälfte (Seite 3), mit beiden Hälften (Seite 4), dann je ein weiteres Band
+(Seiten 5 und 6). `zeichneDemoKreisgrafik()` blendet sie nacheinander
+ineinander; höchstens zwei überlappen sich.
+
+**Nur das erste Band wird ganz gezeichnet** (`stufenBandCounts()` → `zeichneKreiseFuerRun`).
+Jedes weitere bringt allein seine beiden Valenzhälften mit
+(`zeichneKategorieHaelften()`) — kein Schraffurkreis, keine neutrale Fläche.
+Mit drei vollen Bändern lägen in der Mitte acht Kreise übereinander, und der
+Aufbau wäre nicht mehr zu lesen. Auf der Karte zeichnet `zeichneKreiseFuerRun()`
+unverändert alle Ringe. Heruntergerechnet statt summiert, weil die Summe einen
+grösseren Kreis ergäbe — alle drei Zustände sollen denselben Aussenradius haben.
+
+**ACHTUNG** die Stufen kommen monoton in `zeichneDemoKreisgrafik()` an, der
+Schleier getrennt daneben: er blendet am Ende nur die Beschriftungen weg. Wären
+beide verrechnet, fiele das Icon oben rechts auf den schlichten Streifenkreis
+der ersten Stufe zurück.
+
+Der Kopf (`zeichneLegendenTitel()`, «TOPOGRAFIE DER GEFÜHLE / Legende») bekommt
+seine Lage vom Aufrufer. Im Legendenaufbau steht er drei Zeilen über «Positive
+Wahrnehmung» und linksbündig zu dieser Beschriftung. In der Erklärungs-Ebene
+sitzt er links am Rand unterhalb des Schliessknopfs, den sie dort einblendet.
+
+**Alle Canvas-Beschriftungen tragen dieselbe Schrift**: `beschriftungsSchrift()`
+setzt `SCHRIFT_SANS` in `LABEL_GROESSE` und Fettschnitt — dieselben Werte wie
+`.annotation-tag` in `style.css` (Source Sans 3, 11px, 700). Das gilt für die
+Ortsnamen auf der Karte, den Legendentitel und die Blockzeilen gleichermassen.
+`beschriftungsBreite()` misst mit derselben Funktion; würden Messen und
+Zeichnen auseinanderlaufen, stimmte die Zentrierung der Blöcke nicht mehr.
+
+**ACHTUNG** `LABEL_GROESSE` und die `font-size` von `.annotation-tag` in
+`style.css` führen denselben Wert — die Kategorienzeile der Annotationsbox ist
+DOM, alles andere Canvas. Beide Stellen tragen einen Gegenhinweis; wird der eine
+Wert geändert, muss der andere mit.
+
+**Die F-Wert-Punkte einer Gruppe wachsen aus der Mitte ihres Bogenabschnitts
+heraus**: die Reihe ist nur so breit, wie sie sein muss, und sitzt mittig auf
+dem Gruppenwinkel. Früher spannte sie sich über die vollen 100°, sodass schon
+zwei Punkte an den Rändern standen und an die Nachbargruppe stiessen. So bleibt
+zwischen den drei Gruppen auch bei vollen Ringen sichtbar Platz.
+
+Beide Blöcke stehen nebeneinander auf einer Zeile zwischen Kreis und
+Begleittext — dort, wo die Bänder und Punkte liegen, die sie benennen. Die
+Breite des zweiten wird auch dann schon gemessen, wenn er noch gar nicht
+sichtbar ist; sonst spränge der erste zur Seite, sobald der zweite dazukommt.
+
+**ACHTUNG** `begleittextOben()` rechnet die Oberkante des Begleittexts aus den
+CSS-Werten von `.begleittext[data-demo-gruppe]` nach (`top: 78%`,
+`translateY(-50%)`, `line-height: 1.5`, `font-size: clamp(16px, 3vw, 30px)`,
+höchstens vier Zeilen) statt sie zu messen — ein `getBoundingClientRect()` je
+Frame wäre ein erzwungenes Layout. Ändert sich die Textformatierung in
+`style.css`, muss `LEGENDE_TEXT_MITTE` mit, sonst rutscht die Legende in den
+Text; in `style.css` steht dazu ein Gegenhinweis.
+
+Die Legendentexte stehen mit 78 % tiefer als die übrigen Begleittexte (72 %),
+weil sich die ganze Komposition von ihrer Oberkante nach oben aufbaut. Die
+Kapiteltexte folgen dem nicht: mehrere von ihnen sind deutlich länger und
+fielen unten heraus. `legendenKopfraum()` hält über der Kopfzeile so viel Luft
+frei, wie unter dem Text bleibt — dadurch sitzt die Komposition aus Titel,
+Kreis, Blockzeile und Text mittig im Fenster. `demoKreisLage()` gibt dem Kreis,
+was dazwischen übrig bleibt.
+
+In der Demo bleiben die **gefüllten F-Wert-Punkte weg**: dort stehen die offenen
+Ringe des Wahrnehmungsbogens für dieselbe Sache. Auf der Karte zeichnet
+`zeichneFwertPunkte()` sie unverändert.
+
+Beide Ebenen teilen sich `zeichneKreisLabels()` und die Begriffe aus
+`datenbereinigung.js`; verschieden ist nur das Layout.
+
+**Die F-Wert-Punkte sitzen seit dem Legendenumbau auf drei Bogenabschnitten von
+je 100°, dazwischen 20° Luft** (`FWERT_GRUPPEN_SPANNE`/`FWERT_GRUPPEN_LUECKE` in
+`kreisgrafik.js`): neutral nach rechts, positiv nach links oben, negativ nach
+links unten. Das gilt für **jeden** Ortskreis in allen Ansichten, nicht nur für
+die Demo — vorher standen die Gruppen auf 0°/±90°. `zeichneWahrnehmungsbogen()`
+zeichnet in der Legende genau diese drei Abschnitte nach.
+
+**Eine Quelle je Farbe.** `KREIS_KATEGORIEN[].farbe` hält die drei Goldtöne als
+r/g/b-Tripel; `CATEGORY_COLORS` wird über `rgbZuHex()` daraus abgeleitet, statt
+sie ein zweites Mal als Hexstrings zu schreiben. Für alles, was F-Wert heisst,
+gibt es genau ein Orange: `FWERT_COLOR`. Es trägt die Punkte an den Kreisen,
+ihre Beschriftungen in der Legende, die Kapitelpunkte und die Routen-Hitze im
+Übersichtsakt und den Balken der Annotationsbox. Früher standen daneben drei
+Abstufungen je F-Wert-Typ (`FWERT_COLORS`) und ein eigener, dunklerer Ton für
+die Punkte (`FWERT_PUNKT_FARBE`) — dadurch zeigte die Legende eine andere Farbe
+als die Karte daneben.
+
+Alle Ortskreise laufen über `zeichneKreiseFuerRun()` (Karte, Übersicht,
+Graph-Ansicht, Schlussakt, Legende), alle F-Wert-Punkte über
+`zeichneFwertPunkte()` — die Legende zeigt damit zwangsläufig dieselben Farben
+wie die Karte.
+
+**Halbkreise werden deckend gezeichnet**, ohne Multiply und ohne festen
+Alpha-Abschlag. Beides zusammen verschob den Ton gegenüber `KREIS_KATEGORIEN`;
+das Farbfeld der Legende stimmte nicht mit dem Band daneben überein. Der Preis
+ist, dass sich die drei Goldtöne nur noch über ihren eigenen Abstand
+unterscheiden — sie liegen mit 176/184/193 im Grünkanal nahe beieinander.
+
+**Die neutrale Vollfläche ist stillgelegt.** Sie legte sich als geschlossene
+Scheibe über beide Kreishälften. Der Aufruf in `zeichneKreiseFuerRun()` ist
+auskommentiert; `zeichneVollkreis()` und `NEUTRAL_DAEMPFUNG` haben damit keinen
+Leser mehr und bleiben nur deshalb stehen — dieselbe Behandlung wie
+`zeichneWindrose` in `kartendekor.js`. Neutrale Nennungen zählen weiterhin in
+die Schraffur und damit in den Aussenradius.
+
+ACHTUNG das PDF ist für den **Wortlaut** verbindlich, nicht für Farben und
+Grössen: es setzt eigene Goldtöne und ordnet die mittlere und die kleine
+F-Wert-Punktgrösse anders als die Karte. Dort gilt die Karte — eine Legende,
+die andere Farben zeigt als die Kreise daneben, erklärt nichts. Ebenso bewusst:
+das PDF schreibt «Neutral Wahrnehmung», im Projekt heisst es «Neutrale
+Wahrnehmung».
 
 ---
 

@@ -6,13 +6,19 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 14 von 46 Namen intern, 32 exportiert. Konvention: docs/architektur.md.
+// 14 von 52 Namen intern, 38 exportiert. Konvention: docs/architektur.md.
 // ACHTUNG Skript 1 in index.html. kreisgrafik.js liest hexZuRgb beim Laden
 // — diese Datei nach hinten schieben bricht kreisgrafik.js.
 (function () {
 
-const CATEGORY_COLORS = { gold_dunkel: '#DEB031', gold_mittel: '#DEB831', gold_hell: '#DEC131' };
-const CATEGORY_LABELS = { gold_dunkel: 'Raum & Umwelt', gold_mittel: 'Stimmung & Emotion', gold_hell: 'Soziales' };
+// Wortlaut wie in docs/topografie-der-gefuehle-grafik.pdf. Gelesen von der
+// Legende (kreisgrafik.js) und der Annotationsleiste (sketch.js) — beide
+// müssen dasselbe Wort zeigen.
+const CATEGORY_LABELS = {
+  gold_dunkel: 'Raum und Umwelt',
+  gold_mittel: 'Stimmung und Emotion',
+  gold_hell: 'Gesellschaft und Soziales',
+};
 const ROUTE_COLOR = '#63561F';
 
 // Hex-Farbstring zu r/g/b. Nötig, weil p5s stroke() Hex und Alpha nicht
@@ -27,13 +33,20 @@ function hexZuRgb(hex) {
 }
 const ROUTE_COLOR_RGB = hexZuRgb(ROUTE_COLOR);
 
+// Gegenrichtung: r/g/b-Tripel zu Hexstring. Nötig, wo eine Farbe als String
+// gebraucht wird — der CSS-Verlauf der Annotationsleiste, der strokeStyle des
+// Icons, drawHatchedCircle.
+function rgbZuHex(rgb) {
+  return '#' + rgb.map(v => Math.round(v).toString(16).padStart(2, '0').toUpperCase()).join('');
+}
+
+// Ein einziges Orange für alles, was F-Wert heisst: die Punkte an den Kreisen,
+// ihre Beschriftungen in der Legende, die Kapitelpunkte und die Routen-Hitze im
+// Übersichtsakt, der Balken der Annotationsbox. Früher standen hier drei
+// Abstufungen je F-Wert-Typ und ein eigener, dunklerer Ton für die Punkte —
+// dadurch zeigte die Legende eine andere Farbe als die Karte daneben.
 const FWERT_COLOR = '#C2511C';
-const FWERT_COLOR_RGB = hexZuRgb(FWERT_COLOR); // Kapitelpunkte und Routen-Hitze im Übersichtsakt
-const FWERT_COLORS = {
-  ort_loest_emotion_aus: '#AB3F0C',
-  emotion_faerbt_raum: '#C2511C',
-  koerper_als_sensor: '#A03705',
-};
+const FWERT_COLOR_RGB = hexZuRgb(FWERT_COLOR);
 
 // Punktgrösse 1..3 je F-Wert-Typ. Der seltene vierte Typ
 // (persoenliche_sehnsucht, 1 Annotation) fehlt und fällt auf 1 zurück.
@@ -49,15 +62,45 @@ const FWERT_PUNKTGROESSE = {
 const FWERT_PUNKT_DURCHMESSER = { 1: 5, 2: 7.5, 3: 10 };
 
 // Ausformulierte Namen der drei F-Wert-Typen, Gegenstück zu CATEGORY_LABELS.
+// Wortlaut wie im PDF, ohne das frühere Präfix «Wechselwirkung:».
 const FWERT_LABELS = {
-  ort_loest_emotion_aus: 'Wechselwirkung: Der Raum löst Emotion aus.',
-  emotion_faerbt_raum: 'Wechselwirkung: Die Emotion beeinflusst die Raumwahrnehmung.',
-  koerper_als_sensor: 'Wechselwirkung: Der Körper spürt.',
+  ort_loest_emotion_aus: 'Der Raum löst die Emotion aus',
+  emotion_faerbt_raum: 'Die Emotion beeinflusst die Raumwahrnehmung',
+  koerper_als_sensor: 'Der Körper spürt',
 };
 
-// Einheitlich für alle F-Wert-Punkte. Nicht FWERT_COLORS oben, das ist die
-// Annotationsleiste.
-const FWERT_PUNKT_FARBE = '#AB3F0C';
+// Die drei Valenzgruppen der F-Wert-Punkte, benannt wie im PDF.
+// ACHTUNG das PDF schreibt «Neutral Wahrnehmung» — Tippfehler, hier bewusst
+// korrigiert. Nicht «zurückkorrigieren», wenn jemand gegen das PDF abgleicht.
+const WAHRNEHMUNG_LABELS = {
+  pos: 'Positive Wahrnehmung',
+  neg: 'Negative Wahrnehmung',
+  neutral: 'Neutrale Wahrnehmung',
+};
+
+// Überschriften der beiden Legendenblöcke. Im PDF steht «GEFÜHLSKATEGORIEN»
+// nur in der Textebene und ist weiss gerendert, also unsichtbar; hier wird sie
+// sichtbar gezeichnet, spiegelbildlich zu «KÖRPER UND RAUM».
+const LEGENDE_BLOCK_TITEL = {
+  kategorien: 'GEFÜHLSKATEGORIEN',
+  fwerte: 'KÖRPER UND RAUM',
+};
+
+// Beschriftungen rund um den Legendenkreis, ebenfalls wortgetreu aus dem PDF.
+// Die Kreisgrösse steht mehrzeilig, damit der Block rechts nicht überbreit wird.
+const LEGENDE_KREISGROESSE = [
+  'Kreisgrösse:',
+  'Anzahl Gefühlsäusserungen',
+  'an diesem Ort',
+  'Der Kreis wächst mit jedem',
+  'geäusserten Gefühl.',
+];
+const LEGENDE_VALENZ = { pos: 'Anteil positiver Gefühle', neg: 'Anteil negativer Gefühle' };
+const LEGENDE_ORTSBESCHRIFTUNG = 'ORTSBESCHRIFTUNG';
+
+// Kopf der Legende, im PDF auf jeder Seite gleich.
+const LEGENDE_TITEL = 'TOPOGRAFIE DER GEFÜHLE';
+const LEGENDE_UNTERTITEL = 'Legende';
 
 // Fotomarker: dunkles Blaugrau, bewusst NICHT aus der Orange-Reihe. Sonst
 // stünden auf derselben Karte drei runde orange Zeichen mit drei Bedeutungen
@@ -81,6 +124,13 @@ const KREIS_KATEGORIEN = [
   { key: 'gold_mittel', farbe: [222, 184, 49] },
   { key: 'gold_hell', farbe: [222, 193, 49] },
 ];
+
+// Dieselben drei Farben als Hexstrings, für die Aufrufer, die keine Tripel
+// nehmen (Annotationsleiste in sketch.js, Icon in kreisgrafik.js).
+// ACHTUNG abgeleitet, nicht zweitgeschrieben: als eigene Liste driften die
+// beiden Schreibweisen auseinander, sobald jemand nur eine davon anfasst.
+const CATEGORY_COLORS = Object.fromEntries(
+  KREIS_KATEGORIEN.map(kat => [kat.key, rgbZuHex(kat.farbe)]));
 
 // Hat Kapitel X ein Spine-Panel? Kapitel 01 fehlt, es hat sein eigenes.
 // Welche Orte darin stehen, entscheidet ortRunsFuerSpine() weiter unten.
@@ -174,24 +224,30 @@ function ortRunsFuerSpine(daten) {
 // ACHTUNG bei geänderter Streckenlänge alle Werte umrechnen, sonst
 // verschieben sich die Akte gegeneinander.
 const SCROLL_MEILENSTEINE = {
-  heroFadeStart: 0.012089, heroFadeEnd: 0.036265,
+  heroFadeStart: 0.011435, heroFadeEnd: 0.034304,
   // 960vh davor für den zwölfteiligen Intro-Crawl (.begleittext in
-  // index.html), 80vh je Text, danach 434vh Kreisgrafik-Erklärung.
+  // index.html), 80vh je Text, danach 874vh Legendenaufbau.
   // Zoomdauer unverändert 440vh.
-  zoomStart: 0.187913, zoomEnd: 0.236265,
+  zoomStart: 0.231809, zoomEnd: 0.277547,
   // Crossfade Startkarte -> helle Überblickskarte, 80vh.
-  kartenwechselStart: 0.140243, kartenwechselEnd: 0.149034,
-  // Demo-Kreisgrafik: wächst bis demoVoll an, schrumpft ab zoomStart auf den
-  // Icon-Platz oben rechts.
-  demoStart: 0.149034, demoVoll: 0.157825,
+  kartenwechselStart: 0.132661, kartenwechselEnd: 0.140977,
+  // Demo-Kreisgrafik: wächst über den Kreisgrössen-Schritt heran und schrumpft
+  // ab zoomStart auf den Icon-Platz oben rechts. Davor steht nur der
+  // Mittelpunkt mit seiner Ortsbeschriftung da (PDF-Seite 1); der Schleier
+  // blendet in dieser Zeit ein, also von kartenwechselEnd bis demoStart.
+  demoStart: 0.149293, demoVoll: 0.157609,
+  // Legendenaufbau: neun Stufen à 80vh (PDF-Seiten 1-9), gesteuert von den neun
+  // data-demo-gruppe-Texten in index.html. Ab legendeSchleierAus blendet der
+  // Schleier über 80vh aus, erst danach beginnt der Zoom.
+  legendeSchleierAus: 0.220301, legendeEnde: 0.228617,
   // Spine blendet gleichzeitig mit dem Zoom-Beginn ein.
-  spineFadeStart: 0.115604, spineFadeEnd: 0.163956,
+  spineFadeStart: 0.109356, spineFadeEnd: 0.155094,
   // 200vh Lesezeit davor für den Kapitel-Einstiegstext.
-  routeStart: 0.258243, routeEnd: 0.379121,
+  routeStart: 0.298337, routeEnd: 0.412682,
   // Kapitel-1-Ende: ab routeEnd der Projekttext-Einblender (140vh), ab
   // kapitelEndeStart die Kartenansicht mit Hinweis und den beiden Buttons
   // (100vh bis zur Klemme).
-  kapitelEndeStart: 0.394505,
+  kapitelEndeStart: 0.427235,
   // Übersichtsrouten 02–18. 2933vh breit, damit auch Kapitel 8 auf
   // ~7.3vh/Annotation kommt wie Kapitel 1.
 
@@ -199,13 +255,13 @@ const SCROLL_MEILENSTEINE = {
   // Kapitel 1: weiter scrollt draw() nicht. Einen Rauszoom-Akt gibt es nicht
   // mehr, in den Übersichtsakt führt nur noch ein Klick auf "Übersicht" oder
   // "Alle".
-  uebersichtRoutenStart: 0.405494, uebersichtRoutenEnd: 0.727802,
+  uebersichtRoutenStart: 0.437630, uebersichtRoutenEnd: 0.742516,
   // Schlussakt Ortsveränderung (2000vh): Kreise der sieben VERGLEICHS_KNOTEN
   // wachsen mit jedem Kapitel. kreisVergleichFadeEnd liest niemand.
-  kreisVergleichStart: 0.727802, kreisVergleichFadeEnd: 0.745494,
-  kreisVergleichEnd: 0.947583,
+  kreisVergleichStart: 0.742516, kreisVergleichFadeEnd: 0.759252,
+  kreisVergleichEnd: 0.950416,
   // Die Startkarte kommt zurück und zoomt auf die Gesamtkarte raus.
-  startkarteStart: 0.947583,
+  startkarteStart: 0.950416,
 };
 
 // ---------------------------------------------------------------------------
@@ -366,11 +422,16 @@ window.ROUTE_COLOR = ROUTE_COLOR;
 window.ROUTE_COLOR_RGB = ROUTE_COLOR_RGB;
 window.FWERT_COLOR = FWERT_COLOR;
 window.FWERT_COLOR_RGB = FWERT_COLOR_RGB;
-window.FWERT_COLORS = FWERT_COLORS;
 window.FWERT_PUNKTGROESSE = FWERT_PUNKTGROESSE;
 window.FWERT_PUNKT_DURCHMESSER = FWERT_PUNKT_DURCHMESSER;
 window.FWERT_LABELS = FWERT_LABELS;
-window.FWERT_PUNKT_FARBE = FWERT_PUNKT_FARBE;
+window.WAHRNEHMUNG_LABELS = WAHRNEHMUNG_LABELS;
+window.LEGENDE_BLOCK_TITEL = LEGENDE_BLOCK_TITEL;
+window.LEGENDE_KREISGROESSE = LEGENDE_KREISGROESSE;
+window.LEGENDE_VALENZ = LEGENDE_VALENZ;
+window.LEGENDE_ORTSBESCHRIFTUNG = LEGENDE_ORTSBESCHRIFTUNG;
+window.LEGENDE_TITEL = LEGENDE_TITEL;
+window.LEGENDE_UNTERTITEL = LEGENDE_UNTERTITEL;
 window.FOTO_MARKER_FARBE_RGB = FOTO_MARKER_FARBE_RGB;
 window.FOTO_MARKER_KERN_FARBE_RGB = FOTO_MARKER_KERN_FARBE_RGB;
 window.SCHRIFT_SANS = SCHRIFT_SANS;
@@ -393,6 +454,7 @@ window.zaehleAnnotationenLiveNachOrtBasis = zaehleAnnotationenLiveNachOrtBasis;
 
 // Kreisgeometrie und Farbumrechnung
 window.hexZuRgb = hexZuRgb;
+window.rgbZuHex = rgbZuHex;
 window.kreisRadius = kreisRadius;
 window.groessterKreisRadius = groessterKreisRadius;
 

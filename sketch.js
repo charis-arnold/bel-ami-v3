@@ -7,11 +7,11 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 47 von 75 Namen intern, 28 exportiert. Konvention: docs/architektur.md.
+// 39 von 67 Namen intern, 28 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 let stage, heroText, begleitTexte, kapitelEinstiegsTexte;
-let demoGruppenTexte; // die drei .begleittext mit data-demo-gruppe — ihre Fenster steuern auch die Beschriftungen am Demo-Kreis
+let demoGruppenTexte; // die neun .begleittext mit data-demo-gruppe — ihre Fenster steuern auch die Stufen des Legendenaufbaus
 let fotoHinweisText;  // der .begleittext mit data-foto-hinweis — sein Fenster und sein Zielmarker steuern den Bedienhinweis an der Karte
 
 // Text des Bedienhinweises am Fotomarker. Auf welchen Marker er zeigt und
@@ -113,6 +113,12 @@ let projekttextWeggeklickt = false; // der automatische wurde von Hand geschloss
 let projekttextOffen = false;     // je Frame aus den beiden abgeleitet
 const PROJEKTTEXT_SCHLEIER = '#212B2E';
 const PROJEKTTEXT_SCHLEIER_ALPHA = 0.94;
+
+// Heller Schleier unter dem Legendenaufbau. Derselbe Ton wie die
+// Erklärungs-Ebene in kreisgrafik.js: die helle Karte bleibt darunter als
+// Karte erkennbar, tritt aber hinter die Legende zurück.
+const LEGENDE_SCHLEIER = '#E2E6E1';
+const LEGENDE_SCHLEIER_ALPHA = 0.8;
 
 // Zu heisst je nach Weg etwas anderes: den per Icon geholten einfach wieder
 // weg, den automatischen für diesen Durchlauf abhaken.
@@ -316,12 +322,24 @@ function getScrollProgress() {
 // Deckkraft eines scrollgebundenen Fensters: Rampe rein, Plateau, Rampe raus.
 // Rampe höchstens 35% des Fensters, sonst erreicht ein kurzes Fenster nie
 // volle Deckkraft. Auch die Beschriftungen am Demo-Kreis hängen daran.
-function begleittextDeckkraft(progress, von, bis) {
+function fadeDauerFuer(von, bis) {
   let fadeDauerMax = 0.142857; // 0.2 auf die verlängerte Scrollstrecke umskaliert (2200/3080)
-  let fadeDauer = Math.min(fadeDauerMax, (bis - von) * 0.35);
+  return Math.min(fadeDauerMax, (bis - von) * 0.35);
+}
+
+function begleittextDeckkraft(progress, von, bis) {
+  let fadeDauer = fadeDauerFuer(von, bis);
   return constrain(Math.min(
     map(progress, von, von + fadeDauer, 0, 1),
     map(progress, bis - fadeDauer, bis, 1, 0)), 0, 1);
+}
+
+// Wie begleittextDeckkraft, aber ohne das Ausblenden: der Legendenaufbau ist
+// kumulativ wie im PDF — was einmal steht, bleibt stehen, bis der Schleier am
+// Ende alles zusammen mitnimmt. Gleiche Einblenddauer, damit ein Schritt und
+// sein Erklärtext gemeinsam kommen.
+function legendenSchrittDeckkraft(progress, von, bis) {
+  return constrain(map(progress, von, von + fadeDauerFuer(von, bis), 0, 1), 0, 1);
 }
 
 // ---------------------------------------------------------------------------
@@ -565,7 +583,7 @@ function draw() {
 
   // Die Icons blenden erst im Schlussakt wieder aus; ohne sie gibt es auch
   // keine Einblender. Steht hier oben, weil das Kapitelende darauf aufbaut.
-  let demoAlpha = progress < SCROLL_MEILENSTEINE.demoStart ? 0 : 1 - skEinblenden;
+  let demoAlpha = progress < SCROLL_MEILENSTEINE.kartenwechselEnd ? 0 : 1 - skEinblenden;
 
   // Der Projekttext geht am Ende der Route von selbst auf und bleibt, bis er
   // weggeklickt oder durchgescrollt ist. Zurückgescrollt zählt als neuer
@@ -619,7 +637,7 @@ function draw() {
     annotationInner.style.opacity = 1;
     annotationInner.style.background = 'rgba(226, 230, 225, 0.85)';
     let catColor = CATEGORY_COLORS[aktuelleAnnotation.category] || ROUTE_COLOR;
-    let fwertColor = FWERT_COLORS[aktuelleAnnotation.fWertType] || FWERT_COLOR;
+    let fwertColor = FWERT_COLOR;
     annotationBar.style.background = aktuelleAnnotation.hasFwert
       ? `linear-gradient(90deg, ${catColor}, ${fwertColor})`
       : catColor;
@@ -760,9 +778,21 @@ function draw() {
   // über der Graph-Ansicht, die den Rest des Frames überdeckt.
   let demoFortschritt = constrain(map(progress, SCROLL_MEILENSTEINE.demoStart, SCROLL_MEILENSTEINE.demoVoll, 0, 1), 0, 1);
   let demoIkon = constrain(map(progress, SCROLL_MEILENSTEINE.zoomStart, SCROLL_MEILENSTEINE.zoomEnd, 0, 1), 0, 1);
-  // Jede Beschriftungsgruppe folgt dem Fenster ihres Erklärungstextes.
-  let demoGruppenAlpha = demoGruppenTexte.map(el =>
-    begleittextDeckkraft(progress, parseFloat(el.dataset.von), parseFloat(el.dataset.bis)));
+  // Der Schleier ist vor dem Kreis da: er steigt an, während nur der
+  // Mittelpunkt mit seiner Ortsbeschriftung dasteht, und geht erst nach dem
+  // letzten Legendenschritt wieder weg.
+  let legendeSchleier = Math.min(
+    constrain(map(progress, SCROLL_MEILENSTEINE.kartenwechselEnd, SCROLL_MEILENSTEINE.demoStart, 0, 1), 0, 1),
+    constrain(map(progress, SCROLL_MEILENSTEINE.legendeSchleierAus, SCROLL_MEILENSTEINE.legendeEnde, 1, 0), 0, 1));
+  if (legendeSchleier > 0) zeichneSchleier(LEGENDE_SCHLEIER, LEGENDE_SCHLEIER_ALPHA * legendeSchleier);
+
+  // Monoton: jeder Schritt blendet mit seinem Erklärungstext ein und bleibt
+  // dann stehen. Der Schleier geht getrennt davon in zeichneDemoKreisgrafik
+  // ein — er nimmt am Ende die Beschriftungen mit, nicht aber die
+  // Differenzierung des Kreises. Sonst fiele das Icon oben rechts auf den
+  // schlichten Streifenkreis der ersten Stufe zurück.
+  let legendeSchritte = demoGruppenTexte.map(el =>
+    legendenSchrittDeckkraft(progress, parseFloat(el.dataset.von), parseFloat(el.dataset.bis)));
 
   // Beide Ebenen unter die Icons, aber über alles andere: die Icons bleiben
   // sichtbar, weil sie als Nächstes gezeichnet werden.
@@ -778,7 +808,7 @@ function draw() {
   // zeigt die Kreisgrafik ihre echten Farben, das Textzeichen wird hell.
   let legendeIkonHover = demoIkonGetroffen(mouseX, mouseY);
   let projekttextIkonHover = projekttextIkonGetroffen(mouseX, mouseY);
-  zeichneDemoKreisgrafik(demoFortschritt, demoAlpha, demoGruppenAlpha, demoIkon,
+  zeichneDemoKreisgrafik(demoFortschritt, demoAlpha, legendeSchritte, legendeSchleier, demoIkon,
     demoIkon > 0.99 && !legendeIkonHover && !projekttextOffen);
   zeichneProjekttextIkon(demoAlpha * demoIkon, projekttextIkonHover, projekttextOffen);
   // Nach zeichneUebersichtsrouten, das den Cursor jeden Frame selbst setzt.
