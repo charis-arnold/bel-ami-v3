@@ -131,7 +131,7 @@ function zeichneUebersichtsrouten(bbox, alpha, fortschritt) {
       }
       if (upToIndex >= 1) {
         // Strichstärke 10 wie Kapitel 1s Route, hier ohne Rauszoom-Phase.
-        zeichneRoute(routenLinie, upToIndex, bbox, 10, mapOffsetX, mapOffsetY, kapitelZoomAmount);
+        zeichneRoute(routenLinie, upToIndex, bbox, 3, mapOffsetX, mapOffsetY, kapitelZoomAmount);
       }
     }
 

@@ -84,7 +84,7 @@ let annotationInner;
 let annotationTag;
 let annotationBar;
 let scrollFortschritt, scrollFortschrittFuellung; // Fortschrittsleiste unten (Übersicht Scrollytelling-Hauptstrang) — ausgeblendet während einer Kapitel-Ansicht (siehe kapitelAnsichtsModus)
-let kapitelRegister; // Kapitelregister links (inkl. Plan/Graph + Alle), sichtbar während eines Kapitel-Zooms
+let kapitelRegister; // Kapitelregister rechts (inkl. Plan/Graph + Alle), sichtbar während eines Kapitel-Zooms
 let kapitelRegisterEintraege = {}; // nr -> Eintrags-Element, fürs Aktiv-Highlighting in draw()
 let planEintrag, graphEintrag; // "Plan"/"Graph"-Hälften oben im Register, fürs Aktiv-Highlighting in draw()
 let modusZeile, leerzeile, alleEintrag; // Plan/Graph-Zeile + Abstandshalter + "Alle" — in der Übersicht (kein Kapitel gezoomt) blendet draw() modusZeile/leerzeile aus und markiert alleEintrag als aktiv
@@ -539,7 +539,7 @@ function draw() {
   if (!zoomedKapitel) {
     // Strichstärke 10 -> 2 beim Rauszoomen, wie die Übersichtsrouten. Auch
     // dasselbe Ausblenden, sonst verschwände sie vor den anderen.
-    zeichneRoute(stationenData.routenPunkte, liniIndex, activeBbox, lerp(10, 2, zoomOutAmount), kartenOffsetX, kartenOffsetY,
+    zeichneRoute(stationenData.routenPunkte, liniIndex, activeBbox, lerp(3, 2, zoomOutAmount), kartenOffsetX, kartenOffsetY,
       Math.max((1 - 0.45 * kreisVergleichMapFade) * (1 - ovZoom), skRauszoom));
     // Kreisgrafik (Karte) in der letzten Ansicht (Rauszoomen) für den Moment
     // ausgeblendet — Route/Spine bleiben davon unberührt sichtbar.

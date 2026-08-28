@@ -477,7 +477,7 @@ h2 {
   right: 0;
   top: 50%;
   transform: translateY(-50%);
-  width: 5vw;
+  width: 8vw;
   z-index: 20;
   display: flex;
   flex-direction: column;
@@ -499,10 +499,10 @@ h2 {
   background: none;
   font-family: var(--sans);
   font-size: 11px;
-  font-weight: 300;
+  font-weight: 700;
   color: var(--ink);
   cursor: pointer;
-  text-align: right;
+  text-align: left;
   white-space: nowrap;
   transition: background 0.2s ease, color 0.2s ease;
 }

@@ -115,7 +115,7 @@ const SPINE_LABEL_TEXT_ABSTAND = 6;
 // Label-Zeilen werden EINMAL je Kapitel und Breite aus dem Endstand
 // berechnet, damit sie beim Scrollen stillstehen.
 const SPINE_LABEL_HOEHE = 16;
-const SPINE_LABEL_ZEILEN_ABSTAND = 6;
+const SPINE_LABEL_ZEILEN_ABSTAND = 30;
 // Freizuhaltender Rand für die vertikale Lage der Spine. Unten mehr wegen
 // Play-Button und Scroll-Fortschrittsbalken.
 const SPINE_RAND_OBEN = 24;
@@ -147,7 +147,7 @@ function spineLayout(eintraege, daten, abstand, startX) {
   // Dieselbe Schrift wie beim Zeichnen, sonst stimmen die Breiten nicht.
   textFont(SCHRIFT_SANS);
   textStyle(BOLD);
-  textSize(11);
+  textSize(13);
 
   // Jedes Label in die oberste Zeile, in der rechts noch Platz ist.
   let zeilenEnde = [];
@@ -271,7 +271,7 @@ function zeichneSpineHorizontal(eintraege, fortschritt, daten = stationenData) {
 
   textFont(SCHRIFT_SANS);
   textStyle(BOLD);
-  textSize(11);
+  textSize(13);
   textAlign(CENTER, TOP);
 
   // Durchgang 1: Ortspunkte und Zuführungslinien — nach allen Kreisen, damit

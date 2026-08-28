@@ -120,9 +120,9 @@ const SCHRIFT_SERIF = "'Source Serif 4', serif";
 // Harmonische Reihe: gleiche Sättigung und Helligkeit, Hue wandert 44°–50°.
 // Die Schlüssel bleiben, daran hängt zaehleBandCounts.
 const KREIS_KATEGORIEN = [
-  { key: 'gold_dunkel', farbe: [222, 176, 49] },
-  { key: 'gold_mittel', farbe: [222, 184, 49] },
-  { key: 'gold_hell', farbe: [222, 193, 49] },
+  { key: 'gold_dunkel', farbe: [198, 162, 43] },
+  { key: 'gold_mittel', farbe: [188, 148, 143] },
+  { key: 'gold_hell', farbe: [52, 64, 92] },
 ];
 
 // Dieselben drei Farben als Hexstrings, für die Aufrufer, die keine Tripel
@@ -302,7 +302,7 @@ function bereinigeUebersichtsrouten(rohdaten) {
 // Flächenproportional (sqrt), Standard bei proportional symbol maps: die
 // Fläche wächst linear mit n. maxRadius deckelt, der Schlussakt gibt Infinity.
 function kreisRadius(n, maxRadius = 100) {
-  const BASIS = 6, K = 11.5;
+  const BASIS = 6, K = 15.5;
   return n > 0 ? Math.min(maxRadius, BASIS + K * Math.sqrt(n)) : 0;
 }
 

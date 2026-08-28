@@ -172,7 +172,7 @@ function zeichneKreisLabels(kandidaten) {
       let alpha = k.alpha === undefined ? 1 : k.alpha;
       // hilfslinie erzwingt die Linie auch ohne Ausweichen (Demo-Grafik).
       if (k.hilfslinie || Math.abs(y - k.y) > 1) {
-        stroke(0, 100 * alpha);
+        stroke(0, 255 * alpha);
         strokeWeight(0.8);
         drawingContext.setLineDash([2, 3]);
         line(k.ankerX, k.ankerY, k.links ? k.x + k.w + 4 : k.x - 4, y);
@@ -626,23 +626,7 @@ function kreisBeschriftungen(cx, cy, bandCounts, aussen, skala, maxRadius, grupp
 // Legendenaufbau (Onboarding)
 // ---------------------------------------------------------------------------
 
-// Aufbau und Wortlaut nach docs/topografie-der-gefuehle-grafik.pdf. Neun
-// Stufen, eine je PDF-Seite, jede am Deckkraftfenster ihres
-// data-demo-gruppe-Textes in index.html:
-//   0 Ortsbeschriftung (noch ohne Kreis)   5 Gesellschaft und Soziales
-//   1 Kreisgrösse                          6 Positive Wahrnehmung
-//   2 Anteil positiver Gefühle             7 Negative Wahrnehmung
-//     (mit Raum und Umwelt)                8 Neutrale Wahrnehmung
-//   3 Anteil negativer Gefühle
-//   4 Stimmung und Emotion
-// Nicht nur die
-// Beschriftungen kommen gestaffelt — der Kreis differenziert sich mit
-// (siehe stufenBandCounts).
-//
-// ACHTUNG das PDF setzt eigene Goldtöne und ordnet die mittlere und die kleine
-// F-Wert-Punktgrösse anders als die Karte. Hier gilt beides Mal die Karte —
-// eine Legende, die andere Farben und Grössen zeigt als die Kreise daneben,
-// erklärt nichts. Nur der Wortlaut kommt wörtlich aus dem PDF.
+
 const LEGENDE_ZEILE = 22;           // Zeilenabstand in den beiden Blöcken
 const LEGENDE_TITEL_ABSTAND = 26;   // Überschrift zur ersten Zeile
 const LEGENDE_FELD = 15;            // Kantenlänge der Kategorienfelder
@@ -664,18 +648,13 @@ const LEGENDE_STRICHEL = [3, 4];    // Strichelmass von Klammern und Bogen
 const LEGENDE_SICHTBAR = 0.002;     // darunter lohnt das Zeichnen nicht
 const LEGENDE_TINTE_RGB = hexZuRgb(IKON_RUHE_FARBE);
 
-// Zeilen des Blocks «Körper und Raum», gross nach klein wie im PDF — die
-// Grössen selbst kommen aus der Karte (siehe ACHTUNG oben), deshalb sortiert
-// statt fest verdrahtet.
+// Zeilen des Blocks «Körper und Raum»
 const LEGENDE_FWERT_ZEILEN = Object.keys(FWERT_PUNKTGROESSE)
   .sort((a, b) => FWERT_PUNKTGROESSE[b] - FWERT_PUNKTGROESSE[a])
   .map(typ => ({ text: FWERT_LABELS[typ], punkt: FWERT_PUNKT_DURCHMESSER[FWERT_PUNKTGROESSE[typ]] }));
 
-// Der Kreis differenziert sich mit der Legende (PDF-Seiten 2 bis 6): erst
-// schlicht und gestreift, dann mit Valenzhälften, dann mit den drei Bändern.
-// Alle drei Zustände haben denselben Aussenradius — es wächst nichts mehr, es
-// sortiert sich nur. Dafür werden die Mengen auf das grösste Band
-// heruntergerechnet statt summiert: die Summe ergäbe einen grösseren Kreis.
+// Der Kreis differenziert sich mit der Legende: erst
+// gestreift, dann mit Valenzhälften, dann mit den drei Bändern.
 function stufenBandCounts(bandCounts, mitKategorie, valenzen) {
   // Was noch keine Stufe benannt hat, bleibt Schraffur: der Kreis wächst nicht
   // mehr, es füllt sich nur, was schon erklärt ist.
@@ -694,7 +673,7 @@ function stufenBandCounts(bandCounts, mitKategorie, valenzen) {
   // einen grösseren Kreis, und der Aussenradius soll über alle Stufen stehen
   // bleiben. gold_mittel, weil zeichneKreiseFuerRun genau dieses Band deckend
   // zeichnet statt im Multiply; ein einzelnes Band soll nicht nachdunkeln.
-  if (!mitKategorie) {
+  /*if (!mitKategorie) {
     let summe = { neg: 0, pos: 0, neutral: 0, unrated: 0 };
     let groesstesBand = 0;
     KREIS_KATEGORIEN.forEach(kat => {
@@ -713,7 +692,7 @@ function stufenBandCounts(bandCounts, mitKategorie, valenzen) {
       neg: summe.neg * f, pos: summe.pos * f,
       neutral: summe.neutral * f, unrated: summe.unrated * f,
     }) };
-  }
+  }*/
 
   // Mit Kategorie: das erste Band echt. Die weiteren kommen nicht hierher,
   // sondern als blosse Valenzhälften dazu (zeichneKategorieHaelften) — bei
