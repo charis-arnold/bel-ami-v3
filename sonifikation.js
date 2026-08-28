@@ -58,8 +58,21 @@ const SONIFIKATION_GEWICHT_ANNOTATION_SKALA = 0.6; // Gewichtspunkte pro Annotat
 // gerade erzeugt — und weil der Radius mit der Wurzel wächst, springt ein
 // junger Kreis hörbar, während ein voller nur noch kriecht.
 
-// Umschalter zum Vergleichen: 'stationen' spielt die bisherige Fassung.
-const SONIFIKATION_KAPITEL1_MODUS = 'elemente';
+// Umschalter zum Vergleichen: 'stationen' spielt die bisherige Fassung —
+// Kapitel 1 aus kapitel01-sonifikation.json, 02–18 aus den Spine-Einträgen.
+const SONIFIKATION_MODUS = 'elemente';
+
+// Spieldauer im Elementmodell. Nicht die Zahl der Orte zählt, sondern die
+// der Klänge: Kapitel 2 spielt an einem einzigen Ort und bekäme über die
+// Ortsformel 2,6 s für 118 Elemente, also 45 Klänge je Sekunde.
+
+// ACHTUNG die Dauer gilt auch für die Grafik. aktuelleGrafikAnimationDauer()
+// (spine-horizontal.js) fragt hier an, sonst liefen Bild und Ton auseinander
+// — im Elementmodell hängt jeder Klang an seinem Element.
+
+// Die Wurzel hält die Spanne zusammen: linear bekäme Kapitel 5 mit seinen 321
+// Elementen 96 s, so sind es 66. Kapitel 1 bleibt die Marke mit 45 s.
+const ELEMENT_DAUER_BEZUG = 150; // Elemente in Kapitel 1
 
 // Woran die Zeitpunkte hängen:
 // 'spine'   — an dem Moment, in dem das Element im Bild erscheint. Ton und
@@ -258,6 +271,7 @@ function starteWiedergabe(pattern, gesamtdauerSek) {
 // Wählt den Ton zur offenen Ansicht: Kapitel 1, wenn keines gezoomt ist.
 // Ohne await, der Aufrufer wartet ohnehin nicht.
 function spieleSonifikationFuer(kapitelNr) {
+  if (SONIFIKATION_MODUS === 'elemente') return spieleElementAudio(kapitelNr);
   if (kapitelNr) return spieleKapitelSonifikationAudio(kapitelNr);
   return spieleKapitel1SonifikationAudio();
 }
@@ -266,52 +280,63 @@ function spieleSonifikationFuer(kapitelNr) {
 // Elementmodell (Prototyp, Kapitel 1)
 // ---------------------------------------------------------------------------
 
-// Zeitpunkt je Annotation, an dem sie im Bild erscheint. Umkehrung der
-// Interpolation aus zeichneSpineHorizontal(): dort wächst globalAnnIndex
-// stückweise linear zwischen den rv-Werten der Spine-Einträge.
+// Fortschritt 0..1 je Annotation: wo im Ablauf sie im Bild erscheint.
+// Umkehrung der Interpolation aus zeichneSpineHorizontal(), dort wächst
+// globalAnnIndex stückweise linear zwischen den rv-Werten der Spine.
+
+// ACHTUNG in Fortschritt statt in Sekunden, weil die Spieldauer erst aus der
+// Zahl der Elemente folgt — und die steht erst fest, wenn diese Zuordnung
+// gelaufen ist. Sekunden macht daraus erst spieleElementAudio().
 
 // ACHTUNG das Hochziehen des letzten rv-Werts muss mit: die Spine setzt ihn
 // auf die letzte Annotation ("sonst wird der letzte Kreis nie voll"). Ohne
 // dieselbe Zeile laufen Ton und Bild auf den letzten Metern auseinander.
-function elementZeitpunkte(daten, eintraege, gesamtdauerSek) {
+function elementFortschritte(daten, eintraege) {
   let anzahl = daten.annotationen.length;
   let n = eintraege.length;
   let rv = eintraege.map(e => e.rv);
   rv[n - 1] = anzahl - 1;
 
-  let zeiten = [];
+  let werte = [];
   let seg = 0;
   for (let ai = 0; ai < anzahl; ai++) {
     if (SONIFIKATION_ZEITBASIS === 'element') {
-      zeiten[ai] = (ai / Math.max(1, anzahl - 1)) * gesamtdauerSek;
+      werte[ai] = ai / Math.max(1, anzahl - 1);
+      continue;
+    }
+    if (n === 1) {
+      // Einziger Eintrag (Kapitel 2): die Spine interpoliert dort ab -1,
+      // damit der Kreis nicht sofort voll steht. Dieselbe Umkehrung.
+      werte[ai] = (ai + 1) / Math.max(1, rv[0] + 1);
       continue;
     }
     while (seg < n - 2 && ai > rv[seg + 1]) seg++;
     let spanne = rv[seg + 1] - rv[seg];
     let position = seg + (spanne > 0 ? (ai - rv[seg]) / spanne : 0);
-    zeiten[ai] = Math.min(1, Math.max(0, position / (n - 1))) * gesamtdauerSek;
+    werte[ai] = Math.min(1, Math.max(0, position / (n - 1)));
   }
-
-  // Metrum: jeden Abstand auf ganze Pulse runden, mindestens einen. Bewusst
-  // ohne Rückskalierung auf 45 s — sonst würde die Stauchung den Versatz
-  // nur woandershin schieben, statt ihn sichtbar zu lassen.
-  if (SONIFIKATION_ZEITBASIS === 'puls') {
-    let gerastert = [zeiten[0]];
-    for (let ai = 1; ai < anzahl; ai++) {
-      let schritte = Math.max(1, Math.round((zeiten[ai] - zeiten[ai - 1]) / SONIFIKATION_PULS_SEK));
-      gerastert[ai] = gerastert[ai - 1] + schritte * SONIFIKATION_PULS_SEK;
-    }
-    return gerastert;
-  }
-  return zeiten;
+  return werte;
 }
 
 // Ein Eintrag je Element, in Erzählreihenfolge, mit dem Kreisstand, den es
-// gerade erzeugt. Keine neue Datei nötig: alles steht in kapitel01-stationen.
-function baueKapitel1Elemente() {
-  let daten = stationenData;
-  let eintraege = spineEintraegeFuer(null);
-  if (!daten || !eintraege || eintraege.length < 2) return null;
+// gerade erzeugt. Keine neue Datei nötig: alles steht in den
+// kapitelXX-stationen.json, die auch das Bild liest.
+let elementCache = {};
+
+function elementeFuerKapitel(kapitelNr) {
+  let schluessel = kapitelNr || '01';
+  if (elementCache[schluessel]) return elementCache[schluessel];
+  let gebaut = baueKapitelElemente(kapitelNr);
+  // Nur Fertiges merken: sind die Spine-Daten noch nicht aufgebaut, soll der
+  // nächste Aufruf es erneut versuchen statt für immer null zu liefern.
+  if (gebaut) elementCache[schluessel] = gebaut;
+  return gebaut;
+}
+
+function baueKapitelElemente(kapitelNr) {
+  let daten = kapitelNr ? datenFuerKapitel(kapitelNr) : stationenData;
+  let eintraege = spineEintraegeFuer(kapitelNr);
+  if (!daten || !daten.annotationen || !eintraege || !eintraege.length) return null;
 
   // sammleAnnotationenNachOrtBasis() gibt Objekte zurück, gebraucht wird die
   // Erzählposition — einmal vorwärts aufgebaut statt 150-mal indexOf.
@@ -331,7 +356,7 @@ function baueKapitel1Elemente() {
       .forEach(a => { if (aiVon.has(a)) kreisVonAi.set(aiVon.get(a), i); });
   });
 
-  let zeiten = elementZeitpunkte(daten, eintraege, SONIFIKATION_GESAMTDAUER_SEK);
+  let fortschritte = elementFortschritte(daten, eintraege);
 
   // Laufender Stand je Kreis und Kategorie: dieselben Zahlen, aus denen
   // zaehleBandCounts() im Bild die Radien macht. valenz -1/1 wie valenzBucket.
@@ -349,7 +374,7 @@ function baueKapitel1Elemente() {
     let gesamtAmKreis = 0;
     Object.keys(proKategorie).forEach(k => { gesamtAmKreis += proKategorie[k].gesamt; });
     elemente.push({
-      zeit: zeiten[ai],
+      fortschritt: fortschritte[ai],
       kategorie: a.category,
       kreis: kreis,
       // Alle Kategorien zusammen: die Grösse, die der Kreis im Bild zeigt.
@@ -462,21 +487,53 @@ function elementSchicht(grade, gewichte, sound, oktave, rolle, slowFaktor) {
     .slow(slowFaktor);
 }
 
-async function spieleKapitel1ElementAudio() {
+// Spieldauer aus der Zahl der Elemente, siehe ELEMENT_DAUER_BEZUG.
+function elementDauerSek(kapitelNr) {
+  let elemente = elementeFuerKapitel(kapitelNr);
+  if (!elemente) return null;
+  return SONIFIKATION_GESAMTDAUER_SEK * Math.sqrt(elemente.length / ELEMENT_DAUER_BEZUG);
+}
+
+// Für spine-horizontal.js: dieselbe Dauer in Millisekunden, oder null, wenn
+// das Elementmodell nicht zuständig ist — dann gilt dort die Ortsformel.
+function sonifikationElementDauerMs(kapitelNr) {
+  if (SONIFIKATION_MODUS !== 'elemente') return null;
+  stelleSpineDatenBereit(kapitelNr || undefined);
+  let sek = elementDauerSek(kapitelNr);
+  return sek ? sek * 1000 : null;
+}
+
+// Fortschritt mal Dauer ergibt Sekunden. Das Pulsraster greift erst hier,
+// weil es in Sekunden misst und die Dauer vorher nicht feststeht.
+function elementZeiten(elemente, gesamtdauerSek) {
+  let zeiten = elemente.map(e => e.fortschritt * gesamtdauerSek);
+  if (SONIFIKATION_ZEITBASIS !== 'puls') return zeiten;
+
+  // Jeden Abstand auf ganze Pulse runden, mindestens einen. Bewusst ohne
+  // Rückskalierung: die Stauchung würde den Versatz nur woandershin
+  // schieben, statt ihn hörbar zu lassen.
+  let gerastert = [zeiten[0]];
+  for (let i = 1; i < zeiten.length; i++) {
+    let schritte = Math.max(1, Math.round((zeiten[i] - zeiten[i - 1]) / SONIFIKATION_PULS_SEK));
+    gerastert[i] = gerastert[i - 1] + schritte * SONIFIKATION_PULS_SEK;
+  }
+  return gerastert;
+}
+
+// Ohne Kapitelnummer Kapitel 1, sonst das gezoomte — wie überall sonst.
+async function spieleElementAudio(kapitelNr) {
   await stelleSonifikationBereit();
-  // Ohne Argument baut sie nur den Kapitel-1-Cache auf. Der Play-Knopf sitzt
-  // in der Graph-Ansicht, die ihn ohnehin schon gefüllt hat — der Aufruf ist
-  // die Absicherung für den Fall, dass der Ton woanders gestartet wird.
-  stelleSpineDatenBereit();
-  let elemente = baueKapitel1Elemente();
+  stelleSpineDatenBereit(kapitelNr || undefined);
+  let elemente = elementeFuerKapitel(kapitelNr);
   if (!elemente) return;
 
   // Schrittgewichte in Sekunden: Abstand zum nächsten Element, der letzte
   // Schritt trägt den Nachklang. Das kumulierte Gewicht eines Schritts ist
   // damit genau sein Zeitpunkt — deshalb stimmt die Synchronität ohne
   // weiteres Zutun. Die Untergrenze fängt gleichzeitige Elemente ab.
-  let gewichte = elemente.map((e, i) =>
-    i + 1 < elemente.length ? Math.max(0.02, elemente[i + 1].zeit - e.zeit) : SONIFIKATION_NACHKLANG_SEK);
+  let zeiten = elementZeiten(elemente, elementDauerSek(kapitelNr));
+  let gewichte = zeiten.map((z, i) =>
+    i + 1 < zeiten.length ? Math.max(0.02, zeiten[i + 1] - z) : SONIFIKATION_NACHKLANG_SEK);
   let gesamtdauerSek = gewichte.reduce((a, b) => a + b, 0);
   let slowFaktor = gesamtdauerSek / (1 / SONIFIKATION_STANDARD_CPS);
 
@@ -490,10 +547,10 @@ async function spieleKapitel1ElementAudio() {
 }
 
 
+
 // Reiner Audio-Start. Die Spine läuft unabhängig parallel und nutzt dieselbe
 // SONIFIKATION_GESAMTDAUER_SEK, deshalb bleiben beide Uhren synchron.
 async function spieleKapitel1SonifikationAudio() {
-  if (SONIFIKATION_KAPITEL1_MODUS === 'elemente') return spieleKapitel1ElementAudio();
   await stelleSonifikationBereit();
   let daten = await ladeSonifikationDaten();
   let stationen = daten.stationen;
@@ -568,9 +625,10 @@ function beendeSonifikationAudio() {
 
 
 // --- Export ------------------------------------------------------------
-// Vier Namen. Leser: docs/architektur.md.
+// Fünf Namen. Leser: docs/architektur.md.
 window.SONIFIKATION_GESAMTDAUER_SEK = SONIFIKATION_GESAMTDAUER_SEK;
 window.spieleSonifikationFuer = spieleSonifikationFuer;
+window.sonifikationElementDauerMs = sonifikationElementDauerMs;
 window.beendeSonifikationAudio = beendeSonifikationAudio;
 
 // Lesebindung statt Wertkopie: die Flagge fröre sonst auf false ein und der
