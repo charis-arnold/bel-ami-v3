@@ -141,7 +141,13 @@ const ELEMENT_FWERT_GRAD = {
 // die Schraffur allein nicht mehr leisten kann, seit die Kategorien
 // angeschlagen statt gehalten spielen — ein Ton je Ortsbesuch, nicht je
 // Element. Nur Dreiklangstufen, damit nichts gegen die Melodie steht.
-const ELEMENT_BASS = { sound: 'pipeorgan_quiet_pedal', oktave: 2, grade: [0, 2, 4] };
+
+// ACHTUNG maxSek muss bleiben: ein Ortsbesuch dauert in Kapitel 2 die vollen
+// 41 s, und ein Sample hält das nicht — der Bass wäre nach dem ersten Ton
+// weg. Ausserdem füllt das Nachschlagen die Stellen, an denen gar kein
+// Element wächst: Kapitel 9 hat bei 36,8 s eine Lücke von 5,3 s, weil dort
+// ein Ort mit einem einzigen Element eine volle Abschnittsdauer belegt.
+const ELEMENT_BASS = { sound: 'pipeorgan_quiet_pedal', oktave: 2, grade: [0, 2, 4], maxSek: 3 };
 
 // Stufenumfang und Klangfarbe je Rolle. Die Melodiestimmen bekommen eine
 // Oktave: jeder Ort fängt unten an und steigt — das ergibt je Ort eine
@@ -471,7 +477,19 @@ function baueElementStimmen(elemente, gewichte) {
     bass.gewichte.push(gewichte[i]);
   });
 
-  return { stimmen, bass };
+  // Lange Besuche in gleich lange Anschläge zerlegen, Stufe bleibt: ein
+  // Orgelpunkt, der weiteratmet. Die Summe ändert sich dabei nicht, das
+  // Raster der übrigen Stimmen bleibt also unberührt.
+  let orgelpunkt = { grade: [], gewichte: [] };
+  bass.gewichte.forEach((w, i) => {
+    let teile = Math.max(1, Math.ceil(w / ELEMENT_BASS.maxSek));
+    for (let k = 0; k < teile; k++) {
+      orgelpunkt.grade.push(bass.grade[i]);
+      orgelpunkt.gewichte.push(w / teile);
+    }
+  });
+
+  return { stimmen, bass: orgelpunkt };
 }
 
 // n() + scale() statt note(): die Skalenstufen halten alle sieben Stimmen in
