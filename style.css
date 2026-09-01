@@ -307,6 +307,47 @@ h2 {
   color: #212B2E;
 }
 
+/* Feste Bezugshöhe statt Eigenhöhe, Teil 1: die Begleittexte.
+
+   Sie lösen einander überblendend ab, und weil jeder um seine eigene Mitte
+   zentriert ist (translateY(-50 %)), sitzen die Zeilen zweier Texte, die sich
+   gerade kreuzen, um eine halbe Zeile versetzt übereinander — beim Scrollen
+   sieht man den Versatz als Doppelbild. Der Kasten hier ist immer vier Zeilen
+   hoch (4 × line-height 1.5 = 6em), der Text sitzt an seiner Oberkante: alle
+   Begleittexte beginnen damit auf derselben Höhe und blenden sauber
+   ineinander. Vier Zeilen, weil das im Browser gemessen der längste ist.
+
+   min-height statt height: unterhalb von rund 1300 px Fensterbreite wird die
+   Textspalte schmaler (left: 50 % deckelt sie auf die halbe Bühnenbreite,
+   noch vor max-width), die Texte laufen dort auf fünf Zeilen. Sie weichen
+   dann wie bisher nach oben aus, statt unten aus dem Kasten zu ragen. */
+.begleittext {
+  min-height: 6em;
+}
+
+/* Feste Bezugshöhe statt Eigenhöhe, Teil 2: die Kapitel-Einstiegstexte sind
+   zwischen fünf und acht Zeilen lang. Zentriert sich jeder um seine eigene
+   Mitte (translateY(-50 %)), sitzt die erste Zeile bei jedem Kapitel woanders
+   und der Text springt beim Wechsel um bis zu zwei Zeilen. Der Kasten hier
+   ist immer acht Zeilen hoch (8 × line-height 1.5 = 12em), der Text sitzt an
+   seiner Oberkante: alle Kapitel blenden ihre Zeilen an denselben Stellen ein.
+   Acht Zeilen, weil das im Browser gemessen die längsten sind (Kapitel 01 und
+   16) — die Unterkante des Kastens liegt damit genau dort, wo diese beiden
+   auch bisher endeten, kein Kapitel rutscht tiefer ins Bild als zuvor.
+
+   min-height statt height, aus demselben Grund wie oben: auf schmaleren
+   Fenstern laufen die Texte länger und weichen dann mittig aus, statt unten
+   aus dem Bild zu fallen. Wird ein Text länger als acht Zeilen, den Wert
+   hier mit anheben.
+
+   Kapitel 1 hat keinen eigenen .kapitel-einstiegstext — dort steht der
+   Begleittext mit data-kapitel="01" an derselben Stelle und bekommt deshalb
+   denselben Kasten. */
+.kapitel-einstiegstext,
+.begleittext[data-kapitel="01"] {
+  min-height: 12em;
+}
+
 /* Der Kapitelende-Hinweis blendet über diese Klasse ein, nicht über ein
    Scroll-Fenster: hinter der Klemme am Kapitelende gibt es keine Strecke
    mehr, über die er ausblenden könnte (siehe draw()). */
@@ -318,16 +359,34 @@ h2 {
    über seinem Text, und alles darüber leitet sich von dessen Oberkante ab
    (siehe begleittextOben in kreisgrafik.js). Auf 72 % blieb unten ein
    Streifen leer. Die Kapiteltexte bleiben bei 72 % — mehrere von ihnen sind
-   deutlich länger und fielen sonst unten heraus. */
+   deutlich länger und fielen sonst unten heraus.
+
+   ACHTUNG die Grafik darf der Kasten nicht berühren, und das tut er auch
+   nicht: seine vier Zeilen (min-height: 6em oben) sind genau die vier, mit
+   denen der Legendenaufbau ohnehin rechnet (BEGLEITTEXT_ZEILEN_MAX = 4 in
+   kreisgrafik.js). Um 78 % zentriert liegt seine Oberkante damit exakt auf
+   begleittextOben() — der Linie, die die Legende schon heute für den Text
+   frei hält, und die der längste dieser Texte auch bisher erreicht. Kein
+   Erklärungstext rückt der Kreisgrafik also näher als zuvor.
+
+   Wer die 6em oben ändert, ändert diese Linie mit: BEGLEITTEXT_ZEILEN_MAX in
+   kreisgrafik.js muss dann auf dieselbe Zeilenzahl nachgezogen werden, sonst
+   schiebt sich der Text in die Grafik. */
 .begleittext[data-demo-gruppe] {
   top: 78%;
 }
 
 /* Höher als die übrigen Begleittexte: auf 64 % läge der Text genau dort, wo
    während der Route der Bedienhinweis am Fotomarker steht (siehe
-   data-foto-hinweis in index.html und zeichneFotoMarker). */
+   data-foto-hinweis in index.html und zeichneFotoMarker).
+
+   Ohne festen Kasten: dieser Text steht allein in seinem Scroll-Fenster,
+   überblendet also mit keinem zweiten und hat vom gemeinsamen Zeilenraster
+   nichts. Seine Höhe ist gegen den Bedienhinweis eingemessen — ein Kasten
+   würde ihn ohne Gegenwert um eine halbe Zeile anheben. */
 .begleittext.begleittext-hoch {
   top: 42%;
+  min-height: 0;
 }
 
 
