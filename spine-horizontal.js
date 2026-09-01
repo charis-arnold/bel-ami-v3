@@ -280,8 +280,7 @@ function zeichneSpineHorizontal(eintraege, fortschritt, daten = stationenData) {
     // winkel PI: Halbkreise oben/unten statt links/rechts, positiv oben.
     // F-Wert-Punkte bekommen denselben Winkel.
     zeichneKreiseFuerRun(k.x, linieY, k.bc, 1, PI);
-    merkeKreis(k.x, linieY, k.bc, k.radius,
-      zeichneFwertPunkte(k.x, linieY, k.radius, k.fwertAnnotationen, 1));
+    zeichneFwertPunkte(k.x, linieY, k.radius, k.fwertAnnotationen, 1);
     radiusNachIndex.set(k.i, k.radius);
   });
 

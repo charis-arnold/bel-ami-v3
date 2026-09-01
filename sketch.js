@@ -523,10 +523,9 @@ function draw() {
 
   // Hinter "Graph" liegen zwei Ansichten: im Kapitel die Spine, in der
   // Übersicht der Ortsvergleich. Beide decken Karte, Route und Kreise dieses
-  // Frames vollständig ab und melden danach ihre eigenen Kreise an.
+  // Frames vollständig ab.
   if (inKapitelGrafikAnsicht || imOrtsvergleich) {
     background(226, 230, 225); // #E2E6E1
-    vergissGezeichneteKreise();
     aktualisiereGrafikFortschritt(); // ein Playhead für beide Ansichten
   }
   if (inKapitelGrafikAnsicht) {
@@ -786,7 +785,8 @@ function draw() {
     demoIkon > 0.99 && !legendeIkonHover && !projekttextOffen);
   zeichneProjekttextIkon(demoAlpha * demoIkon, projekttextIkonHover, projekttextOffen);
   // Nach zeichneUebersichtsrouten, das den Cursor jeden Frame selbst setzt.
-  if (legendeIkonHover || projekttextIkonHover) cursor(HAND);
+  if (legendeIkonHover || projekttextIkonHover
+    || (kreisErklaerungOffen && kategorieZeileGetroffen(mouseX, mouseY))) cursor(HAND);
 }
 
 // ---------------------------------------------------------------------------
@@ -817,7 +817,14 @@ function mousePressed() {
   }
   // Sonst fängt ein offener Einblender jeden Klick ab.
   if (projekttextOffen) { schliesseProjekttext(); return; }
-  if (kreisErklaerungOffen) { kreisErklaerungOffen = false; return; }
+  // In der Erklärungs-Ebene sind die drei Kategorienzeilen anklickbar: sie
+  // spielen ihren Klang vor, statt die Ebene zu schliessen.
+  if (kreisErklaerungOffen) {
+    let kategorie = kategorieZeileGetroffen(mouseX, mouseY);
+    if (kategorie) spieleKategorieKlang(kategorie);
+    else kreisErklaerungOffen = false;
+    return;
+  }
   if (kapitelHover === '01') { scrolleZuKapitel1(); return; }
   // ACHTUNG über springeZuKapitelZoom, nicht direkt über oeffneKapitelZoom:
   // die Startpunkte sind erst weit im Akt sichtbar, ein Klick dort öffnete

@@ -8,7 +8,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 86 von 99 Namen intern, 13 exportiert. Konvention: docs/architektur.md.
+// 86 von 98 Namen intern, 12 exportiert. Konvention: docs/architektur.md.
 // ACHTUNG Ladezeit: hexZuRgb() und baueDemoAnnotationen() laufen schon in der
 // IIFE — diese Datei muss nach datenbereinigung.js stehen, sonst ReferenceError.
 // p5s Konstanten (PI, HALF_PI) gibt es hier noch nicht, die setzt p5 erst beim
@@ -34,32 +34,6 @@ const LABEL_ABSTAND = 4;
 // hier geändert, muss er dort mit, sonst laufen die beiden auseinander.
 const LABEL_GROESSE = 13;
 
-// Die echten Ortskreise dieses Frames — Grundlage der Erklärungs-Ebene, die
-// sich an den grössten davon hängt. frameCount setzt die Liste selbst
-// zurück, damit kein Aufrufer daran denken muss.
-
-// ACHTUNG die Liste wird nur beim ersten merkeKreis() eines Frames geleert.
-// Wird in einem Frame gar keiner gezeichnet, steht noch der Stand des
-// letzten drin — deshalb liest kreiseDiesesFrames() den Zähler mit.
-let gezeichneteKreise = [];
-let kreisRegisterFrame = -1;
-
-function kreiseDiesesFrames() {
-  return kreisRegisterFrame === frameCount ? gezeichneteKreise : [];
-}
-
-function merkeKreis(cx, cy, bandCounts, radius, fwertPunkte, skala = 1, maxRadius = 100) {
-  if (kreisRegisterFrame !== frameCount) { gezeichneteKreise = []; kreisRegisterFrame = frameCount; }
-  if (radius > 0) gezeichneteKreise.push({ cx, cy, bandCounts, radius, fwertPunkte, skala, maxRadius });
-}
-
-// Ein background()-Aufruf übermalt den bisherigen Frame — was vorher
-// gemerkt wurde, ist nicht mehr zu sehen.
-function vergissGezeichneteKreise() {
-  gezeichneteKreise = [];
-  kreisRegisterFrame = frameCount;
-}
-
 // ACHTUNG gehört zur stillgelegten neutralen Vollfläche in
 // zeichneKreiseFuerRun und hat solange keinen Leser. Bleibt stehen, weil der
 // Aufruf nur auskommentiert ist — wie zeichneWindrose in kartendekor.js.
@@ -69,6 +43,21 @@ const NEUTRAL_DAEMPFUNG = 0.35;
 // Kreise
 // ---------------------------------------------------------------------------
 
+// Waagrechte Schraffur in die gesetzte Clip-Fläche; Gesamtkreise und
+// Legendenfeld teilen sie sich. Aufrufer klammert mit push()/pop().
+function schraffiere(x0, x1, y0, y1, farbe, alphaSkala) {
+  const ctx = drawingContext;
+  ctx.strokeStyle = farbe;
+  ctx.globalAlpha = 0.55 * alphaSkala;
+  ctx.lineWidth = 1.8;
+  for (let ly = y0; ly <= y1; ly += HATCH_SPACING) {
+    ctx.beginPath();
+    ctx.moveTo(x0, ly);
+    ctx.lineTo(x1, ly);
+    ctx.stroke();
+  }
+}
+
 function drawHatchedCircle(cx, cy, r, color, alphaSkala = 1) {
   if (r <= 0) return;
   push(); // schreibt strokeStyle direkt, siehe ACHTUNG oben
@@ -76,15 +65,7 @@ function drawHatchedCircle(cx, cy, r, color, alphaSkala = 1) {
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.clip();
-  ctx.strokeStyle = color;
-  ctx.globalAlpha = 0.55 * alphaSkala;
-  ctx.lineWidth = 1.8;
-  for (let ly = cy - r; ly <= cy + r; ly += HATCH_SPACING) {
-    ctx.beginPath();
-    ctx.moveTo(cx - r, ly);
-    ctx.lineTo(cx + r, ly);
-    ctx.stroke();
-  }
+  schraffiere(cx - r, cx + r, cy - r, cy + r, color, alphaSkala);
   pop();
 }
 
@@ -118,8 +99,7 @@ function zeichneKreiseOrtRuns(punktIndex, annIndex, activeBbox, offsetX = mapOff
     let radius = groessterKreisRadius(bandCounts);
     zeichneKreiseFuerRun(pos.x, pos.y, bandCounts, 1, PI);
     let fwertAnnotationen = treffer.filter(a => a.hasFwert);
-    merkeKreis(pos.x, pos.y, bandCounts, radius,
-      zeichneFwertPunkte(pos.x, pos.y, radius, fwertAnnotationen, 1));
+    zeichneFwertPunkte(pos.x, pos.y, radius, fwertAnnotationen, 1);
     if (radius > 0) {
       // Erst sammeln, Kollisionen nach der Schleife (zeichneKreisLabels).
       // Der Routen-Startpunkt blendet erst mit dem Kapitel-1-Ausschnitt ein.
@@ -295,10 +275,9 @@ const FWERT_GRUPPEN_WINKEL = { neg: FWERT_GRUPPEN_VERSATZ, pos: -FWERT_GRUPPEN_V
 
 // Ein Punkt je Annotation mit F-Wert, Grösse nach Typ, Lage im 120°-Drittel
 // der eigenen Valenz. Bei Andrang wachsen weitere Ringe nach aussen.
-// Rückgabe: die gesetzten Punkte, an die sich die Erklärungs-Ebene hängt.
+
 function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1) {
-  let gesetzt = [];
-  if (!fwertAnnotationen.length || radius <= 0) return gesetzt;
+  if (!fwertAnnotationen.length || radius <= 0) return;
 
   push(); // noStroke() plus direkte fillStyle-Schreibzugriffe
   // Reihenfolge [neg, pos, neutral] — gruppen[0..2] unten wird so indiziert.
@@ -347,7 +326,6 @@ function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1) {
         kante += winkelBreiten[i];
         let x = cx + Math.cos(winkelPunkt) * ringRadius;
         let y = cy + Math.sin(winkelPunkt) * ringRadius;
-        gesetzt.push({ x, y, typ: f.typ });
         // Canvas-Pfad, siehe ACHTUNG oben.
         drawingContext.fillStyle = `rgba(${f.rgb.r}, ${f.rgb.g}, ${f.rgb.b}, ${alphaSkala})`;
         drawingContext.beginPath();
@@ -359,7 +337,6 @@ function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1) {
     }
   });
   pop();
-  return gesetzt;
 }
 
 
@@ -393,7 +370,6 @@ const DEMO_FWERTE = { pos: 'ort_loest_emotion_aus', neg: 'emotion_faerbt_raum', 
 // Die Demo steht allein auf der Karte und darf grösser sein als die Kreise
 // entlang der Route. maxRadius ist der Vorgabewert von kreisRadius().
 const DEMO_MAX_RADIUS = 100;
-const DEMO_LABEL_ABSTAND = 45;
 
 // Ruheplatz der beiden Icons: nebeneinander direkt über dem Kapitelregister,
 // rechtsbündig zum Bildschirmrand. Links die Kreisgrafik (Legende), rechts
@@ -419,6 +395,15 @@ const IKON_TEXT_ZEILEN = [0.72, 0.94, 0.88, 0.56]; // Zeilenlängen, Anteil am R
 
 // Lage der zuletzt gezeichneten Icons, für die Treffertests.
 let letzteDemoLage = null;
+// Lage der Kategorienzeilen im Legendenblock. Nur die Erklärungs-Ebene fragt
+// sie ab, siehe kategorieZeileGetroffen().
+
+// ACHTUNG je Frame beim ERSTEN Eintrag leeren, nicht beim Zeichnen des Blocks:
+// demoLegende() läuft zweimal pro Frame, wenn die Erklärung offen ist — einmal
+// für sie, einmal für das Icon oben rechts. Ein Zurücksetzen im zweiten Lauf
+// löschte die Flächen, bevor mousePressed() sie sehen kann.
+let letzteKategorieZeilen = [];
+let kategorieZeilenFrame = -1;
 let letzteProjekttextIkonLage = null;
 
 // Höhe der Icon-Zeile, gemessen an der Oberkante des Kapitelregisters — das
@@ -463,10 +448,11 @@ function legendenKopfraum() {
   return height - (height * LEGENDE_TEXT_MITTE + begleittextHalbeHoehe());
 }
 
-// Höhe, die die Blockzeile über dem Begleittext belegt: Überschrift, drei
-// Zeilen und die Luft darunter.
+// Höhe der Blockzeile: Kategorienblock, Sonifikationsbox, Luft zum
+// Begleittext. Wächst sie, bleibt dem Kreis weniger Raum (demoKreisLage).
 function blockZeileHoehe() {
-  return LEGENDE_TITEL_ABSTAND + 2 * LEGENDE_ZEILE + LEGENDE_BLOCK_LUFT;
+  return LEGENDE_TITEL_ABSTAND + 2 * LEGENDE_ZEILE
+    + LEGENDE_BLOCK_ABSTAND + LEGENDE_TITEL_ABSTAND + LEGENDE_BLOCK_LUFT;
 }
 
 // Radius des fertig aufgebauten Demo-Kreises bei Massstab 1. Hängt nur an
@@ -560,68 +546,6 @@ function baueDemoAnnotationen() {
 
 const DEMO_ANNOTATIONEN = baueDemoAnnotationen();
 
-// Beschriftungen am Kreis, in drei Gruppen passend zu den Erklärungstexten in
-// index.html (data-demo-gruppe): Grösse, Wölbung, F-Wert-Punkte. Alle Labels
-// stehen auf einer Seite, die Hilfslinien zeigen auf die Stelle, die der Text
-// meint. Gilt für die Demo-Grafik wie für jeden echten Ortskreis — was ein
-// Kreis nicht zeigt (fehlendes Band, fehlende Valenz), bekommt kein Label.
-function kreisBeschriftungen(cx, cy, bandCounts, aussen, skala, maxRadius, gruppenAlpha, fwertPunkte, links) {
-  let labelX = links ? cx - aussen - DEMO_LABEL_ABSTAND : cx + aussen + DEMO_LABEL_ABSTAND;
-  let eintrag = (gruppe, text, radius, winkel) => {
-    let ankerY = cy + Math.sin(winkel) * radius;
-    return {
-      ankerX: cx + Math.cos(winkel) * radius, ankerY,
-      x: labelX, y: ankerY, text, farbe: null,
-      hilfslinie: true, links, alpha: gruppenAlpha[gruppe],
-    };
-  };
-  // Fächer über eine Kreisseite, damit sich die Hilfslinien nicht kreuzen.
-  let winkelBand = [-0.95, -0.35, 0.3];
-  let bandAnzahl = key => {
-    let b = bandCounts[key] || {};
-    return (b.neg || 0) + (b.pos || 0) + (b.neutral || 0) + (b.unrated || 0);
-  };
-  let valenzAnzahl = bucket => KREIS_KATEGORIEN.reduce(
-    (n, kat) => n + ((bandCounts[kat.key] || {})[bucket] || 0), 0);
-
-  let labels = [];
-  KREIS_KATEGORIEN.forEach((kat, i) => {
-    let n = bandAnzahl(kat.key);
-    if (n > 0) labels.push(eintrag(0, CATEGORY_LABELS[kat.key],
-      kreisRadius(n, maxRadius) * skala, winkelBand[i]));
-  });
-  // Einzeilig, deshalb die ersten drei der fünf PDF-Zeilen zusammengezogen.
-  labels.push(eintrag(0, LEGENDE_KREISGROESSE.slice(0, 3).join(' '), aussen, 0.85));
-
-  if (valenzAnzahl('pos') > 0) labels.push(eintrag(1, LEGENDE_VALENZ.pos, aussen * 0.7, -PI / 3));
-  if (valenzAnzahl('neg') > 0) labels.push(eintrag(1, LEGENDE_VALENZ.neg, aussen * 0.7, PI / 3));
-  // Nicht auf Winkel 0: dort sitzt der neutrale F-Wert-Punkt, die Hilfslinie
-  // liefe genau durch ihn. Für neutrale Gefühle kennt das PDF keine Klammer —
-  // der Wortlaut setzt deshalb das Muster der beiden anderen fort.
-  if (valenzAnzahl('neutral') > 0) labels.push(eintrag(1, 'Anteil neutraler Gefühle', aussen * 0.45, 0.32));
-
-  // Je F-Wert-Typ ein Label, angeheftet an einen wirklich gesetzten Punkt
-  // dieses Typs — die Punktgrösse ist es, die den Typ unterscheidet.
-  let schonBeschriftet = new Set();
-  (fwertPunkte || []).forEach(p => {
-    if (!p.typ || schonBeschriftet.has(p.typ)) return;
-    schonBeschriftet.add(p.typ);
-    labels.push({
-      ankerX: p.x, ankerY: p.y, x: labelX, y: p.y,
-      text: FWERT_LABELS[p.typ], farbe: null,
-      hilfslinie: true, links, alpha: gruppenAlpha[2],
-    });
-  });
-
-  // zeichneKreisLabels weicht nur nach unten aus: liegt der Kreis tief im
-  // Bild, muss der Stapel vorher hoch, sonst fällt er unten heraus.
-  let stapel = labels.length * (LABEL_HOEHE + LABEL_ABSTAND);
-  let obenRaus = LABEL_HOEHE;
-  let untenRaus = Math.max(obenRaus, height - stapel);
-  labels.forEach(l => l.y = constrain(l.y, obenRaus, untenRaus));
-  return labels;
-}
-
 // ---------------------------------------------------------------------------
 // Legendenaufbau (Onboarding)
 // ---------------------------------------------------------------------------
@@ -630,13 +554,12 @@ function kreisBeschriftungen(cx, cy, bandCounts, aussen, skala, maxRadius, grupp
 const LEGENDE_ZEILE = 22;           // Zeilenabstand in den beiden Blöcken
 const LEGENDE_TITEL_ABSTAND = 26;   // Überschrift zur ersten Zeile
 const LEGENDE_FELD = 15;            // Kantenlänge der Kategorienfelder
+const LEGENDE_FELD_LUECKE = 4;      // Luft zwischen Farbfeld und Schraffurfeld
 const LEGENDE_MARKE_SPALTE = 26;    // Feld- bzw. Punktspalte zum Text
 const LEGENDE_BLOCK_LUECKE = 40;    // Luft zwischen den beiden Blöcken
 const LEGENDE_BLOCK_LUFT = 22;      // Blockzeile zur Oberkante des Begleittexts
+const LEGENDE_BLOCK_ABSTAND = 26;   // Luft zwischen Kategorien- und Sonifikationsbox
 const LEGENDE_RAND_LINKS = 46;      // Titel und linker Block zum Fensterrand
-const LEGENDE_TITEL_OBEN = 84;      // Mitte der Titelzeile — unterhalb des
-                                    // Schliessknopfs der Erklärungs-Ebene
-                                    // (.einblender-schliessen, 28px + 36px)
 const LEGENDE_TEXTZEILE = 17;       // Zeilenabstand im Kreisgrössen-Block
 const LEGENDE_TEXT_ABSTAND = 60;    // Kreisrand zum Text rechts
 const LEGENDE_ECKE = 46;            // Höhe des Knicks über dem Kreisscheitel
@@ -813,11 +736,33 @@ function zeichneValenzKlammer(cx, cy, aussen, richtung, alpha) {
   });
 }
 
-// Breite eines Blocks: Markenspalte plus längste Zeile. Nur der rechte Block
+// Wo der Text eines Blocks beginnt: Kategorienzeilen tragen zwei Felder
+// nebeneinander — gefüllt und schraffiert —, die Punktzeilen nur eine Marke.
+function legendenTextSpalte(zeilen) {
+  if (zeilen.some(z => z.feld)) return LEGENDE_MARKE_SPALTE + LEGENDE_FELD + LEGENDE_FELD_LUECKE;
+  if (zeilen.some(z => z.punkt)) return LEGENDE_MARKE_SPALTE;
+  return 0; // reine Textzeile, etwa der Hinweis der Sonifikationsbox
+}
+
+// Zweites Feld je Kategorie: dieselbe Farbe als Schraffur. Es zeigt, wie der
+// noch unbestimmte Anteil derselben Kategorie im Kreis aussieht.
+function zeichneSchraffurFeld(x, y, farbe, alphaSkala) {
+  push();
+  const ctx = drawingContext;
+  ctx.beginPath();
+  ctx.rect(x, y, LEGENDE_FELD, LEGENDE_FELD);
+  ctx.clip();
+  schraffiere(x, x + LEGENDE_FELD, y, y + LEGENDE_FELD,
+    `rgb(${farbe[0]}, ${farbe[1]}, ${farbe[2]})`, alphaSkala);
+  pop();
+}
+
+// Breite eines Blocks: Textspalte plus längste Zeile. Nur der rechte Block
 // braucht sie, um am Fensterrand zu enden.
 function legendenBlockBreite(titel, zeilen) {
+  let spalte = legendenTextSpalte(zeilen);
   return Math.max(beschriftungsBreite(titel),
-    ...zeilen.map(z => LEGENDE_MARKE_SPALTE + beschriftungsBreite(z.text)));
+    ...zeilen.map(z => spalte + beschriftungsBreite(z.text)));
 }
 
 // Schritte 4 und 5: ein Block mit Überschrift und Zeilen. Eine Zeile trägt
@@ -832,6 +777,7 @@ function zeichneLegendenBlock(x, y, titel, zeilen, alpha) {
   beschriftungsSchrift(LABEL_GROESSE);
   fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b, 255 * alpha);
   text(titel, x, y);
+  let textSpalte = legendenTextSpalte(zeilen);
   zeilen.forEach((z, i) => {
     let a = z.alpha === undefined ? alpha : z.alpha;
     if (a <= LEGENDE_SICHTBAR) return;
@@ -839,12 +785,26 @@ function zeichneLegendenBlock(x, y, titel, zeilen, alpha) {
     if (z.feld) {
       fill(z.feld[0], z.feld[1], z.feld[2], 255 * a);
       rect(x, zy - LEGENDE_FELD / 2, LEGENDE_FELD, LEGENDE_FELD);
-    } else {
+      zeichneSchraffurFeld(x + LEGENDE_FELD + LEGENDE_FELD_LUECKE,
+        zy - LEGENDE_FELD / 2, z.feld, a);
+    } else if (z.punkt) {
       fill(FWERT_COLOR_RGB.r, FWERT_COLOR_RGB.g, FWERT_COLOR_RGB.b, 255 * a);
       circle(x + LEGENDE_FELD / 2, zy, z.punkt);
     }
     fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b, 255 * a);
-    text(z.text, x + LEGENDE_MARKE_SPALTE, zy);
+    text(z.text, x + textSpalte, zy);
+    // Anklickbare Zeilen ihre Fläche merken: Feld, Schraffur und Text.
+    if (z.kategorie) {
+      if (kategorieZeilenFrame !== frameCount) {
+        letzteKategorieZeilen = [];
+        kategorieZeilenFrame = frameCount;
+      }
+      letzteKategorieZeilen.push({
+        kategorie: z.kategorie,
+        x0: x, x1: x + textSpalte + beschriftungsBreite(z.text),
+        y0: zy - LEGENDE_ZEILE / 2, y1: zy + LEGENDE_ZEILE / 2,
+      });
+    }
   });
   pop();
 }
@@ -933,10 +893,16 @@ function demoLegende(cx, cy, aussen, gruppenAlpha, kreisDa) {
 
   // Stufen 2, 4 und 5 (PDF-Seiten 3, 5 und 6): jede Bandzeile kommt mit dem
   // Band, das sie benennt. Stufe 2 bringt zugleich die Überschrift mit.
-  let kategorieZeilen = KREIS_KATEGORIEN.map((kat, i) => ({
-    text: CATEGORY_LABELS[kat.key], feld: kat.farbe,
-    alpha: [aPos, aMittel, aHell][i],
-  }));
+  // Klangname in Klammern: die Zeile ist anklickbar und spielt ihn ab. Name
+  // und Klang aus einer Quelle (ELEMENT_INSTRUMENTE in sonifikation.js).
+  let kategorieZeilen = KREIS_KATEGORIEN.map((kat, i) => {
+    let instr = ELEMENT_INSTRUMENTE[kat.key];
+    return {
+      text: CATEGORY_LABELS[kat.key] + (instr ? ` (${instr.name})` : ''),
+      feld: kat.farbe, kategorie: kat.key,
+      alpha: [aPos, aMittel, aHell][i],
+    };
+  });
   // Stufe 6 (PDF-Seite 7) bringt den zweiten Block ganz, mit allen drei Zeilen.
   let fwertZeilen = LEGENDE_FWERT_ZEILEN.map(z => ({ ...z, alpha: aWpos }));
 
@@ -944,13 +910,24 @@ function demoLegende(cx, cy, aussen, gruppenAlpha, kreisDa) {
   // — dort, wo die Bänder und Punkte liegen, die sie benennen. Die Breite des
   // zweiten wird auch dann schon eingerechnet, wenn er noch gar nicht sichtbar
   // ist; sonst spränge der erste zur Seite, sobald der zweite dazukommt.
+  // Dritte Box unter dem Kategorienblock: sie sagt, dass die Zeilen darüber
+  // klingen. Ihr Hinweis trägt keine Marke, steht also ohne Einzug.
+  let sonifikationZeilen = [{ text: LEGENDE_SONIFIKATION_HINWEIS, alpha: aPos }];
+
   let bKat = legendenBlockBreite(LEGENDE_BLOCK_TITEL.kategorien, kategorieZeilen);
   let bFwert = legendenBlockBreite(LEGENDE_BLOCK_TITEL.fwerte, fwertZeilen);
+  let bSon = legendenBlockBreite(LEGENDE_BLOCK_TITEL.sonifikation, sonifikationZeilen);
   let blockY = begleittextOben() - blockZeileHoehe();
-  let blockX = (width - (bKat + LEGENDE_BLOCK_LUECKE + bFwert)) / 2;
+  // Die Sonifikationsbox kann breiter sein als die beiden darüber — dann
+  // richtet sich die Mitte nach ihr, sonst stünde sie rechts heraus.
+  let blockX = (width - Math.max(bKat + LEGENDE_BLOCK_LUECKE + bFwert, bSon)) / 2;
+
   zeichneLegendenBlock(blockX, blockY, LEGENDE_BLOCK_TITEL.kategorien, kategorieZeilen, aPos);
   zeichneLegendenBlock(blockX + bKat + LEGENDE_BLOCK_LUECKE, blockY,
     LEGENDE_BLOCK_TITEL.fwerte, fwertZeilen, aWpos);
+  zeichneLegendenBlock(blockX,
+    blockY + LEGENDE_TITEL_ABSTAND + 2 * LEGENDE_ZEILE + LEGENDE_BLOCK_ABSTAND,
+    LEGENDE_BLOCK_TITEL.sonifikation, sonifikationZeilen, aPos);
 
   // Stufen 6 bis 8: ein Bogenabschnitt je Wahrnehmung. neutral sitzt rechts,
   // positiv und negativ auf der Klammerseite.
@@ -1015,11 +992,10 @@ function demoIkonGetroffen(mx, my) {
 // Erklärungs-Ebene (Klick aufs Icon)
 // ---------------------------------------------------------------------------
 
-// Heller Schleier über der ganzen Ansicht; die Kreisgrafik bleibt darunter
-// erkennbar, tritt aber hinter die Beschriftungen zurück.
+// Heller Schleier über der Ansicht; die Karte bleibt erkennbar. Ton und
+// Deckung wie im Legendenaufbau (LEGENDE_SCHLEIER_ALPHA in sketch.js).
 const ERKLAERUNG_SCHLEIER = '#E2E6E1';
-const ERKLAERUNG_SCHLEIER_ALPHA = 0.6;
-const ERKLAERUNG_LABEL_BREITE = 360; // Platzbedarf des längsten Labels
+const ERKLAERUNG_SCHLEIER_ALPHA = 0.8;
 
 // Legt den Schleier über die Ansicht und beschriftet den grössten Kreis des
 // Frames mit allen drei Erklärungen zugleich. Steht keiner im Bild
@@ -1039,13 +1015,21 @@ function zeichneSchleier(farbe, alphaSkala) {
 // vollständigen Legendenaufbau und dem Kopf darüber. Sie erklärt die Bauweise
 // der Kreisgrafik, nicht einen einzelnen Ort — deshalb hängt sie an nichts,
 // was gerade auf dem Bild steht.
+// Treffer auf einer Kategorienzeile der Legende, sonst null. Nur die
+// Erklärungs-Ebene fragt danach — dort sind die Zeilen anklickbar.
+function kategorieZeileGetroffen(mx, my) {
+  let treffer = letzteKategorieZeilen.find(z =>
+    mx >= z.x0 && mx <= z.x1 && my >= z.y0 && my <= z.y1);
+  return treffer ? treffer.kategorie : null;
+}
+
 function zeichneKreisErklaerung() {
   zeichneSchleier(ERKLAERUNG_SCHLEIER, ERKLAERUNG_SCHLEIER_ALPHA);
   zeichneDemoKreisgrafik(1, 1, Array(9).fill(1), 1, 0); // bringt den Kopf mit
 }
 
 // --- Export ------------------------------------------------------------
-// Dreizehn Namen. Leser: docs/architektur.md.
+// Zwölf Namen. Leser: docs/architektur.md.
 window.leereBandCounts = leereBandCounts;
 window.zeichneSchleier = zeichneSchleier;
 window.zeichneProjekttextIkon = zeichneProjekttextIkon;
@@ -1055,9 +1039,8 @@ window.zeichneKreiseOrtRuns = zeichneKreiseOrtRuns;
 window.zeichneKreiseFuerRun = zeichneKreiseFuerRun;
 window.zeichneFwertPunkte = zeichneFwertPunkte;
 window.zeichneDemoKreisgrafik = zeichneDemoKreisgrafik;
-window.merkeKreis = merkeKreis;
-window.vergissGezeichneteKreise = vergissGezeichneteKreise;
 window.demoIkonGetroffen = demoIkonGetroffen;
+window.kategorieZeileGetroffen = kategorieZeileGetroffen;
 window.zeichneKreisErklaerung = zeichneKreisErklaerung;
 
 })(); // Ende der Modulkapselung, siehe Kommentar oben

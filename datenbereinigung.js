@@ -6,7 +6,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 14 von 52 Namen intern, 38 exportiert. Konvention: docs/architektur.md.
+// 14 von 53 Namen intern, 39 exportiert. Konvention: docs/architektur.md.
 // ACHTUNG Skript 1 in index.html. kreisgrafik.js liest hexZuRgb beim Laden
 // — diese Datei nach hinten schieben bricht kreisgrafik.js.
 (function () {
@@ -84,7 +84,12 @@ const WAHRNEHMUNG_LABELS = {
 const LEGENDE_BLOCK_TITEL = {
   kategorien: 'GEFÜHLSKATEGORIEN',
   fwerte: 'KÖRPER UND RAUM',
+  sonifikation: 'SONIFIKATION',
 };
+
+// Einzige Zeile der Sonifikations-Box. Die Kategorienzeilen darüber sind in
+// der Erklärungs-Ebene anklickbar, siehe kategorieZeileGetroffen().
+const LEGENDE_SONIFIKATION_HINWEIS = 'Klicke auf die Kategorien und höre, wie sie klingen.';
 
 // Beschriftungen rund um den Legendenkreis, ebenfalls wortgetreu aus dem PDF.
 // Die Kreisgrösse steht mehrzeilig, damit der Block rechts nicht überbreit wird.
@@ -411,7 +416,7 @@ function baueSpineDaten(daten, hauptorte) {
 
 
 // --- Export ------------------------------------------------------------
-// 32 Namen, die grösste Schnittstelle im Projekt. Leser: docs/architektur.md.
+// 33 Namen, die grösste Schnittstelle im Projekt. Leser: docs/architektur.md.
 
 // Farben, Kategorien, Punktgrössen
 window.CATEGORY_COLORS = CATEGORY_COLORS;
@@ -426,6 +431,7 @@ window.FWERT_PUNKT_DURCHMESSER = FWERT_PUNKT_DURCHMESSER;
 window.FWERT_LABELS = FWERT_LABELS;
 window.WAHRNEHMUNG_LABELS = WAHRNEHMUNG_LABELS;
 window.LEGENDE_BLOCK_TITEL = LEGENDE_BLOCK_TITEL;
+window.LEGENDE_SONIFIKATION_HINWEIS = LEGENDE_SONIFIKATION_HINWEIS;
 window.LEGENDE_KREISGROESSE = LEGENDE_KREISGROESSE;
 window.LEGENDE_VALENZ = LEGENDE_VALENZ;
 window.LEGENDE_ORTSBESCHRIFTUNG = LEGENDE_ORTSBESCHRIFTUNG;

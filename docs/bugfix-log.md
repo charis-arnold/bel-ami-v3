@@ -339,3 +339,63 @@ Werte eingetragen wurden.
    Strassen folgen.
 3. Überblicksakt gegenprüfen — dort war es vorher schon richtig und muss es
    bleiben.
+
+
+---
+
+## Fix 3 — Nach dem ersten Ton zeichnete p5 alles Farbige weiss
+
+**Datum:** 1. September 2026
+**Datei:** `sonifikation.js`, Funktion `stelleSonifikationBereit()`
+**Betroffen seit:** dem Einbau der Sonifikation — sichtbar wurde es erst mit
+den anklickbaren Kategorien in der Kreisgrafik-Erklärung
+**Gemeldet von:** Charis Arnold
+
+### Symptom
+
+Sobald zum ersten Mal ein Klang lief — Play in einer Graph-Ansicht oder ein
+Klick auf eine Kategorienzeile der Legende — verloren die Farbfelder der
+Legende und die Punkte des Blocks «Körper und Raum» ihre Farbe und standen
+weiss da. Die Schraffur daneben und der grosse Kreis blieben farbig.
+
+### Ursache
+
+`initStrudel()` schreibt Strudels Funktionen ins globale Objekt und trifft
+dabei **16 Namen, die p5 dort schon belegt**:
+
+```
+frameRate, loop, rotate, scale, square, curve, color, clip,
+fill, set, ceil, floor, pow, round, noise, splice
+```
+
+Zwei davon braucht das Projekt zum Zeichnen: `fill` und `color`. Danach ist
+`fill()` kein p5-Aufruf mehr, sondern ein Strudel-Kontrollbefehl: er setzt
+keine Farbe, sondern gibt ein Pattern zurück. Alles, was danach damit gemalt
+wird, bleibt in der zuletzt gesetzten Farbe stehen — weiss.
+
+Dass Schraffur und Kreis farbig blieben, war kein Zufall: beide schreiben
+`strokeStyle` bzw. `fillStyle` direkt in den Canvas-Context und gehen an
+p5s `fill()` vorbei.
+
+Die Zuweisungen kommen **einen Tick nach** dem Promise von `initStrudel()` —
+dieselbe Verzögerung, die der Code schon für `n()` kennt. Eine Messung
+unmittelbar nach dem `await` findet die Kollision deshalb nicht.
+
+### Fix
+
+`stelleSonifikationBereit()` sichert vor `initStrudel()` alle globalen
+p5-Funktionen und legt sie nach dem Polling auf `n()`/`note()` zurück.
+Strudels eigene Namen bleiben unberührt, weil p5 sie nicht kennt; und keiner
+der 16 wird im Projekt in Strudels Bedeutung gebraucht — `scale` kommt nur in
+einem Kommentar vor und meint dort die Pattern-Methode `.scale()`.
+
+### Gegenprobe
+
+Farbige Flächen in einem p5-Sketch, Pixel gemessen:
+
+| | Feld 1 | Feld 2 | Feld 3 |
+|---|---|---|---|
+| Soll | 198,162,43 | 188,148,143 | 52,64,92 |
+| vor dem Ton | 198,162,43 | 188,148,143 | 52,64,92 |
+| nach dem Ton, ohne Fix | 255,255,255 | 255,255,255 | 255,255,255 |
+| nach dem Ton, mit Fix | 198,162,43 | 188,148,143 | 52,64,92 |

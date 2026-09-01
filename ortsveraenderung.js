@@ -8,7 +8,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 27 von 30 Namen intern, 3 exportiert. Konvention: docs/architektur.md.
+// 34 von 37 Namen intern, 3 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 const VERGLEICHS_KNOTEN = [
@@ -385,9 +385,7 @@ function zeichneOrtsveraenderung(p) {
   orte.slice().sort((a, b) => b.radius - a.radius).forEach(o => {
     zeichneKreiseFuerRun(o.x, layout.linienY, o.stand.bandCounts, o.alphaSkala,
       PI, layout.kreisSkala, Infinity);
-    merkeKreis(o.x, layout.linienY, o.stand.bandCounts, o.radius,
-      zeichneFwertPunkte(o.x, layout.linienY, o.radius, o.stand.fwerte, o.alphaSkala),
-      layout.kreisSkala, Infinity);
+    zeichneFwertPunkte(o.x, layout.linienY, o.radius, o.stand.fwerte, o.alphaSkala);
   });
 
   textAlign(CENTER, CENTER);

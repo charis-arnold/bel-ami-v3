@@ -15,7 +15,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 19 von 23 Namen intern, 4 exportiert. Konvention: docs/architektur.md.
+// 19 von 25 Namen intern, 6 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 // Dieselben zwei CDN-Quellen, die strudel.cc selbst lädt. @strudel/web bringt
@@ -117,10 +117,12 @@ const ELEMENT_STUFENBEZUG = 'ort';
 // Wellenformen: sie klingen von selbst ab und lassen Luft zwischen den
 // Tönen — ohne die gibt es keine Melodie, nur Fläche. Die Oktave folgt der
 // Farbreihe, dunkles Band tief, helles Band hoch.
+// name steht hier und nicht in der Legende: Klang und Bezeichnung gehören
+// zusammen, sonst driften sie auseinander. kreisgrafik.js liest ihn.
 const ELEMENT_INSTRUMENTE = {
-  gold_dunkel: { sound: 'harp', oktave: 3 },        // Raum und Umwelt
-  gold_mittel: { sound: 'vibraphone_soft', oktave: 4 }, // Stimmung und Emotion
-  gold_hell: { sound: 'glockenspiel', oktave: 5 },  // Gesellschaft und Soziales
+  gold_dunkel: { sound: 'harp', oktave: 3, name: 'Harfe' },              // Raum und Umwelt
+  gold_mittel: { sound: 'vibraphone_soft', oktave: 4, name: 'Vibraphon' }, // Stimmung und Emotion
+  gold_hell: { sound: 'glockenspiel', oktave: 5, name: 'Glockenspiel' },  // Gesellschaft und Soziales
 };
 
 // Instrument 4: das Xylophon der «Danse macabre». Feste Stufen aus dem
@@ -224,6 +226,15 @@ const SONIFIKATION_STANDARD_CPS = 0.5;
 
 async function stelleSonifikationBereit() {
   if (sonifikationBereit) return;
+
+  // ACHTUNG initStrudel() überschreibt 16 globale Namen, die p5 belegt —
+  // darunter fill() und color(). Danach zeichnet p5 alles weiss. Deshalb p5s
+  // Fassungen sichern und nach der Initialisierung zurücklegen.
+  // Hergang und Messung: docs/bugfix-log.md.
+  let p5Namen = Object.getOwnPropertyNames(p5.prototype).filter(k => typeof window[k] === 'function');
+  let p5Fassung = {};
+  p5Namen.forEach(k => { p5Fassung[k] = window[k]; });
+
   await initStrudel({
     prebake: () => Promise.all(
       SONIFIKATION_SAMPLE_BAENKE.map(([json, basis]) => samples(json, basis, { prebake: true }))
@@ -239,6 +250,10 @@ async function stelleSonifikationBereit() {
     await new Promise(r => setTimeout(r, 10));
     versuche++;
   }
+
+  // Erst jetzt zurücklegen: die Zuweisungen kommen im selben Schub wie n().
+  p5Namen.forEach(k => { if (window[k] !== p5Fassung[k]) window[k] = p5Fassung[k]; });
+
   sonifikationBereit = true;
 }
 
@@ -672,6 +687,27 @@ async function spieleKapitelSonifikationAudio(nr) {
 
 // Nur der Audio-Teil. Play-Zustand und Button gehören der Graph-Ansicht
 // (toggleGrafikPlay, spine-horizontal.js) und bleiben unangetastet.
+// Ein einzelner Anschlag zum Anhören, für die anklickbaren Kategorienzeilen
+// der Legende. Neben der Wiedergabe: ohne Kapitel und ohne Fortschritt.
+
+// ACHTUNG er beendet, was gerade läuft: ein Strudel-Muster lässt sich nur über
+// hush() anhalten, und das trifft alle Stimmen. Läuft die Sonifikation, bricht
+// ein Klick auf eine Kategorie sie also ab.
+const KATEGORIE_KLANG_SEK = 2;
+
+async function spieleKategorieKlang(kategorie) {
+  let instr = ELEMENT_INSTRUMENTE[kategorie];
+  if (!instr) return;
+  await stelleSonifikationBereit();
+  beendeSonifikationAudio();
+  let rolle = ELEMENT_ROLLEN.melodie;
+  starteWiedergabe(
+    n('0').scale(`g${instr.oktave}:${ELEMENT_TONART}`).s(instr.sound)
+      .gain(rolle.gain).attack(rolle.attack).release(rolle.release).room(rolle.room)
+      .slow(KATEGORIE_KLANG_SEK / (1 / SONIFIKATION_STANDARD_CPS)),
+    KATEGORIE_KLANG_SEK);
+}
+
 function beendeSonifikationAudio() {
   if (typeof hush === 'function') hush();
   sonifikationSpieltGerade = false;
@@ -683,8 +719,10 @@ function beendeSonifikationAudio() {
 
 
 // --- Export ------------------------------------------------------------
-// Fünf Namen. Leser: docs/architektur.md.
+// Sieben Namen. Leser: docs/architektur.md.
 window.SONIFIKATION_GESAMTDAUER_SEK = SONIFIKATION_GESAMTDAUER_SEK;
+window.ELEMENT_INSTRUMENTE = ELEMENT_INSTRUMENTE;
+window.spieleKategorieKlang = spieleKategorieKlang;
 window.spieleSonifikationFuer = spieleSonifikationFuer;
 window.sonifikationElementDauerMs = sonifikationElementDauerMs;
 window.beendeSonifikationAudio = beendeSonifikationAudio;
