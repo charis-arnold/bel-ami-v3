@@ -209,6 +209,10 @@ function preload() {
   fotoMarkerListe = loadJSON('fotomarker.json');
   uebersichtsRouten = loadJSON('kapitel-routen-uebersicht.json');
 
+  // Nicht hier, und das mit Absicht: kreisvergleich-orte.json im Projektstamm
+  // ist ein Prüf-Artefakt der Python-Pipeline (baue-sammelpunkte-handkuriert.py
+  // vergleicht dagegen), keine Eingangsdatei. Nicht löschen.
+
   Object.keys(kapitelKarten).forEach(nr => {
     if (OHNE_EIGENEN_KARTENAUSSCHNITT.includes(nr)) return;
     kapitelKarten[nr].bild = loadImage(`bilder-karten/kapitel${nr}-karte.png`);
@@ -818,8 +822,13 @@ function draw() {
 // ---------------------------------------------------------------------------
 // Klicks auf dem Canvas
 // ---------------------------------------------------------------------------
-// sonifikation.js liefert nur den Ton, das Bild ist die Graph-Ansicht.
-// Play-Schalter und Animationsdauer liegen in spine-horizontal.js.
+// Drei anklickbare Familien: Icons (kreisgrafik.js), Kapitel-Startpunkte
+// (uebersichtsrouten.js), Fotomarker (fotomarker.js). Sieben Prüfungen, der
+// erste Treffer gewinnt. Die Startpunkte bringen ihren Treffer als
+// kapitelHover schon mit, die anderen beiden nur ihre Lage.
+
+// Nicht hier: Kapitelregister (dom-aufbau.js) und Play-Knopf sind HTML mit
+// eigenen Listenern.
 
 function mousePressed() {
   // Zuerst die beiden Icons: ein Klick darauf schaltet direkt um, statt nur
@@ -854,12 +863,6 @@ function mousePressed() {
     }
   }
 }
-
-// kreisvergleich-orte.json wird vom Code nicht gelesen, bleibt aber als
-// Prüf-Artefakt: baue-sammelpunkte-handkuriert.py vergleicht dagegen.
-
-
-
 
 // --- Export ------------------------------------------------------------
 // 28 Namen: 11 als Wert, 5 p5-Hooks, 12 als Lesebindung.
