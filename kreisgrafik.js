@@ -1035,28 +1035,13 @@ function zeichneSchleier(farbe, alphaSkala) {
   pop();
 }
 
+// Überall dieselbe Erklärung: der Demo-Kreis in der Bildmitte mit dem
+// vollständigen Legendenaufbau und dem Kopf darüber. Sie erklärt die Bauweise
+// der Kreisgrafik, nicht einen einzelnen Ort — deshalb hängt sie an nichts,
+// was gerade auf dem Bild steht.
 function zeichneKreisErklaerung() {
   zeichneSchleier(ERKLAERUNG_SCHLEIER, ERKLAERUNG_SCHLEIER_ALPHA);
-
-  // Ein angeschnittener Kreis taugt nicht als Bezug: seine Beschriftungen
-  // zeigten auf Stellen ausserhalb des Bildes. Nur wenn gar keiner ganz
-  // drinsteht, zählt wieder das ganze Feld.
-  let groesster = (liste) => liste.reduce((bisher, k) =>
-    !bisher || k.radius > bisher.radius ? k : bisher, null);
-  let imBild = kreiseDiesesFrames();
-  let ganzImBild = imBild.filter(k =>
-    k.cx - k.radius > 0 && k.cx + k.radius < width &&
-    k.cy - k.radius > 0 && k.cy + k.radius < height);
-  let kreis = groesster(ganzImBild) || groesster(imBild);
-  if (!kreis) {
-    zeichneDemoKreisgrafik(1, 1, Array(9).fill(1), 1, 0); // bringt den Kopf mit
-    return;
-  }
-  zeichneLegendenTitel(LEGENDE_RAND_LINKS, LEGENDE_TITEL_OBEN, 1);
-  // Passen die Labels rechts nicht mehr aufs Bild, klappen sie nach links.
-  let links = kreis.cx + kreis.radius + DEMO_LABEL_ABSTAND + ERKLAERUNG_LABEL_BREITE > width;
-  zeichneKreisLabels(kreisBeschriftungen(kreis.cx, kreis.cy, kreis.bandCounts, kreis.radius,
-    kreis.skala, kreis.maxRadius, [1, 1, 1], kreis.fwertPunkte, links));
+  zeichneDemoKreisgrafik(1, 1, Array(9).fill(1), 1, 0); // bringt den Kopf mit
 }
 
 // --- Export ------------------------------------------------------------
