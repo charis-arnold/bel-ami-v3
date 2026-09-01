@@ -8,12 +8,17 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 7 von 18 Namen intern, 11 exportiert. Konvention: docs/architektur.md.
+// 8 von 19 Namen intern, 11 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 let zoomedKapitel = null;      // z.B. '03', oder null (Übersicht)
 let kapitelZoomAmount = 0;     // 0 = Übersicht, 1 = voll in Kapitelausschnitt gezoomt
 let kapitelHover = null;       // Kapitelnummer unter der Maus (fürs Cursor/Highlight)
+
+// Deckkraft der Übersichtsrouten und ihrer Badges. Fest, seit es keinen
+// Schlussakt mehr gibt, der sie ausgeblendet hätte; ein gezoomtes Kapitel
+// rechnet unten weiter mit kapitelZoomAmount dagegen.
+const ROUTEN_ALPHA = 180;
 
 // Teilt den Übersichtsakt in eine Scheibe je Kapitel, nach Routenlänge
 // gewichtet (sonst 27-fache Tempo-Schwankung) plus festem Grundanteil.
@@ -53,7 +58,7 @@ function kapitelHitze(fortschritt, scheibe) {
   return 1 - constrain(map(fortschritt, scheibe.bis, scheibe.bis + breite * KAPITEL_NACHGLUEHEN, 0, 1), 0, 1);
 }
 
-function zeichneUebersichtsrouten(bbox, alpha, fortschritt) {
+function zeichneUebersichtsrouten(bbox, fortschritt) {
   // Ausserhalb des Akts gibt es keine Hover-Ziele. Rücksetzer steht hier,
   // weil nur hier die Geometrie der Startpunkte bekannt ist.
   if (fortschritt <= 0) {
@@ -87,8 +92,8 @@ function zeichneUebersichtsrouten(bbox, alpha, fortschritt) {
     if (kapitelNr === zoomedKapitel && kapitelZoomAmount > 0.001) return;
 
     let routenAlpha = (zoomedKapitel && kapitelNr !== zoomedKapitel)
-      ? alpha * (1 - kapitelZoomAmount)
-      : alpha;
+      ? ROUTEN_ALPHA * (1 - kapitelZoomAmount)
+      : ROUTEN_ALPHA;
     if (routenAlpha <= 0) return;
     // Wachsende Route in Hoverfarbe, danach auf Gold abkühlend.
     let hitze = zoomedKapitel ? 0 : kapitelHitze(fortschritt, scheibe);
@@ -180,8 +185,8 @@ function zeichneUebersichtsrouten(bbox, alpha, fortschritt) {
     // NICHT an lokalerFortschritt gekoppelt wie die Routenlinien: Badges
     // sind Klickziele und müssen von Anfang an alle da sein.
     let labelAlpha = (zoomedKapitel && kapitelNr !== zoomedKapitel)
-      ? alpha * (1 - kapitelZoomAmount)
-      : alpha;
+      ? ROUTEN_ALPHA * (1 - kapitelZoomAmount)
+      : ROUTEN_ALPHA;
     // ACHTUNG Schwelle 1, nicht 0: kapitelZoomAmount läuft per lerp() nur
     // asymptotisch, labelAlpha wird nie 0. Bei konstantem Alpha überspringt
     // p5 das fill(), und fillText() erbt die Deckkraft, die kreisgrafik.js
@@ -263,7 +268,7 @@ function zeichneUebersichtsrouten(bbox, alpha, fortschritt) {
 
   // Kapitel 1 hat keine Übersichtsroute — Nummer hier ergänzt, Klick scrollt
   // zurück statt zu zoomen. Blendet im Kapitel-Zoom mit aus wie 02–18.
-  let ch1Alpha = zoomedKapitel ? alpha * (1 - kapitelZoomAmount) : alpha;
+  let ch1Alpha = zoomedKapitel ? ROUTEN_ALPHA * (1 - kapitelZoomAmount) : ROUTEN_ALPHA;
   if (ch1Alpha >= 1) {
     let ch1Start = lonLatToScreen(stationenData.routenPunkte[0][0], stationenData.routenPunkte[0][1], bbox, 0, 0); // zentrierte Übersichtskarte, kein mapOffsetX
     let ch1Hover = dist(mouseX, mouseY, ch1Start.x, ch1Start.y) < FOTO_MARKER_TREFFER_RADIUS;

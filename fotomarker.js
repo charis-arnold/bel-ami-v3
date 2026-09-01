@@ -36,8 +36,7 @@ function merkeKartenlage(bbox, offsetX, offsetY) {
 // hinweis (optional): { titel, text, alpha } — hängt ein beschriftetes Label
 // mit Zuführungslinie an genau den Marker mit diesem Titel. Zeitpunkt und
 // Deckkraft bestimmt der Aufrufer, siehe draw() in sketch.js.
-function zeichneFotoMarker(activeBbox, offsetX = mapOffsetX, offsetY = mapOffsetY, alphaMultiplier = 1, hinweis = null) {
-  if (alphaMultiplier <= 0) return; // keine Karte, also auch keine Marker
+function zeichneFotoMarker(activeBbox, offsetX = mapOffsetX, offsetY = mapOffsetY, hinweis = null) {
   // Aussen so gross wie der grösste F-Wert-Punkt, der Kern so gross wie der
   // kleinste. Abgeleitet statt fest, damit der Marker mitwandert, wenn sich
   // die Punktgrössen ändern. Wie jene skaliert er nicht mit dem Zoom.
@@ -52,7 +51,7 @@ function zeichneFotoMarker(activeBbox, offsetX = mapOffsetX, offsetY = mapOffset
   push(); // schreibt fillStyle direkt, wie zeichneFwertPunkte in kreisgrafik.js
   noStroke();
   let scheibe = (x, y, r, rgb) => {
-    drawingContext.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alphaMultiplier})`;
+    drawingContext.fillStyle = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
     drawingContext.beginPath();
     drawingContext.arc(x, y, r, 0, TWO_PI);
     drawingContext.fill();
@@ -94,9 +93,9 @@ function zeichneFotoMarker(activeBbox, offsetX = mapOffsetX, offsetY = mapOffset
     let tw = textWidth(label) + 16;
     // Dieselbe Farbe wie der Marker selbst, damit Punkt und Infobox als ein
     // Element lesen.
-    fill(FOTO_MARKER_FARBE_RGB.r, FOTO_MARKER_FARBE_RGB.g, FOTO_MARKER_FARBE_RGB.b, 200 * alphaMultiplier);
+    fill(FOTO_MARKER_FARBE_RGB.r, FOTO_MARKER_FARBE_RGB.g, FOTO_MARKER_FARBE_RGB.b, 200);
     rect(unterCursor.pos.x + 10, unterCursor.pos.y - 12, tw, 20, 4);
-    fill(255, 255 * alphaMultiplier);
+    fill(255, 255);
     textAlign(LEFT, CENTER);
     drawingContext.fillText(label, unterCursor.pos.x + 18, unterCursor.pos.y - 2);
     pop();

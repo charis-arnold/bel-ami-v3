@@ -335,7 +335,7 @@ function ovBerechneLayout() {
     kreisSkala = skalaFuer(bbox, pos);
   }
 
-  ovLayout = { breite: width, hoehe: height, bbox, kreisSkala, rand,
+  ovLayout = { breite: width, hoehe: height, bbox, kreisSkala,
     labelZeilen, textZeilen, datenZeilen };
   return ovLayout;
 }

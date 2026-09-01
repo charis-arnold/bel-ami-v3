@@ -484,7 +484,7 @@ function draw() {
   }
 
   let massstabOffsetX = (kapitelCrop && kapitelZoomAmount > 0.5) ? mapOffsetX : kartenOffsetX;
-  zeichneMassstabsleiste(activeBbox, massstabOffsetX, 1);
+  zeichneMassstabsleiste(activeBbox, massstabOffsetX);
   // Windrose stillgelegt; der Platz oben rechts gehört jetzt dem
   // Kreisgrafik-Icon. Zum Wiedereinschalten diese Zeile entkommentieren.
   // zeichneWindrose(width - 90, 150, 50, 1);
@@ -507,7 +507,7 @@ function draw() {
   // setzt dann selbst kapitelHover und den Cursor zurück. Im Ortsvergleich
   // deckt die Ansicht die Karte ohnehin ab — mit Fortschritt 0 fallen dort
   // zugleich die Startpunkte als unsichtbare Klickziele weg.
-  let uebersichtRoutenErgebnis = zeichneUebersichtsrouten(activeBbox, 180,
+  let uebersichtRoutenErgebnis = zeichneUebersichtsrouten(activeBbox,
     imOrtsvergleich ? 0 : uebersichtRoutenFortschritt);
   aktuelleAnnotationZoom = uebersichtRoutenErgebnis.aktuelleAnnotationZoom;
 
@@ -747,7 +747,7 @@ function draw() {
     alpha: begleittextDeckkraft(progress,
       parseFloat(fotoHinweisText.dataset.von), parseFloat(fotoHinweisText.dataset.bis)),
   } : null;
-  if (fotoMarkerSichtbar) zeichneFotoMarker(activeBbox, fotoOffsetX, fotoOffsetY, 1, fotoHinweis);
+  if (fotoMarkerSichtbar) zeichneFotoMarker(activeBbox, fotoOffsetX, fotoOffsetY, fotoHinweis);
 
   // Demo-Kreisgrafik: wächst über den Erklärungstexten heran, schrumpft mit
   // dem Zoom auf den Icon-Platz oben rechts und bleibt dort stehen. Ganz
