@@ -220,34 +220,34 @@ function ortRunsFuerSpine(daten) {
   );
 }
 
-// Anteil 0..1 der Scrollstrecke (9300vh, .scroll-track in index.html).
+// Anteil 0..1 der Scrollstrecke (7343vh, .scroll-track in index.html).
 // ACHTUNG bei geänderter Streckenlänge alle Werte umrechnen, sonst
 // verschieben sich die Akte gegeneinander.
 const SCROLL_MEILENSTEINE = {
-  heroFadeStart: 0.011435, heroFadeEnd: 0.034304,
+  heroFadeStart: 0.014981, heroFadeEnd: 0.044941,
   // 960vh davor für den zwölfteiligen Intro-Crawl (.begleittext in
   // index.html), 80vh je Text, danach 874vh Legendenaufbau.
   // Zoomdauer unverändert 440vh.
-  zoomStart: 0.231809, zoomEnd: 0.277547,
+  zoomStart: 0.303691, zoomEnd: 0.363612,
   // Crossfade Startkarte -> helle Überblickskarte, 80vh.
-  kartenwechselStart: 0.132661, kartenwechselEnd: 0.140977,
+  kartenwechselStart: 0.173798, kartenwechselEnd: 0.184693,
   // Demo-Kreisgrafik: wächst über den Kreisgrössen-Schritt heran und schrumpft
   // ab zoomStart auf den Icon-Platz oben rechts. Davor steht nur der
   // Mittelpunkt mit seiner Ortsbeschriftung da (PDF-Seite 1); der Schleier
   // blendet in dieser Zeit ein, also von kartenwechselEnd bis demoStart.
-  demoStart: 0.149293, demoVoll: 0.157609,
+  demoStart: 0.195587, demoVoll: 0.206482,
   // Legendenaufbau: neun Stufen à 80vh (PDF-Seiten 1-9), gesteuert von den neun
   // data-demo-gruppe-Texten in index.html. Ab legendeSchleierAus blendet der
   // Schleier über 80vh aus, erst danach beginnt der Zoom.
-  legendeSchleierAus: 0.220301, legendeEnde: 0.228617,
+  legendeSchleierAus: 0.288614, legendeEnde: 0.299509,
   // Spine blendet gleichzeitig mit dem Zoom-Beginn ein.
-  spineFadeStart: 0.109356, spineFadeEnd: 0.155094,
+  spineFadeStart: 0.143266, spineFadeEnd: 0.203187,
   // 200vh Lesezeit davor für den Kapitel-Einstiegstext.
-  routeStart: 0.298337, routeEnd: 0.412682,
+  routeStart: 0.390849, routeEnd: 0.540651,
   // Kapitel-1-Ende: ab routeEnd der Projekttext-Einblender (140vh), ab
   // kapitelEndeStart die Kartenansicht mit Hinweis und den beiden Buttons
   // (100vh bis zur Klemme).
-  kapitelEndeStart: 0.427235,
+  kapitelEndeStart: 0.559717,
   // Übersichtsrouten 02–18. 2933vh breit, damit auch Kapitel 8 auf
   // ~7.3vh/Annotation kommt wie Kapitel 1.
 
@@ -256,11 +256,11 @@ const SCROLL_MEILENSTEINE = {
   // mehr, in den Übersichtsakt führt nur noch ein Klick auf "Übersicht" oder
   // "Alle".
 
-  // ACHTUNG uebersichtRoutenEnd trägt zwei Bedeutungen und ist die zweite
-  // Klemme: Ende der Überblickskarte UND Anfang des Ortsvergleichs, der von
-  // dort bis 1 läuft (2477vh, rund 138vh je Kapitel). Beide Ansichten klemmen
-  // an dieser Marke, hinüber führt nur "Graph" bzw. "Plan" im Register.
-  uebersichtRoutenStart: 0.437630, uebersichtRoutenEnd: 0.742516,
+  // ACHTUNG uebersichtRoutenEnd ist die zweite Klemme und zugleich das Ende
+  // der Strecke: dahinter liegen nur noch 200vh Auslauf, damit die Marke
+  // überhaupt erreichbar bleibt. Der Ortsvergleich hat keine eigene Strecke
+  // mehr — er läuft über den Play-Knopf, nicht über den Scroll.
+  uebersichtRoutenStart: 0.573335, uebersichtRoutenEnd: 0.972764,
 };
 
 // ---------------------------------------------------------------------------

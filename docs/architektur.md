@@ -17,8 +17,8 @@ Neun der zwölf Module sind gekapselt und geben nur die genannten Namen über
 | `sketch.js` | 29 (11 Wert, 13 Lesebindung, **5 p5-Hooks**) |
 | `kreisgrafik.js` | 13 |
 | `spine-horizontal.js` | 11 (3 Lesebindungen) |
-| `uebersichtsrouten.js` | 11 (3 Lesebindungen) |
-| `ortsveraenderung.js` | 1 |
+| `uebersichtsrouten.js` | 12 (3 Lesebindungen) |
+| `ortsveraenderung.js` | 3 |
 | `sonifikation.js` | 4 (1 Lesebindung) |
 | `kartendekor.js` | 3 |
 | `annotationsbox.js` | 2 |
@@ -194,6 +194,7 @@ graph TD
     KD -.-> UR & SK
     OV -.-> SK
     SH -.-> DOM & UR & SK & SO
+    OV -.->|"ortsvergleichAnnotationen"| SO
     FM -.-> UR & SK
     AB -.-> SK
     DOM -.-> SK
@@ -202,6 +203,7 @@ graph TD
     SK -.->|"stationenData, datenFuerKapitel, …"| DB
     SK -.-> KG & OV & SH & AB & DOM & UR & SO
     SO -.->|"Ton startet/stoppt"| SH
+    SO -.->|"laeuftOrtsvergleich, Annotationsfolge"| OV
     SO -.-> UR
 
     classDef ladezeit stroke-width:3px
@@ -234,18 +236,18 @@ eigenen Header-Abschnitt aus.
 
 | # | Modul | Zeilen | Hauptfunktionen | Wichtigste eigene Variablen |
 |---|---|---|---|---|
-| 1 | `datenbereinigung.js` | 467 | `bereinigeStationenDaten`, `baueSpineDaten`, `sammleAnnotationenNachOrtBasis`, `zaehleBandCounts`, `zaehleAnnotationenLiveNachOrtBasis`, `ortRunsFuerSpine`, `ortRunSichtbar`, `kreisRadius`, `groessterKreisRadius`, `hexZuRgb` | `KREIS_KATEGORIEN`, `SCROLL_MEILENSTEINE`, `ROUTE_COLOR_RGB`, `FWERT_COLOR`/`FWERT_COLOR_RGB`, `FWERT_PUNKTGROESSE`, `FWERT_PUNKT_DURCHMESSER`, beide `FOTO_MARKER_*_RGB`, `KAPITEL_MIT_SPINE_PANEL`, `WOHNUNG_SAMMELPUNKT_ANKER`, `SCHRIFT_SANS`/`SCHRIFT_SERIF`, `hexZuRgb`/`rgbZuHex`, die Legendenbegriffe aus dem PDF (`WAHRNEHMUNG_LABELS`, `LEGENDE_BLOCK_TITEL`, `LEGENDE_KREISGROESSE`, `LEGENDE_VALENZ`, `LEGENDE_ORTSBESCHRIFTUNG`, `LEGENDE_TITEL`/`LEGENDE_UNTERTITEL`) — **gekapselt**, 39 Exporte. Intern: alle drei `GEDANKEN_*`, die übrigen drei `WOHNUNG_*`, die beiden Fotomarker-Hexwerte und `valenzBucket` |
+| 1 | `datenbereinigung.js` | 466 | `bereinigeStationenDaten`, `baueSpineDaten`, `sammleAnnotationenNachOrtBasis`, `zaehleBandCounts`, `zaehleAnnotationenLiveNachOrtBasis`, `ortRunsFuerSpine`, `ortRunSichtbar`, `kreisRadius`, `groessterKreisRadius`, `hexZuRgb` | `KREIS_KATEGORIEN`, `SCROLL_MEILENSTEINE`, `ROUTE_COLOR_RGB`, `FWERT_COLOR`/`FWERT_COLOR_RGB`, `FWERT_PUNKTGROESSE`, `FWERT_PUNKT_DURCHMESSER`, beide `FOTO_MARKER_*_RGB`, `KAPITEL_MIT_SPINE_PANEL`, `WOHNUNG_SAMMELPUNKT_ANKER`, `SCHRIFT_SANS`/`SCHRIFT_SERIF`, `hexZuRgb`/`rgbZuHex`, die Legendenbegriffe aus dem PDF (`WAHRNEHMUNG_LABELS`, `LEGENDE_BLOCK_TITEL`, `LEGENDE_KREISGROESSE`, `LEGENDE_VALENZ`, `LEGENDE_ORTSBESCHRIFTUNG`, `LEGENDE_TITEL`/`LEGENDE_UNTERTITEL`) — **gekapselt**, 39 Exporte. Intern: alle drei `GEDANKEN_*`, die übrigen drei `WOHNUNG_*`, die beiden Fotomarker-Hexwerte und `valenzBucket` |
 | 2 | `geo-projektion.js` | 96 | `lonLatToScreen`, `coverCrop`, `cropToBbox`, `bboxToImgCrop`, `passeBboxInRahmen` | `startBbox`, `uebersichtBbox`, `ch1ImgBbox`, `UEBERSICHT_SCHNITT_BBOX`, `mapOffsetX`, `mapOffsetY` |
 | 3 | `kreisgrafik.js` | 1099 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `zeichneKreisLabels`, `zeichneDemoKreisgrafik`, `zeichneProjekttextIkon`, `zeichneKreisErklaerung`, `zeichneSchleier`, `demoIkonGetroffen`, `projekttextIkonGetroffen`, `merkeKreis`, `vergissGezeichneteKreise`, `leereBandCounts` | **gekapselt**, 13 Exporte; die übrigen 86 Namen (u. a. `HATCH_SPACING`, `kreisBeschriftungen`, alle `DEMO_*`, `IKON_*`, `LEGENDE_*` und `ERKLAERUNG_*`) sind modulintern. Beherbergt seit dem Onboarding-Umbau auch den vierstufigen Legendenaufbau (`demoLegende` und seine vier Zeichenroutinen). Beherbergt auch das zweite Icon (Kreis mit Textzeilen): es teilt sich Zeile und Treffertest mit dem Kreisgrafik-Icon |
 | 4 | `kartendekor.js` | 312 | `zeichneRoute`, `zeichneMassstabsleiste`, `zeichneWindrose` | — **gekapselt**, 3 Exporte; intern `haversineMeter`, `MASSSTAB_SCHRITTE`, der Routenpuffer und seine Helfer (`routenPufferBereit`, `routenStufenZuege`, `routenStufenAlpha`, alle `ROUTE_*`). `zeichneWindrose` hat derzeit keinen Aufrufer: der Aufruf in `draw()` ist auskommentiert, oben rechts steht das Kreisgrafik-Icon |
-| 5 | `ortsveraenderung.js` | 486 | `zeichneOrtsveraenderung` | **Ein einziger Export** — die Ansicht bringt Ausschnitt (`ovBerechneLayout`) und Ablauf selbst mit, `draw()` übergibt nur ihren Fortschritt. Alles Übrige ist modulintern |
-| 6 | `spine-horizontal.js` | 548 | `zeichneSpineHorizontal`, `toggleGrafikPlay`, `setzeKapitelAnsichtModus`, `setzeGrafikZurueck`, `stelleSpineDatenBereit`, `spineEintraegeFuer`, `aktuelleGrafikAnimationDauer`, `aktualisiereGrafikFortschritt` | `grafikSpielt`, `grafikFortschritt`, `grafikPlayAusblendStart` (Lesebindungen) — **gekapselt**, intern: beide Spine-Caches, alle `SPINE_*`, `spineLayout` |
+| 5 | `ortsveraenderung.js` | 491 | `zeichneOrtsveraenderung` | **Zwei Exporte**: die Zeichenfunktion und `OV_KAPITEL_ZAHL`, aus der `spine-horizontal.js` die Abspieldauer rechnet. Die Ansicht bringt Reihenfolge, Linienlayout und gemeinsame Kreis-Skala (`ovBerechneLayout`) selbst mit, `draw()` übergibt nur `grafikFortschritt`. Alles Übrige ist modulintern |
+| 6 | `spine-horizontal.js` | 364 | `zeichneSpineHorizontal`, `toggleGrafikPlay`, `setzeKapitelAnsichtModus`, `setzeGrafikZurueck`, `stelleSpineDatenBereit`, `spineEintraegeFuer`, `aktuelleGrafikAnimationDauer`, `aktualisiereGrafikFortschritt` | `grafikSpielt`, `grafikFortschritt`, `grafikPlayAusblendStart` (Lesebindungen) — **gekapselt**, intern: beide Spine-Caches, alle `SPINE_*`, `spineLayout` |
 | 7 | `fotomarker.js` | 116 | `zeichneFotoMarker`, `merkeKartenlage`, `oeffneFotoPopup`, `schliesseFotoPopup` | `fotoMarkerListe`, `letzteActiveBbox`, `letzterFotoOffsetX/Y`, `FOTO_MARKER_TREFFER_RADIUS`. Zeichnet einen Punkt mit hellem Kern; Grösse abgeleitet aus `FWERT_PUNKT_DURCHMESSER`, Beschriftung über `zeichneKreisLabels` |
 | 8 | `annotationsbox.js` | 152 | `annotationBoxPosition` | `ANNOTATION_BOX_POSITIONEN` — **gekapselt**, intern u. a. `annotationBoxPositionCache` |
 | 9 | `dom-aufbau.js` | 107 | `baueKapitelRegister`, `baueKartenMarkierungen`, `baueStationsMarker`, `baueZwischenMarker` | — (baut nur DOM, hält keinen Zustand) |
-| 10 | `uebersichtsrouten.js` | 402 | `zeichneUebersichtsrouten`, `kapitelScheiben`, `aktualisiereKapitelZoom`, `springeZuKapitelZoom`, `scrolleZuKapitel1`, `waehleAnsichtsModus` | `zoomedKapitel`, `kapitelZoomAmount`, `kapitelHover` (alle drei als Lesebindung) — **gekapselt**, intern u. a. `kapitelHitze`, `oeffneKapitelZoom`, `scheibenCache` |
-| 11 | `sketch.js` | 886 | `preload`, `setup`, `draw`, `mousePressed`, `windowResized`, `datenFuerKapitel`, `kapitelHatEigeneAnsicht`, `setzeAnsichtsModus`, `starteKapitelEinstieg` | `stationenData`, `uebersichtsRouten`, `kapitelAnsichtsModus`, `kreisErklaerungOffen` (Zustand der Erklärungs-Ebene), 8 DOM-Handles (als Lesebindung) — **gekapselt**, intern u. a. `kapitelKarten`, `bgImage`/`bgImage2`/`ch1Image`, die übrigen DOM-Handles |
-| 12 | `sonifikation.js` | 370 | `spieleSonifikationFuer`, `beendeSonifikationAudio` | `SONIFIKATION_GESAMTDAUER_SEK`, `sonifikationSpieltGerade` (als Lesebindung) — **gekapselt**, die übrigen 17 Namen (u. a. `baueSpielplan`, `baueGainFolge`, `sonifikationDaten`) sind modulintern |
+| 10 | `uebersichtsrouten.js` | 411 | `zeichneUebersichtsrouten`, `kapitelScheiben`, `aktualisiereKapitelZoom`, `springeZuKapitelZoom`, `scrolleZuKapitel1`, `waehleAnsichtsModus` | `zoomedKapitel`, `kapitelZoomAmount`, `kapitelHover` (alle drei als Lesebindung) — **gekapselt**, intern u. a. `kapitelHitze`, `oeffneKapitelZoom`, `scheibenCache` |
+| 11 | `sketch.js` | 883 | `preload`, `setup`, `draw`, `mousePressed`, `windowResized`, `datenFuerKapitel`, `kapitelHatEigeneAnsicht`, `setzeAnsichtsModus`, `starteKapitelEinstieg` | `stationenData`, `uebersichtsRouten`, `kapitelAnsichtsModus`, `kreisErklaerungOffen` (Zustand der Erklärungs-Ebene), 8 DOM-Handles (als Lesebindung) — **gekapselt**, intern u. a. `kapitelKarten`, `bgImage`/`bgImage2`/`ch1Image`, die übrigen DOM-Handles |
+| 12 | `sonifikation.js` | 699 | `spieleSonifikationFuer`, `beendeSonifikationAudio` | `SONIFIKATION_GESAMTDAUER_SEK`, `sonifikationSpieltGerade` (als Lesebindung) — **gekapselt**, die übrigen 17 Namen (u. a. `baueSpielplan`, `baueGainFolge`, `sonifikationDaten`) sind modulintern |
 
 `dom-aufbau.js` ist das einzige Modul ohne eigene Top-Level-Variablen: es baut
 DOM-Knoten und schreibt sie in Handles, die `sketch.js` hält.
@@ -291,13 +293,44 @@ Kapitel 1, danach auf der Überblickskarte — ein Schnitt, keine Rampe, weil de
 Sprung selbst ein Schnitt ist.
 
 **Eine zweite Klemme trennt Überblickskarte und Ortsvergleich.** Sie liegt auf
-`uebersichtRoutenEnd`, und diese Marke trägt beide Bedeutungen: Ende der
-Überblickskarte und Anfang der Ortsvergleichs-Strecke, die von dort bis 1
-läuft. Welche der beiden Ansichten gilt, entscheidet nicht die Scrollposition,
-sondern `kapitelAnsichtsModus` — in der Kartenansicht klemmt `draw()` nach
-unten, im Ortsvergleich nach oben. Einen Scroll-Übergang zwischen ihnen gibt es
-nicht, hinüber führt nur „Plan"/„Graph" im Register. Einen Schlussakt gibt es
-ebenfalls nicht mehr: die Startkarte kehrt nicht zurück.
+`uebersichtRoutenEnd`, dem Ende der Scrollstrecke — dahinter stehen nur noch
+200 vh Auslauf, damit die Marke überhaupt erreichbar bleibt. Der Ortsvergleich
+hat **keine eigene Strecke**: er sitzt auf der Klemme und läuft über den
+Play-Knopf. Welche der beiden Ansichten gilt, entscheidet deshalb nicht die
+Scrollposition, sondern `kapitelAnsichtsModus`; `draw()` klemmt in der
+Kartenansicht nach unten, im Ortsvergleich nach oben. Hinüber führt nur
+„Plan"/„Graph" im Register. Einen Schlussakt gibt es ebenfalls nicht mehr: die
+Startkarte kehrt nicht zurück.
+
+**Der Ton läuft im selben Elementmodell.** `sonifikation.js` spielt einen Klang
+je Annotation, getaktet auf den Moment, in dem sie im Bild erscheint. Für die
+Kapitel liefert die Spine diese Momente, für den Ortsvergleich
+`ortsvergleichAnnotationen()` in `ortsveraenderung.js` — dieselbe Zeitrechnung
+wie sein Bild, deshalb steht sie dort und nicht im Tonmodul. Das Zählen der
+laufenden Kreisstände teilen sich beide über `baueElementeAus()`. Die
+Spieldauer folgt wie überall der Zahl der Elemente: 1417 Annotationen auf den
+sieben Orten ergeben 138 s gegenüber 45 s in Kapitel 1. Weil
+`aktuelleGrafikAnimationDauer()` diese Dauer übernimmt, bleiben Bild und Ton
+synchron.
+
+**Die Zeitachse hängt an den Elementen, nicht an den Kapiteln.** Gleich lange
+Kapitel hiessen: 44 % der Laufzeit in Lücken, in denen keiner der sieben Orte
+etwas beiträgt, und kurze Besuche, die aufblitzen statt zu wachsen — Madeleines
+Besuch in Kapitel 1 dauerte so 0.84 s statt 1.66 s. `ovBaueDaten()` legt deshalb
+alle Elemente in Erzählreihenfolge ab; `ovStandFuer()` interpoliert daraus den
+Kapitelstand, und `ortsvergleichAnnotationen()` gibt denselben Rang als
+Fortschritt an den Ton. Reihenfolge und Zuordnung bleiben unberührt, nur die
+Leerläufe schrumpfen. Wo ein Kapitel dennoch später einsetzt — Kapitel 2 tut das
+— stellt `spieleElementAudio()` dem Muster eine Pause voran, sonst klänge der
+erste Ton, bevor sein Kreis da ist.
+
+**Ein Playhead für beide Graph-Ansichten.** `grafikFortschritt` aus
+`spine-horizontal.js` treibt die Kapitel-Spine wie den Ortsvergleich; `draw()`
+tickt ihn einmal je Frame für beide. Die Spine liest ihn als Position auf ihrer
+Achse, der Ortsvergleich als Kapitelzähler 1..18. Was gerade läuft, beantwortet
+`laeuftOrtsvergleich()` in `uebersichtsrouten.js` — einzige Quelle dieser
+Regel, gelesen von der zweiten Klemme, von `draw()`, von der Abspieldauer und
+vom Ton, den der Ortsvergleich als einziger nicht hat.
 
 **„Plan"/„Graph" schaltet je nach Ort etwas anderes um**, und die
 Fallunterscheidung steht an genau einer Stelle: `waehleAnsichtsModus()` in
@@ -308,6 +341,18 @@ Spine. In der Übersicht springt sie stattdessen zwischen den beiden Strecken,
 weil dort mit dem Modus auch die Scrollposition wechseln muss. In `draw()`
 teilen sich beide Graph-Ansichten die Übermalung des Frames: die Spine für ein
 Kapitel, `zeichneOrtsveraenderung()` für die Übersicht.
+
+**Der Ortsvergleich ordnet die sieben Orte auf einer Linie an**, in der
+Reihenfolge ihres ersten Auftretens im Buch — nicht mehr geografisch. Weil
+diese Reihenfolge nach Kapiteln aufsteigt, kommen die Orte beim Abspielen von
+links nach rechts dazu, wie die Einträge der Spine unter ihrem Playhead. Über
+dem Kreis stehen Erläuterung und Datenzeile, darunter Ortsname und die Nummer
+des Kapitels, in dem der Ort zuletzt vorkam (`ovStand().letztes`). Statt des
+100-px-Deckels rechnet `ovBerechneLayout()` eine **gemeinsame `kreisSkala`**:
+alle sieben Bänder liegen zwischen 45 und 137 Annotationen und sässen sonst
+samt und sonders am Anschlag. Die Skala nimmt den schärferen von zwei Werten —
+waagrecht dürfen sich Nachbarn nicht berühren, senkrecht muss der grösste Kreis
+zwischen Textblock und Beschriftung passen.
 
 Vor der Klemme liegen zwei Strecken: 140 vh Projekttext-Einblender ab
 `routeEnd`, dann ab `kapitelEndeStart` 100 vh Kartenansicht mit Hinweis und

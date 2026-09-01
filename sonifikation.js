@@ -15,7 +15,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 17 von 21 Namen intern, 4 exportiert. Konvention: docs/architektur.md.
+// 19 von 23 Namen intern, 4 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 // Dieselben zwei CDN-Quellen, die strudel.cc selbst lädt. @strudel/web bringt
@@ -330,9 +330,10 @@ function elementFortschritte(daten, eintraege) {
 let elementCache = {};
 
 function elementeFuerKapitel(kapitelNr) {
-  let schluessel = kapitelNr || '01';
+  let ortsvergleich = laeuftOrtsvergleich(); // uebersichtsrouten.js
+  let schluessel = ortsvergleich ? 'alle' : (kapitelNr || '01');
   if (elementCache[schluessel]) return elementCache[schluessel];
-  let gebaut = baueKapitelElemente(kapitelNr);
+  let gebaut = ortsvergleich ? baueOrtsvergleichElemente() : baueKapitelElemente(kapitelNr);
   // Nur Fertiges merken: sind die Spine-Daten noch nicht aufgebaut, soll der
   // nächste Aufruf es erneut versuchen statt für immer null zu liefern.
   if (gebaut) elementCache[schluessel] = gebaut;
@@ -363,14 +364,29 @@ function baueKapitelElemente(kapitelNr) {
   });
 
   let fortschritte = elementFortschritte(daten, eintraege);
-
-  // Laufender Stand je Kreis und Kategorie: dieselben Zahlen, aus denen
-  // zaehleBandCounts() im Bild die Radien macht. valenz -1/1 wie valenzBucket.
-  let stand = new Map();
-  let elemente = [];
+  let folge = [];
   daten.annotationen.forEach((a, ai) => {
     if (!a.category || !kreisVonAi.has(ai)) return;
-    let kreis = kreisVonAi.get(ai);
+    folge.push({ annotation: a, kreis: kreisVonAi.get(ai), fortschritt: fortschritte[ai] });
+  });
+  return baueElementeAus(folge);
+}
+
+// Der Ortsvergleich spielt dieselben Elemente, nur kommen Zuordnung und
+// Zeitpunkte aus ortsveraenderung.js statt aus der Spine: die sieben Orte
+// tragen die Kreise, das Kapitel treibt die Zeit.
+function baueOrtsvergleichElemente() {
+  let folge = ortsvergleichAnnotationen();
+  return folge && folge.length ? baueElementeAus(folge) : null;
+}
+
+// Laufender Stand je Kreis und Kategorie: dieselben Zahlen, aus denen
+// zaehleBandCounts() im Bild die Radien macht. valenz -1/1 wie valenzBucket.
+// Beide Ansichten liefern dieselbe Folge und unterscheiden sich nur in der
+// Zeitrechnung — deshalb steht das Zählen hier nur einmal.
+function baueElementeAus(folge) {
+  let stand = new Map();
+  let elemente = folge.map(({ annotation: a, kreis, fortschritt }) => {
     if (!stand.has(kreis)) stand.set(kreis, {});
     let proKategorie = stand.get(kreis);
     let z = proKategorie[a.category] || (proKategorie[a.category] = { gesamt: 0, neg: 0, pos: 0 });
@@ -379,10 +395,10 @@ function baueKapitelElemente(kapitelNr) {
     if (a.valenz === 1) z.pos++;
     let gesamtAmKreis = 0;
     Object.keys(proKategorie).forEach(k => { gesamtAmKreis += proKategorie[k].gesamt; });
-    elemente.push({
-      fortschritt: fortschritte[ai],
+    return {
+      fortschritt,
       kategorie: a.category,
-      kreis: kreis,
+      kreis,
       // Alle Kategorien zusammen: die Grösse, die der Kreis im Bild zeigt.
       kreisGesamt: gesamtAmKreis,
       // Radius NACH diesem Element: der Klang meldet den Stand, den er macht.
@@ -390,7 +406,7 @@ function baueKapitelElemente(kapitelNr) {
       neg: a.valenz === -1 ? kreisRadius(z.neg) : 0,
       pos: a.valenz === 1 ? kreisRadius(z.pos) : 0,
       fWertType: a.hasFwert ? a.fWertType : null,
-    });
+    };
   });
   return elemente.length ? elemente : null;
 }
@@ -516,7 +532,8 @@ function elementDauerSek(kapitelNr) {
 // das Elementmodell nicht zuständig ist — dann gilt dort die Ortsformel.
 function sonifikationElementDauerMs(kapitelNr) {
   if (SONIFIKATION_MODUS !== 'elemente') return null;
-  stelleSpineDatenBereit(kapitelNr || undefined);
+  // Der Ortsvergleich braucht keine Spine-Daten, seine Kreise sind die Orte.
+  if (!laeuftOrtsvergleich()) stelleSpineDatenBereit(kapitelNr || undefined);
   let sek = elementDauerSek(kapitelNr);
   return sek ? sek * 1000 : null;
 }
@@ -541,7 +558,7 @@ function elementZeiten(elemente, gesamtdauerSek) {
 // Ohne Kapitelnummer Kapitel 1, sonst das gezoomte — wie überall sonst.
 async function spieleElementAudio(kapitelNr) {
   await stelleSonifikationBereit();
-  stelleSpineDatenBereit(kapitelNr || undefined);
+  if (!laeuftOrtsvergleich()) stelleSpineDatenBereit(kapitelNr || undefined);
   let elemente = elementeFuerKapitel(kapitelNr);
   if (!elemente) return;
 
@@ -549,13 +566,36 @@ async function spieleElementAudio(kapitelNr) {
   // Schritt trägt den Nachklang. Das kumulierte Gewicht eines Schritts ist
   // damit genau sein Zeitpunkt — deshalb stimmt die Synchronität ohne
   // weiteres Zutun. Die Untergrenze fängt gleichzeitige Elemente ab.
+
+  // ACHTUNG jeden Schritt aus der ERREICHTEN Position rechnen, nicht aus der
+  // Sollzeit des Vorgängers: hebt die Untergrenze einen Abstand an, holt der
+  // nächste Schritt das wieder auf. Sonst summiert sich der Zuschlag über das
+  // ganze Stück und der Ton hinkt am Ende nach — im Ortsvergleich um 0.18 s.
   let zeiten = elementZeiten(elemente, elementDauerSek(kapitelNr));
-  let gewichte = zeiten.map((z, i) =>
-    i + 1 < zeiten.length ? Math.max(0.02, zeiten[i + 1] - z) : SONIFIKATION_NACHKLANG_SEK);
-  let gesamtdauerSek = gewichte.reduce((a, b) => a + b, 0);
-  let slowFaktor = gesamtdauerSek / (1 / SONIFIKATION_STANDARD_CPS);
+  let gewichte = [];
+  let gesetzt = zeiten[0];
+  zeiten.forEach((z, i) => {
+    let ziel = i + 1 < zeiten.length ? zeiten[i + 1] : gesetzt + SONIFIKATION_NACHKLANG_SEK;
+    let schritt = Math.max(0.02, ziel - gesetzt);
+    gewichte.push(schritt);
+    gesetzt += schritt;
+  });
 
   let gebaut = baueElementStimmen(elemente, gewichte);
+
+  // ACHTUNG Vorlauf als Pause voranstellen: das erste Element klingt sonst
+  // sofort, während das Bild es erst zu seinem eigenen Zeitpunkt zeigt — der
+  // ganze Ton liefe um zeiten[0] vor. Im Ortsvergleich sind das 0.8 s, weil
+  // die sieben Orte erst ab Annotation 16 von Kapitel 1 vorkommen.
+  if (zeiten[0] > 0.001) {
+    gewichte.unshift(zeiten[0]);
+    Object.values(gebaut.stimmen).forEach(stimme => stimme.grade.unshift('~'));
+    gebaut.bass.grade.unshift('~');
+    gebaut.bass.gewichte.unshift(zeiten[0]);
+  }
+
+  let gesamtdauerSek = gewichte.reduce((a, b) => a + b, 0);
+  let slowFaktor = gesamtdauerSek / (1 / SONIFIKATION_STANDARD_CPS);
   let layers = Object.values(gebaut.stimmen).map(st =>
     elementSchicht(st.grade, gewichte, st.sound, st.oktave, ELEMENT_ROLLEN[st.rolle], slowFaktor));
   layers.push(elementSchicht(gebaut.bass.grade, gebaut.bass.gewichte,

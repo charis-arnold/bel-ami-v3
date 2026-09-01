@@ -12,7 +12,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 14 von 25 Namen intern, 11 exportiert. Konvention: docs/architektur.md.
+// 15 von 26 Namen intern, 11 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 // Zustand der Play-Animation.
@@ -68,6 +68,12 @@ function setzeGrafikZurueck() {
   grafikPlayAusblendStart = null;
 }
 
+// Schrittgeschwindigkeit von Kapitel 1: dessen Audiostück, geteilt durch
+// seine Spine-Einträge. Bezug für alle anderen Ansichten.
+function dauerProSchritt() {
+  return (SONIFIKATION_GESAMTDAUER_SEK * 1000) / (spineEintraegep5.length - 1 || 1);
+}
+
 // Kapitel 1 nutzt die Dauer des Audiostücks, 02–18 dieselbe Geschwindigkeit
 // pro Spine-Eintrag — sonst wirken kurze Kapitel hastig durchgespult.
 function aktuelleGrafikAnimationDauer() {
@@ -79,12 +85,14 @@ function aktuelleGrafikAnimationDauer() {
     ? sonifikationElementDauerMs(zoomedKapitel) : null;
   if (ausElementen) return ausElementen;
 
+  // Ohne Elementmodell zählt der Ortsvergleich Kapitel statt Spine-Einträge;
+  // sonst bekäme er über zoomedKapitel === null die Dauer von Kapitel 1.
+  if (laeuftOrtsvergleich()) return dauerProSchritt() * (OV_KAPITEL_ZAHL - 1);
+
   if (!zoomedKapitel) return SONIFIKATION_GESAMTDAUER_SEK * 1000;
-  let n1 = spineEintraegep5.length;
-  let dauerProSchritt = (SONIFIKATION_GESAMTDAUER_SEK * 1000) / (n1 - 1 || 1);
   let eintraege = spineEintraegeKapitel[zoomedKapitel];
   let ni = eintraege ? eintraege.length : 1;
-  return dauerProSchritt * (ni - 1 || 1);
+  return dauerProSchritt() * (ni - 1 || 1);
 }
 
 // Play/Pause der Spine-Animation, mit Ton synchron.

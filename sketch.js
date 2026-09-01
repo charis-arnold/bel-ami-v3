@@ -325,7 +325,7 @@ function getScrollProgress() {
 // Rampe höchstens 35% des Fensters, sonst erreicht ein kurzes Fenster nie
 // volle Deckkraft. Auch die Beschriftungen am Demo-Kreis hängen daran.
 function fadeDauerFuer(von, bis) {
-  let fadeDauerMax = 0.142857; // 0.2 auf die verlängerte Scrollstrecke umskaliert (2200/3080)
+  let fadeDauerMax = 0.187156; // 0.2 der ursprünglichen Strecke, auf die heutige umgerechnet
   return Math.min(fadeDauerMax, (bis - von) * 0.35);
 }
 
@@ -374,9 +374,9 @@ function draw() {
   // der Ortsvergleich beginnt dort. Jede der beiden Ansichten bleibt auf ihrer
   // Seite, hinüber führt nur "Plan"/"Graph" im Register.
   if (!zoomedKapitel && !kapitel1Geklemmt) {
-    let daneben = kapitelAnsichtsModus === 'karte'
-      ? progress > SCROLL_MEILENSTEINE.uebersichtRoutenEnd
-      : progress < SCROLL_MEILENSTEINE.uebersichtRoutenEnd;
+    let daneben = laeuftOrtsvergleich()
+      ? progress < SCROLL_MEILENSTEINE.uebersichtRoutenEnd
+      : progress > SCROLL_MEILENSTEINE.uebersichtRoutenEnd;
     if (daneben) progress = klemmeScroll(SCROLL_MEILENSTEINE.uebersichtRoutenEnd);
   }
   scrollFortschrittFuellung.style.width = (progress * 100) + '%';
@@ -421,10 +421,7 @@ function draw() {
   // allen Routen oder Ortsvergleich. Welche läuft, sagt der Menümodus; die
   // Klemme oben trennt nur ihre Scrollstrecken.
   let inUebersicht = uebersichtRoutenFortschritt > 0 && !zoomedKapitel;
-  let imOrtsvergleich = inUebersicht && kapitelAnsichtsModus === 'grafik';
-  // Fortschritt der Ortsvergleichs-Strecke: zählt dort die Kapitel 1..18 durch.
-  let ortsvergleichFortschritt = constrain(map(progress,
-    SCROLL_MEILENSTEINE.uebersichtRoutenEnd, 1, 0, 1), 0, 1);
+  let imOrtsvergleich = laeuftOrtsvergleich(); // uebersichtsrouten.js
 
   // Kapitel-Zoom öffnet sofort mit voller Route, nur zeitlich eingeblendet.
   aktualisiereKapitelZoom();
@@ -530,15 +527,15 @@ function draw() {
   if (inKapitelGrafikAnsicht || imOrtsvergleich) {
     background(226, 230, 225); // #E2E6E1
     vergissGezeichneteKreise();
+    aktualisiereGrafikFortschritt(); // ein Playhead für beide Ansichten
   }
   if (inKapitelGrafikAnsicht) {
     let grafikEintraege = spineEintraegeFuer(zoomedKapitel);
     let grafikDaten = zoomedKapitel ? datenFuerKapitel(zoomedKapitel) : stationenData;
-    aktualisiereGrafikFortschritt();
     zeichneSpineHorizontal(grafikEintraege || [], grafikFortschritt, grafikDaten);
   }
-  // Bringt Ausschnitt und Ablauf selbst mit, siehe ortsveraenderung.js.
-  if (imOrtsvergleich) zeichneOrtsveraenderung(ortsvergleichFortschritt);
+  // Zählt aus demselben Fortschritt die Kapitel durch, siehe ortsveraenderung.js.
+  if (imOrtsvergleich) zeichneOrtsveraenderung(grafikFortschritt);
 
   // Kapitel 1 läuft über routeAmount/annIndex, ein gezoomtes Kapitel über
   // aktuelleAnnotationZoom. Beide schliessen sich aus.
@@ -647,7 +644,7 @@ function draw() {
   // Fortschrittsleiste nur ausserhalb einer Kapitel-Ansicht; in der
   // Graph-Ansicht steht dort der Play-Button.
   scrollFortschritt.classList.toggle('versteckt', inKapitelAnsicht);
-  grafikPlayButton.classList.toggle('sichtbar', inKapitelGrafikAnsicht);
+  grafikPlayButton.classList.toggle('sichtbar', inKapitelGrafikAnsicht || imOrtsvergleich);
   grafikPlayButton.textContent = grafikSpielt ? '❚❚' : '▶';
 
   // Kartenbezogene DOM-Overlays blenden sich in der Graph-Ansicht per CSS

@@ -8,7 +8,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 8 von 19 Namen intern, 11 exportiert. Konvention: docs/architektur.md.
+// 8 von 20 Namen intern, 12 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 let zoomedKapitel = null;      // z.B. '03', oder null (Übersicht)
@@ -349,14 +349,22 @@ function springeZurUebersicht() {
   schliesseKapitelZoom(); // setzt den Modus auf 'karte' zurück
 }
 
-// "Graph" in der Übersicht. Die Strecke des Ortsvergleichs beginnt an
-// derselben Marke, an der die Überblickskarte klemmt. Nur aus
+// Läuft gerade der Ortsvergleich? Übersicht (kein Kapitel offen, Klemme
+// gelöst) im Modus 'grafik'. Einzige Quelle dieser Regel — draw(), die zweite
+// Klemme und die Abspieldauer in spine-horizontal.js fragen alle hier.
+function laeuftOrtsvergleich() {
+  return !zoomedKapitel && !kapitel1Geklemmt && kapitelAnsichtsModus === 'grafik';
+}
+
+// "Graph" in der Übersicht. Der Ortsvergleich hat keine eigene Scrollstrecke:
+// er sitzt auf der Klemme und läuft über den Play-Knopf. Nur aus
 // waehleAnsichtsModus gerufen, also nie mit offenem Kapitel und nie mit
 // stehender Klemme — beides muss hier deshalb nicht gelöst werden.
 function springeZumOrtsvergleich() {
   let trackEl = document.querySelector('.scroll-track');
   window.scrollTo(0, trackEl.offsetHeight * SCROLL_MEILENSTEINE.uebersichtRoutenEnd);
   setzeAnsichtsModus('grafik'); // sketch.js
+  setzeGrafikZurueck();         // spine-horizontal.js — Play beginnt bei 0
 }
 
 // Menübalken "Plan"/"Graph": im Kapitel schaltet er zwischen Kartenausschnitt
@@ -376,7 +384,7 @@ function waehleAnsichtsModus(modus) {
 
 
 // --- Export ------------------------------------------------------------
-// Acht Funktionen als Wert.
+// Neun Funktionen als Wert.
 window.kapitelScheiben = kapitelScheiben;
 window.zeichneUebersichtsrouten = zeichneUebersichtsrouten;
 window.aktualisiereKapitelZoom = aktualisiereKapitelZoom;
@@ -385,6 +393,7 @@ window.schliesseKapitelZoom = schliesseKapitelZoom;
 window.springeZuKapitelZoom = springeZuKapitelZoom;
 window.springeZurUebersicht = springeZurUebersicht;
 window.waehleAnsichtsModus = waehleAnsichtsModus;
+window.laeuftOrtsvergleich = laeuftOrtsvergleich;
 
 // Lesebindung statt Wertkopie: alle drei werden laufend umgeschaltet, eine
 // Kopie nagelte die Leser auf null bzw. 0 fest. Schreiben von aussen wirkt nicht.
