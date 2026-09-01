@@ -8,7 +8,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 6 von 16 Namen intern, 10 exportiert. Konvention: docs/architektur.md.
+// 7 von 18 Namen intern, 11 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 let zoomedKapitel = null;      // z.B. '03', oder null (Übersicht)
@@ -334,19 +334,44 @@ function springeZuKapitelZoom(nr) {
   oeffneKapitelZoom(nr);
 }
 
-// "Alle"-Button. Zielt auf die MITTE des Akts (Routen gewachsen), nicht wie
-// springeZuKapitelZoom auf den Anfang.
+// "Alle"-Button und "Plan" in der Übersicht. Zielt auf die MITTE des Akts
+// (Routen gewachsen), nicht wie springeZuKapitelZoom auf den Anfang.
 function springeZurUebersicht() {
   let trackEl = document.querySelector('.scroll-track');
   let mitte = (SCROLL_MEILENSTEINE.uebersichtRoutenStart + SCROLL_MEILENSTEINE.uebersichtRoutenEnd) / 2;
   loeseKapitel1Klemme(); // sonst zöge draw() sofort ans Kapitel-1-Ende zurück
   window.scrollTo(0, trackEl.offsetHeight * mitte);
-  schliesseKapitelZoom();
+  schliesseKapitelZoom(); // setzt den Modus auf 'karte' zurück
+}
+
+// "Graph" in der Übersicht. Die Strecke des Ortsvergleichs beginnt an
+// derselben Marke, an der die Überblickskarte klemmt. Nur aus
+// waehleAnsichtsModus gerufen, also nie mit offenem Kapitel und nie mit
+// stehender Klemme — beides muss hier deshalb nicht gelöst werden.
+function springeZumOrtsvergleich() {
+  let trackEl = document.querySelector('.scroll-track');
+  window.scrollTo(0, trackEl.offsetHeight * SCROLL_MEILENSTEINE.uebersichtRoutenEnd);
+  setzeAnsichtsModus('grafik'); // sketch.js
+}
+
+// Menübalken "Plan"/"Graph": im Kapitel schaltet er zwischen Kartenausschnitt
+// und Spine, in der Übersicht zwischen Überblickskarte und Ortsvergleich.
+// Einziger Einstieg für beide Knöpfe — die Fallunterscheidung steht nur hier.
+function waehleAnsichtsModus(modus) {
+  // Solange Kapitel 1s Klemme steht, ist auch ohne zoomedKapitel eine
+  // Kapitel-Ansicht offen.
+  if (zoomedKapitel || kapitel1Geklemmt) {
+    setzeKapitelAnsichtModus(modus); // spine-horizontal.js
+    return;
+  }
+  if (kapitelAnsichtsModus === modus) return; // schon da, nur gelesen
+  if (modus === 'grafik') springeZumOrtsvergleich();
+  else springeZurUebersicht();
 }
 
 
 // --- Export ------------------------------------------------------------
-// Sieben Funktionen als Wert.
+// Acht Funktionen als Wert.
 window.kapitelScheiben = kapitelScheiben;
 window.zeichneUebersichtsrouten = zeichneUebersichtsrouten;
 window.aktualisiereKapitelZoom = aktualisiereKapitelZoom;
@@ -354,6 +379,7 @@ window.scrolleZuKapitel1 = scrolleZuKapitel1;
 window.schliesseKapitelZoom = schliesseKapitelZoom;
 window.springeZuKapitelZoom = springeZuKapitelZoom;
 window.springeZurUebersicht = springeZurUebersicht;
+window.waehleAnsichtsModus = waehleAnsichtsModus;
 
 // Lesebindung statt Wertkopie: alle drei werden laufend umgeschaltet, eine
 // Kopie nagelte die Leser auf null bzw. 0 fest. Schreiben von aussen wirkt nicht.

@@ -18,7 +18,6 @@ let fotoHinweisText;  // der .begleittext mit data-foto-hinweis — sein Fenster
 // wann, steht am Begleittext in index.html — hier nur der Wortlaut.
 const FOTO_HINWEIS_TEXT = 'Diese Punkte lassen sich anklicken, um ein historisches Foto zu sehen.';
 let annotationBoxEl; // #annotationBox — trägt die Positionsklasse (pos-oben-links etc.), siehe annotationBoxPosition()
-let schlusstextEl;   // #schlusstext — Gegenstück zum Einstiegstext, blendet im Schlussakt ein
 let kapitelEndeEl, kapitelEndeWeiterEl, kapitelEndeTextEl; // Kapitelende: Buttonpaar und der Hinweis darüber (nur Kapitel 1), siehe draw()
 let projekttextEl, einblenderSchliessenEl; // #projekttext (dunkle Textfläche) und das Schliesskreuz, das sich beide Einblender teilen
 
@@ -263,7 +262,6 @@ function setup() {
     kreisErklaerungOffen = false;
   });
   annotationBoxEl = document.getElementById('annotationBox');
-  schlusstextEl = document.getElementById('schlusstext');
   annotationText = document.getElementById('annotationText');
   annotationInner = document.getElementById('annotationInner');
   annotationTag = document.getElementById('annotationTag');
@@ -372,12 +370,19 @@ function draw() {
   if (!zoomedKapitel && kapitel1Geklemmt && progress > SCROLL_MEILENSTEINE.uebersichtRoutenStart) {
     progress = klemmeScroll(SCROLL_MEILENSTEINE.uebersichtRoutenStart);
   }
+  // Zweite Klemme, auf uebersichtRoutenEnd: die Überblickskarte endet dort,
+  // der Ortsvergleich beginnt dort. Jede der beiden Ansichten bleibt auf ihrer
+  // Seite, hinüber führt nur "Plan"/"Graph" im Register.
+  if (!zoomedKapitel && !kapitel1Geklemmt) {
+    let daneben = kapitelAnsichtsModus === 'karte'
+      ? progress > SCROLL_MEILENSTEINE.uebersichtRoutenEnd
+      : progress < SCROLL_MEILENSTEINE.uebersichtRoutenEnd;
+    if (daneben) progress = klemmeScroll(SCROLL_MEILENSTEINE.uebersichtRoutenEnd);
+  }
   scrollFortschrittFuellung.style.width = (progress * 100) + '%';
 
   // Startkarte blendet vor dem Zoom auf die helle Überblickskarte über.
-  // Im Schlussakt kehrt die STARTkarte wieder, mit eigener Georeferenz.
-  let imStartkarteAkt = progress >= SCROLL_MEILENSTEINE.startkarteStart;
-  let kartenwechsel = imStartkarteAkt ? 0 : constrain(map(progress,
+  let kartenwechsel = constrain(map(progress,
     SCROLL_MEILENSTEINE.kartenwechselStart, SCROLL_MEILENSTEINE.kartenwechselEnd, 0, 1), 0, 1);
   let fullCrop = coverCrop(bgImage.width, bgImage.height, 0.5, 0.5, 0); // grosse Karte bleibt zentriert, unabhängig von mapOffsetX
   // ACHTUNG der Ausschnitt muss in BEIDE Karten passen: sonst klemmt
@@ -412,16 +417,14 @@ function draw() {
   let uebersichtRoutenFortschritt = constrain(map(progress, SCROLL_MEILENSTEINE.uebersichtRoutenStart, SCROLL_MEILENSTEINE.uebersichtRoutenEnd, 0, 1), 0, 1);
   if (zoomedKapitel && uebersichtRoutenFortschritt <= 0) schliesseKapitelZoom(); // zurückgescrollt
 
-  // Schlussakt Ortsveränderung: ein Fortschritt 0..1 über den ganzen Akt,
-  // aus dem die Phasen OV_*/SK_* abgeleitet werden.
-  let ovFortschritt = constrain(map(progress, SCROLL_MEILENSTEINE.kreisVergleichStart, SCROLL_MEILENSTEINE.kreisVergleichEnd, 0, 1), 0, 1);
-  let skFortschritt = constrain(map(progress, SCROLL_MEILENSTEINE.startkarteStart, 1, 0, 1), 0, 1);
-  let skEinblenden = ovPhase(skFortschritt, SK_EINBLENDEN);
-  let skRauszoom = ovPhase(skFortschritt, SK_RAUSZOOM);
-  if (schlusstextEl) schlusstextEl.style.opacity = ovPhase(skFortschritt, SK_TEXT);
-  let kreisVergleichMapFade = ovPhase(ovFortschritt, OV_KARTE_AUS);
-  // Ein offener Kapitel-Zoom darf nicht in diesen Akt hinübergescrollt werden.
-  if (zoomedKapitel && kreisVergleichMapFade > 0) schliesseKapitelZoom();
+  // Übersichtswelt hinter Kapitel 1, in zwei Ansichten: Überblickskarte mit
+  // allen Routen oder Ortsvergleich. Welche läuft, sagt der Menümodus; die
+  // Klemme oben trennt nur ihre Scrollstrecken.
+  let inUebersicht = uebersichtRoutenFortschritt > 0 && !zoomedKapitel;
+  let imOrtsvergleich = inUebersicht && kapitelAnsichtsModus === 'grafik';
+  // Fortschritt der Ortsvergleichs-Strecke: zählt dort die Kapitel 1..18 durch.
+  let ortsvergleichFortschritt = constrain(map(progress,
+    SCROLL_MEILENSTEINE.uebersichtRoutenEnd, 1, 0, 1), 0, 1);
 
   // Kapitel-Zoom öffnet sofort mit voller Route, nur zeitlich eingeblendet.
   aktualisiereKapitelZoom();
@@ -432,32 +435,6 @@ function draw() {
     south: lerp(fullBbox.south, targetBbox.south, zoomAmount),
     north: lerp(fullBbox.north, targetBbox.north, zoomAmount),
   };
-
-  // Schlusszoom auf die sieben Orte, erst nach dem Schrumpfen der Linien —
-  // so rücken sie weit genug auseinander für ihre Kreise.
-  let ovZoom = ovPhase(ovFortschritt, OV_ZOOM);
-  if (ovZoom > 0) {
-    let ziel = ovZoomBbox();
-    if (ziel) {
-      activeBbox = {
-        west: lerp(activeBbox.west, ziel.west, ovZoom),
-        east: lerp(activeBbox.east, ziel.east, ovZoom),
-        south: lerp(activeBbox.south, ziel.south, ovZoom),
-        north: lerp(activeBbox.north, ziel.north, ovZoom),
-      };
-    }
-  }
-
-  // Und wieder heraus: aus dem Ausschnitt der sieben Orte zurück auf die
-  // ganze Startkarte, nachdem diese eingeblendet hat.
-  if (skRauszoom > 0) {
-    activeBbox = {
-      west: lerp(activeBbox.west, fullBbox.west, skRauszoom),
-      east: lerp(activeBbox.east, fullBbox.east, skRauszoom),
-      south: lerp(activeBbox.south, fullBbox.south, skRauszoom),
-      north: lerp(activeBbox.north, fullBbox.north, skRauszoom),
-    };
-  }
 
   // Kapitel-Zoom (Klick auf «03» etc.) — zoomt von der Gesamtkarte weiter in
   // den eigenen Kartenausschnitt des Kapitels, genau wie oben bgImage→ch1Image.
@@ -482,9 +459,7 @@ function draw() {
   // Ein dynamischer Ausschnitt würde geklemmt und dabei verzerrt.
   let ch1Crop = targetCrop;
 
-  // (1 - kreisVergleichMapFade) blendet die Karte im Ortsveränderungs-Akt aus;
-  // skEinblenden holt sie im allerletzten Akt zurück.
-  let kartenAlpha = 255 * (1 - zoomAmount) * Math.max(1 - kreisVergleichMapFade, skEinblenden);
+  let kartenAlpha = 255 * (1 - zoomAmount);
   // Beide Karten auf dieselbe activeBbox, je aus der eigenen Georeferenz —
   // so liegen sie im Crossfade deckungsgleich übereinander.
   if (kartenwechsel < 1) {
@@ -497,22 +472,22 @@ function draw() {
     tint(255, kartenAlpha * kartenwechsel);
     image(bgImage2, 0, 0, width, height, uebersichtCrop.x, uebersichtCrop.y, uebersichtCrop.w, uebersichtCrop.h);
   }
-  tint(255, 255 * zoomAmount * (1 - kreisVergleichMapFade));
+  tint(255, 255 * zoomAmount);
   image(ch1Image, mapOffsetX, mapOffsetY, width - mapOffsetX, height, ch1Crop.x, ch1Crop.y, ch1Crop.w, ch1Crop.h);
   noTint();
 
   if (kapitelCrop && kapitelZoomAmount > 0.001) {
     let k = kapitelKarten[zoomedKapitel];
-    tint(255, 255 * kapitelZoomAmount * (1 - kreisVergleichMapFade));
+    tint(255, 255 * kapitelZoomAmount);
     image(k.bild, mapOffsetX, mapOffsetY, width - mapOffsetX, height, kapitelCrop.x, kapitelCrop.y, kapitelCrop.w, kapitelCrop.h);
     noTint();
   }
 
   let massstabOffsetX = (kapitelCrop && kapitelZoomAmount > 0.5) ? mapOffsetX : kartenOffsetX;
-  zeichneMassstabsleiste(activeBbox, massstabOffsetX, 1 - kreisVergleichMapFade);
+  zeichneMassstabsleiste(activeBbox, massstabOffsetX, 1);
   // Windrose stillgelegt; der Platz oben rechts gehört jetzt dem
   // Kreisgrafik-Icon. Zum Wiedereinschalten diese Zeile entkommentieren.
-  // zeichneWindrose(width - 90, 150, 50, 1 - kreisVergleichMapFade);
+  // zeichneWindrose(width - 90, 150, 50, 1);
 
   let routeAmount = constrain(map(progress, SCROLL_MEILENSTEINE.routeStart, SCROLL_MEILENSTEINE.routeEnd, 0, 1), 0, 1);
 
@@ -527,48 +502,43 @@ function draw() {
 
   // Übersichtsrouten 02–18, zuerst gezeichnet — Kapitel 1s Route liegt darüber.
   let aktuelleAnnotationZoom = null;
-  // Die Routen bleiben stehen, damit die Ortspunkte auf ihnen landen; erst
-  // der Zoom lässt sie verschwinden, im Schlussakt kommen sie zurück.
 
   // Unbedingt aufrufen, auch bei Fortschritt 0: zeichneUebersichtsrouten()
-  // setzt dann selbst kapitelHover und den Cursor zurück.
-  let routenSichtbar = Math.max((1 - 0.45 * kreisVergleichMapFade) * (1 - ovZoom), skRauszoom);
-  let routenAlpha = 180 * routenSichtbar;
-  let uebersichtRoutenErgebnis = zeichneUebersichtsrouten(activeBbox, routenAlpha, uebersichtRoutenFortschritt);
+  // setzt dann selbst kapitelHover und den Cursor zurück. Im Ortsvergleich
+  // deckt die Ansicht die Karte ohnehin ab — mit Fortschritt 0 fallen dort
+  // zugleich die Startpunkte als unsichtbare Klickziele weg.
+  let uebersichtRoutenErgebnis = zeichneUebersichtsrouten(activeBbox, 180,
+    imOrtsvergleich ? 0 : uebersichtRoutenFortschritt);
   aktuelleAnnotationZoom = uebersichtRoutenErgebnis.aktuelleAnnotationZoom;
 
   // ACHTUNG Sperre nötig: bei gezoomtem Kapitel zeigt activeBbox dessen Bbox,
   // nicht Kapitel 1s Gegend. Ohne sie liefe Kapitel 1s Route quer über den
   // fremden Kartenausschnitt.
   if (!zoomedKapitel) {
-    // Strichstärke 10 -> 2 beim Rauszoomen, wie die Übersichtsrouten. Auch
-    // dasselbe Ausblenden, sonst verschwände sie vor den anderen.
-    zeichneRoute(stationenData.routenPunkte, liniIndex, activeBbox, lerp(3, 2, zoomOutAmount), kartenOffsetX, kartenOffsetY,
-      Math.max((1 - 0.45 * kreisVergleichMapFade) * (1 - ovZoom), skRauszoom));
-    // Kreisgrafik (Karte) in der letzten Ansicht (Rauszoomen) für den Moment
-    // ausgeblendet — Route/Spine bleiben davon unberührt sichtbar.
+    // Strichstärke 3 -> 2 auf der Überblickskarte, wie die Übersichtsrouten.
+    zeichneRoute(stationenData.routenPunkte, liniIndex, activeBbox, lerp(3, 2, zoomOutAmount), kartenOffsetX, kartenOffsetY, 1);
+    // Kreise nur in Kapitel 1s eigenem Ausschnitt; auf der Überblickskarte
+    // zeigt sie niemand. Route und Spine bleiben davon unberührt.
     if (zoomOutAmount <= 0) {
       zeichneKreiseOrtRuns(punktIndex, annIndex, activeBbox, kartenOffsetX, kartenOffsetY);
     }
   }
 
-  // Schlussakt, siehe ortsveraenderung.js.
-  if (ovFortschritt > 0 && !zoomedKapitel) {
-    zeichneOrtsveraenderung(activeBbox, ovFortschritt, 255 * (1 - skRauszoom), 1 - skEinblenden);
-  }
-
-  // Graph-Ansicht deckt Karte, Route und Kreise dieses Frames vollständig ab
-  // (zeichneSpineHorizontal, aktualisiereGrafikFortschritt).
-  if (inKapitelGrafikAnsicht) {
+  // Hinter "Graph" liegen zwei Ansichten: im Kapitel die Spine, in der
+  // Übersicht der Ortsvergleich. Beide decken Karte, Route und Kreise dieses
+  // Frames vollständig ab und melden danach ihre eigenen Kreise an.
+  if (inKapitelGrafikAnsicht || imOrtsvergleich) {
     background(226, 230, 225); // #E2E6E1
-    // Die Karte samt ihren Kreisen ist damit übermalt; die Spine meldet
-    // gleich ihre eigenen an.
     vergissGezeichneteKreise();
+  }
+  if (inKapitelGrafikAnsicht) {
     let grafikEintraege = spineEintraegeFuer(zoomedKapitel);
     let grafikDaten = zoomedKapitel ? datenFuerKapitel(zoomedKapitel) : stationenData;
     aktualisiereGrafikFortschritt();
     zeichneSpineHorizontal(grafikEintraege || [], grafikFortschritt, grafikDaten);
   }
+  // Bringt Ausschnitt und Ablauf selbst mit, siehe ortsveraenderung.js.
+  if (imOrtsvergleich) zeichneOrtsveraenderung(ortsvergleichFortschritt);
 
   // Kapitel 1 läuft über routeAmount/annIndex, ein gezoomtes Kapitel über
   // aktuelleAnnotationZoom. Beide schliessen sich aus.
@@ -585,9 +555,9 @@ function draw() {
     ANNOTATION_BOX_POSITIONEN.forEach(p => annotationBoxEl.classList.toggle('pos-' + p, p === position));
   }
 
-  // Die Icons blenden erst im Schlussakt wieder aus; ohne sie gibt es auch
-  // keine Einblender. Steht hier oben, weil das Kapitelende darauf aufbaut.
-  let demoAlpha = progress < SCROLL_MEILENSTEINE.kartenwechselEnd ? 0 : 1 - skEinblenden;
+  // Die Icons stehen ab dem Kartenwechsel; ohne sie gibt es auch keine
+  // Einblender. Steht hier oben, weil das Kapitelende darauf aufbaut.
+  let demoAlpha = progress < SCROLL_MEILENSTEINE.kartenwechselEnd ? 0 : 1;
 
   // Der Projekttext geht am Ende der Route von selbst auf und bleibt, bis er
   // weggeklickt oder durchgescrollt ist. Zurückgescrollt zählt als neuer
@@ -652,23 +622,24 @@ function draw() {
     annotationTag.textContent = '';
   }
 
-  // Kapitelregister: in jeder Kapitel-Ansicht und zusätzlich in der Übersicht,
-  // damit man von dort direkt in ein Kapitel springen kann. Im Schlussakt nicht.
-  let inUebersichtRouten = uebersichtRoutenFortschritt > 0 && !zoomedKapitel && kreisVergleichMapFade <= 0;
-  kapitelRegister.classList.toggle('sichtbar', inKapitelAnsicht || inUebersichtRouten);
+  // Kapitelregister: in jeder Kapitel-Ansicht und in beiden
+  // Übersichtsansichten, damit man von dort direkt weiterspringen kann.
+  let imRegisterbereich = inKapitelAnsicht || inUebersicht;
+  kapitelRegister.classList.toggle('sichtbar', imRegisterbereich);
 
-  // Plan/Graph nur in einer echten Kapitel-Ansicht; in der Übersicht ist
-  // "Alle" der aktive Eintrag.
-  modusZeile.classList.toggle('versteckt', !inKapitelAnsicht);
-  leerzeile.classList.toggle('versteckt', !inKapitelAnsicht);
-  alleEintrag.classList.toggle('aktiv', inUebersichtRouten);
+  // Plan/Graph gilt in beiden Welten: im Kapitel schaltet es zwischen Karte
+  // und Spine, in der Übersicht zwischen Überblickskarte und Ortsvergleich.
+  // "Alle" bleibt daneben der Eintrag der Übersicht.
+  modusZeile.classList.toggle('versteckt', !imRegisterbereich);
+  leerzeile.classList.toggle('versteckt', !imRegisterbereich);
+  alleEintrag.classList.toggle('aktiv', inUebersicht);
+  planEintrag.classList.toggle('aktiv', kapitelAnsichtsModus === 'karte');
+  graphEintrag.classList.toggle('aktiv', kapitelAnsichtsModus === 'grafik');
   if (inKapitelAnsicht) {
-    planEintrag.classList.toggle('aktiv', kapitelAnsichtsModus === 'karte');
-    graphEintrag.classList.toggle('aktiv', kapitelAnsichtsModus === 'grafik');
     Object.entries(kapitelRegisterEintraege).forEach(([nr, eintrag]) => {
       eintrag.classList.toggle('aktiv', zoomedKapitel ? nr === zoomedKapitel : nr === '01');
     });
-  } else if (inUebersichtRouten) {
+  } else if (inUebersicht) {
     // Kein Kapitel aktiv, sonst bliebe eine veraltete Hervorhebung stehen.
     Object.values(kapitelRegisterEintraege).forEach(eintrag => eintrag.classList.remove('aktiv'));
   }
@@ -681,7 +652,7 @@ function draw() {
 
   // Kartenbezogene DOM-Overlays blenden sich in der Graph-Ansicht per CSS
   // aus, siehe .scrolly-stage.grafik-ansicht in style.css.
-  stage.classList.toggle('grafik-ansicht', inKapitelGrafikAnsicht);
+  stage.classList.toggle('grafik-ansicht', inKapitelGrafikAnsicht || imOrtsvergleich);
 
   // Stillgelegt, siehe KARTEN_MARKER_SICHTBAR oben.
   if (KARTEN_MARKER_SICHTBAR) {
@@ -729,8 +700,7 @@ function draw() {
   // Im Übersichtsakt bekommt jedes Kapitel die Scheibe seiner Route: der Text
   // blendet ein und aus, bevor das nächste an die Reihe kommt.
   let uebersichtScheiben = !zoomedKapitel ? kapitelScheiben() : null;
-  let imUebersichtsakt = uebersichtRoutenFortschritt > 0
-    && progress < SCROLL_MEILENSTEINE.kreisVergleichStart;
+  let imUebersichtsakt = inUebersicht && !imOrtsvergleich;
 
   kapitelEinstiegsTexte.forEach(el => {
     let passtZuOffenemKapitel = el.dataset.kapitel === zoomedKapitel;
@@ -756,7 +726,7 @@ function draw() {
       // Dauer wie das Einblenden.
       let ausblendenPlay = grafikPlayAusblendStart === null ? 1 :
         1 - constrain(map(millis() - grafikPlayAusblendStart, 0, KAPITEL_EINSTIEG_FADE_MS, 0, 1), 0, 1);
-      opacity = Math.min(einblenden, ausblenden, ausblendenPlay) * kapitelZoomAmount * (1 - kreisVergleichMapFade);
+      opacity = Math.min(einblenden, ausblenden, ausblendenPlay) * kapitelZoomAmount;
     }
     el.style.opacity = opacity;
   });
@@ -764,7 +734,11 @@ function draw() {
   // mapOffsetX/Y bei gezoomtem Kapitel, sonst kartenOffsetX/Y.
   let fotoOffsetX = (zoomedKapitel && kapitelZoomAmount > 0.001) ? mapOffsetX : kartenOffsetX;
   let fotoOffsetY = (zoomedKapitel && kapitelZoomAmount > 0.001) ? mapOffsetY : kartenOffsetY;
-  merkeKartenlage(activeBbox, fotoOffsetX, fotoOffsetY);
+  // ACHTUNG die Lage nur merken, solange die Marker wirklich im Bild stehen:
+  // hinter "Graph" deckt Spine bzw. Ortsvergleich sie zu, und der Treffertest
+  // in mousePressed() öffnete sonst Fotos an unsichtbaren Stellen.
+  let fotoMarkerSichtbar = !inKapitelGrafikAnsicht && !imOrtsvergleich;
+  merkeKartenlage(fotoMarkerSichtbar ? activeBbox : null, fotoOffsetX, fotoOffsetY);
   // Der Bedienhinweis teilt sich das Scroll-Fenster mit seinem Kommentartext,
   // damit beide zusammen erscheinen und wieder gehen.
   let fotoHinweis = fotoHinweisText ? {
@@ -773,8 +747,7 @@ function draw() {
     alpha: begleittextDeckkraft(progress,
       parseFloat(fotoHinweisText.dataset.von), parseFloat(fotoHinweisText.dataset.bis)),
   } : null;
-  // In der Graph-Ansicht nicht zeichnen, sonst schweben sie über der Spine.
-  if (!inKapitelGrafikAnsicht) zeichneFotoMarker(activeBbox, fotoOffsetX, fotoOffsetY, 1 - kreisVergleichMapFade, fotoHinweis);
+  if (fotoMarkerSichtbar) zeichneFotoMarker(activeBbox, fotoOffsetX, fotoOffsetY, 1, fotoHinweis);
 
   // Demo-Kreisgrafik: wächst über den Erklärungstexten heran, schrumpft mit
   // dem Zoom auf den Icon-Platz oben rechts und bleibt dort stehen. Ganz
@@ -865,7 +838,7 @@ function mousePressed() {
 }
 
 // --- Export ------------------------------------------------------------
-// 28 Namen: 11 als Wert, 5 p5-Hooks, 12 als Lesebindung.
+// 29 Namen: 11 als Wert, 5 p5-Hooks, 13 als Lesebindung.
 
 // Konstanten, Funktionen und die vier nur befüllten Container: Die Bindung
 // ändert sich nie, deshalb Wertzuweisung.
@@ -897,6 +870,9 @@ function lesebindung(name, lies) {
 lesebindung('stationenData', () => stationenData);
 lesebindung('uebersichtsRouten', () => uebersichtsRouten);
 lesebindung('kapitelAnsichtsModus', () => kapitelAnsichtsModus);
+// Für waehleAnsichtsModus() in uebersichtsrouten.js: solange die Klemme steht,
+// gilt "Plan"/"Graph" der Kapitel-1-Ansicht, danach der Übersicht.
+lesebindung('kapitel1Geklemmt', () => kapitel1Geklemmt);
 lesebindung('kapitel1ZoomAmount', () => kapitel1ZoomAmount);
 lesebindung('annotationText', () => annotationText);
 lesebindung('kartenMarkierungenEl', () => kartenMarkierungenEl);

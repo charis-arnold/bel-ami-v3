@@ -1,14 +1,14 @@
 /* =============================================================================
-   ortsveraenderung.js — Schlussakt "Ortsveränderung"
+   ortsveraenderung.js — Ansicht "Ortsvergleich"
 
-   Sieben kapitelübergreifende Orte (VERGLEICHS_KNOTEN) wachsen als senkrechte
-   Linien aus der Karte, kehren auf ihre echten Koordinaten zurück, die Ansicht
-   zoomt auf sie — dann zählen die Kapitel 1..18 durch und die Kreise wachsen.
-   Ablauf in den Phasenfenstern OV_* und SK_*, umgerechnet von ovPhase().
+   Sieben kapitelübergreifende Orte (VERGLEICHS_KNOTEN) auf ihren echten
+   Koordinaten, auf sie gezoomt. Die Ansicht steht beim Öffnen fertig da; der
+   Scroll zählt allein die Kapitel 1..18 durch, mit denen die Kreise wachsen.
+   Erreichbar über "Graph" im Register, siehe uebersichtsrouten.js.
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 36 von 44 Namen intern, 8 exportiert. Konvention: docs/architektur.md.
+// 28 von 29 Namen intern, 1 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 // Die sieben Orte des Schlussakts, je an ihrer echten Koordinate verankert.
@@ -49,26 +49,9 @@ const VERGLEICHS_KNOTEN = [
       'Théâtre du Vaudeville, Boulevard des Capucines', 'Juwelierladen am Boulevard des Capucines',
       'Boulevard-Cafés (unterwegs), Paris'] },
 ];
-// ── Schlussakt "Ortsveränderung" ───────────────────────────────────────────
+// ── Ansicht "Ortsvergleich" ────────────────────────────────────────────────
 
-// Anteile am letzten Akt. Die Fenster überlappen, damit nichts hart einsetzt.
-const OV_LINIE_WACHSEN = [0.00, 0.18];
-const OV_KARTE_AUS     = [0.12, 0.32];
-const OV_LINIE_ZURUECK = [0.32, 0.46];
-const OV_LABEL_EIN     = [0.18, 0.30];
-const OV_ZOOM          = [0.32, 0.52];
-const OV_KAPITEL       = [0.64, 1.00];
-// Allerletzter Akt: Startkarte blendet ein, dann Rauszoom auf die Gesamtkarte.
-// Die Kreise verblassen dabei, sonst liefen sie beim Rauszoomen ineinander.
-const SK_EINBLENDEN = [0.00, 0.45];
-const SK_RAUSZOOM   = [0.45, 1.00];
-// Der Schlusstext kommt zuletzt und steht allein auf der Gesamtkarte.
-const SK_TEXT       = [0.62, 0.90];
-
-const OV_STAFFEL = 0.45;      // Anteil des Wachstumsfensters, über den die Linien versetzt starten
-const OV_ZOOM_RAND = 0.18;    // Luft um die sieben Orte im Zielausschnitt
-const OV_LINIE_BASIS = 70;    // Tiefe der ersten Linie
-const OV_LINIE_SCHRITT = 64;  // zusätzliche Tiefe je weiterem Knoten
+const OV_ZOOM_RAND = 0.18;    // Luft um die sieben Orte im Ausschnitt
 
 const OV_LABEL_MAX_BREITE = 200; // ab dieser Breite wird zweizeilig gesetzt
 const OV_LABEL_ZEILE = 15;       // Zeilenhöhe der Ortsbeschriftung
@@ -91,11 +74,11 @@ const OV_TEXT_RAND = 24;         // Abstand vom Fensterrand bei fixierten Blöck
 // durch den Text läuft.
 const OV_LINIE_VERSATZ = 14;     // Abstand zwischen Linie und erster Textzeile
 
-// Feinkorrektur einzelner Ortspunkte in Pixeln, fährt mit dem Schlusszoom ein.
-// Schafft Luft, wo eine Beschriftung in den Nachbarkreis lief.
-function ovVersatz(knoten, faktor) {
+// Feinkorrektur einzelner Ortspunkte in Pixeln. Schafft Luft, wo eine
+// Beschriftung in den Nachbarkreis lief.
+function ovVersatz(knoten) {
   let v = knoten.versatz;
-  return v ? { x: (v.x || 0) * faktor, y: (v.y || 0) * faktor } : { x: 0, y: 0 };
+  return v ? { x: v.x || 0, y: v.y || 0 } : { x: 0, y: 0 };
 }
 // Datenzeile im Stil von .annotation-tag: serifenlos, fett, versal, gesperrt.
 const OV_DATEN_GROESSE = 9.5;
@@ -140,15 +123,11 @@ function ovLabelZeilen(text) {
   return [text.slice(0, beste).trim(), text.slice(beste + 1).trim()];
 }
 
-function ovPhase(p, fenster) {
-  return constrain(map(p, fenster[0], fenster[1], 0, 1), 0, 1);
-}
-
 // Je Knoten und Kapitel vorberechnet — live wären es 126 Scans pro Frame.
 let ovProKapitel = null;   // [knoten][kapitelNr] -> { bandCounts, fwerte }
 let ovRohradien = null;    // Endstand-Rohradius je Knoten (ohne Deckel)
 let ovErstesKapitel = null; // erste Kapitelnummer mit Inhalt, je Knoten
-let ovLayout = null;       // { breite, hoehe, tiefen, kreisSkala, bbox }
+let ovLayout = null;       // { breite, hoehe, bbox, kreisSkala, Zeilen je Knoten }
 
 function ovAddiere(ziel, quelle) {
   ['gold_dunkel', 'gold_mittel', 'gold_hell'].forEach(cat => {
@@ -213,7 +192,7 @@ function ovStand(index, maxNr) {
   return { bandCounts: summe, fwerte, letztes };
 }
 
-// Zielausschnitt des Schlusszooms: alle sieben Orte plus Rand, aufs
+// Ausschnitt der Ansicht: alle sieben Orte plus Rand, aufs
 // Canvas-Seitenverhältnis gebracht, dazu die grösstmögliche Kreis-Skala.
 function ovBerechneLayout() {
   if (ovLayout && ovLayout.breite === width && ovLayout.hoehe === height) return ovLayout;
@@ -343,7 +322,7 @@ function ovBerechneLayout() {
   let rand = OV_ZOOM_RAND;
   let mitVersatz = (bbox) => VERGLEICHS_KNOTEN.map(k => {
     let p = lonLatToScreen(k.lon, k.lat, bbox, 0, 0);
-    let v = ovVersatz(k, 1); // das Layout rechnet mit dem Endzustand
+    let v = ovVersatz(k);
     return { x: p.x + v.x, y: p.y + v.y };
   });
   let bbox = baueBbox(rand);
@@ -356,115 +335,71 @@ function ovBerechneLayout() {
     kreisSkala = skalaFuer(bbox, pos);
   }
 
-  // Tiefe der senkrechten Linien in der Zwischenphase: gestaffelt nach der
-  // Höhenlage der Anker, gedeckelt auf die Fensterhöhe.
-  let reihenfolge = pos.map((p, i) => ({ i, y: p.y })).sort((a, b) => a.y - b.y).map(a => a.i);
-  let tiefen = [];
-  reihenfolge.forEach((idx, rang) => { tiefen[idx] = OV_LINIE_BASIS + rang * OV_LINIE_SCHRITT; });
-  let maxTiefe = Math.max(...tiefen);
-  let platz = height - 90;
-  if (maxTiefe > platz) tiefen = tiefen.map(t => t * platz / maxTiefe);
-
-  ovLayout = { breite: width, hoehe: height, bbox, kreisSkala, tiefen, reihenfolge, rand,
+  ovLayout = { breite: width, hoehe: height, bbox, kreisSkala, rand,
     labelZeilen, textZeilen, datenZeilen };
   return ovLayout;
 }
 
-// Zielausschnitt für den Schlusszoom — draw() blendet activeBbox dorthin.
-function ovZoomBbox() {
-  if (!ovProKapitel) return null;
-  return ovBerechneLayout().bbox;
-}
-
-// p = Fortschritt im Akt (0..1), bbox = die gerade gültige Kartenbbox.
-// textFaktor blendet NUR die Schrift aus, die Kreise bleiben stehen.
-function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
-  if (alpha <= 0 || !stationenData || !stationenData.annotationen) return;
+// p = Fortschritt in der Ansicht (0..1). Er zählt allein die Kapitel durch —
+// Ausschnitt, Beschriftungen und Kreise stehen ab dem ersten Frame.
+function zeichneOrtsveraenderung(p) {
+  if (!stationenData || !stationenData.annotationen) return;
   ovBaueDaten();
   let layout = ovBerechneLayout();
 
-  let pZoomPhase = ovPhase(p, OV_ZOOM);
-  let pWachsen = ovPhase(p, OV_LINIE_WACHSEN);
-  let pZurueck = ovPhase(p, OV_LINIE_ZURUECK);
-  let pLabel = ovPhase(p, OV_LABEL_EIN);
-  let pKapitel = ovPhase(p, OV_KAPITEL);
-  let maxKapitel = Math.max(1, Math.min(18, Math.ceil(pKapitel * 18)));
-  let kreisAlpha = pKapitel > 0 ? 1 : 0;
-
-  let n = VERGLEICHS_KNOTEN.length;
+  // Kapitel 1 steht schon beim Öffnen da, der Scroll zählt bis 18 hoch.
+  let maxKapitel = Math.max(1, Math.min(18, Math.ceil(p * 18)));
 
   textFont(SCHRIFT_SANS);
   textAlign(CENTER, CENTER);
 
   VERGLEICHS_KNOTEN.forEach((k, i) => {
-    let anker = lonLatToScreen(k.lon, k.lat, bbox, 0, 0);
-    let v = ovVersatz(k, pZoomPhase);
-    anker = { x: anker.x + v.x, y: anker.y + v.y };
-    // Gestaffelter Start: der Knoten mit dem obersten Anker beginnt zuerst.
-    let rang = layout.reihenfolge.indexOf(i);
-    let start = (rang / n) * OV_STAFFEL;
-    let wachsen = constrain(map(pWachsen, start, start + (1 - OV_STAFFEL), 0, 1), 0, 1);
-    let tiefe = layout.tiefen[i] * wachsen * (1 - pZurueck);
-    let cy = anker.y + tiefe;
+    let roh = lonLatToScreen(k.lon, k.lat, layout.bbox, 0, 0);
+    let v = ovVersatz(k);
+    let anker = { x: roh.x + v.x, y: roh.y + v.y };
 
-    if (tiefe > 0.5) {
-      stroke(ROUTE_COLOR_RGB.r, ROUTE_COLOR_RGB.g, ROUTE_COLOR_RGB.b, alpha);
-      strokeWeight(1.5);
-      line(anker.x, anker.y, anker.x, cy);
-      noStroke();
-    }
-
-    // Ortspunkt am unteren Ende der Linie — er wandert hinunter und wieder
-    // zurück auf seinen echten Ort.
-    drawingContext.fillStyle = `rgba(${ROUTE_COLOR_RGB.r}, ${ROUTE_COLOR_RGB.g}, ${ROUTE_COLOR_RGB.b}, ${alpha / 255})`;
+    // Ortspunkt unter dem Kreis. Er trägt die Orte, die bis hierher noch
+    // nichts beigetragen haben und deshalb keinen Kreis zeigen.
+    drawingContext.fillStyle = `rgb(${ROUTE_COLOR_RGB.r}, ${ROUTE_COLOR_RGB.g}, ${ROUTE_COLOR_RGB.b})`;
     drawingContext.beginPath();
-    drawingContext.arc(anker.x, cy, 3.5, 0, TWO_PI);
+    drawingContext.arc(anker.x, anker.y, 3.5, 0, TWO_PI);
     drawingContext.fill();
 
-    let radius = 0;
-    let stand = null;
-    if (kreisAlpha > 0) {
-      stand = ovStand(i, maxKapitel);
-        // Innerhalb des Blocks: bei unsichtbarem Kreis muss radius 0 bleiben,
-        // daran hängt der Abstand der Beschriftung darunter.
-        radius = groessterKreisRadius(stand.bandCounts, Infinity, layout.kreisSkala);
-        zeichneKreiseFuerRun(anker.x, cy, stand.bandCounts, (alpha / 255) * kreisAlpha,
-          PI, layout.kreisSkala, Infinity);
-        zeichneFwertPunkte(anker.x, cy, radius, stand.fwerte, (alpha / 255) * kreisAlpha);
-    }
+    let stand = ovStand(i, maxKapitel);
+    // radius bleibt 0, solange der Ort nichts beigetragen hat — daran hängt
+    // der Abstand der Beschriftung darunter.
+    let radius = groessterKreisRadius(stand.bandCounts, Infinity, layout.kreisSkala);
+    zeichneKreiseFuerRun(anker.x, anker.y, stand.bandCounts, 1, PI, layout.kreisSkala, Infinity);
+    zeichneFwertPunkte(anker.x, anker.y, radius, stand.fwerte, 1);
 
     // Reihenfolge von oben nach unten: Kreis, Ortsbeschriftung, Kapitelzähler.
     let rand = radius > 0 ? radius : 6;
 
     let zeilen = layout.labelZeilen[i];
-    if (pLabel > 0) {
-      textStyle(BOLD);
-      textSize(13);
-      // ACHTUNG fillStyle direkt setzen, nicht über fill(): p5 überspringt die
-      // Zuweisung bei gleichbleibendem Wert. zeichneFwertPunkte schreibt oben
-      // direkt in fillStyle und umgeht den Zwischenspeicher — der Ortsname
-      // wurde dadurch rot, sobald sich seine Deckkraft nicht mehr änderte.
-      drawingContext.fillStyle = `rgba(33, 43, 46, ${alpha * pLabel * textFaktor / 255})`;
-      zeilen.forEach((zeile, z) => {
-        drawingContext.fillText(zeile, anker.x, cy + rand + OV_LABEL_ABSTAND + z * OV_LABEL_ZEILE);
-      });
-    }
+    textStyle(BOLD);
+    textSize(13);
+    // ACHTUNG fillStyle direkt setzen, nicht über fill(): p5 überspringt die
+    // Zuweisung bei gleichbleibendem Wert. zeichneFwertPunkte schreibt oben
+    // direkt in fillStyle und umgeht den Zwischenspeicher — der Ortsname
+    // wurde dadurch rot, sobald sich seine Deckkraft nicht mehr änderte.
+    drawingContext.fillStyle = 'rgb(33, 43, 46)';
+    zeilen.forEach((zeile, z) => {
+      drawingContext.fillText(zeile, anker.x, anker.y + rand + OV_LABEL_ABSTAND + z * OV_LABEL_ZEILE);
+    });
 
     // Kapitelzähler darunter — rutscht bei zweizeiliger Beschriftung mit.
-    if (kreisAlpha > 0 && stand) {
-      textStyle(NORMAL);
-      textSize(11);
-      drawingContext.fillStyle = `rgba(90, 90, 90, ${alpha * kreisAlpha * textFaktor / 255})`;
-      drawingContext.fillText(stand.letztes ? `Kapitel ${stand.letztes}` : 'Kapitel –',
-        anker.x, cy + rand + OV_LABEL_ABSTAND + (zeilen.length - 1) * OV_LABEL_ZEILE + 16);
-    }
+    textStyle(NORMAL);
+    textSize(11);
+    drawingContext.fillStyle = 'rgb(90, 90, 90)';
+    drawingContext.fillText(stand.letztes ? `Kapitel ${stand.letztes}` : 'Kapitel –',
+      anker.x, anker.y + rand + OV_LABEL_ABSTAND + (zeilen.length - 1) * OV_LABEL_ZEILE + 16);
 
     // Erläuterung seitlich neben dem Kreis, linksbündig und nach aussen.
 
     // Die Textbox erscheint, wenn dieser Ort seine erste Annotation bekommt —
     // die Texte kommen dadurch nacheinander statt alle auf einmal.
     let erstes = ovErstesKapitel[i];
-    let pTextbox = constrain(map(pKapitel * 18, erstes - 1, erstes, 0, 1), 0, 1);
+    let pTextbox = constrain(map(p * 18, erstes - 1, erstes, 0, 1), 0, 1);
     let erlaeuterung = layout.textZeilen[i];
     if (pTextbox > 0 && erlaeuterung && erlaeuterung.length) {
       textFont(SCHRIFT_SERIF);
@@ -472,7 +407,7 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
       textSize(OV_TEXT_GROESSE);
       textAlign(LEFT, CENTER);
       drawingContext.textAlign = 'left';
-      drawingContext.fillStyle = `rgba(33, 43, 46, ${alpha * pTextbox * textFaktor * 0.85 / 255})`;
+      drawingContext.fillStyle = `rgba(33, 43, 46, ${pTextbox * 0.85})`;
       let breite = Math.max(...erlaeuterung.map(t => textWidth(t)));
       // Am ENDRADIUS aufgehängt, nicht am laufenden — sonst schöbe der
       // wachsende Kreis den Text Kapitel für Kapitel vor sich her.
@@ -485,10 +420,10 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
         // ihr oberer Rand am Ende der Linie.
         let datenHoehe = layout.datenZeilen[i].length
           ? OV_DATEN_ABSTAND + layout.datenZeilen[i].length * OV_DATEN_ZEILE : 0;
-        start = cy - endRand - OV_TEXT_ABSTAND_OBEN - datenHoehe
+        start = anker.y - endRand - OV_TEXT_ABSTAND_OBEN - datenHoehe
           - (erlaeuterung.length - 1) * OV_TEXT_ZEILE;
         linksBuendig = anker.x + OV_LINIE_VERSATZ;
-        linie = [anker.x, cy - endRand, anker.x, start - OV_TEXT_ZEILE / 2];
+        linie = [anker.x, anker.y - endRand, anker.x, start - OV_TEXT_ZEILE / 2];
       } else {
         // Waagrechte Linie auf Punkthöhe, Box darunter. Sie spannt über die
         // Boxbreite, damit der Text frei bleibt.
@@ -499,13 +434,13 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
           ? anker.x + endRand + abstand
           : anker.x - endRand - abstand - breite;
         let nachRechts = linksBuendig > anker.x;
-        linie = [anker.x + (nachRechts ? endRand : -endRand), cy,
-          nachRechts ? linksBuendig + breite : linksBuendig, cy];
-        start = cy + OV_LINIE_VERSATZ + OV_TEXT_ZEILE / 2;
+        linie = [anker.x + (nachRechts ? endRand : -endRand), anker.y,
+          nachRechts ? linksBuendig + breite : linksBuendig, anker.y];
+        start = anker.y + OV_LINIE_VERSATZ + OV_TEXT_ZEILE / 2;
       }
 
       if (linie) {
-        stroke(33, 43, 46, alpha * pTextbox * textFaktor * 0.5);
+        stroke(33, 43, 46, 255 * pTextbox * 0.5);
         strokeWeight(1);
         line(linie[0], linie[1], linie[2], linie[3]);
         noStroke();
@@ -522,7 +457,7 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
         textStyle(BOLD);
         textSize(OV_DATEN_GROESSE);
         drawingContext.letterSpacing = '0.06em';
-        drawingContext.fillStyle = `rgba(33, 43, 46, ${alpha * pTextbox * textFaktor * 0.7 / 255})`;
+        drawingContext.fillStyle = `rgba(33, 43, 46, ${pTextbox * 0.7})`;
         let dStart = start + (erlaeuterung.length - 1) * OV_TEXT_ZEILE + OV_DATEN_ABSTAND + OV_DATEN_ZEILE;
         daten.forEach((zeile, z) => {
           drawingContext.fillText(zeile, linksBuendig, dStart + z * OV_DATEN_ZEILE);
@@ -544,14 +479,8 @@ function zeichneOrtsveraenderung(bbox, p, alpha, textFaktor = 1) {
 
 
 // --- Export ------------------------------------------------------------
-// Acht Namen, alle nur von sketch.js gelesen.
-window.OV_KARTE_AUS = OV_KARTE_AUS;
-window.OV_ZOOM = OV_ZOOM;
-window.SK_EINBLENDEN = SK_EINBLENDEN;
-window.SK_RAUSZOOM = SK_RAUSZOOM;
-window.SK_TEXT = SK_TEXT;
-window.ovPhase = ovPhase;
-window.ovZoomBbox = ovZoomBbox;
+// Ein Name: die Ansicht bringt Ausschnitt und Ablauf selbst mit, draw()
+// übergibt nur noch ihren Fortschritt.
 window.zeichneOrtsveraenderung = zeichneOrtsveraenderung;
 
 })(); // Ende der Modulkapselung, siehe Kommentar oben

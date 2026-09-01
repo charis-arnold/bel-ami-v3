@@ -14,11 +14,11 @@ Neun der zwölf Module sind gekapselt und geben nur die genannten Namen über
 | Modul | Exporte |
 |---|---|
 | `datenbereinigung.js` | 38 |
-| `sketch.js` | 28 (11 Wert, 12 Lesebindung, **5 p5-Hooks**) |
+| `sketch.js` | 29 (11 Wert, 13 Lesebindung, **5 p5-Hooks**) |
 | `kreisgrafik.js` | 13 |
 | `spine-horizontal.js` | 11 (3 Lesebindungen) |
-| `uebersichtsrouten.js` | 10 (3 Lesebindungen) |
-| `ortsveraenderung.js` | 8 |
+| `uebersichtsrouten.js` | 11 (3 Lesebindungen) |
+| `ortsveraenderung.js` | 1 |
 | `sonifikation.js` | 4 (1 Lesebindung) |
 | `kartendekor.js` | 3 |
 | `annotationsbox.js` | 2 |
@@ -135,7 +135,7 @@ Zwei Dinge deshalb bei jeder Änderung mitprüfen —
 | 2 | `geo-projektion.js` | Geografie: Bboxen und Projektion lon/lat → Bildschirm |
 | 3 | `kreisgrafik.js` | Kreisdiagramme der Orte |
 | 4 | `kartendekor.js` | Routenzug, Massstabsleiste (und die stillgelegte Windrose) |
-| 5 | `ortsveraenderung.js` | Schlussakt „Ortsveränderung" |
+| 5 | `ortsveraenderung.js` | Ansicht „Ortsvergleich" |
 | 6 | `spine-horizontal.js` | Graph-Ansicht: waagrechte Zeitleiste + Play |
 | 7 | `fotomarker.js` | Foto-Marker und Bild-Popup |
 | 8 | `annotationsbox.js` | Positionswahl der Annotationsbox |
@@ -238,13 +238,13 @@ eigenen Header-Abschnitt aus.
 | 2 | `geo-projektion.js` | 96 | `lonLatToScreen`, `coverCrop`, `cropToBbox`, `bboxToImgCrop`, `passeBboxInRahmen` | `startBbox`, `uebersichtBbox`, `ch1ImgBbox`, `UEBERSICHT_SCHNITT_BBOX`, `mapOffsetX`, `mapOffsetY` |
 | 3 | `kreisgrafik.js` | 1099 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `zeichneKreisLabels`, `zeichneDemoKreisgrafik`, `zeichneProjekttextIkon`, `zeichneKreisErklaerung`, `zeichneSchleier`, `demoIkonGetroffen`, `projekttextIkonGetroffen`, `merkeKreis`, `vergissGezeichneteKreise`, `leereBandCounts` | **gekapselt**, 13 Exporte; die übrigen 86 Namen (u. a. `HATCH_SPACING`, `kreisBeschriftungen`, alle `DEMO_*`, `IKON_*`, `LEGENDE_*` und `ERKLAERUNG_*`) sind modulintern. Beherbergt seit dem Onboarding-Umbau auch den vierstufigen Legendenaufbau (`demoLegende` und seine vier Zeichenroutinen). Beherbergt auch das zweite Icon (Kreis mit Textzeilen): es teilt sich Zeile und Treffertest mit dem Kreisgrafik-Icon |
 | 4 | `kartendekor.js` | 314 | `zeichneRoute`, `zeichneMassstabsleiste`, `zeichneWindrose` | — **gekapselt**, 3 Exporte; intern `haversineMeter`, `MASSSTAB_SCHRITTE`, der Routenpuffer und seine Helfer (`routenPufferBereit`, `routenStufenZuege`, `routenStufenAlpha`, alle `ROUTE_*`). `zeichneWindrose` hat derzeit keinen Aufrufer: der Aufruf in `draw()` ist auskommentiert, oben rechts steht das Kreisgrafik-Icon |
-| 5 | `ortsveraenderung.js` | 687 | `zeichneOrtsveraenderung`, `ovPhase`, `ovZoomBbox` | `OV_KARTE_AUS`/`OV_ZOOM`/`SK_*`-Phasenfenster — **als einziges Modul gekapselt**, alles Übrige ist modulintern |
+| 5 | `ortsveraenderung.js` | 486 | `zeichneOrtsveraenderung` | **Ein einziger Export** — die Ansicht bringt Ausschnitt (`ovBerechneLayout`) und Ablauf selbst mit, `draw()` übergibt nur ihren Fortschritt. Alles Übrige ist modulintern |
 | 6 | `spine-horizontal.js` | 548 | `zeichneSpineHorizontal`, `toggleGrafikPlay`, `setzeKapitelAnsichtModus`, `setzeGrafikZurueck`, `stelleSpineDatenBereit`, `spineEintraegeFuer`, `aktuelleGrafikAnimationDauer`, `aktualisiereGrafikFortschritt` | `grafikSpielt`, `grafikFortschritt`, `grafikPlayAusblendStart` (Lesebindungen) — **gekapselt**, intern: beide Spine-Caches, alle `SPINE_*`, `spineLayout` |
 | 7 | `fotomarker.js` | 115 | `zeichneFotoMarker`, `merkeKartenlage`, `oeffneFotoPopup`, `schliesseFotoPopup` | `fotoMarkerListe`, `letzteActiveBbox`, `letzterFotoOffsetX/Y`, `FOTO_MARKER_TREFFER_RADIUS`. Zeichnet einen Punkt mit hellem Kern; Grösse abgeleitet aus `FWERT_PUNKT_DURCHMESSER`, Beschriftung über `zeichneKreisLabels` |
 | 8 | `annotationsbox.js` | 152 | `annotationBoxPosition` | `ANNOTATION_BOX_POSITIONEN` — **gekapselt**, intern u. a. `annotationBoxPositionCache` |
 | 9 | `dom-aufbau.js` | 107 | `baueKapitelRegister`, `baueKartenMarkierungen`, `baueStationsMarker`, `baueZwischenMarker` | — (baut nur DOM, hält keinen Zustand) |
-| 10 | `uebersichtsrouten.js` | 372 | `zeichneUebersichtsrouten`, `kapitelScheiben`, `aktualisiereKapitelZoom`, `springeZuKapitelZoom`, `scrolleZuKapitel1` | `zoomedKapitel`, `kapitelZoomAmount`, `kapitelHover` (alle drei als Lesebindung) — **gekapselt**, intern u. a. `kapitelHitze`, `oeffneKapitelZoom`, `scheibenCache` |
-| 11 | `sketch.js` | 907 | `preload`, `setup`, `draw`, `mousePressed`, `windowResized`, `datenFuerKapitel`, `kapitelHatEigeneAnsicht`, `setzeAnsichtsModus`, `starteKapitelEinstieg` | `stationenData`, `uebersichtsRouten`, `kapitelAnsichtsModus`, `kreisErklaerungOffen` (Zustand der Erklärungs-Ebene), 8 DOM-Handles (als Lesebindung) — **gekapselt**, intern u. a. `kapitelKarten`, `bgImage`/`bgImage2`/`ch1Image`, die übrigen DOM-Handles |
+| 10 | `uebersichtsrouten.js` | 397 | `zeichneUebersichtsrouten`, `kapitelScheiben`, `aktualisiereKapitelZoom`, `springeZuKapitelZoom`, `scrolleZuKapitel1`, `waehleAnsichtsModus` | `zoomedKapitel`, `kapitelZoomAmount`, `kapitelHover` (alle drei als Lesebindung) — **gekapselt**, intern u. a. `kapitelHitze`, `oeffneKapitelZoom`, `scheibenCache` |
+| 11 | `sketch.js` | 886 | `preload`, `setup`, `draw`, `mousePressed`, `windowResized`, `datenFuerKapitel`, `kapitelHatEigeneAnsicht`, `setzeAnsichtsModus`, `starteKapitelEinstieg` | `stationenData`, `uebersichtsRouten`, `kapitelAnsichtsModus`, `kreisErklaerungOffen` (Zustand der Erklärungs-Ebene), 8 DOM-Handles (als Lesebindung) — **gekapselt**, intern u. a. `kapitelKarten`, `bgImage`/`bgImage2`/`ch1Image`, die übrigen DOM-Handles |
 | 12 | `sonifikation.js` | 370 | `spieleSonifikationFuer`, `beendeSonifikationAudio` | `SONIFIKATION_GESAMTDAUER_SEK`, `sonifikationSpieltGerade` (als Lesebindung) — **gekapselt**, die übrigen 17 Namen (u. a. `baueSpielplan`, `baueGainFolge`, `sonifikationDaten`) sind modulintern |
 
 `dom-aufbau.js` ist das einzige Modul ohne eigene Top-Level-Variablen: es baut
@@ -289,6 +289,25 @@ zurück. Ein Zurückscrollen unter die Marke setzt die Klemme neu. An demselben
 Merker hängt `zoomOutAmount`: solange die Klemme steht, liegt die Karte in
 Kapitel 1, danach auf der Überblickskarte — ein Schnitt, keine Rampe, weil der
 Sprung selbst ein Schnitt ist.
+
+**Eine zweite Klemme trennt Überblickskarte und Ortsvergleich.** Sie liegt auf
+`uebersichtRoutenEnd`, und diese Marke trägt beide Bedeutungen: Ende der
+Überblickskarte und Anfang der Ortsvergleichs-Strecke, die von dort bis 1
+läuft. Welche der beiden Ansichten gilt, entscheidet nicht die Scrollposition,
+sondern `kapitelAnsichtsModus` — in der Kartenansicht klemmt `draw()` nach
+unten, im Ortsvergleich nach oben. Einen Scroll-Übergang zwischen ihnen gibt es
+nicht, hinüber führt nur „Plan"/„Graph" im Register. Einen Schlussakt gibt es
+ebenfalls nicht mehr: die Startkarte kehrt nicht zurück.
+
+**„Plan"/„Graph" schaltet je nach Ort etwas anderes um**, und die
+Fallunterscheidung steht an genau einer Stelle: `waehleAnsichtsModus()` in
+`uebersichtsrouten.js`, dem einzigen Einstieg beider Knöpfe. Im Kapitel — auch
+in Kapitel 1, erkennbar an der stehenden Klemme — reicht sie an
+`setzeKapitelAnsichtModus()` durch und schaltet zwischen Kartenausschnitt und
+Spine. In der Übersicht springt sie stattdessen zwischen den beiden Strecken,
+weil dort mit dem Modus auch die Scrollposition wechseln muss. In `draw()`
+teilen sich beide Graph-Ansichten die Übermalung des Frames: die Spine für ein
+Kapitel, `zeichneOrtsveraenderung()` für die Übersicht.
 
 Vor der Klemme liegen zwei Strecken: 140 vh Projekttext-Einblender ab
 `routeEnd`, dann ab `kapitelEndeStart` 100 vh Kartenansicht mit Hinweis und

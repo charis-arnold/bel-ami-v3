@@ -255,13 +255,12 @@ const SCROLL_MEILENSTEINE = {
   // Kapitel 1: weiter scrollt draw() nicht. Einen Rauszoom-Akt gibt es nicht
   // mehr, in den Übersichtsakt führt nur noch ein Klick auf "Übersicht" oder
   // "Alle".
+
+  // ACHTUNG uebersichtRoutenEnd trägt zwei Bedeutungen und ist die zweite
+  // Klemme: Ende der Überblickskarte UND Anfang des Ortsvergleichs, der von
+  // dort bis 1 läuft (2477vh, rund 138vh je Kapitel). Beide Ansichten klemmen
+  // an dieser Marke, hinüber führt nur "Graph" bzw. "Plan" im Register.
   uebersichtRoutenStart: 0.437630, uebersichtRoutenEnd: 0.742516,
-  // Schlussakt Ortsveränderung (2000vh): Kreise der sieben VERGLEICHS_KNOTEN
-  // wachsen mit jedem Kapitel. kreisVergleichFadeEnd liest niemand.
-  kreisVergleichStart: 0.742516, kreisVergleichFadeEnd: 0.759252,
-  kreisVergleichEnd: 0.950416,
-  // Die Startkarte kommt zurück und zoomt auf die Gesamtkarte raus.
-  startkarteStart: 0.950416,
 };
 
 // ---------------------------------------------------------------------------

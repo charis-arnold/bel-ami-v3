@@ -8,6 +8,8 @@
 
 // Kapitelregister links: Plan/Graph, Leerzeile, "Alle", dann 01–18.
 // 01 springt zurück in die Hauptgeschichte statt in einen Kapitel-Zoom.
+// Plan/Graph gehen über waehleAnsichtsModus (uebersichtsrouten.js): was sie
+// umschalten, hängt davon ab, ob gerade ein Kapitel oder die Übersicht läuft.
 function baueKapitelRegister() {
   // Lokal, gehen als Rückgabewert hinaus; gehalten werden sie in sketch.js.
   let modusZeile = document.createElement('div');
@@ -17,14 +19,14 @@ function baueKapitelRegister() {
   planEintrag.type = 'button';
   planEintrag.className = 'kapitel-register-modus-item';
   planEintrag.textContent = 'Plan';
-  planEintrag.addEventListener('click', () => setzeKapitelAnsichtModus('karte'));
+  planEintrag.addEventListener('click', () => waehleAnsichtsModus('karte'));
   modusZeile.appendChild(planEintrag);
 
   let graphEintrag = document.createElement('button');
   graphEintrag.type = 'button';
   graphEintrag.className = 'kapitel-register-modus-item';
   graphEintrag.textContent = 'Graph';
-  graphEintrag.addEventListener('click', () => setzeKapitelAnsichtModus('grafik'));
+  graphEintrag.addEventListener('click', () => waehleAnsichtsModus('grafik'));
   modusZeile.appendChild(graphEintrag);
 
   kapitelRegister.appendChild(modusZeile);
