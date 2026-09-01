@@ -2,25 +2,44 @@
    annotationsbox.js — Positionswahl der Annotationsbox
 
    Die Box weicht der Karte aus statt umgekehrt: annotationBoxPosition()
-   bewertet vier Positionen nach Strafpunkten (verdeckte Kreise nach Radius,
-   Route schwächer) und liefert die günstigste. Entschieden je Kapitel und
-   Fenstergrösse, gecacht, damit die Box beim Scrollen nicht springt.
+   bewertet oben links und unten links nach Strafpunkten (verdeckte Kreise
+   nach Radius, Route schwächer) und liefert die günstigere. Entschieden je
+   Kapitel und Fenstergrösse, gecacht, damit die Box beim Scrollen nicht
+   springt. ANNOTATION_BOX_FEST übergeht die Rechnung für zwei Kapitel.
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 5 von 7 Namen intern, 2 exportiert. Konvention: docs/architektur.md.
+// 6 von 8 Namen intern, 2 exportiert. Konvention: docs/architektur.md.
 (function () {
 
-// Vier Positionen in der Reihenfolge der Bevorzugung: oben links bleibt, bis
-// dort Kreise oder Route daruntergeraten.
-const ANNOTATION_BOX_POSITIONEN = ['oben-links', 'unten-links', 'oben-rechts', 'unten-rechts'];
+// Die Box steht immer links, oben oder unten — dort ist Platz, und der Blick
+// findet sie an einer festen Kante wieder. Oben bleibt sie, bis dort Kreise
+// oder Route daruntergeraten.
+
+// ACHTUNG die Reihenfolge ist die der Bevorzugung: bei Gleichstand gewinnt
+// der frühere Eintrag, siehe die Schwelle in der Schleife unten.
+const ANNOTATION_BOX_POSITIONEN = ['oben-links', 'unten-links'];
 const ANNOTATION_BOX_BREITE = 572;   // max-width 520px + 2x26px Innenabstand, siehe .annotation-text
 const ANNOTATION_BOX_RAND_X = 0.05;  // left/right 5%, siehe .annotation-box
 const ANNOTATION_BOX_RAND_OBEN = 0.10;
 const ANNOTATION_BOX_RAND_UNTEN = 0.12;
 const annotationBoxPositionCache = new Map(); // "kapitel|breite|hoehe" -> Position
 
+// Handkorrektur je Kapitel: wo die Strafpunktrechnung eine Lage wählt, die im
+// Bild nicht überzeugt, steht sie hier fest. Werte aus ANNOTATION_BOX_POSITIONEN
+// — ein anderer Text setzt gar keine Klasse, siehe draw() in sketch.js.
+
+// Nur noch diese zwei: seit die Box auf die beiden linken Lagen beschränkt
+// ist, trifft die Rechnung die übrigen von selbst. Kapitel 4 wählt sie auf
+// jedem Fenster anders als gewünscht, Kapitel 9 kippt mit der Fenstergrösse.
+const ANNOTATION_BOX_FEST = {
+  '04': 'oben-links',
+  '09': 'oben-links',
+};
+
 function annotationBoxPosition(kapitelNr, daten, bbox) {
+  if (ANNOTATION_BOX_FEST[kapitelNr]) return ANNOTATION_BOX_FEST[kapitelNr];
+
   let schluessel = `${kapitelNr}|${Math.round(width)}|${Math.round(height)}`;
   if (annotationBoxPositionCache.has(schluessel)) return annotationBoxPositionCache.get(schluessel);
 

@@ -437,24 +437,17 @@ h2 {
   pointer-events: none;
 }
 
-/* Vier mögliche Positionen der Annotationsbox. Welche je Kapitel gilt,
-   entscheidet annotationBoxPosition() in annotationsbox.js anhand der
+/* Zwei mögliche Positionen der Annotationsbox, beide links. Welche je Kapitel
+   gilt, entscheidet annotationBoxPosition() in annotationsbox.js anhand der
    tatsächlichen Lage von Route und Kreisen — einmal je Kapitel UND
    Fenstergrösse, nicht fest verdrahtet: der Kartenausschnitt wird je nach
    Fensterformat unterschiedlich weit seitlich beschnitten, die Kreise liegen
    also nicht auf jedem Bildschirm gleich.
    Unten mit 12 % Abstand statt 10 %, damit die Box den Scroll-Fortschrittsbalken
    (bottom 16px) frei lässt. */
-.annotation-box.pos-unten-links,
-.annotation-box.pos-unten-rechts {
+.annotation-box.pos-unten-links {
   top: auto;
   bottom: 12%;
-}
-
-.annotation-box.pos-oben-rechts,
-.annotation-box.pos-unten-rechts {
-  left: auto;
-  right: 5%;
 }
 
 /* Übergang wie beim Buttonpaar am Kapitelende (.kapitel-ende), damit die Box
