@@ -176,11 +176,20 @@ h2 {
   color: #ffffff;
 }
 
-.scroll-hinweis-text {
+/* Bedienschrift: der Scrollen-Hinweis, die Kapitelende-Knöpfe und die
+   Beschriftung über dem Play-Knopf tragen dieselbe Schrift. Die Farbe steht
+   bei jedem einzeln — sie hängt am Untergrund, siehe .kapitel-ende-knopf. */
+.scroll-hinweis-text,
+.kapitel-ende-knopf,
+.grafik-play-button::before {
+  font-family: var(--sans);
   font-size: 14px;
   font-weight: 300;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.scroll-hinweis-text {
   color: #ffffff;
 }
 
@@ -214,11 +223,6 @@ h2 {
   border: 1px solid rgba(33, 43, 46, 0.35);
   background: rgba(226, 230, 225, 0.85);
   padding: 10px 20px;
-  font-family: var(--sans);
-  font-size: 14px;
-  font-weight: 300;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: #212B2E;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
@@ -755,6 +759,25 @@ body.projekttext-offen .einblender-schliessen:hover {
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease, background 0.2s ease;
+}
+
+/* Beschriftung über dem Knopf. Als Pseudo-Element statt eigenem Knoten: so
+   kommt und geht sie mit dem Knopf, ohne zweiten Zustand in draw(). Dunkel
+   wie die Kapitelende-Knöpfe — sie steht auf der hellen Graph-Ansicht, nicht
+   auf dem dunklen Startbild wie der Scrollen-Hinweis.
+
+   ACHTUNG absolut positioniert, sonst würde sie als Flex-Element das Play-
+   Zeichen aus der Mitte des Knopfes schieben. */
+.grafik-play-button::before {
+  content: 'Sound on';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 10px;
+  white-space: nowrap;
+  color: #212B2E;
+  pointer-events: none;
 }
 
 .grafik-play-button.sichtbar {
