@@ -28,7 +28,7 @@ function haversineMeter(lon1, lat1, lon2, lat2) {
 // Rundwerte für die Balkenlänge in Metern, Übersicht bis Kapitel-Zoom.
 const MASSSTAB_SCHRITTE = [10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 20000, 25000, 50000, 100000];
 
-function zeichneMassstabsleiste(bbox, offsetX) {
+function zeichneMassstabsleiste(bbox, offsetX, offsetY = 0) {
   let mapPixelWidth = width - offsetX;
   if (mapPixelWidth <= 0) return;
   let midLat = (bbox.north + bbox.south) / 2;
@@ -48,7 +48,7 @@ function zeichneMassstabsleiste(bbox, offsetX) {
   let randX = 40, randY = 36, tickHoehe = 6;
   let x1 = width - randX - balkenBreite;
   let x2 = width - randX;
-  let y = height - randY;
+  let y = height - randY - offsetY;
 
   push();
   stroke(26, 26, 26, 220);

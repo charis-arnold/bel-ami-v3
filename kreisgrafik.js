@@ -849,8 +849,9 @@ function zeichneLegendenBlock(x, y, titel, zeilen, alpha) {
 // Lücken zeigen, dass die Punkte in drei Abschnitten liegen, nicht rundum.
 // alphas nennt je Valenzgruppe die Deckkraft; gibt die sichtbaren Ringe für
 // die Beschriftung zurück.
-function zeichneWahrnehmungsbogen(cx, cy, aussen, alphas) {
-  let r = aussen + LEGENDE_BOGEN_ABSTAND;
+function zeichneWahrnehmungsbogen(cx, cy, aussen, alphas,
+    abstand = LEGENDE_BOGEN_ABSTAND, ringR = LEGENDE_RING_RADIUS) {
+  let r = aussen + abstand;
   let ringe = Object.entries(FWERT_GRUPPEN_WINKEL)
     .map(([bucket, winkel]) => ({
       bucket, winkel, alpha: alphas[bucket] || 0,
@@ -864,7 +865,7 @@ function zeichneWahrnehmungsbogen(cx, cy, aussen, alphas) {
     noFill();
     stroke(FWERT_COLOR_RGB.r, FWERT_COLOR_RGB.g, FWERT_COLOR_RGB.b, 255 * ring.alpha);
     strokeWeight(1.4);
-    circle(ring.x, ring.y, LEGENDE_RING_RADIUS * 2);
+    circle(ring.x, ring.y, ringR * 2);
     pop();
   });
   return ringe;
@@ -1062,8 +1063,175 @@ function zeichneKreisErklaerung() {
   zeichneDemoKreisgrafik(1, 1, Array(9).fill(1), 1, 0); // bringt den Kopf mit
 }
 
+// ---------------------------------------------------------------------------
+// Legendenleiste am unteren Fensterrand (docs/Legende.pdf)
+// ---------------------------------------------------------------------------
+
+// Waagrechte Fassung derselben Legende: fünf Gruppen nebeneinander auf einem
+// hellen Balken, aufklappbar über den Reiter rechts. Steht neben der
+// Erklärungs-Ebene, nicht an ihrer Stelle.
+const LEISTE_HOEHE = 158;           // Höhe des offenen Balkens
+const LEISTE_RAND = 26;             // Innenabstand links und rechts
+const LEISTE_OBEN = 24;             // Oberkante des Balkens zur ersten Zeile
+const LEISTE_LUECKE = 42;           // Luft zwischen den Gruppen
+const LEISTE_REITER_B = 132;        // Reiter «LEGENDE»
+const LEISTE_REITER_H = 30;
+// Derselbe Grund wie die Erklärungs-Ebene — beide tragen dieselbe Legende.
+const LEISTE_GRUND = hexZuRgb(ERKLAERUNG_SCHLEIER);
+const LEISTE_KREIS_R = 34;          // Beispielkreis der Gruppe «Kreisgrösse»
+const LEISTE_VALENZ_R = 30;         // Halbkreise der Gruppe «Anteil»
+const LEISTE_WAHRNEHMUNG_R = 12;    // Kreis des Wahrnehmungsbogens
+const LEISTE_BOGEN_ABSTAND = 18;    // enger als im Vollbild, der Balken ist flach
+const LEISTE_RING_R = 4.5;          // die drei offenen Ringe auf dem Bogen
+
+let letzteReiterLage = null;
+
+function legendenLeisteHoehe() { return LEISTE_HOEHE; }
+
+// Reiter mit Doppelpfeil. Sitzt rechts auf der Oberkante des Balkens, im
+// eingeklappten Zustand also direkt am unteren Fensterrand.
+function zeichneLegendenReiter(oben, offen) {
+  let x = width - LEISTE_RAND - LEISTE_REITER_B;
+  letzteReiterLage = { x0: x, y0: oben - LEISTE_REITER_H, x1: x + LEISTE_REITER_B, y1: oben };
+  push();
+  noStroke();
+  fill(LEISTE_GRUND.r, LEISTE_GRUND.g, LEISTE_GRUND.b);
+  rect(x, oben - LEISTE_REITER_H, LEISTE_REITER_B, LEISTE_REITER_H);
+  fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b);
+  beschriftungsSchrift(LABEL_GROESSE);
+  textAlign(LEFT, CENTER);
+  text(LEGENDE_UNTERTITEL.toUpperCase(), x + 14, oben - LEISTE_REITER_H / 2);
+  // Doppelpfeil: zeigt nach unten zum Einklappen, nach oben zum Aufklappen.
+  let px = x + LEISTE_REITER_B - 24, py = oben - LEISTE_REITER_H / 2, r = offen ? 1 : -1;
+  stroke(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b);
+  strokeWeight(1.6);
+  noFill();
+  [-3, 2].forEach(v => {
+    line(px - 5, py + v * r - 1 * r, px, py + v * r + 3 * r);
+    line(px, py + v * r + 3 * r, px + 5, py + v * r - 1 * r);
+  });
+  pop();
+}
+
+// Gruppe 2: leerer Beispielkreis mit dem Kreisgrössen-Text daneben.
+function leisteKreisgroesse(x, mitte) {
+  push();
+  noFill();
+  stroke(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b);
+  strokeWeight(1);
+  circle(x + LEISTE_KREIS_R, mitte, LEISTE_KREIS_R * 2);
+  noStroke();
+  fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b);
+  beschriftungsSchrift(LABEL_GROESSE);
+  textAlign(LEFT, CENTER);
+  let tx = x + LEISTE_KREIS_R * 2 + 18;
+  let oben = mitte - (LEGENDE_KREISGROESSE.length - 1) * LEGENDE_TEXTZEILE / 2;
+  LEGENDE_KREISGROESSE.forEach((z, i) => text(z, tx, oben + i * LEGENDE_TEXTZEILE));
+  pop();
+  return LEISTE_KREIS_R * 2 + 18 + Math.max(...LEGENDE_KREISGROESSE.map(beschriftungsBreite));
+}
+
+// Gruppe 3: die beiden Valenzhälften, jede in einem gestrichelten Kasten.
+function leisteValenz(x, mitte) {
+  let cx = x + LEISTE_VALENZ_R;
+  let oben = LEISTE_VALENZ_R, unten = LEISTE_VALENZ_R * 0.72;
+  push();
+  noStroke();
+  fill(150, 150, 150);
+  arc(cx, mitte, oben * 2, oben * 2, PI, TWO_PI, OPEN);
+  arc(cx, mitte, unten * 2, unten * 2, 0, PI, OPEN);
+  pop();
+  legendenStrich(LEGENDE_TINTE_RGB, 1, () => {
+    rect(cx - oben, mitte - oben, oben * 2, oben);
+    rect(cx - unten, mitte, unten * 2, unten);
+    line(cx - oben, mitte, cx + oben, mitte);
+  });
+  push();
+  noStroke();
+  fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b);
+  beschriftungsSchrift(LABEL_GROESSE);
+  textAlign(LEFT, CENTER);
+  let tx = cx + oben + 16;
+  text(LEGENDE_VALENZ.pos, tx, mitte - oben / 2);
+  text(LEGENDE_VALENZ.neg, tx, mitte + unten / 2);
+  pop();
+  return oben * 2 + 16 + Math.max(beschriftungsBreite(LEGENDE_VALENZ.pos), beschriftungsBreite(LEGENDE_VALENZ.neg));
+}
+
+// Gruppe 5: der Wahrnehmungsbogen mit seinen drei Ringpunkten, beschriftet.
+function leisteWahrnehmung(x, mitte) {
+  let breit = Math.max(...Object.values(WAHRNEHMUNG_LABELS).map(beschriftungsBreite));
+  let bogen = LEISTE_WAHRNEHMUNG_R + LEISTE_BOGEN_ABSTAND;
+  let cx = x + breit + 24 + bogen;
+  let ringe = zeichneWahrnehmungsbogen(cx, mitte, LEISTE_WAHRNEHMUNG_R,
+    { pos: 1, neg: 1, neutral: 1 }, LEISTE_BOGEN_ABSTAND, LEISTE_RING_R);
+  push();
+  noStroke();
+  beschriftungsSchrift(LABEL_GROESSE);
+  ringe.forEach(ring => {
+    let links = ring.x < cx;
+    textAlign(links ? RIGHT : LEFT, CENTER);
+    fill(FWERT_COLOR_RGB.r, FWERT_COLOR_RGB.g, FWERT_COLOR_RGB.b);
+    let lx = links ? ring.x - 12 : ring.x + 12;
+    text(WAHRNEHMUNG_LABELS[ring.bucket], lx, ring.y);
+    legendenStrich(FWERT_COLOR_RGB, 1, () => line(links ? lx + 3 : ring.x + 3, ring.y, links ? ring.x - 3 : lx - 3, ring.y));
+  });
+  pop();
+  return breit * 2 + 48 + bogen * 2;
+}
+
+// Der ganze Balken. Zeichnet den Reiter immer, den Inhalt nur im offenen
+// Zustand — die Klickfläche des Reiters merkt sich zeichneLegendenReiter().
+function zeichneLegendenLeiste(offen) {
+  let oben = height - (offen ? LEISTE_HOEHE : 0);
+  if (offen) {
+    push();
+    noStroke();
+    fill(LEISTE_GRUND.r, LEISTE_GRUND.g, LEISTE_GRUND.b);
+    rect(0, oben, width, LEISTE_HOEHE);
+    pop();
+
+    let mitte = oben + LEISTE_OBEN + (LEISTE_HOEHE - LEISTE_OBEN * 2) / 2;
+    let blockY = oben + LEISTE_OBEN;
+    let kategorieZeilen = KREIS_KATEGORIEN.map(kat => {
+      let instr = ELEMENT_INSTRUMENTE[kat.key];
+      return {
+        text: CATEGORY_LABELS[kat.key] + (instr ? ` (${instr.name})` : ''),
+        feld: kat.farbe, kategorie: kat.key, alpha: 1,
+      };
+    });
+    let fwertZeilen = LEGENDE_FWERT_ZEILEN.map(z => ({ ...z, alpha: 1 }));
+
+    let x = LEISTE_RAND;
+    zeichneLegendenBlock(x, blockY, LEGENDE_BLOCK_TITEL.kategorien, kategorieZeilen, 1);
+    x += legendenBlockBreite(LEGENDE_BLOCK_TITEL.kategorien, kategorieZeilen) + LEISTE_LUECKE;
+    x += leisteKreisgroesse(x, mitte) + LEISTE_LUECKE;
+    x += leisteValenz(x, mitte) + LEISTE_LUECKE;
+
+    // Senkrechte Trennlinie zwischen den beiden Hälften, wie im PDF.
+    push();
+    stroke(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b);
+    strokeWeight(2);
+    line(x, oben + LEISTE_OBEN, x, height - LEISTE_OBEN);
+    pop();
+    x += LEISTE_LUECKE;
+
+    zeichneLegendenBlock(x, blockY, LEGENDE_BLOCK_TITEL.fwerte, fwertZeilen, 1);
+    x += legendenBlockBreite(LEGENDE_BLOCK_TITEL.fwerte, fwertZeilen) + LEISTE_LUECKE;
+    leisteWahrnehmung(x, mitte);
+  }
+  zeichneLegendenReiter(oben, offen);
+}
+
+// Treffer auf dem Reiter. sketch.js schaltet daraufhin die Leiste um.
+function legendenReiterGetroffen(mx, my) {
+  let l = letzteReiterLage;
+  return !!l && mx >= l.x0 && mx <= l.x1 && my >= l.y0 && my <= l.y1;
+}
+
+
 // --- Export ------------------------------------------------------------
-// Zwölf Namen. Leser: docs/architektur.md.
+// Fünfzehn Namen. Leser: docs/architektur.md.
 window.leereBandCounts = leereBandCounts;
 window.zeichneSchleier = zeichneSchleier;
 window.zeichneProjekttextIkon = zeichneProjekttextIkon;
@@ -1075,6 +1243,9 @@ window.zeichneFwertPunkte = zeichneFwertPunkte;
 window.zeichneDemoKreisgrafik = zeichneDemoKreisgrafik;
 window.demoIkonGetroffen = demoIkonGetroffen;
 window.kategorieZeileGetroffen = kategorieZeileGetroffen;
+window.zeichneLegendenLeiste = zeichneLegendenLeiste;
+window.legendenReiterGetroffen = legendenReiterGetroffen;
+window.legendenLeisteHoehe = legendenLeisteHoehe;
 window.zeichneKreisErklaerung = zeichneKreisErklaerung;
 
 })(); // Ende der Modulkapselung, siehe Kommentar oben

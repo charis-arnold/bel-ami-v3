@@ -103,6 +103,10 @@ function loeseKapitel1Klemme() {
 // Kreisgrafik-Icon oben rechts. Jeder weitere Klick schliesst sie wieder.
 let kreisErklaerungOffen = false;
 
+// Legendenleiste am unteren Fensterrand (docs/Legende.pdf), zweite Fassung
+// derselben Legende. Eingeklappt steht nur ihr Reiter da.
+let legendenLeisteOffen = false;
+
 // Der Projekttext-Einblender hat zwei Wege hinein: am Ende der Route geht er
 // von selbst auf, und das zweite Icon holt ihn jederzeit zurück. Deshalb zwei
 // Merker statt einem — sonst liesse sich der automatische nicht wegklicken,
@@ -481,7 +485,9 @@ function draw() {
   }
 
   let massstabOffsetX = (kapitelCrop && kapitelZoomAmount > 0.5) ? mapOffsetX : kartenOffsetX;
-  zeichneMassstabsleiste(activeBbox, massstabOffsetX);
+  // Bei offener Legendenleiste rückt sie in den Balken hinein, wie im PDF.
+  zeichneMassstabsleiste(activeBbox, massstabOffsetX,
+    legendenLeisteOffen ? legendenLeisteHoehe() - 40 : 0);
   // Windrose stillgelegt; der Platz oben rechts gehört jetzt dem
   // Kreisgrafik-Icon. Zum Wiedereinschalten diese Zeile entkommentieren.
   // zeichneWindrose(width - 90, 150, 50, 1);
@@ -767,6 +773,10 @@ function draw() {
   let legendeSchritte = demoGruppenTexte.map(el =>
     legendenSchrittDeckkraft(progress, parseFloat(el.dataset.von), parseFloat(el.dataset.bis)));
 
+  // Die Leiste liegt unter den beiden Einblendern: ist einer offen, deckt er
+  // sie mit ab, und ihr Reiter ist solange nicht erreichbar.
+  zeichneLegendenLeiste(legendenLeisteOffen);
+
   // Beide Ebenen unter die Icons, aber über alles andere: die Icons bleiben
   // sichtbar, weil sie als Nächstes gezeichnet werden.
   if (kreisErklaerungOffen) zeichneKreisErklaerung();
@@ -785,8 +795,11 @@ function draw() {
     demoIkon > 0.99 && !legendeIkonHover && !projekttextOffen);
   zeichneProjekttextIkon(demoAlpha * demoIkon, projekttextIkonHover, projekttextOffen);
   // Nach zeichneUebersichtsrouten, das den Cursor jeden Frame selbst setzt.
+  let leisteBedienbar = !kreisErklaerungOffen && !projekttextOffen;
   if (legendeIkonHover || projekttextIkonHover
-    || (kreisErklaerungOffen && kategorieZeileGetroffen(mouseX, mouseY))) cursor(HAND);
+    || (kreisErklaerungOffen && kategorieZeileGetroffen(mouseX, mouseY))
+    || (leisteBedienbar && legendenReiterGetroffen(mouseX, mouseY))
+    || (leisteBedienbar && legendenLeisteOffen && kategorieZeileGetroffen(mouseX, mouseY))) cursor(HAND);
 }
 
 // ---------------------------------------------------------------------------
@@ -824,6 +837,16 @@ function mousePressed() {
     if (kategorie) spieleKategorieKlang(kategorie);
     else kreisErklaerungOffen = false;
     return;
+  }
+  // Reiter und Klangsymbole der Legendenleiste, solange kein Einblender
+  // darüberliegt.
+  if (legendenReiterGetroffen(mouseX, mouseY)) {
+    legendenLeisteOffen = !legendenLeisteOffen;
+    return;
+  }
+  if (legendenLeisteOffen) {
+    let kategorie = kategorieZeileGetroffen(mouseX, mouseY);
+    if (kategorie) { spieleKategorieKlang(kategorie); return; }
   }
   if (kapitelHover === '01') { scrolleZuKapitel1(); return; }
   // ACHTUNG über springeZuKapitelZoom, nicht direkt über oeffneKapitelZoom:
