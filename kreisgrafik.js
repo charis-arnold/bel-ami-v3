@@ -555,6 +555,8 @@ const LEGENDE_ZEILE = 22;           // Zeilenabstand in den beiden Blöcken
 const LEGENDE_TITEL_ABSTAND = 26;   // Überschrift zur ersten Zeile
 const LEGENDE_FELD = 15;            // Kantenlänge der Kategorienfelder
 const LEGENDE_FELD_LUECKE = 4;      // Luft zwischen Farbfeld und Schraffurfeld
+const LEGENDE_KLANG_IKON = 13;      // Kantenlänge des Lautsprechers vor der Zeile
+const LEGENDE_KLANG_LUECKE = 8;     // Luft zwischen Lautsprecher und Farbfeld
 const LEGENDE_MARKE_SPALTE = 26;    // Feld- bzw. Punktspalte zum Text
 const LEGENDE_BLOCK_LUECKE = 40;    // Luft zwischen den beiden Blöcken
 const LEGENDE_BLOCK_LUFT = 22;      // Blockzeile zur Oberkante des Begleittexts
@@ -736,12 +738,42 @@ function zeichneValenzKlammer(cx, cy, aussen, richtung, alpha) {
   });
 }
 
+// Einzug der Felder: Kategorienzeilen tragen vorweg den Lautsprecher, der
+// ihren Klang abspielt. Punkt- und Textzeilen fangen am Blockrand an.
+function legendenFeldSpalte(zeilen) {
+  return zeilen.some(z => z.kategorie) ? LEGENDE_KLANG_IKON + LEGENDE_KLANG_LUECKE : 0;
+}
+
 // Wo der Text eines Blocks beginnt: Kategorienzeilen tragen zwei Felder
 // nebeneinander — gefüllt und schraffiert —, die Punktzeilen nur eine Marke.
 function legendenTextSpalte(zeilen) {
-  if (zeilen.some(z => z.feld)) return LEGENDE_MARKE_SPALTE + LEGENDE_FELD + LEGENDE_FELD_LUECKE;
+  let feldX = legendenFeldSpalte(zeilen);
+  if (zeilen.some(z => z.feld)) return feldX + LEGENDE_MARKE_SPALTE + LEGENDE_FELD + LEGENDE_FELD_LUECKE;
   if (zeilen.some(z => z.punkt)) return LEGENDE_MARKE_SPALTE;
   return 0; // reine Textzeile, etwa der Hinweis der Sonifikationsbox
+}
+
+// Kleiner Lautsprecher: Korpus, Trichter, zwei Schallbögen. Trägt die Tinte
+// der Beschriftung, damit er als Bedienzeichen und nicht als Farbe gilt.
+function zeichneKlangIkon(x, y, alpha) {
+  let h = LEGENDE_KLANG_IKON;
+  let r = LEGENDE_TINTE_RGB;
+  push();
+  noStroke();
+  fill(r.r, r.g, r.b, 255 * alpha);
+  rect(x, y + h * 0.34, h * 0.30, h * 0.32);
+  beginShape();
+  vertex(x + h * 0.30, y + h * 0.34);
+  vertex(x + h * 0.56, y + h * 0.10);
+  vertex(x + h * 0.56, y + h * 0.90);
+  vertex(x + h * 0.30, y + h * 0.66);
+  endShape(CLOSE);
+  noFill();
+  stroke(r.r, r.g, r.b, 255 * alpha);
+  strokeWeight(1.2);
+  arc(x + h * 0.56, y + h / 2, h * 0.52, h * 0.62, -PI / 3, PI / 3);
+  arc(x + h * 0.56, y + h / 2, h * 0.92, h * 1.02, -PI / 3, PI / 3);
+  pop();
 }
 
 // Zweites Feld je Kategorie: dieselbe Farbe als Schraffur. Es zeigt, wie der
@@ -778,14 +810,16 @@ function zeichneLegendenBlock(x, y, titel, zeilen, alpha) {
   fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b, 255 * alpha);
   text(titel, x, y);
   let textSpalte = legendenTextSpalte(zeilen);
+  let feldX = x + legendenFeldSpalte(zeilen);
   zeilen.forEach((z, i) => {
     let a = z.alpha === undefined ? alpha : z.alpha;
     if (a <= LEGENDE_SICHTBAR) return;
     let zy = y + LEGENDE_TITEL_ABSTAND + i * LEGENDE_ZEILE;
+    if (z.kategorie) zeichneKlangIkon(x, zy - LEGENDE_KLANG_IKON / 2, a);
     if (z.feld) {
       fill(z.feld[0], z.feld[1], z.feld[2], 255 * a);
-      rect(x, zy - LEGENDE_FELD / 2, LEGENDE_FELD, LEGENDE_FELD);
-      zeichneSchraffurFeld(x + LEGENDE_FELD + LEGENDE_FELD_LUECKE,
+      rect(feldX, zy - LEGENDE_FELD / 2, LEGENDE_FELD, LEGENDE_FELD);
+      zeichneSchraffurFeld(feldX + LEGENDE_FELD + LEGENDE_FELD_LUECKE,
         zy - LEGENDE_FELD / 2, z.feld, a);
     } else if (z.punkt) {
       fill(FWERT_COLOR_RGB.r, FWERT_COLOR_RGB.g, FWERT_COLOR_RGB.b, 255 * a);
@@ -793,7 +827,7 @@ function zeichneLegendenBlock(x, y, titel, zeilen, alpha) {
     }
     fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b, 255 * a);
     text(z.text, x + textSpalte, zy);
-    // Anklickbare Zeilen ihre Fläche merken: Feld, Schraffur und Text.
+    // Klickfläche ist allein der Lautsprecher, nicht die ganze Zeile.
     if (z.kategorie) {
       if (kategorieZeilenFrame !== frameCount) {
         letzteKategorieZeilen = [];
@@ -801,7 +835,7 @@ function zeichneLegendenBlock(x, y, titel, zeilen, alpha) {
       }
       letzteKategorieZeilen.push({
         kategorie: z.kategorie,
-        x0: x, x1: x + textSpalte + beschriftungsBreite(z.text),
+        x0: x - 3, x1: x + LEGENDE_KLANG_IKON + 3,
         y0: zy - LEGENDE_ZEILE / 2, y1: zy + LEGENDE_ZEILE / 2,
       });
     }
