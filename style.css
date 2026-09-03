@@ -227,18 +227,30 @@ h2 {
 /* Farbe wie die Kapitelnummern und die Kreis-Labels (#212B2E) — anders als
    der weisse "Scrollen"-Hinweis der Startseite, der auf dem dunklen
    Startbild steht. Das Kapitelende liegt über der hellen Kapitelkarte. */
+/* Optik wie die Einträge des Kapitelregisters, aber umgekehrt: die Knöpfe
+   stehen von Anfang an in der aktiven Fassung — dunkle Fläche, helle Schrift,
+   dieselben Werte wie .kapitel-register-item.aktiv. Der Zeiger nimmt sie
+   zurück auf den hellen Ruhezustand des Registers.
+   Die Haarlinie steht in beiden Zuständen, auf der dunklen Fläche unsichtbar:
+   sonst wechselte die Höhe des Knopfs beim Überfahren um 1 px.
+   Die Grösse bleibt, wie sie war — Polster 10/20 und die 14px der
+   Bedienschrift oben, damit die Knöpfe nicht auf Registermass schrumpfen. */
 .kapitel-ende-knopf {
-  border: 1px solid rgba(33, 43, 46, 0.35);
-  background: rgba(226, 230, 225, 0.85);
+  border: none;
+  border-bottom: 1px solid rgba(26, 26, 26, 0.15);
+  background: var(--ink);
   padding: 10px 20px;
-  color: #212B2E;
+  color: #c6d2d7;
   cursor: pointer;
+  /* Fett statt der 300 aus der Bedienschrift oben; die Versalien kommen von
+     dort. Wie die Registereinträge, die ebenfalls fett stehen. */
+  font-weight: 700;
   transition: background 0.2s ease, color 0.2s ease;
 }
 
 .kapitel-ende-knopf:hover {
-  background: #212B2E;
-  color: #E2E6E1;
+  background: rgba(26, 26, 26, 0.08);
+  color: var(--ink);
 }
 
 /* Kapitel 18 hat kein nächstes Kapitel — dort bleibt nur "Übersicht". */
@@ -549,7 +561,7 @@ body.legende-offen .annotation-box.pos-unten-links {
   right: 0;
   top: 46vh;
   transform: translateY(-50%);
-  width: 8vw;
+  width: 7vw;
   pointer-events: auto;
   display: flex;
   flex-direction: column;
@@ -572,6 +584,7 @@ body.legende-offen .annotation-box.pos-unten-links {
   font-family: var(--sans);
   font-size: 11px;
   font-weight: 700;
+  text-transform: uppercase;
   color: var(--ink);
   cursor: pointer;
   text-align: left;
@@ -607,7 +620,8 @@ body.legende-offen .annotation-box.pos-unten-links {
   background: none;
   font-family: var(--sans);
   font-size: 11px;
-  font-weight: 300;
+  font-weight: 700;
+  text-transform: uppercase;
   color: var(--ink);
   cursor: pointer;
   text-align: left;
