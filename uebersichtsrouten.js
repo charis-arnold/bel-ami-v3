@@ -58,10 +58,13 @@ function kapitelHitze(fortschritt, scheibe) {
   return 1 - constrain(map(fortschritt, scheibe.bis, scheibe.bis + breite * KAPITEL_NACHGLUEHEN, 0, 1), 0, 1);
 }
 
-function zeichneUebersichtsrouten(bbox, fortschritt) {
+// imAkt: läuft die Übersicht oder ein geöffnetes Kapitel? Nicht am
+// Fortschritt ablesbar — der steht am Anfang des Akts genauso auf 0 wie
+// ausserhalb, und dort sollen Startpunkte und Nummern schon stehen.
+function zeichneUebersichtsrouten(bbox, fortschritt, imAkt) {
   // Ausserhalb des Akts gibt es keine Hover-Ziele. Rücksetzer steht hier,
   // weil nur hier die Geometrie der Startpunkte bekannt ist.
-  if (fortschritt <= 0) {
+  if (!imAkt) {
     kapitelHover = null;
     cursor(ARROW);
     return { aktuelleAnnotationZoom: null };

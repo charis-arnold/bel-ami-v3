@@ -581,12 +581,14 @@ function draw() {
   // Übersichtsrouten 02–18, zuerst gezeichnet — Kapitel 1s Route liegt darüber.
   let aktuelleAnnotationZoom = null;
 
-  // Unbedingt aufrufen, auch bei Fortschritt 0: zeichneUebersichtsrouten()
-  // setzt dann selbst kapitelHover und den Cursor zurück. Im Ortsvergleich
-  // deckt die Ansicht die Karte ohnehin ab — mit Fortschritt 0 fallen dort
-  // zugleich die Startpunkte als unsichtbare Klickziele weg.
+  // Unbedingt aufrufen, auch ausserhalb des Akts: zeichneUebersichtsrouten()
+  // setzt dann selbst kapitelHover und den Cursor zurück. Ob der Akt läuft,
+  // sagt der dritte Wert — nicht der Fortschritt, der an seinem Anfang auf 0
+  // steht, wo Startpunkte und Nummern schon dastehen sollen. Im Ortsvergleich
+  // deckt die Ansicht die Karte ohnehin ab, und die Startpunkte fallen dort
+  // zugleich als unsichtbare Klickziele weg.
   let uebersichtRoutenErgebnis = zeichneUebersichtsrouten(activeBbox,
-    imOrtsvergleich ? 0 : uebersichtRoutenFortschritt);
+    uebersichtRoutenFortschritt, !imOrtsvergleich && (!!zoomedKapitel || inUebersicht));
   aktuelleAnnotationZoom = uebersichtRoutenErgebnis.aktuelleAnnotationZoom;
 
   // ACHTUNG Sperre nötig: bei gezoomtem Kapitel zeigt activeBbox dessen Bbox,
@@ -858,8 +860,10 @@ function draw() {
   // Zuoberst die beiden Register: erst der Legendenbalken, dann die
   // Info-Fläche, die beim Ausfahren alles zudeckt, die Reiter eingeschlossen.
   // Fortschrittsleiste zuerst, die Register darüber: ihre Reiter sitzen an
-  // derselben Stelle am unteren Rand und sollen davor liegen.
-  zeichneScrollFortschritt(leisteAnteil);
+  // derselben Stelle am unteren Rand und sollen davor liegen. In der
+  // Graph-Ansicht entfällt sie — dort treibt der Play-Knopf, nicht der Scroll,
+  // und er sitzt an derselben Stelle.
+  if (!inKapitelGrafikAnsicht && !imOrtsvergleich) zeichneScrollFortschritt(leisteAnteil);
   zeichneRegisterleiste(legendeAus, imRegisterbereich);
   zeichneInfoLeiste(infoAus, legendeAus);
 

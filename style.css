@@ -8,6 +8,8 @@
 :root {
   --bg: #ECECEC;
   --ink: #1A1A1A;
+  /* Tinte des Kapitelmenüs: Schrift, Haarlinien und die aktive Fläche */
+  --menue: #3A5058;
   --gold: #63561F;
   --grey: #8F8F8F;
   --sans: 'Source Sans 3', -apple-system, sans-serif;
@@ -199,6 +201,9 @@ h2 {
 
 .scroll-hinweis-text {
   color: #ffffff;
+  /* Fett statt der 300 aus der Bedienschrift oben, wie die Kapitelende-Knöpfe.
+     Bei der Beschriftung des Play-Knopfs bleibt es bei 300. */
+  font-weight: 700;
 }
 
 /* Kapitelende: zwei Klickziele am Ende jedes Kapitels — weiter ins nächste
@@ -579,13 +584,13 @@ body.legende-offen .annotation-box.pos-unten-links {
   width: 100%;
   padding: 8px 6px;
   border: none;
-  border-bottom: 1px solid rgba(26, 26, 26, 0.15);
+  border-bottom: 1px solid rgba(58, 80, 88, 0.15);
   background: none;
   font-family: var(--sans);
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--ink);
+  color: var(--menue);
   cursor: pointer;
   text-align: left;
   white-space: nowrap;
@@ -593,11 +598,11 @@ body.legende-offen .annotation-box.pos-unten-links {
 }
 
 .kapitel-register-item:hover {
-  background: rgba(26, 26, 26, 0.08);
+  background: rgba(58, 80, 88, 0.08);
 }
 
 .kapitel-register-item.aktiv {
-  background: var(--ink);
+  background: var(--menue);
   color: #c6d2d7;
 }
 
@@ -610,7 +615,7 @@ body.legende-offen .annotation-box.pos-unten-links {
 .kapitel-register-modus-zeile {
   display: flex;
   width: 100%;
-  border-bottom: 1px solid rgba(26, 26, 26, 0.15);
+  border-bottom: 1px solid rgba(58, 80, 88, 0.15);
 }
 
 .kapitel-register-modus-item {
@@ -622,7 +627,7 @@ body.legende-offen .annotation-box.pos-unten-links {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--ink);
+  color: var(--menue);
   cursor: pointer;
   text-align: left;
   white-space: nowrap;
@@ -630,15 +635,15 @@ body.legende-offen .annotation-box.pos-unten-links {
 }
 
 .kapitel-register-modus-item:first-child {
-  border-right: 1px solid rgba(26, 26, 26, 0.15);
+  border-right: 1px solid rgba(58, 80, 88, 0.15);
 }
 
 .kapitel-register-modus-item:hover {
-  background: rgba(26, 26, 26, 0.08);
+  background: rgba(58, 80, 88, 0.08);
 }
 
 .kapitel-register-modus-item.aktiv {
-  background: var(--ink);
+  background: var(--menue);
   color: #c6d2d7;
 }
 

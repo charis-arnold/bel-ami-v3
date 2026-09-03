@@ -438,8 +438,11 @@ const DEMO_FWERTE = { pos: 'ort_loest_emotion_aus', neg: 'emotion_faerbt_raum', 
 // entlang der Route. maxRadius ist der Vorgabewert von kreisRadius().
 const DEMO_MAX_RADIUS = 100;
 
-// Schwarzgrau aller Legendenschrift, wie die Kreis-Labels.
-const LEGENDE_TINTE = '#212B2E';
+// Tinte der Legende: Schrift, Striche und Klammern in beiden Fassungen, der
+// Registerleiste wie dem Legendenaufbau. Dasselbe Blaugrau trägt das
+// Kapitelmenü (--menue in style.css). Die Ortsbeschriftungen auf der Karte
+// bleiben davon unberührt, sie setzen ihre Farbe in zeichneKreisLabels selbst.
+const LEGENDE_TINTE = '#3A5058';
 
 // Lage der Kategorienzeilen im Legendenblock. Der Legendenaufbau und die
 // Registerleiste tragen sie ein, siehe kategorieZeileGetroffen().
@@ -1043,9 +1046,12 @@ const LEISTE_REITER_H = 30;
 const LEISTE_REITER_LUECKE = 6;     // Fuge zwischen den beiden Reitern
 const LEISTE_REITER_INFO = 'Info';  // Beschriftung des zweiten Registers
 const LEISTE_GRUND = hexZuRgb('#E2E6E1');
-// Der Projekttext liegt dunkel auf, damit die helle Serifenschrift trägt.
-const INFO_GRUND = '#212B2E';
+// Der Projekttext liegt dunkel auf, damit die helle Serifenschrift trägt —
+// im selben Blaugrau wie die Legendentinte und das Kapitelmenü.
+const INFO_GRUND = '#3A5058';
 const INFO_ALPHA = 0.94;
+// Schrift des offenen Reiters, wie .kapitel-register-item.aktiv in style.css.
+const LEISTE_AKTIV_TINTE = hexZuRgb('#C6D2D7');
 const LEISTE_KREIS_R = 34;          // Beispielkreis der Gruppe «Kreisgrösse»
 const LEISTE_VALENZ_R = 30;         // Halbkreise der Gruppe «Anteil»
 const LEISTE_WAHRNEHMUNG_R = 12;    // Kreis des Wahrnehmungsbogens
@@ -1075,17 +1081,19 @@ function reiterBreite(titel) {
     + LEISTE_REITER_PFEIL + LEISTE_REITER_RAND_R;
 }
 
-// negativ: der Reiter steht auf der dunklen Info-Fläche. Dort braucht er keine
-// eigene Platte — Schrift und Pfeil kehren sich einfach um und stehen hell
-// direkt darauf.
+// Der offene Reiter steht negativ da, wie ein aktives Kapitel im Menü: dunkle
+// Platte, helle Schrift. negativ = true heisst, die dunkle Fläche liegt schon
+// darunter (der Info-Reiter auf seiner eigenen) — dann entfällt die Platte,
+// sonst zeichnete sie sich mit voller Deckung als Rechteck darauf ab.
 function zeichneReiter(name, x, oben, titel, breite, offen, negativ = false) {
   let mitte = oben - LEISTE_REITER_H / 2;
-  let tinte = negativ ? LEISTE_GRUND : LEGENDE_TINTE_RGB;
+  let tinte = (offen || negativ) ? LEISTE_AKTIV_TINTE : LEGENDE_TINTE_RGB;
   letzteReiterLagen.push({ name, x0: x, y0: oben - LEISTE_REITER_H, x1: x + breite, y1: oben });
   push();
   noStroke();
   if (!negativ) {
-    fill(LEISTE_GRUND.r, LEISTE_GRUND.g, LEISTE_GRUND.b);
+    let grund = offen ? LEGENDE_TINTE_RGB : LEISTE_GRUND;
+    fill(grund.r, grund.g, grund.b);
     rect(x, oben - LEISTE_REITER_H, breite, LEISTE_REITER_H);
   }
   fill(tinte.r, tinte.g, tinte.b);

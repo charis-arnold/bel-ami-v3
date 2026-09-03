@@ -319,8 +319,8 @@ derselben Annotationsfolge, also im selben Takt.
 
 **Der Akt hat zwei Längen.** `uebersichtRoutenStart` ist für beide der Anfang,
 das Ende nicht: Die Übersicht (alle Routen nacheinander) läuft über ihre festen
-2933 vh bis `uebersichtRoutenEnd`, ein geöffnetes Kapitel über seine eigene,
-vom Takt bestimmte Strecke. `draw()` wählt die Marke, aus der es
+14 850 vh bis `uebersichtRoutenEnd` — rund 873 vh je Kapitelroute —, ein
+geöffnetes Kapitel über seine eigene, vom Takt bestimmte Strecke. `draw()` wählt die Marke, aus der es
 `uebersichtRoutenFortschritt` rechnet, deshalb je Frame neu. Der Übersichtsakt
 selbst behält seine Aufteilung: `kapitelScheiben()` gibt jedem Kapitel einen
 Sockel, damit auch kurze ein lesbares Fenster für ihren Einstiegstext haben.

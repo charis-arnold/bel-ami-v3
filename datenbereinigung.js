@@ -265,7 +265,9 @@ const SCROLL_MEILENSTEINE = {
   // kapitelEndeStart die Kartenansicht mit Hinweis und den beiden Buttons
   // (100vh bis zur Klemme).
   kapitelEndeStart: 0.354954,
-  // Übersichtsakt 02–18 (alle Routen nacheinander), 2933vh breit. Ein
+  // Übersichtsakt 02–18 (alle Routen nacheinander), 14850vh breit — rund 873vh
+  // je Kapitelroute. Nach oben ist Luft bis 31581vh: so lang ist das längste
+  // Kapitel, und weiter reicht die Strecke nicht. Ein
   // GEÖFFNETES Kapitel hält sich nicht daran: sein Akt beginnt zwar ebenfalls
   // auf uebersichtRoutenStart, endet aber dort, wo ihm der Takt seine
   // Annotationen zumisst (kapitelAktEnde in sketch.js) — Kapitel 05 nach
@@ -281,7 +283,7 @@ const SCROLL_MEILENSTEINE = {
   // Übersichtsakts, nicht das Ende der Strecke: die läuft für die langen
   // Kapitel weiter. Der Ortsvergleich hat keine eigene Strecke mehr — er
   // sitzt auf dieser Klemme und läuft über den Play-Knopf.
-  uebersichtRoutenStart: 0.356977, uebersichtRoutenEnd: 0.416320,
+  uebersichtRoutenStart: 0.356977, uebersichtRoutenEnd: 0.657432,
 };
 
 // ---------------------------------------------------------------------------
