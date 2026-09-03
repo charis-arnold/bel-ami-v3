@@ -906,7 +906,7 @@ function draw() {
   projekttextEl.classList.toggle('offen', infoAus > 0.99);
 
   // Nach zeichneUebersichtsrouten, das den Cursor jeden Frame selbst setzt.
-  if ((!projekttextOffen && kategorieZeileGetroffen(mouseX, mouseY))
+  if ((!projekttextOffen && klangZeileGetroffen(mouseX, mouseY))
     || reiterGetroffen(mouseX, mouseY)) cursor(HAND);
 }
 
@@ -927,8 +927,8 @@ function mousePressed() {
   // was in diesem Frame gezeichnet wurde — deshalb reicht eine Prüfung für
   // beide. Der Projekttext deckt sie zu und geht vor.
   if (!projekttextOffen) {
-    let kategorie = kategorieZeileGetroffen(mouseX, mouseY);
-    if (kategorie) { spieleKategorieKlang(kategorie); return; }
+    let klang = klangZeileGetroffen(mouseX, mouseY);
+    if (klang) { spieleLegendenKlang(klang); return; }
   }
   // Sonst fängt der offene Projekttext jeden Klick ab.
   if (projekttextOffen) { schliesseProjekttext(); return; }

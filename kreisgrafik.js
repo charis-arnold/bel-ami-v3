@@ -426,15 +426,15 @@ const DEMO_MAX_RADIUS = 100;
 const LEGENDE_TINTE = '#3A5058';
 
 // Lage der Kategorienzeilen im Legendenblock. Der Legendenaufbau und die
-// Registerleiste tragen sie ein, siehe kategorieZeileGetroffen().
+// Registerleiste tragen sie ein, siehe klangZeileGetroffen().
 
 // ACHTUNG die Liste wird je Frame beim ERSTEN Eintrag geleert, nicht beim
 // Zeichnen des Blocks. Der Block wird nämlich zweimal pro Frame gezeichnet,
 // wenn der Legendenbalken während des Onboardings offen ist — einmal für den
 // Balken, einmal für die Legende im Bild. Beim zweiten Mal geleert, wären die
 // Flächen weg, bevor mousePressed() sie lesen kann.
-let letzteKategorieZeilen = [];
-let kategorieZeilenFrame = -1;
+let letzteKlangZeilen = [];
+let klangZeilenFrame = -1;
 
 // Oberkante des Begleittexts. Aus seinen CSS-Werten gerechnet, nicht gemessen:
 // getBoundingClientRect() je Frame wäre ein erzwungenes Layout, und die
@@ -550,9 +550,21 @@ const LEGENDE_SICHTBAR = 0.002;     // darunter lohnt das Zeichnen nicht
 const LEGENDE_TINTE_RGB = hexZuRgb(LEGENDE_TINTE);
 
 // Zeilen des Blocks «Körper und Raum»
+// klang: Name der Stimme, die diese Zeile vorspielt. Bei den F-Werten ist es
+// der Typ selbst — alle drei klingen auf dem Xylophon, jeder auf seiner
+// eigenen Stufe (ELEMENT_FWERT_GRAD in sonifikation.js).
 const LEGENDE_FWERT_ZEILEN = Object.keys(FWERT_PUNKTGROESSE)
   .sort((a, b) => FWERT_PUNKTGROESSE[b] - FWERT_PUNKTGROESSE[a])
-  .map(typ => ({ text: FWERT_LABELS[typ], punkt: FWERT_PUNKT_DURCHMESSER[FWERT_PUNKTGROESSE[typ]] }));
+  .map(typ => ({ text: FWERT_LABELS[typ], punkt: FWERT_PUNKT_DURCHMESSER[FWERT_PUNKTGROESSE[typ]], klang: typ }));
+
+// Instrumentname erst beim Zeichnen anhängen: sonifikation.js wird nach dieser
+// Datei geladen, beim Auswerten der Liste oben gibt es den Namen noch nicht.
+function fwertZeilenMitKlang(alpha) {
+  let instr = typeof ELEMENT_FWERT_INSTRUMENT !== 'undefined' ? ELEMENT_FWERT_INSTRUMENT : null;
+  return LEGENDE_FWERT_ZEILEN.map(z => ({
+    ...z, alpha, text: instr ? `${z.text} (${instr.name})` : z.text,
+  }));
+}
 
 // Der Kreis differenziert sich mit der Legende: erst
 // gestreift, dann mit Valenzhälften, dann mit den drei Bändern.
@@ -715,15 +727,16 @@ function zeichneValenzKlammer(cx, cy, aussen, richtung, alpha) {
 // Einzug der Felder: Kategorienzeilen tragen vorweg den Lautsprecher, der
 // ihren Klang abspielt. Punkt- und Textzeilen fangen am Blockrand an.
 function legendenFeldSpalte(zeilen) {
-  return zeilen.some(z => z.kategorie) ? LEGENDE_KLANG_IKON + LEGENDE_KLANG_LUECKE : 0;
+  return zeilen.some(z => z.klang) ? LEGENDE_KLANG_IKON + LEGENDE_KLANG_LUECKE : 0;
 }
 
 // Wo der Text eines Blocks beginnt: Kategorienzeilen tragen zwei Felder
 // nebeneinander — gefüllt und schraffiert —, die Punktzeilen nur eine Marke.
 function legendenTextSpalte(zeilen) {
   let feldX = legendenFeldSpalte(zeilen);
-  if (zeilen.some(z => z.feld)) return feldX + LEGENDE_MARKE_SPALTE + LEGENDE_FELD + LEGENDE_FELD_LUECKE;
-  if (zeilen.some(z => z.punkt)) return LEGENDE_MARKE_SPALTE;
+  // Drei Marken je Kategorienzeile: Schraffur und zwei halbe Felder.
+  if (zeilen.some(z => z.feld)) return feldX + LEGENDE_MARKE_SPALTE + 2 * (LEGENDE_FELD + LEGENDE_FELD_LUECKE);
+  if (zeilen.some(z => z.punkt)) return feldX + LEGENDE_MARKE_SPALTE;
   return 0; // reine Textzeile, etwa der Hinweis der Sonifikationsbox
 }
 
@@ -752,6 +765,16 @@ function zeichneKlangIkon(x, y, alpha) {
 
 // Zweites Feld je Kategorie: dieselbe Farbe als Schraffur. Es zeigt, wie der
 // noch unbestimmte Anteil derselben Kategorie im Kreis aussieht.
+// Halbes Farbfeld für den Anteil einer Valenz. Welche Hälfte gefüllt ist, sagt
+// dasselbe wie im Kreis: positiv oben, negativ unten.
+function zeichneHalbfeld(x, y, farbe, alphaSkala, untereHaelfte = false) {
+  push();
+  noStroke();
+  fill(farbe[0], farbe[1], farbe[2], 255 * alphaSkala);
+  rect(x, untereHaelfte ? y + LEGENDE_FELD / 2 : y, LEGENDE_FELD, LEGENDE_FELD / 2);
+  pop();
+}
+
 function zeichneSchraffurFeld(x, y, farbe, alphaSkala) {
   push();
   const ctx = drawingContext;
@@ -789,26 +812,32 @@ function zeichneLegendenBlock(x, y, titel, zeilen, alpha) {
     let a = z.alpha === undefined ? alpha : z.alpha;
     if (a <= LEGENDE_SICHTBAR) return;
     let zy = y + LEGENDE_TITEL_ABSTAND + i * LEGENDE_ZEILE;
-    if (z.kategorie) zeichneKlangIkon(x, zy - LEGENDE_KLANG_IKON / 2, a);
+    if (z.klang) zeichneKlangIkon(x, zy - LEGENDE_KLANG_IKON / 2, a);
     if (z.feld) {
-      fill(z.feld[0], z.feld[1], z.feld[2], 255 * a);
-      rect(feldX, zy - LEGENDE_FELD / 2, LEGENDE_FELD, LEGENDE_FELD);
-      zeichneSchraffurFeld(feldX + LEGENDE_FELD + LEGENDE_FELD_LUECKE,
-        zy - LEGENDE_FELD / 2, z.feld, a);
+      // Drei Marken in der Reihenfolge, in der die Grafik sie aufbaut: erst
+      // die Schraffur (alle Nennungen), dann die beiden Valenzanteile als
+      // halbe Quadrate: obere Hälfte positiv, untere Hälfte negativ — dieselbe
+      // Leserichtung wie im Kreis.
+      let markeY = zy - LEGENDE_FELD / 2;
+      let schritt = LEGENDE_FELD + LEGENDE_FELD_LUECKE;
+      zeichneSchraffurFeld(feldX, markeY, z.feld, a);
+      zeichneHalbfeld(feldX + schritt, markeY, z.feld, a);
+      zeichneHalbfeld(feldX + 2 * schritt, markeY, z.feld, a, true);
     } else if (z.punkt) {
+      // feldX, nicht x: sonst läge der Punkt unter dem Lautsprecher davor.
       fill(FWERT_COLOR_RGB.r, FWERT_COLOR_RGB.g, FWERT_COLOR_RGB.b, 255 * a);
-      circle(x + LEGENDE_FELD / 2, zy, z.punkt);
+      circle(feldX + LEGENDE_FELD / 2, zy, z.punkt);
     }
     fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b, 255 * a);
     text(z.text, x + textSpalte, zy);
     // Klickfläche ist allein der Lautsprecher, nicht die ganze Zeile.
-    if (z.kategorie) {
-      if (kategorieZeilenFrame !== frameCount) {
-        letzteKategorieZeilen = [];
-        kategorieZeilenFrame = frameCount;
+    if (z.klang) {
+      if (klangZeilenFrame !== frameCount) {
+        letzteKlangZeilen = [];
+        klangZeilenFrame = frameCount;
       }
-      letzteKategorieZeilen.push({
-        kategorie: z.kategorie,
+      letzteKlangZeilen.push({
+        klang: z.klang,
         x0: x - 3, x1: x + LEGENDE_KLANG_IKON + 3,
         y0: zy - LEGENDE_ZEILE / 2, y1: zy + LEGENDE_ZEILE / 2,
       });
@@ -908,12 +937,12 @@ function demoLegende(cx, cy, aussen, gruppenAlpha, kreisDa) {
     let instr = ELEMENT_INSTRUMENTE[kat.key];
     return {
       text: CATEGORY_LABELS[kat.key] + (instr ? ` (${instr.name})` : ''),
-      feld: kat.farbe, kategorie: kat.key,
+      feld: kat.farbe, klang: kat.key,
       alpha: [aPos, aMittel, aHell][i],
     };
   });
   // Stufe 6 (PDF-Seite 7) bringt den zweiten Block ganz, mit allen drei Zeilen.
-  let fwertZeilen = LEGENDE_FWERT_ZEILEN.map(z => ({ ...z, alpha: aWpos }));
+  let fwertZeilen = fwertZeilenMitKlang(aWpos);
 
   // Beide Blöcke nebeneinander auf einer Zeile zwischen Kreis und Begleittext
   // — dort, wo die Bänder und Punkte liegen, die sie benennen. Die Breite des
@@ -998,12 +1027,13 @@ function zeichneSchleier(farbe, alphaSkala) {
   pop();
 }
 
-// Treffer auf einem Klangsymbol der Legende, sonst null. Gilt für jede
+// Treffer auf einem Klangsymbol der Legende, sonst null — Kategorie oder
+// F-Wert-Typ. Gilt für jede
 // Fassung der Legende: Aufbau im Onboarding wie Registerleiste.
-function kategorieZeileGetroffen(mx, my) {
-  let treffer = letzteKategorieZeilen.find(z =>
+function klangZeileGetroffen(mx, my) {
+  let treffer = letzteKlangZeilen.find(z =>
     mx >= z.x0 && mx <= z.x1 && my >= z.y0 && my <= z.y1);
-  return treffer ? treffer.kategorie : null;
+  return treffer ? treffer.klang : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -1182,10 +1212,10 @@ function zeichneRegisterleiste(aus, sichtbar) {
       let instr = ELEMENT_INSTRUMENTE[kat.key];
       return {
         text: CATEGORY_LABELS[kat.key] + (instr ? ` (${instr.name})` : ''),
-        feld: kat.farbe, kategorie: kat.key, alpha: 1,
+        feld: kat.farbe, klang: kat.key, alpha: 1,
       };
     });
-    let fwertZeilen = LEGENDE_FWERT_ZEILEN.map(z => ({ ...z, alpha: 1 }));
+    let fwertZeilen = fwertZeilenMitKlang(1);
 
     let x = LEISTE_RAND;
     zeichneLegendenBlock(x, blockY, LEGENDE_BLOCK_TITEL.kategorien, kategorieZeilen, 1);
@@ -1254,7 +1284,7 @@ window.zeichneKreiseOrtRuns = zeichneKreiseOrtRuns;
 window.zeichneKreiseFuerRun = zeichneKreiseFuerRun;
 window.zeichneFwertPunkte = zeichneFwertPunkte;
 window.zeichneDemoKreisgrafik = zeichneDemoKreisgrafik;
-window.kategorieZeileGetroffen = kategorieZeileGetroffen;
+window.klangZeileGetroffen = klangZeileGetroffen;
 window.zeichneRegisterleiste = zeichneRegisterleiste;
 window.zeichneInfoLeiste = zeichneInfoLeiste;
 window.reiterGetroffen = reiterGetroffen;

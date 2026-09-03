@@ -25,10 +25,10 @@ const SONIFIKATION_SAMPLE_BAENKE = [
   ['https://strudel.b-cdn.net/vcsl.json', 'https://strudel.b-cdn.net/VCSL/'],
 ];
 
-// VCSL hat keine Streicher/Klarinetten — Klavier/Orgel/Saxophon statt der
-// ursprünglich gedachten Saint-Saëns-Besetzung. Was die Bank sehr wohl hat:
-// Harfe, Xylophon, Glockenspiel, Pauke, Glasharmonika, Orgelpedal. Das
-// Elementmodell weiter unten spielt darauf.
+// VCSL hat keine Streicher und keine Klarinetten — die ursprünglich gedachte
+// Saint-Saëns-Besetzung war so nicht zu haben. Was die Bank hat und das
+// Elementmodell weiter unten benutzt: Harfe, Vibraphon, Klavier, Xylophon und
+// das Orgelpedal.
 const SONIFIKATION_INSTRUMENTE = {
   ort_loest_emotion_aus: { sound: 'piano', attack: 0.02, release: 0.6, octave: 3 },
   emotion_faerbt_raum: { sound: 'pipeorgan_quiet', attack: 0.25, release: 1.2, octave: 4 },
@@ -90,6 +90,16 @@ const SONIFIKATION_ZEITBASIS = 'spine';
 // Nur für 'puls': Rasterweite in Sekunden.
 const SONIFIKATION_PULS_SEK = 0.25;
 
+// Gemeinsamer Versatz aller Klänge gegenüber dem Bild, in Sekunden.
+// Positiv = Ton später, negativ = Ton früher. Der Zeitplan selbst stimmt mit
+// dem Bild überein (siehe spieleElementAudio); was hier ausgeglichen wird, ist
+// die Anlaufzeit der Tonausgabe: Das Bild startet mit dem Klick, der Ton erst,
+// wenn der Strudel-Takt ihn aufnimmt. Wie lange das dauert, hängt am Rechner
+// und am Browser — deshalb eine Stellschraube und kein fester Wert.
+// Einstellen: abspielen, eine auffällige Stelle beobachten und in Schritten
+// von 0.05 nachziehen, bis Ton und Kreiswachstum zusammenfallen.
+const SONIFIKATION_VERSATZ_SEK = 0;
+
 // Nachklang nach dem letzten Element; die Spine steht dann schon still.
 const SONIFIKATION_NACHKLANG_SEK = 2;
 
@@ -120,17 +130,37 @@ const ELEMENT_STUFENBEZUG = 'ort';
 // name steht hier und nicht in der Legende: Klang und Bezeichnung gehören
 // zusammen, sonst driften sie auseinander. kreisgrafik.js liest ihn.
 const ELEMENT_INSTRUMENTE = {
-  gold_dunkel: { sound: 'harp', oktave: 3, name: 'Harfe' },              // Raum und Umwelt
-  gold_mittel: { sound: 'vibraphone_soft', oktave: 4, name: 'Vibraphon' }, // Stimmung und Emotion
-  gold_hell: { sound: 'glockenspiel', oktave: 5, name: 'Glockenspiel' },  // Gesellschaft und Soziales
+// Zwei Stellschrauben je Instrument, beide freiwillig:
+// lautstaerke gleicht aus, was die Aufnahmen an Pegel mitbringen (1 = unverändert).
+// anschlag überschreibt die Anlaufzeit der Rolle — je länger, desto weicher setzt
+// der Ton ein und desto weniger bricht er aus dem Satz heraus.
+// negOktaven überschreibt, wie weit die negative Lage unter der Grundlage liegt.
+// hoehenfilter (Hz) nimmt die Höhen zurück: Je tiefer der Wert, desto weicher
+// und weiter weg klingt das Instrument. Ohne Angabe bleibt der Klang unbearbeitet.
+//
+// ACHTUNG die Aufnahmen der Bank sind sehr verschieden laut ausgesteuert —
+// gemessen am Ton A4 (Effektivwert der ersten drei Sekunden):
+//   Marimba 0.0005 | Harfe 0.0085 | Vibraphon 0.0700 | Steinway 0.0738
+// Zwischen Marimba und Steinway liegen also fast 43 dB. Die Faktoren unten
+// gleichen das auf den Pegel der Harfe aus; sie sind keine Gestaltung, sondern
+// eine Korrektur der Aufnahmen. Wer ein Instrument tauscht, muss neu messen.
+// Das musikalische Gewicht steht getrennt davon in ELEMENT_ROLLEN: lautstaerke
+// gleicht die Aufnahme aus, gain sagt, wie wichtig die Stimme ist.
+  gold_dunkel: { sound: 'marimba', oktave: 3, name: 'Marimba', lautstaerke: 10 }, // Raum und Umwelt
+  gold_mittel: { sound: 'harp', oktave: 4, name: 'Harfe' },              // Stimmung und Emotion
+  gold_hell: { sound: 'steinway', oktave: 5, name: 'Klavier', lautstaerke: 0.12 }, // Gesellschaft und Soziales
 };
 
-// Instrument 4: das Xylophon der «Danse macabre». Feste Stufen aus dem
-// g-moll-Dreiklang, damit die 63 Anschläge zu jeder Melodie passen.
-// persoenliche_sehnsucht fehlt in FWERT_PUNKTGROESSE und kommt in Kapitel 1
-// genau einmal vor — der seltenste Ton des Stücks.
-const ELEMENT_FWERT_SOUND = 'xylophone_soft_pp';
-const ELEMENT_FWERT_OKTAVE = 5;
+// Instrument 4: das Vibraphon. Dasselbe Instrument für alle F-Werte, aber je
+// Typ eine eigene Stufe — in der Legende klingt deshalb jede Zeile anders.
+// Feste Stufen aus dem g-moll-Dreiklang, damit die 63 Anschläge zu jeder
+// Melodie passen. persoenliche_sehnsucht fehlt in FWERT_PUNKTGROESSE und kommt
+// in Kapitel 1 genau einmal vor — der seltenste Ton des Stücks.
+// ACHTUNG Oktave 4, nicht 5: die Aufnahmen reichen von F2 bis E5, in Oktave 5
+// läge der oberste Ton eine Oktave über der höchsten Aufnahme.
+const ELEMENT_FWERT_INSTRUMENT = { sound: 'vibraphone_soft', oktave: 4, name: 'Vibraphon', lautstaerke: 0.12 };
+const ELEMENT_FWERT_SOUND = ELEMENT_FWERT_INSTRUMENT.sound;
+const ELEMENT_FWERT_OKTAVE = ELEMENT_FWERT_INSTRUMENT.oktave;
 const ELEMENT_FWERT_GRAD = {
   ort_loest_emotion_aus: 0,
   emotion_faerbt_raum: 2,
@@ -158,14 +188,17 @@ const ELEMENT_ROLLEN = {
   melodie: { grade: [0, 7], attack: 0.01, release: 1.4, gain: 0.55, room: 0.35 },
   neg: { grade: [0, 5], attack: 0.01, release: 2.4, gain: 0.45, room: 0.45 },
   pos: { grade: [0, 7], attack: 0.01, release: 1.6, gain: 0.40, room: 0.30 },
-  fwert: { grade: [0, 0], attack: 0.01, release: 0.7, gain: 0.30, room: 0.25 },
+  // Lauter als die Melodie: Der F-Wert sagt, WIE der Ort auf Duroy wirkt —
+  // eine inhaltliche Auszeichnung, die man hören soll, nicht ein Beiwerk.
+  fwert: { grade: [0, 0], attack: 0.01, release: 0.7, gain: 1.0, room: 0.25 },
   bass: { grade: [0, 0], attack: 0.6, release: 3.5, gain: 0.32, room: 0.5 },
 };
 
-// Die schwere Hälfte hat ein eigenes Fell: Pauke statt Kategorieinstrument.
-// Die helle bekommt die Glasharmonika aus dem «Aquarium».
-const ELEMENT_NEG = { sound: 'timpani', oktave: 2 };
-const ELEMENT_POS = { sound: 'wineglass', oktave: 5 };
+// Jede Kategorie spielt ihre drei Flächen auf demselben Instrument, in drei
+// Lagen: die Schraffur in der Grundoktave, der positive Anteil eine Oktave
+// höher, der negative eine tiefer. Was trägt, klingt hell; was drückt, dunkel.
+const ELEMENT_POS_OKTAVEN = 1;
+const ELEMENT_NEG_OKTAVEN = -1;
 
 
 let sonifikationDaten = null;
@@ -458,13 +491,18 @@ function baueElementStimmen(elemente, gewichte) {
   };
   elemente.forEach(e => {
     merke('melodie_' + e.kategorie, e.kreis, e.schraffur);
-    if (e.neg > 0) merke('neg', e.kreis, e.neg);
-    if (e.pos > 0) merke('pos', e.kreis, e.pos);
+    // Je Kategorie eigene Bezugsgrössen: die Stimmen sind jetzt je Kategorie
+    // getrennt, also muss auch die Normierung getrennt laufen.
+    if (e.neg > 0) merke('neg_' + e.kategorie, e.kreis, e.neg);
+    if (e.pos > 0) merke('pos_' + e.kategorie, e.kreis, e.pos);
   });
 
   let stimmen = {};
-  let hole = (name, sound, oktave, rolle) => {
-    if (!stimmen[name]) stimmen[name] = { sound, oktave, rolle, grade: elemente.map(() => '~') };
+  let hole = (name, sound, oktave, rolle, instr = {}) => {
+    if (!stimmen[name]) stimmen[name] = {
+      sound, oktave, rolle, lautstaerke: instr.lautstaerke, anschlag: instr.anschlag,
+      hoehenfilter: instr.hoehenfilter, grade: elemente.map(() => '~'),
+    };
     return stimmen[name];
   };
 
@@ -472,22 +510,24 @@ function baueElementStimmen(elemente, gewichte) {
     let instr = ELEMENT_INSTRUMENTE[e.kategorie];
     if (!instr) return;
     let name = 'melodie_' + e.kategorie;
-    hole(name, instr.sound, instr.oktave, 'melodie').grade[i] =
+    hole(name, instr.sound, instr.oktave, 'melodie', instr).grade[i] =
       elementGrad(e.schraffur, bezug[schluessel(name, e.kreis)], ELEMENT_ROLLEN.melodie.grade);
-    // Negativ und positiv je EINE Stimme über alle Kategorien: ein Element
-    // hat genau eine Valenz, zwei Kategorien können sich im selben Schritt
-    // also nicht ins Gehege kommen.
+    // Negativ und positiv laufen auf dem Instrument der Kategorie, nur in
+    // einer anderen Lage. Deshalb je Kategorie eine eigene Stimme — mit einer
+    // gemeinsamen liesse sich das Instrument nicht wechseln.
     if (e.neg > 0) {
-      hole('neg', ELEMENT_NEG.sound, ELEMENT_NEG.oktave, 'neg').grade[i] =
-        elementGrad(e.neg, bezug[schluessel('neg', e.kreis)], ELEMENT_ROLLEN.neg.grade);
+      let negName = 'neg_' + e.kategorie;
+      hole(negName, instr.sound, instr.oktave + (instr.negOktaven ?? ELEMENT_NEG_OKTAVEN), 'neg', instr).grade[i] =
+        elementGrad(e.neg, bezug[schluessel(negName, e.kreis)], ELEMENT_ROLLEN.neg.grade);
     }
     if (e.pos > 0) {
-      hole('pos', ELEMENT_POS.sound, ELEMENT_POS.oktave, 'pos').grade[i] =
-        elementGrad(e.pos, bezug[schluessel('pos', e.kreis)], ELEMENT_ROLLEN.pos.grade);
+      let posName = 'pos_' + e.kategorie;
+      hole(posName, instr.sound, instr.oktave + ELEMENT_POS_OKTAVEN, 'pos', instr).grade[i] =
+        elementGrad(e.pos, bezug[schluessel(posName, e.kreis)], ELEMENT_ROLLEN.pos.grade);
     }
     let fwertGrad = e.fWertType ? ELEMENT_FWERT_GRAD[e.fWertType] : undefined;
     if (fwertGrad !== undefined) {
-      hole('fwert', ELEMENT_FWERT_SOUND, ELEMENT_FWERT_OKTAVE, 'fwert').grade[i] = fwertGrad;
+      hole('fwert', ELEMENT_FWERT_SOUND, ELEMENT_FWERT_OKTAVE, 'fwert', ELEMENT_FWERT_INSTRUMENT).grade[i] = fwertGrad;
     }
   });
 
@@ -525,15 +565,16 @@ function baueElementStimmen(elemente, gewichte) {
 
 // n() + scale() statt note(): die Skalenstufen halten alle sieben Stimmen in
 // derselben Tonart, und gebrochene MIDI-Werte braucht es damit nicht mehr.
-function elementSchicht(grade, gewichte, sound, oktave, rolle, slowFaktor) {
-  return n(grade.map((wert, i) => wert + '@' + gewichte[i].toFixed(3)).join(' '))
+function elementSchicht(grade, gewichte, sound, oktave, rolle, slowFaktor, instr = {}) {
+  let schicht = n(grade.map((wert, i) => wert + '@' + gewichte[i].toFixed(3)).join(' '))
     .scale('g' + oktave + ':' + ELEMENT_TONART)
     .s(sound)
-    .gain(rolle.gain)
-    .attack(rolle.attack)
+    .gain(rolle.gain * (instr.lautstaerke ?? 1))
+    .attack(instr.anschlag ?? rolle.attack)
     .release(rolle.release)
-    .room(rolle.room)
-    .slow(slowFaktor);
+    .room(rolle.room);
+  if (instr.hoehenfilter) schicht = schicht.lpf(instr.hoehenfilter);
+  return schicht.slow(slowFaktor);
 }
 
 // Spieldauer aus der Zahl der Elemente, siehe ELEMENT_DAUER_BEZUG.
@@ -557,6 +598,11 @@ function sonifikationElementDauerMs(kapitelNr) {
 // weil es in Sekunden misst und die Dauer vorher nicht feststeht.
 function elementZeiten(elemente, gesamtdauerSek) {
   let zeiten = elemente.map(e => e.fortschritt * gesamtdauerSek);
+  // Nie vor dem Start: ein negativer Versatz schiebt die ersten Elemente
+  // zusammen, statt sie in die Vergangenheit zu legen.
+  if (SONIFIKATION_VERSATZ_SEK) {
+    zeiten = zeiten.map(z => Math.max(0, z + SONIFIKATION_VERSATZ_SEK));
+  }
   if (SONIFIKATION_ZEITBASIS !== 'puls') return zeiten;
 
   // Jeden Abstand auf ganze Pulse runden, mindestens einen. Bewusst ohne
@@ -612,9 +658,11 @@ async function spieleElementAudio(kapitelNr) {
   let gesamtdauerSek = gewichte.reduce((a, b) => a + b, 0);
   let slowFaktor = gesamtdauerSek / (1 / SONIFIKATION_STANDARD_CPS);
   let layers = Object.values(gebaut.stimmen).map(st =>
-    elementSchicht(st.grade, gewichte, st.sound, st.oktave, ELEMENT_ROLLEN[st.rolle], slowFaktor));
-  layers.push(elementSchicht(gebaut.bass.grade, gebaut.bass.gewichte,
-    ELEMENT_BASS.sound, ELEMENT_BASS.oktave, ELEMENT_ROLLEN.bass, slowFaktor));
+    elementSchicht(st.grade, gewichte, st.sound, st.oktave, ELEMENT_ROLLEN[st.rolle], slowFaktor, st));
+  // HÖRPROBE 2026-09-03: Orgelpedal stillgelegt, um das Stück ohne Bass zu
+  // hören. Zum Zurücknehmen die beiden Zeilen wieder aktivieren.
+  // layers.push(elementSchicht(gebaut.bass.grade, gebaut.bass.gewichte,
+  //   ELEMENT_BASS.sound, ELEMENT_BASS.oktave, ELEMENT_ROLLEN.bass, slowFaktor));
 
   starteWiedergabe(stack(...layers), gesamtdauerSek);
 }
@@ -694,17 +742,49 @@ async function spieleKapitelSonifikationAudio(nr) {
 // hush() anhalten, und das trifft alle Stimmen. Läuft die Sonifikation, bricht
 // ein Klick auf eine Kategorie sie also ab.
 const KATEGORIE_KLANG_SEK = 2;
+// Der Takt wird viermal so lang gedehnt wie die Spieldauer. Strudel wiederholt
+// ein Muster endlos; so kommt der zweite Anschlag erst nach 8 s, also lange
+// nachdem bei 2 s abgeschaltet wird. Gehört wird dadurch genau ein Ton.
+const KATEGORIE_KLANG_TAKT = 4;
 
-async function spieleKategorieKlang(kategorie) {
-  let instr = ELEMENT_INSTRUMENTE[kategorie];
-  if (!instr) return;
+async function spieleLegendenKlang(name) {
+  // Zwei Sorten Zeile: die drei Gefühlskategorien spielen ihr eigenes
+  // Instrument auf der untersten Stufe, die F-Werte alle das Xylophon — dafür
+  // jeder auf seiner eigenen Stufe, genau wie im Stück.
+  let instr = ELEMENT_INSTRUMENTE[name];
+  let fwertGrad = ELEMENT_FWERT_GRAD[name];
+  let sound, oktave, rolle, folge, lautstaerke = 1, anschlag, hoehenfilter;
+  if (instr) {
+    sound = instr.sound; oktave = instr.oktave; rolle = ELEMENT_ROLLEN.melodie;
+    lautstaerke = instr.lautstaerke ?? 1;
+    anschlag = instr.anschlag;
+    hoehenfilter = instr.hoehenfilter;
+    // Drei Töne, einer je Marke der Zeile: Schraffur in der Grundlage, der
+    // positive Anteil eine Oktave höher, der negative so tief, wie das
+    // Instrument es vorgibt. Die Molltonart hat sieben Stufen, eine Oktave ist
+    // also Stufe 7 — die Hörprobe zeigt damit genau die Lagen des Stücks.
+    folge = ['0', String(7 * ELEMENT_POS_OKTAVEN),
+      String(7 * (instr.negOktaven ?? ELEMENT_NEG_OKTAVEN))];
+  } else if (fwertGrad !== undefined) {
+    sound = ELEMENT_FWERT_SOUND; oktave = ELEMENT_FWERT_OKTAVE; rolle = ELEMENT_ROLLEN.fwert;
+    lautstaerke = ELEMENT_FWERT_INSTRUMENT.lautstaerke ?? 1;
+    // F-Werte haben nur eine Marke, den Punkt — also auch nur einen Ton.
+    folge = [String(fwertGrad)];
+  } else {
+    return;
+  }
+  // Hinter die Töne kommen so viele Pausen, dass sie zusammen den gedehnten
+  // Takt füllen: Die Töne liegen damit in der Spieldauer, die Wiederholung
+  // käme erst lange danach — und da ist längst abgeschaltet.
+  let plaetze = folge.concat(new Array(folge.length * (KATEGORIE_KLANG_TAKT - 1)).fill('~'));
   await stelleSonifikationBereit();
   beendeSonifikationAudio();
-  let rolle = ELEMENT_ROLLEN.melodie;
+  let probe = n(plaetze.join(' ')).scale(`g${oktave}:${ELEMENT_TONART}`).s(sound)
+    .gain(rolle.gain * lautstaerke).attack(anschlag ?? rolle.attack)
+    .release(rolle.release).room(rolle.room);
+  if (hoehenfilter) probe = probe.lpf(hoehenfilter);
   starteWiedergabe(
-    n('0').scale(`g${instr.oktave}:${ELEMENT_TONART}`).s(instr.sound)
-      .gain(rolle.gain).attack(rolle.attack).release(rolle.release).room(rolle.room)
-      .slow(KATEGORIE_KLANG_SEK / (1 / SONIFIKATION_STANDARD_CPS)),
+    probe.slow(KATEGORIE_KLANG_TAKT * KATEGORIE_KLANG_SEK / (1 / SONIFIKATION_STANDARD_CPS)),
     KATEGORIE_KLANG_SEK);
 }
 
@@ -722,7 +802,8 @@ function beendeSonifikationAudio() {
 // Sieben Namen. Leser: docs/architektur.md.
 window.SONIFIKATION_GESAMTDAUER_SEK = SONIFIKATION_GESAMTDAUER_SEK;
 window.ELEMENT_INSTRUMENTE = ELEMENT_INSTRUMENTE;
-window.spieleKategorieKlang = spieleKategorieKlang;
+window.ELEMENT_FWERT_INSTRUMENT = ELEMENT_FWERT_INSTRUMENT;
+window.spieleLegendenKlang = spieleLegendenKlang;
 window.spieleSonifikationFuer = spieleSonifikationFuer;
 window.sonifikationElementDauerMs = sonifikationElementDauerMs;
 window.beendeSonifikationAudio = beendeSonifikationAudio;

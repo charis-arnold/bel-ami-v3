@@ -87,8 +87,8 @@ const LEGENDE_BLOCK_TITEL = {
   sonifikation: 'SONIFIKATION',
 };
 
-// Einzige Zeile der Sonifikations-Box. Die Klangsymbole der Kategorienzeilen
-// darüber sind anklickbar, siehe kategorieZeileGetroffen().
+// Einzige Zeile der Sonifikations-Box. Die Klangsymbole der Zeilen darüber
+// sind anklickbar, siehe klangZeileGetroffen() in kreisgrafik.js.
 const LEGENDE_SONIFIKATION_HINWEIS = 'Klicke auf die Kategorien und höre, wie sie klingen.';
 
 // Beschriftungen rund um den Legendenkreis, ebenfalls wortgetreu aus dem PDF.
