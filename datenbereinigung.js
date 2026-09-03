@@ -87,8 +87,8 @@ const LEGENDE_BLOCK_TITEL = {
   sonifikation: 'SONIFIKATION',
 };
 
-// Einzige Zeile der Sonifikations-Box. Die Kategorienzeilen darüber sind in
-// der Erklärungs-Ebene anklickbar, siehe kategorieZeileGetroffen().
+// Einzige Zeile der Sonifikations-Box. Die Klangsymbole der Kategorienzeilen
+// darüber sind anklickbar, siehe kategorieZeileGetroffen().
 const LEGENDE_SONIFIKATION_HINWEIS = 'Klicke auf die Kategorien und höre, wie sie klingen.';
 
 // Beschriftungen rund um den Legendenkreis, ebenfalls wortgetreu aus dem PDF.
@@ -236,8 +236,8 @@ const SCROLL_MEILENSTEINE = {
   zoomStart: 0.303691, zoomEnd: 0.363612,
   // Crossfade Startkarte -> helle Überblickskarte, 80vh.
   kartenwechselStart: 0.173798, kartenwechselEnd: 0.184693,
-  // Demo-Kreisgrafik: wächst über den Kreisgrössen-Schritt heran und schrumpft
-  // ab zoomStart auf den Icon-Platz oben rechts. Davor steht nur der
+  // Demo-Kreisgrafik: wächst über den Kreisgrössen-Schritt heran und blendet
+  // ab zoomStart aus, während die Kapitelkarte aufzieht. Davor steht nur der
   // Mittelpunkt mit seiner Ortsbeschriftung da (PDF-Seite 1); der Schleier
   // blendet in dieser Zeit ein, also von kartenwechselEnd bis demoStart.
   demoStart: 0.195587, demoVoll: 0.206482,

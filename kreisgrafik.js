@@ -23,8 +23,8 @@
 // Zeilenabstand der Schraffur in den Gesamtkreisen.
 const HATCH_SPACING = 3;
 
-// Zeilenmass der Kreis-Labels; zeichneKreisLabels rutscht damit aus, die
-// Erklärungs-Ebene rechnet damit ihren Platzbedarf aus.
+// Zeilenmass der Kreis-Labels; zeichneKreisLabels rutscht damit aus, der
+// Legendenaufbau rechnet damit seinen Platzbedarf aus.
 const LABEL_HOEHE = 14;
 const LABEL_ABSTAND = 4;
 // Schriftgrad aller Beschriftungen im Canvas: Ortsnamen, Legendentitel,
@@ -371,32 +371,11 @@ const DEMO_FWERTE = { pos: 'ort_loest_emotion_aus', neg: 'emotion_faerbt_raum', 
 // entlang der Route. maxRadius ist der Vorgabewert von kreisRadius().
 const DEMO_MAX_RADIUS = 100;
 
-// Ruheplatz der beiden Icons: nebeneinander direkt über dem Kapitelregister,
-// rechtsbündig zum Bildschirmrand. Links die Kreisgrafik (Legende), rechts
-// der Projekttext.
-const IKON_RAND_RECHTS = 46;       // Mitte des rechten Icons zum Bildschirmrand
-const IKON_ABSTAND_PAAR = 80;      // Mitte zu Mitte der beiden Icons
-const IKON_ABSTAND_REGISTER = 44;  // Luft zwischen Icon-Mitte und Registerkante
-const IKON_ABSTAND_OBEN_MIN = 50;  // damit die Zeile nie oben herausfällt
-const IKON_RADIUS_SKALA = 0.45;
+// Schwarzgrau aller Legendenschrift, wie die Kreis-Labels.
+const LEGENDE_TINTE = '#212B2E';
 
-// Ruhezustand schwarzgrau, erst der Zeiger holt das Gold hervor. Der Filter
-// entsättigt die ganze Miniatur, statt jede Bandfarbe einzeln umzurechnen.
-const IKON_GRAUFILTER = 'grayscale(1) brightness(0.45)';
-const IKON_RUHE_FARBE = '#212B2E';       // wie die Kreis-Labels
-const IKON_RUHE_FARBE_DUNKEL = '#E2E6E1'; // auf dem Schleier des Projekttextes
-const IKON_GOLD = CATEGORY_COLORS.gold_mittel;
-
-// Zweites Icon: ein Kreis mit waagrechten Zeilen — dieselbe Geste wie die
-// Schraffur der Gesamtkreise, hier als Zeichen für Text. Wohnt hier, weil es
-// sich Zeile und Treffertest mit dem Kreisgrafik-Icon teilt.
-const IKON_TEXT_RADIUS = 23;
-const IKON_TEXT_ZEILEN = [0.72, 0.94, 0.88, 0.56]; // Zeilenlängen, Anteil am Radius
-
-// Lage der zuletzt gezeichneten Icons, für die Treffertests.
-let letzteDemoLage = null;
-// Lage der Kategorienzeilen im Legendenblock. Nur die Erklärungs-Ebene fragt
-// sie ab, siehe kategorieZeileGetroffen().
+// Lage der Kategorienzeilen im Legendenblock. Der Legendenaufbau und die
+// Registerleiste tragen sie ein, siehe kategorieZeileGetroffen().
 
 // ACHTUNG je Frame beim ERSTEN Eintrag leeren, nicht beim Zeichnen des Blocks:
 // demoLegende() läuft zweimal pro Frame, wenn die Erklärung offen ist — einmal
@@ -404,23 +383,6 @@ let letzteDemoLage = null;
 // löschte die Flächen, bevor mousePressed() sie sehen kann.
 let letzteKategorieZeilen = [];
 let kategorieZeilenFrame = -1;
-let letzteProjekttextIkonLage = null;
-
-// Höhe der Icon-Zeile, gemessen an der Oberkante des Kapitelregisters — das
-// sitzt vertikal zentriert und wandert mit der Fensterhöhe.
-
-// ACHTUNG getBoundingClientRect() erzwingt ein Layout. Deshalb gecacht und nur
-// neu gelesen, wenn sich Fenstergrösse oder Registerhöhe geändert haben
-// (Plan/Graph-Zeile fällt in der Übersicht weg, siehe draw()).
-let ikonZeileCache = null;
-function ikonZeileY() {
-  let schluessel = `${width}|${height}|${!!(modusZeile && modusZeile.classList.contains('versteckt'))}`;
-  if (!ikonZeileCache || ikonZeileCache.schluessel !== schluessel) {
-    let oben = kapitelRegister ? kapitelRegister.getBoundingClientRect().top : height * 0.14;
-    ikonZeileCache = { schluessel, y: Math.max(IKON_ABSTAND_OBEN_MIN, oben - IKON_ABSTAND_REGISTER) };
-  }
-  return ikonZeileCache.y;
-}
 
 // Oberkante des Begleittexts. Aus seinen CSS-Werten gerechnet, nicht gemessen:
 // getBoundingClientRect() je Frame wäre ein erzwungenes Layout, und die
@@ -465,11 +427,10 @@ function demoEinheitsRadius() {
   return einheitsRadiusCache;
 }
 
-// ikon 0 = Legendenplatz in der Bildmitte, 1 = Ruheplatz als Icon.
-// Auf dem Legendenplatz steht der Kreis im Viewport zentriert. Der Massstab
-// fällt auf kleinen Fenstern mit, sonst reicht der Platz unter dem Kreis nicht
-// mehr für die beiden Legendenblöcke.
-function demoKreisLage(ikon) {
+// Der Kreis steht im Viewport zentriert. Der Massstab fällt auf kleinen
+// Fenstern mit, sonst reicht der Platz unter dem Kreis nicht mehr für die
+// beiden Legendenblöcke.
+function demoKreisLage() {
   // Über dem Begleittext liegen von oben nach unten: der Kreisgrössen-Text,
   // der Kreis mit seinem Bogen und der Kategorienblock. Der Kreis nimmt, was
   // dazwischen frei bleibt — kein fester Massstab, sondern der Zielradius
@@ -480,47 +441,10 @@ function demoKreisLage(ikon) {
   let ziel = Math.min(width * 0.26,
     Math.max(40, (raum - LEGENDE_ECKE - 2 * LEGENDE_BOGEN_ABSTAND) / 2));
   return {
-    cx: lerp(width * 0.5, width - IKON_RAND_RECHTS - IKON_ABSTAND_PAAR, ikon),
-    cy: lerp(legendenKopfraum() + LEGENDE_ECKE + ziel, ikonZeileY(), ikon),
-    skala: lerp(ziel / demoEinheitsRadius(), IKON_RADIUS_SKALA, ikon),
+    cx: width * 0.5,
+    cy: legendenKopfraum() + LEGENDE_ECKE + ziel,
+    skala: ziel / demoEinheitsRadius(),
   };
-}
-
-// alphaSkala blendet mit dem Kreisgrafik-Icon ein, hover holt das Gold.
-// aufDunkel dreht den Ruheton hell, solange der Projekttext offen ist.
-function zeichneProjekttextIkon(alphaSkala, hover, aufDunkel = false) {
-  letzteProjekttextIkonLage = null;
-  if (alphaSkala <= 0.01) return;
-  let cx = width - IKON_RAND_RECHTS, cy = ikonZeileY(), r = IKON_TEXT_RADIUS;
-
-  push(); // schreibt strokeStyle direkt, siehe ACHTUNG oben
-  drawingContext.globalAlpha = alphaSkala;
-  drawingContext.strokeStyle = hover ? IKON_GOLD
-    : (aufDunkel ? IKON_RUHE_FARBE_DUNKEL : IKON_RUHE_FARBE);
-  drawingContext.lineWidth = 1.8;
-  drawingContext.beginPath();
-  drawingContext.arc(cx, cy, r, 0, TWO_PI);
-  drawingContext.stroke();
-
-  let abstand = r * 0.4;
-  let obenY = cy - abstand * (IKON_TEXT_ZEILEN.length - 1) / 2;
-  IKON_TEXT_ZEILEN.forEach((anteil, i) => {
-    let halb = r * anteil * 0.72;
-    let y = obenY + i * abstand;
-    drawingContext.beginPath();
-    drawingContext.moveTo(cx - halb, y);
-    drawingContext.lineTo(cx + halb, y);
-    drawingContext.stroke();
-  });
-  pop();
-
-  letzteProjekttextIkonLage = { cx, cy, r, alpha: alphaSkala };
-}
-
-function projekttextIkonGetroffen(mx, my) {
-  let l = letzteProjekttextIkonLage;
-  if (!l || l.alpha <= 0.5) return false; // erst am Ruheplatz anklickbar
-  return dist(mx, my, l.cx, l.cy) <= l.r + 8;
 }
 
 // Aufdeck-Reihenfolge: reihum durch die Bänder, damit alle drei gemeinsam
@@ -571,7 +495,7 @@ const LEGENDE_RING_RADIUS = 7;      // offene Ringe auf dem Bogen
 const LEGENDE_MITTELPUNKT = 4;      // dunkler Punkt in der Kreismitte, wie in zeichneKreiseFuerRun
 const LEGENDE_STRICHEL = [3, 4];    // Strichelmass von Klammern und Bogen
 const LEGENDE_SICHTBAR = 0.002;     // darunter lohnt das Zeichnen nicht
-const LEGENDE_TINTE_RGB = hexZuRgb(IKON_RUHE_FARBE);
+const LEGENDE_TINTE_RGB = hexZuRgb(LEGENDE_TINTE);
 
 // Zeilen des Blocks «Körper und Raum»
 const LEGENDE_FWERT_ZEILEN = Object.keys(FWERT_PUNKTGROESSE)
@@ -683,8 +607,9 @@ function beschriftungsBreite(text, groesse = LABEL_GROESSE) {
   return breite;
 }
 
-// Kopf der Legende, im PDF auf jeder Seite gleich. Lage gibt der Aufrufer vor — im Legendenaufbau steht er auf der Zeile von
-// «Anteil positiver Gefühle», in der Erklärungs-Ebene unter dem Schliessknopf.
+// Kopf der Legende, im PDF auf jeder Seite gleich. Lage gibt der Aufrufer
+// vor — im Legendenaufbau steht er auf der Zeile von «Anteil positiver
+// Gefühle».
 function zeichneLegendenTitel(x, y, alpha) {
   if (alpha <= LEGENDE_SICHTBAR) return;
   push();
@@ -976,20 +901,16 @@ function demoLegende(cx, cy, aussen, gruppenAlpha, kreisDa) {
 
 // fortschritt 0..1 deckt die erfundenen Annotationen auf, alphaSkala blendet
 // die ganze Grafik, schritte die neun Legendenstufen (monoton, siehe draw()),
-// schleier blendet allein die Beschriftungen wieder aus, ikon 0..1 schiebt
-// alles vom Legendenplatz auf den Icon-Platz oben rechts.
-function zeichneDemoKreisgrafik(fortschritt, alphaSkala, schritte, schleier, ikon = 0, grau = false) {
-  letzteDemoLage = null;
+// schleier blendet allein die Beschriftungen wieder aus.
+function zeichneDemoKreisgrafik(fortschritt, alphaSkala, schritte, schleier) {
   if (alphaSkala <= 0) return;
   let [, , aPos, aNeg, aMittel, aHell] = schritte;
   let sichtbar = DEMO_ANNOTATIONEN.slice(0, Math.round(fortschritt * DEMO_ANNOTATIONEN.length));
-  let { cx, cy, skala } = demoKreisLage(ikon);
+  let { cx, cy, skala } = demoKreisLage();
   // Endradius, nicht der des halb aufgedeckten Kreises: sonst wanderte die
   // ganze Legende mit, während der Kreis heranwächst.
   let aussen = demoEinheitsRadius() * skala;
 
-  push(); // trägt den Graufilter; die inneren push/pop erben ihn
-  if (grau) drawingContext.filter = IKON_GRAUFILTER;
   if (sichtbar.length) {
     let bandCounts = zaehleBandCounts(sichtbar);
     // winkel PI wie alle anderen Ansichten: positiv oben, negativ unten.
@@ -1011,32 +932,14 @@ function zeichneDemoKreisgrafik(fortschritt, alphaSkala, schritte, schleier, iko
   }
   zeichneKreisLabels(demoLegende(cx, cy, aussen,
     schritte.map(a => a * alphaSkala * schleier), sichtbar.length > 0));
-  pop();
-  letzteDemoLage = { cx, cy, r: aussen, ikon, alpha: alphaSkala };
-}
-
-// Trefferfläche des Icons — nur wenn es auch wirklich als Icon dasteht und
-// nicht gerade noch auf dem Weg dorthin ist.
-function demoIkonGetroffen(mx, my) {
-  let l = letzteDemoLage;
-  if (!l || l.ikon < 0.99 || l.alpha <= 0.01) return false;
-  return dist(mx, my, l.cx, l.cy) <= l.r + FWERT_PUNKT_RAND_ABSTAND + 8;
 }
 
 // ---------------------------------------------------------------------------
-// Erklärungs-Ebene (Klick aufs Icon)
+// Schleier
 // ---------------------------------------------------------------------------
 
-// Heller Schleier über der Ansicht; die Karte bleibt erkennbar. Ton und
-// Deckung wie im Legendenaufbau (LEGENDE_SCHLEIER_ALPHA in sketch.js).
-const ERKLAERUNG_SCHLEIER = '#E2E6E1';
-const ERKLAERUNG_SCHLEIER_ALPHA = 0.8;
-
-// Legt den Schleier über die Ansicht und beschriftet den grössten Kreis des
-// Frames mit allen drei Erklärungen zugleich. Steht keiner im Bild
-// (Übersichts- und Schlussakt), erklärt die Demo-Grafik an ihrem alten Platz.
-// Deckt die ganze Fläche ein. Auch der Projekttext-Einblender nutzt sie,
-// nur mit dunkler Farbe (siehe draw() in sketch.js).
+// Deckt die ganze Fläche ein. Der Legendenaufbau im Onboarding legt ihn hell
+// unter die Legende (LEGENDE_SCHLEIER in sketch.js).
 function zeichneSchleier(farbe, alphaSkala) {
   push();
   noStroke();
@@ -1046,53 +949,48 @@ function zeichneSchleier(farbe, alphaSkala) {
   pop();
 }
 
-// Überall dieselbe Erklärung: der Demo-Kreis in der Bildmitte mit dem
-// vollständigen Legendenaufbau und dem Kopf darüber. Sie erklärt die Bauweise
-// der Kreisgrafik, nicht einen einzelnen Ort — deshalb hängt sie an nichts,
-// was gerade auf dem Bild steht.
-// Treffer auf einer Kategorienzeile der Legende, sonst null. Nur die
-// Erklärungs-Ebene fragt danach — dort sind die Zeilen anklickbar.
+// Treffer auf einem Klangsymbol der Legende, sonst null. Gilt für jede
+// Fassung der Legende: Aufbau im Onboarding wie Registerleiste.
 function kategorieZeileGetroffen(mx, my) {
   let treffer = letzteKategorieZeilen.find(z =>
     mx >= z.x0 && mx <= z.x1 && my >= z.y0 && my <= z.y1);
   return treffer ? treffer.kategorie : null;
 }
 
-function zeichneKreisErklaerung() {
-  zeichneSchleier(ERKLAERUNG_SCHLEIER, ERKLAERUNG_SCHLEIER_ALPHA);
-  zeichneDemoKreisgrafik(1, 1, Array(9).fill(1), 1, 0); // bringt den Kopf mit
-}
-
 // ---------------------------------------------------------------------------
-// Legendenleiste am unteren Fensterrand (docs/Legende.pdf)
+// Register am unteren Fensterrand (docs/Legende.pdf)
 // ---------------------------------------------------------------------------
 
-// Waagrechte Fassung derselben Legende: fünf Gruppen nebeneinander auf einem
-// hellen Balken, aufklappbar über den Reiter rechts. Steht neben der
-// Erklärungs-Ebene, nicht an ihrer Stelle.
-const LEISTE_HOEHE = 158;           // Höhe des offenen Balkens
+// Zwei Register nebeneinander, beide fahren von unten aus. «Legende» bringt
+// einen flachen Balken mit den fünf Gruppen der Legende, «Info» fährt über die
+// ganze Seite und trägt am Ende den Projekttext (#projekttext im DOM).
+const LEISTE_HOEHE = 158;           // Höhe des offenen Legendenbalkens
 const LEISTE_RAND = 26;             // Innenabstand links und rechts
 const LEISTE_OBEN = 24;             // Oberkante des Balkens zur ersten Zeile
 const LEISTE_LUECKE = 42;           // Luft zwischen den Gruppen
-const LEISTE_REITER_B = 132;        // Reiter «LEGENDE»
+const LEISTE_REITER_B = 132;        // beide Reiter gleich breit
 const LEISTE_REITER_H = 30;
-// Derselbe Grund wie die Erklärungs-Ebene — beide tragen dieselbe Legende.
-const LEISTE_GRUND = hexZuRgb(ERKLAERUNG_SCHLEIER);
+const LEISTE_REITER_LUECKE = 6;     // Fuge zwischen den beiden Reitern
+const LEISTE_REITER_INFO = 'Info';  // Beschriftung des zweiten Registers
+const LEISTE_GRUND = hexZuRgb('#E2E6E1');
+// Der Projekttext liegt dunkel auf, damit die helle Serifenschrift trägt.
+const INFO_GRUND = '#212B2E';
+const INFO_ALPHA = 0.94;
 const LEISTE_KREIS_R = 34;          // Beispielkreis der Gruppe «Kreisgrösse»
 const LEISTE_VALENZ_R = 30;         // Halbkreise der Gruppe «Anteil»
 const LEISTE_WAHRNEHMUNG_R = 12;    // Kreis des Wahrnehmungsbogens
 const LEISTE_BOGEN_ABSTAND = 18;    // enger als im Vollbild, der Balken ist flach
 const LEISTE_RING_R = 4.5;          // die drei offenen Ringe auf dem Bogen
 
-let letzteReiterLage = null;
+let letzteReiterLagen = [];
 
-function legendenLeisteHoehe() { return LEISTE_HOEHE; }
+// Wie weit der Legendenbalken gerade ins Bild ragt; der Massstab rückt darüber.
+function legendenLeisteHoehe(aus) { return LEISTE_HOEHE * aus; }
 
-// Reiter mit Doppelpfeil. Sitzt rechts auf der Oberkante des Balkens, im
-// eingeklappten Zustand also direkt am unteren Fensterrand.
-function zeichneLegendenReiter(oben, offen) {
-  let x = width - LEISTE_RAND - LEISTE_REITER_B;
-  letzteReiterLage = { x0: x, y0: oben - LEISTE_REITER_H, x1: x + LEISTE_REITER_B, y1: oben };
+// Reiter mit Doppelpfeil. Beide sitzen rechts auf der Oberkante des
+// Legendenbalkens, eingeklappt also direkt am unteren Fensterrand.
+function zeichneReiter(name, x, oben, titel, offen) {
+  letzteReiterLagen.push({ name, x0: x, y0: oben - LEISTE_REITER_H, x1: x + LEISTE_REITER_B, y1: oben });
   push();
   noStroke();
   fill(LEISTE_GRUND.r, LEISTE_GRUND.g, LEISTE_GRUND.b);
@@ -1100,7 +998,7 @@ function zeichneLegendenReiter(oben, offen) {
   fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b);
   beschriftungsSchrift(LABEL_GROESSE);
   textAlign(LEFT, CENTER);
-  text(LEGENDE_UNTERTITEL.toUpperCase(), x + 14, oben - LEISTE_REITER_H / 2);
+  text(titel, x + 14, oben - LEISTE_REITER_H / 2);
   // Doppelpfeil: zeigt nach unten zum Einklappen, nach oben zum Aufklappen.
   let px = x + LEISTE_REITER_B - 24, py = oben - LEISTE_REITER_H / 2, r = offen ? 1 : -1;
   stroke(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b);
@@ -1180,11 +1078,12 @@ function leisteWahrnehmung(x, mitte) {
   return breit * 2 + 48 + bogen * 2;
 }
 
-// Der ganze Balken. Zeichnet den Reiter immer, den Inhalt nur im offenen
-// Zustand — die Klickfläche des Reiters merkt sich zeichneLegendenReiter().
-function zeichneLegendenLeiste(offen) {
-  let oben = height - (offen ? LEISTE_HOEHE : 0);
-  if (offen) {
+// Der ganze Balken, aus 0..1 ausgefahren, mit beiden Reitern auf seiner
+// Oberkante. Sein Inhalt fährt mit hinaus und wird solange vom Fensterrand
+// beschnitten; die Klickflächen merkt sich zeichneReiter().
+function zeichneRegisterleiste(aus) {
+  let oben = height - LEISTE_HOEHE * aus;
+  if (aus > LEGENDE_SICHTBAR) {
     push();
     noStroke();
     fill(LEISTE_GRUND.r, LEISTE_GRUND.g, LEISTE_GRUND.b);
@@ -1212,7 +1111,7 @@ function zeichneLegendenLeiste(offen) {
     push();
     stroke(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b);
     strokeWeight(2);
-    line(x, oben + LEISTE_OBEN, x, height - LEISTE_OBEN);
+    line(x, oben + LEISTE_OBEN, x, oben + LEISTE_HOEHE - LEISTE_OBEN);
     pop();
     x += LEISTE_LUECKE;
 
@@ -1220,32 +1119,46 @@ function zeichneLegendenLeiste(offen) {
     x += legendenBlockBreite(LEGENDE_BLOCK_TITEL.fwerte, fwertZeilen) + LEISTE_LUECKE;
     leisteWahrnehmung(x, mitte);
   }
-  zeichneLegendenReiter(oben, offen);
+  letzteReiterLagen = [];
+  let xLegende = width - LEISTE_RAND - LEISTE_REITER_B;
+  zeichneReiter('info', xLegende - LEISTE_REITER_B - LEISTE_REITER_LUECKE, oben,
+    LEISTE_REITER_INFO.toUpperCase(), false);
+  zeichneReiter('legende', xLegende, oben, LEGENDE_UNTERTITEL.toUpperCase(), aus > 0.5);
 }
 
-// Treffer auf dem Reiter. sketch.js schaltet daraufhin die Leiste um.
-function legendenReiterGetroffen(mx, my) {
-  let l = letzteReiterLage;
-  return !!l && mx >= l.x0 && mx <= l.x1 && my >= l.y0 && my <= l.y1;
+// «Info» fährt über die ganze Seite: eine dunkle Fläche von unten herauf, auf
+// der am Ende der Projekttext steht (siehe draw() in sketch.js). Zuletzt
+// gezeichnet, sie deckt auch die beiden Reiter zu.
+function zeichneInfoLeiste(aus) {
+  if (aus <= LEGENDE_SICHTBAR) return;
+  push();
+  noStroke();
+  drawingContext.globalAlpha = INFO_ALPHA;
+  drawingContext.fillStyle = INFO_GRUND;
+  drawingContext.fillRect(0, height - height * aus, width, height * aus);
+  pop();
+}
+
+// Name des getroffenen Reiters («legende» oder «info»), sonst null.
+function reiterGetroffen(mx, my) {
+  let l = letzteReiterLagen.find(r => mx >= r.x0 && mx <= r.x1 && my >= r.y0 && my <= r.y1);
+  return l ? l.name : null;
 }
 
 
 // --- Export ------------------------------------------------------------
-// Fünfzehn Namen. Leser: docs/architektur.md.
+// Zwölf Namen. Leser: docs/architektur.md.
 window.leereBandCounts = leereBandCounts;
 window.zeichneSchleier = zeichneSchleier;
-window.zeichneProjekttextIkon = zeichneProjekttextIkon;
-window.projekttextIkonGetroffen = projekttextIkonGetroffen;
 window.zeichneKreisLabels = zeichneKreisLabels;
 window.zeichneKreiseOrtRuns = zeichneKreiseOrtRuns;
 window.zeichneKreiseFuerRun = zeichneKreiseFuerRun;
 window.zeichneFwertPunkte = zeichneFwertPunkte;
 window.zeichneDemoKreisgrafik = zeichneDemoKreisgrafik;
-window.demoIkonGetroffen = demoIkonGetroffen;
 window.kategorieZeileGetroffen = kategorieZeileGetroffen;
-window.zeichneLegendenLeiste = zeichneLegendenLeiste;
-window.legendenReiterGetroffen = legendenReiterGetroffen;
+window.zeichneRegisterleiste = zeichneRegisterleiste;
+window.zeichneInfoLeiste = zeichneInfoLeiste;
+window.reiterGetroffen = reiterGetroffen;
 window.legendenLeisteHoehe = legendenLeisteHoehe;
-window.zeichneKreisErklaerung = zeichneKreisErklaerung;
 
 })(); // Ende der Modulkapselung, siehe Kommentar oben

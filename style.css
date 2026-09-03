@@ -61,20 +61,16 @@ body {
   pointer-events: none;
 }
 
-/* Erklärungs-Ebene (Klick aufs Kreisgrafik-Icon, siehe zeichneKreisErklaerung
-   in kreisgrafik.js): Der Schleier liegt im Canvas — alles DOM darüber stünde
-   sonst unverschleiert im Bild. Auf der Bühne trifft es jedes Kind ausser dem
+/* Register «Info» ganz ausgefahren (zeichneInfoLeiste in kreisgrafik.js):
+   Die dunkle Fläche liegt im Canvas — alles DOM darüber stünde sonst
+   unverdeckt im Bild. Auf der Bühne trifft es jedes Kind ausser dem
    Canvas selbst (Begleit- und Einstiegstexte, Annotationsbox, Marker),
    dazu die fixen Bedienelemente daneben. pointer-events aus, damit jeder
-   Klick bei p5 ankommt und die Ebene wieder schliesst.
+   Klick bei p5 ankommt und das Register wieder zufährt.
 
    ACHTUNG visibility statt opacity: draw() schreibt die Deckkraft der
    Begleit- und Einstiegstexte jeden Frame als Inline-Stil: eine
    opacity-Regel im Stylesheet käme dagegen nicht an. */
-body.erklaerung-offen #scrollyStage > *:not(canvas),
-body.erklaerung-offen #kapitelRegister,
-body.erklaerung-offen #scrollFortschritt,
-body.erklaerung-offen #grafikPlayButton,
 body.projekttext-offen #scrollyStage > *:not(canvas),
 body.projekttext-offen #kapitelRegister,
 body.projekttext-offen #scrollFortschritt,
@@ -610,7 +606,7 @@ h2 {
 /* =========================
    9c) Projekttext-Einblender und das geteilte Schliesskreuz
 
-   Die dunkle Fläche selbst liegt im Canvas (zeichneSchleier in
+   Die dunkle Fläche selbst liegt im Canvas (zeichneInfoLeiste in
    kreisgrafik.js) — hier steht nur der Text darauf. Der Container fängt
    bewusst KEINE Klicks (pointer-events: none), damit ein Klick neben den
    Text bei p5 ankommt und den Einblender schliesst; nur die Textspalte
@@ -658,9 +654,8 @@ h2 {
   margin-top: 1.1em;
 }
 
-/* Ein Kreuz für beide Einblender. Oben LINKS, weil oben rechts die beiden
-   Icons stehen, die sie öffnen. Die Farbe folgt dem offenen Einblender:
-   dunkel auf der hellen Legendenfläche, hell auf dem dunklen Projekttext. */
+/* Kreuz zum Schliessen des Projekttextes. Oben LINKS, weit weg von den
+   Reitern am unteren Rand. Hell auf dem dunklen Grund des Registers. */
 .einblender-schliessen {
   position: fixed;
   top: 28px;
@@ -670,10 +665,10 @@ h2 {
   z-index: 23;
   border: none;
   border-radius: 50%;
-  background: rgba(33, 43, 46, 0.08);
+  background: rgba(226, 230, 225, 0.14);
   font-size: 22px;
   line-height: 1;
-  color: #212B2E;
+  color: #E2E6E1;
   cursor: pointer;
   opacity: 0;
   visibility: hidden;
@@ -686,15 +681,6 @@ h2 {
 }
 
 .einblender-schliessen:hover {
-  background: rgba(33, 43, 46, 0.18);
-}
-
-body.projekttext-offen .einblender-schliessen {
-  background: rgba(226, 230, 225, 0.14);
-  color: #E2E6E1;
-}
-
-body.projekttext-offen .einblender-schliessen:hover {
   background: rgba(226, 230, 225, 0.28);
 }
 

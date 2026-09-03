@@ -238,15 +238,15 @@ eigenen Header-Abschnitt aus.
 |---|---|---|---|---|
 | 1 | `datenbereinigung.js` | 472 | `bereinigeStationenDaten`, `baueSpineDaten`, `sammleAnnotationenNachOrtBasis`, `zaehleBandCounts`, `zaehleAnnotationenLiveNachOrtBasis`, `ortRunsFuerSpine`, `ortRunSichtbar`, `kreisRadius`, `groessterKreisRadius`, `hexZuRgb` | `KREIS_KATEGORIEN`, `SCROLL_MEILENSTEINE`, `ROUTE_COLOR_RGB`, `FWERT_COLOR`/`FWERT_COLOR_RGB`, `FWERT_PUNKTGROESSE`, `FWERT_PUNKT_DURCHMESSER`, beide `FOTO_MARKER_*_RGB`, `KAPITEL_MIT_SPINE_PANEL`, `WOHNUNG_SAMMELPUNKT_ANKER`, `SCHRIFT_SANS`/`SCHRIFT_SERIF`, `hexZuRgb`/`rgbZuHex`, die Legendenbegriffe aus dem PDF (`WAHRNEHMUNG_LABELS`, `LEGENDE_BLOCK_TITEL`, `LEGENDE_KREISGROESSE`, `LEGENDE_VALENZ`, `LEGENDE_ORTSBESCHRIFTUNG`, `LEGENDE_TITEL`/`LEGENDE_UNTERTITEL`) — **gekapselt**, 39 Exporte. Intern: alle drei `GEDANKEN_*`, die übrigen drei `WOHNUNG_*`, die beiden Fotomarker-Hexwerte und `valenzBucket` |
 | 2 | `geo-projektion.js` | 96 | `lonLatToScreen`, `coverCrop`, `cropToBbox`, `bboxToImgCrop`, `passeBboxInRahmen` | `startBbox`, `uebersichtBbox`, `ch1ImgBbox`, `UEBERSICHT_SCHNITT_BBOX`, `mapOffsetX`, `mapOffsetY` |
-| 3 | `kreisgrafik.js` | 1046 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `zeichneKreisLabels`, `zeichneDemoKreisgrafik`, `zeichneProjekttextIkon`, `zeichneKreisErklaerung`, `zeichneSchleier`, `demoIkonGetroffen`, `projekttextIkonGetroffen`, `kategorieZeileGetroffen`, `leereBandCounts` | **gekapselt**, 12 Exporte; die übrigen 86 Namen (u. a. `HATCH_SPACING`, `schraffiere`, alle `DEMO_*`, `IKON_*`, `LEGENDE_*` und `ERKLAERUNG_*`) sind modulintern. Beherbergt seit dem Onboarding-Umbau auch den vierstufigen Legendenaufbau (`demoLegende` und seine vier Zeichenroutinen). Beherbergt auch das zweite Icon (Kreis mit Textzeilen): es teilt sich Zeile und Treffertest mit dem Kreisgrafik-Icon |
-| 4 | `kartendekor.js` | 312 | `zeichneRoute`, `zeichneMassstabsleiste`, `zeichneWindrose` | — **gekapselt**, 3 Exporte; intern `haversineMeter`, `MASSSTAB_SCHRITTE`, der Routenpuffer und seine Helfer (`routenPufferBereit`, `routenStufenZuege`, `routenStufenAlpha`, alle `ROUTE_*`). `zeichneWindrose` hat derzeit keinen Aufrufer: der Aufruf in `draw()` ist auskommentiert, oben rechts steht das Kreisgrafik-Icon |
+| 3 | `kreisgrafik.js` | 1164 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `zeichneKreisLabels`, `zeichneDemoKreisgrafik`, `zeichneSchleier`, `kategorieZeileGetroffen`, `zeichneRegisterleiste`, `zeichneInfoLeiste`, `reiterGetroffen`, `legendenLeisteHoehe`, `leereBandCounts` | **gekapselt**, 12 Exporte; die übrigen Namen (u. a. `HATCH_SPACING`, `schraffiere`, alle `DEMO_*`, `LEGENDE_*` und `LEISTE_*`) sind modulintern. Beherbergt seit dem Onboarding-Umbau auch den neunstufigen Legendenaufbau (`demoLegende` und seine Zeichenroutinen) und beide Register am unteren Rand |
+| 4 | `kartendekor.js` | 312 | `zeichneRoute`, `zeichneMassstabsleiste`, `zeichneWindrose` | — **gekapselt**, 3 Exporte; intern `haversineMeter`, `MASSSTAB_SCHRITTE`, der Routenpuffer und seine Helfer (`routenPufferBereit`, `routenStufenZuege`, `routenStufenAlpha`, alle `ROUTE_*`). `zeichneWindrose` hat derzeit keinen Aufrufer: der Aufruf in `draw()` ist auskommentiert |
 | 5 | `ortsveraenderung.js` | 489 | `zeichneOrtsveraenderung` | **Zwei Exporte**: die Zeichenfunktion und `OV_KAPITEL_ZAHL`, aus der `spine-horizontal.js` die Abspieldauer rechnet. Die Ansicht bringt Reihenfolge, Linienlayout und gemeinsame Kreis-Skala (`ovBerechneLayout`) selbst mit, `draw()` übergibt nur `grafikFortschritt`. Alles Übrige ist modulintern |
 | 6 | `spine-horizontal.js` | 363 | `zeichneSpineHorizontal`, `toggleGrafikPlay`, `setzeKapitelAnsichtModus`, `setzeGrafikZurueck`, `stelleSpineDatenBereit`, `spineEintraegeFuer`, `aktuelleGrafikAnimationDauer`, `aktualisiereGrafikFortschritt` | `grafikSpielt`, `grafikFortschritt`, `grafikPlayAusblendStart` (Lesebindungen) — **gekapselt**, intern: beide Spine-Caches, alle `SPINE_*`, `spineLayout` |
 | 7 | `fotomarker.js` | 116 | `zeichneFotoMarker`, `merkeKartenlage`, `oeffneFotoPopup`, `schliesseFotoPopup` | `fotoMarkerListe`, `letzteActiveBbox`, `letzterFotoOffsetX/Y`, `FOTO_MARKER_TREFFER_RADIUS`. Zeichnet einen Punkt mit hellem Kern; Grösse abgeleitet aus `FWERT_PUNKT_DURCHMESSER`, Beschriftung über `zeichneKreisLabels` |
 | 8 | `annotationsbox.js` | 106 | `annotationBoxPosition` | `ANNOTATION_BOX_POSITIONEN` — **gekapselt**, intern u. a. `annotationBoxPositionCache` |
 | 9 | `dom-aufbau.js` | 107 | `baueKapitelRegister`, `baueKartenMarkierungen`, `baueStationsMarker`, `baueZwischenMarker` | — (baut nur DOM, hält keinen Zustand) |
 | 10 | `uebersichtsrouten.js` | 411 | `zeichneUebersichtsrouten`, `kapitelScheiben`, `aktualisiereKapitelZoom`, `springeZuKapitelZoom`, `scrolleZuKapitel1`, `waehleAnsichtsModus` | `zoomedKapitel`, `kapitelZoomAmount`, `kapitelHover` (alle drei als Lesebindung) — **gekapselt**, intern u. a. `kapitelHitze`, `oeffneKapitelZoom`, `scheibenCache` |
-| 11 | `sketch.js` | 890 | `preload`, `setup`, `draw`, `mousePressed`, `windowResized`, `datenFuerKapitel`, `kapitelHatEigeneAnsicht`, `setzeAnsichtsModus`, `starteKapitelEinstieg` | `stationenData`, `uebersichtsRouten`, `kapitelAnsichtsModus`, `kreisErklaerungOffen` (Zustand der Erklärungs-Ebene), 8 DOM-Handles (als Lesebindung) — **gekapselt**, intern u. a. `kapitelKarten`, `bgImage`/`bgImage2`/`ch1Image`, die übrigen DOM-Handles |
+| 11 | `sketch.js` | 892 | `preload`, `setup`, `draw`, `mousePressed`, `windowResized`, `datenFuerKapitel`, `kapitelHatEigeneAnsicht`, `setzeAnsichtsModus`, `starteKapitelEinstieg` | `stationenData`, `uebersichtsRouten`, `kapitelAnsichtsModus`, `kapitel1Geklemmt`/`kapitel1ZoomAmount`, 9 DOM-Handles (als Lesebindung) — **gekapselt**, intern u. a. `kapitelKarten`, `bgImage`/`bgImage2`/`ch1Image`, der Zustand beider Register (`legendenLeisteOffen`, `legendeAus`, `infoAus`) |
 | 12 | `sonifikation.js` | 737 | `spieleSonifikationFuer`, `beendeSonifikationAudio` | `SONIFIKATION_GESAMTDAUER_SEK`, `sonifikationSpieltGerade` (als Lesebindung) — **gekapselt**, die übrigen 17 Namen (u. a. `baueSpielplan`, `baueGainFolge`, `sonifikationDaten`) sind modulintern |
 
 `dom-aufbau.js` ist das einzige Modul ohne eigene Top-Level-Variablen: es baut
@@ -362,21 +362,23 @@ Weg über das Schliesskreuz die blanke Karte, bis man bis zur Klemme
 durchgescrollt hätte. Die Marke begrenzt nur, wie weit das Panel den Scroll
 für sich behält.
 
-**Zwei Einblender, ein Mechanismus.** Beide legen dieselbe Fläche über die
-Ansicht (`zeichneSchleier`) und werden vom selben Klickpfad in `mousePressed()`
-geschaltet; unterschiedlich sind nur Farbe und Inhalt. Die Legende beschriftet
-hell die echte Kreisgrafik im Canvas, der Projekttext legt dunkel auf und zeigt
-darauf die DOM-Textfläche `#projekttext` — Prosa bleibt im DOM, wo im Projekt
-alle Prosa liegt. Der Projekttext hat zwei Wege hinein (automatisch am Ende der
-Route, jederzeit über sein Icon) und trägt deshalb zwei Merker: `projekttextPerIkon`
-und `projekttextWeggeklickt`; `projekttextOffen` wird je Frame daraus abgeleitet.
+**Zwei Register am unteren Rand, ein Mechanismus.** Beide Reiter stehen
+nebeneinander rechts unten und fahren ihre Fläche von unten herauf.
+«Legende» bringt einen 158 px flachen Balken mit den fünf Gruppen der Legende,
+«Info» fährt über die ganze Seite und trägt am Ende die DOM-Textfläche
+`#projekttext` — Prosa bleibt im DOM, wo im Projekt alle Prosa liegt. Der
+Ausfahrgrad liegt in `sketch.js` als `legendeAus` und `infoAus` (0..1), je
+Frame über `naehereRegister()` an den Sollwert herangeführt; die Reiter reiten
+auf der Oberkante des Legendenbalkens, die Info-Fläche deckt sie beim
+Ausfahren mit zu. Gezeichnet wird zuletzt und in dieser Reihenfolge:
+`zeichneRegisterleiste(legendeAus)`, dann `zeichneInfoLeiste(infoAus)`.
 
-**Die Erklärungs-Ebene der Kreisgrafik** zeigt überall dasselbe: den
-Demo-Kreis mit dem vollständigen Legendenaufbau. `zeichneKreisErklaerung()`
-legt den Schleier auf und ruft `zeichneDemoKreisgrafik()` — sie erklärt die
-Bauweise der Grafik, nicht einen einzelnen Ort, und hängt deshalb an nichts,
-was gerade im Bild steht. `sketch.js` hält nur den Auf/Zu-Zustand
-(`kreisErklaerungOffen`) und ruft `demoIkonGetroffen()` in `mousePressed()`.
+Der Projekttext hat zwei Wege hinein (automatisch am Ende der Route, jederzeit
+über den Reiter «Info») und trägt deshalb zwei Merker: `projekttextPerRegister`
+und `projekttextWeggeklickt`; `projekttextOffen` wird je Frame daraus
+abgeleitet und ist zugleich der Sollwert für `infoAus`. Text, Schliesskreuz und
+die Sperre der DOM-Ebene (`body.projekttext-offen`) hängen dagegen an
+`infoAus > 0.99` — sie erscheinen erst auf der ganz ausgefahrenen Fläche.
 
 **Die drei Kategorienzeilen der Legende sind anklickbar** und spielen ihren
 Klang vor. `zeichneLegendenBlock()` merkt sich dafür je Frame ihre Flächen,
@@ -386,8 +388,9 @@ Klammern beim Label und kommt aus derselben Quelle wie der Klang selbst
 (`ELEMENT_INSTRUMENTE`).
 
 **ACHTUNG** die Flächen werden je Frame beim ERSTEN Eintrag geleert, nicht
-beim Zeichnen des Blocks: `demoLegende()` läuft zweimal pro Frame, wenn die
-Erklärung offen ist — einmal für sie, einmal für das Icon oben rechts.
+beim Zeichnen des Blocks: `zeichneLegendenBlock()` läuft zweimal pro Frame,
+wenn der Legendenbalken während des Onboardings offen ist — einmal für ihn,
+einmal für die Legende im Bild.
 
 **Der Legendenaufbau im Onboarding** ist davon getrennt: `demoLegende()` baut
 die Legende nach `docs/topografie-der-gefuehle-grafik.pdf` in **neun Stufen**
@@ -417,13 +420,12 @@ grösseren Kreis ergäbe — alle drei Zustände sollen denselben Aussenradius h
 
 **ACHTUNG** die Stufen kommen monoton in `zeichneDemoKreisgrafik()` an, der
 Schleier getrennt daneben: er blendet am Ende nur die Beschriftungen weg. Wären
-beide verrechnet, fiele das Icon oben rechts auf den schlichten Streifenkreis
-der ersten Stufe zurück.
+beide verrechnet, fiele der Kreis beim Ausblenden auf den schlichten
+Streifenkreis der ersten Stufe zurück.
 
 Der Kopf (`zeichneLegendenTitel()`, «TOPOGRAFIE DER GEFÜHLE / Legende») bekommt
 seine Lage vom Aufrufer. Im Legendenaufbau steht er drei Zeilen über «Positive
-Wahrnehmung» und linksbündig zu dieser Beschriftung. In der Erklärungs-Ebene
-sitzt er links am Rand unterhalb des Schliessknopfs, den sie dort einblendet.
+Wahrnehmung» und linksbündig zu dieser Beschriftung.
 
 **Alle Canvas-Beschriftungen tragen dieselbe Schrift**: `beschriftungsSchrift()`
 setzt `SCHRIFT_SANS` in `LABEL_GROESSE` und Fettschnitt — dieselben Werte wie

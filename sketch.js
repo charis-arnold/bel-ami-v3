@@ -99,35 +99,40 @@ function loeseKapitel1Klemme() {
   kapitel1Geklemmt = false;
 }
 
-// Erklärungs-Ebene über der laufenden Ansicht, geöffnet per Klick aufs
-// Kreisgrafik-Icon oben rechts. Jeder weitere Klick schliesst sie wieder.
-let kreisErklaerungOffen = false;
-
-// Legendenleiste am unteren Fensterrand (docs/Legende.pdf), zweite Fassung
-// derselben Legende. Eingeklappt steht nur ihr Reiter da.
+// Die beiden Register am unteren Fensterrand (docs/Legende.pdf). Eingeklappt
+// stehen nur ihre Reiter da; «Info» deckt ausgefahren alles zu.
 let legendenLeisteOffen = false;
+// Ausfahrgrad 0..1, je Frame an den Sollwert herangeführt.
+let legendeAus = 0;
+let infoAus = 0;
+const REGISTER_TEMPO = 0.18;   // Anteil des Rests je Frame, wie kapitelZoomAmount
 
-// Der Projekttext-Einblender hat zwei Wege hinein: am Ende der Route geht er
-// von selbst auf, und das zweite Icon holt ihn jederzeit zurück. Deshalb zwei
-// Merker statt einem — sonst liesse sich der automatische nicht wegklicken,
-// ohne den per Icon geöffneten mitzuschliessen.
-let projekttextPerIkon = false;   // per Icon geholt, bleibt bis zum nächsten Klick
+// Der Projekttext hat zwei Wege hinein: am Ende der Route geht er von selbst
+// auf, und das Register «Info» holt ihn jederzeit zurück. Deshalb zwei Merker
+// statt einem — sonst liesse sich der automatische nicht wegklicken, ohne den
+// von Hand geöffneten mitzuschliessen.
+let projekttextPerRegister = false; // über den Reiter geholt, bleibt bis zum nächsten Klick
 let projekttextWeggeklickt = false; // der automatische wurde von Hand geschlossen
 let projekttextOffen = false;     // je Frame aus den beiden abgeleitet
-const PROJEKTTEXT_SCHLEIER = '#212B2E';
-const PROJEKTTEXT_SCHLEIER_ALPHA = 0.94;
 
-// Heller Schleier unter dem Legendenaufbau. Derselbe Ton wie die
-// Erklärungs-Ebene in kreisgrafik.js: die helle Karte bleibt darunter als
+// Heller Schleier unter dem Legendenaufbau. Derselbe Ton wie der Grund der
+// Registerleiste in kreisgrafik.js: die helle Karte bleibt darunter als
 // Karte erkennbar, tritt aber hinter die Legende zurück.
 const LEGENDE_SCHLEIER = '#E2E6E1';
 const LEGENDE_SCHLEIER_ALPHA = 0.8;
 
-// Zu heisst je nach Weg etwas anderes: den per Icon geholten einfach wieder
-// weg, den automatischen für diesen Durchlauf abhaken.
+// Zu heisst je nach Weg etwas anderes: den über den Reiter geholten einfach
+// wieder weg, den automatischen für diesen Durchlauf abhaken.
 function schliesseProjekttext() {
-  if (projekttextPerIkon) projekttextPerIkon = false;
+  if (projekttextPerRegister) projekttextPerRegister = false;
   else projekttextWeggeklickt = true;
+}
+
+// Register fahren geglättet aus. Am Ende auf den Sollwert einrasten, sonst
+// bliebe die Fläche für immer knapp unter 1 bzw. knapp über 0 stehen.
+function naehereRegister(wert, ziel) {
+  let neu = lerp(wert, ziel, REGISTER_TEMPO);
+  return Math.abs(ziel - neu) < 0.002 ? ziel : neu;
 }
 
 // Zwei Modi je Kapitel-Ansicht: 'karte' (Ausschnitt und Route) und 'grafik'
@@ -263,7 +268,6 @@ function setup() {
   einblenderSchliessenEl = document.getElementById('einblenderSchliessen');
   haltKlickAuf(einblenderSchliessenEl, () => {
     if (projekttextOffen) schliesseProjekttext();
-    kreisErklaerungOffen = false;
   });
   annotationBoxEl = document.getElementById('annotationBox');
   annotationText = document.getElementById('annotationText');
@@ -285,7 +289,6 @@ function setup() {
   fotoPopup.addEventListener('click', e => { if (e.target === fotoPopup) schliesseFotoPopup(); });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      kreisErklaerungOffen = false;
       schliesseProjekttext();
       schliesseFotoPopup();
       schliesseKapitelZoom();
@@ -485,11 +488,13 @@ function draw() {
   }
 
   let massstabOffsetX = (kapitelCrop && kapitelZoomAmount > 0.5) ? mapOffsetX : kartenOffsetX;
-  // Bei offener Legendenleiste rückt sie in den Balken hinein, wie im PDF.
+  // Beim Ausfahren des Legendenbalkens rückt sie mit hinein, wie im PDF.
+  // Ein Frame Verzug gegenüber legendeAus, das erst weiter unten nachgeführt
+  // wird — bei 60 Bildern in der Sekunde nicht zu sehen.
   zeichneMassstabsleiste(activeBbox, massstabOffsetX,
-    legendenLeisteOffen ? legendenLeisteHoehe() - 40 : 0);
-  // Windrose stillgelegt; der Platz oben rechts gehört jetzt dem
-  // Kreisgrafik-Icon. Zum Wiedereinschalten diese Zeile entkommentieren.
+    Math.max(0, legendenLeisteHoehe(legendeAus) - 40));
+  // Windrose stillgelegt; der Platz oben rechts ist inzwischen frei.
+  // Zum Wiedereinschalten diese Zeile entkommentieren.
   // zeichneWindrose(width - 90, 150, 50, 1);
 
   let routeAmount = constrain(map(progress, SCROLL_MEILENSTEINE.routeStart, SCROLL_MEILENSTEINE.routeEnd, 0, 1), 0, 1);
@@ -557,8 +562,8 @@ function draw() {
     ANNOTATION_BOX_POSITIONEN.forEach(p => annotationBoxEl.classList.toggle('pos-' + p, p === position));
   }
 
-  // Die Icons stehen ab dem Kartenwechsel; ohne sie gibt es auch keine
-  // Einblender. Steht hier oben, weil das Kapitelende darauf aufbaut.
+  // Die Demo-Kreisgrafik steht ab dem Kartenwechsel. Steht hier oben, weil
+  // das Kapitelende darauf aufbaut.
   let demoAlpha = progress < SCROLL_MEILENSTEINE.kartenwechselEnd ? 0 : 1;
 
   // Der Projekttext geht am Ende der Route von selbst auf und bleibt, bis er
@@ -568,9 +573,9 @@ function draw() {
     && progress >= SCROLL_MEILENSTEINE.routeEnd
     && progress < SCROLL_MEILENSTEINE.kapitelEndeStart;
   if (progress < SCROLL_MEILENSTEINE.routeEnd) projekttextWeggeklickt = false;
-  // Ohne Icons keine Einblender: auf Start- und Schlusskarte gibt es beide nicht.
-  if (demoAlpha <= 0.01) { kreisErklaerungOffen = false; projekttextPerIkon = false; }
-  projekttextOffen = projekttextPerIkon || (imProjekttextFenster && !projekttextWeggeklickt);
+  projekttextOffen = projekttextPerRegister || (imProjekttextFenster && !projekttextWeggeklickt);
+  legendeAus = naehereRegister(legendeAus, legendenLeisteOffen ? 1 : 0);
+  infoAus = naehereRegister(infoAus, projekttextOffen ? 1 : 0);
 
   // Kapitelende, in jedem Kapitel: die beiden Klickziele. In 02–18 steht der
   // Scroll dort geklemmt, Kapitel 1 hat dafür seine eigene Strecke zwischen
@@ -751,12 +756,12 @@ function draw() {
   } : null;
   if (fotoMarkerSichtbar) zeichneFotoMarker(activeBbox, fotoOffsetX, fotoOffsetY, fotoHinweis);
 
-  // Demo-Kreisgrafik: wächst über den Erklärungstexten heran, schrumpft mit
-  // dem Zoom auf den Icon-Platz oben rechts und bleibt dort stehen. Ganz
-  // zuletzt gezeichnet, damit das Icon über allen Ansichten liegt — auch
-  // über der Graph-Ansicht, die den Rest des Frames überdeckt.
+  // Demo-Kreisgrafik: wächst über den Erklärungstexten heran und blendet mit
+  // dem Zoom wieder aus, während die Kapitelkarte aufzieht. Ganz zuletzt
+  // gezeichnet, damit sie über allen Ansichten liegt — auch über der
+  // Graph-Ansicht, die den Rest des Frames überdeckt.
   let demoFortschritt = constrain(map(progress, SCROLL_MEILENSTEINE.demoStart, SCROLL_MEILENSTEINE.demoVoll, 0, 1), 0, 1);
-  let demoIkon = constrain(map(progress, SCROLL_MEILENSTEINE.zoomStart, SCROLL_MEILENSTEINE.zoomEnd, 0, 1), 0, 1);
+  let demoAusblenden = constrain(map(progress, SCROLL_MEILENSTEINE.zoomStart, SCROLL_MEILENSTEINE.zoomEnd, 0, 1), 0, 1);
   // Der Schleier ist vor dem Kreis da: er steigt an, während nur der
   // Mittelpunkt mit seiner Ortsbeschriftung dasteht, und geht erst nach dem
   // letzten Legendenschritt wieder weg.
@@ -773,33 +778,25 @@ function draw() {
   let legendeSchritte = demoGruppenTexte.map(el =>
     legendenSchrittDeckkraft(progress, parseFloat(el.dataset.von), parseFloat(el.dataset.bis)));
 
-  // Die Leiste liegt unter den beiden Einblendern: ist einer offen, deckt er
-  // sie mit ab, und ihr Reiter ist solange nicht erreichbar.
-  zeichneLegendenLeiste(legendenLeisteOffen);
+  zeichneDemoKreisgrafik(demoFortschritt, demoAlpha * (1 - demoAusblenden),
+    legendeSchritte, legendeSchleier);
 
-  // Beide Ebenen unter die Icons, aber über alles andere: die Icons bleiben
-  // sichtbar, weil sie als Nächstes gezeichnet werden.
-  if (kreisErklaerungOffen) zeichneKreisErklaerung();
-  else if (projekttextOffen) zeichneSchleier(PROJEKTTEXT_SCHLEIER, PROJEKTTEXT_SCHLEIER_ALPHA);
-  document.body.classList.toggle('erklaerung-offen', kreisErklaerungOffen);
-  document.body.classList.toggle('projekttext-offen', projekttextOffen);
-  projekttextEl.classList.toggle('offen', projekttextOffen);
-  einblenderSchliessenEl.classList.toggle('sichtbar', kreisErklaerungOffen || projekttextOffen);
+  // Zuoberst die beiden Register: erst der Legendenbalken, dann die
+  // Info-Fläche, die beim Ausfahren alles zudeckt, die Reiter eingeschlossen.
+  zeichneRegisterleiste(legendeAus);
+  zeichneInfoLeiste(infoAus);
 
-  // Ruhezustand beider Icons ist schwarzgrau, erst der Zeiger holt das Gold.
-  // Auf dem dunklen Schleier des Projekttextes ginge Schwarzgrau unter — dort
-  // zeigt die Kreisgrafik ihre echten Farben, das Textzeichen wird hell.
-  let legendeIkonHover = demoIkonGetroffen(mouseX, mouseY);
-  let projekttextIkonHover = projekttextIkonGetroffen(mouseX, mouseY);
-  zeichneDemoKreisgrafik(demoFortschritt, demoAlpha, legendeSchritte, legendeSchleier, demoIkon,
-    demoIkon > 0.99 && !legendeIkonHover && !projekttextOffen);
-  zeichneProjekttextIkon(demoAlpha * demoIkon, projekttextIkonHover, projekttextOffen);
+  // Die DOM-Ebene geht schon beim Anfahren weg: sie liegt über dem Canvas und
+  // stünde sonst hell auf der heraufziehenden Fläche. Der Text und sein Kreuz
+  // kommen umgekehrt erst, wenn die Fläche ganz oben ist.
+  let infoVoll = infoAus > 0.99;
+  document.body.classList.toggle('projekttext-offen', infoAus > 0.01);
+  projekttextEl.classList.toggle('offen', infoVoll);
+  einblenderSchliessenEl.classList.toggle('sichtbar', infoVoll);
+
   // Nach zeichneUebersichtsrouten, das den Cursor jeden Frame selbst setzt.
-  let leisteBedienbar = !kreisErklaerungOffen && !projekttextOffen;
-  if (legendeIkonHover || projekttextIkonHover
-    || (kreisErklaerungOffen && kategorieZeileGetroffen(mouseX, mouseY))
-    || (leisteBedienbar && legendenReiterGetroffen(mouseX, mouseY))
-    || (leisteBedienbar && legendenLeisteOffen && kategorieZeileGetroffen(mouseX, mouseY))) cursor(HAND);
+  if ((!projekttextOffen && kategorieZeileGetroffen(mouseX, mouseY))
+    || (infoAus < 0.01 && reiterGetroffen(mouseX, mouseY))) cursor(HAND);
 }
 
 // ---------------------------------------------------------------------------
@@ -814,39 +811,23 @@ function draw() {
 // eigenen Listenern.
 
 function mousePressed() {
-  // Zuerst die beiden Icons: ein Klick darauf schaltet direkt um, statt nur
-  // den offenen Einblender zu schliessen. Die beiden schliessen sich aus.
-  if (demoIkonGetroffen(mouseX, mouseY)) {
-    let aufmachen = !kreisErklaerungOffen;
-    if (projekttextOffen) schliesseProjekttext();
-    kreisErklaerungOffen = aufmachen;
-    return;
-  }
-  if (projekttextIkonGetroffen(mouseX, mouseY)) {
-    kreisErklaerungOffen = false;
-    if (projekttextOffen) schliesseProjekttext();
-    else projekttextPerIkon = true;
-    return;
-  }
-  // Sonst fängt ein offener Einblender jeden Klick ab.
-  if (projekttextOffen) { schliesseProjekttext(); return; }
-  // In der Erklärungs-Ebene sind die drei Kategorienzeilen anklickbar: sie
-  // spielen ihren Klang vor, statt die Ebene zu schliessen.
-  if (kreisErklaerungOffen) {
-    let kategorie = kategorieZeileGetroffen(mouseX, mouseY);
-    if (kategorie) spieleKategorieKlang(kategorie);
-    else kreisErklaerungOffen = false;
-    return;
-  }
-  // Reiter und Klangsymbole der Legendenleiste, solange kein Einblender
-  // darüberliegt.
-  if (legendenReiterGetroffen(mouseX, mouseY)) {
-    legendenLeisteOffen = !legendenLeisteOffen;
-    return;
-  }
-  if (legendenLeisteOffen) {
+  // Zuerst die Klangsymbole der Legende. Sie stammen aus zwei Quellen: dem
+  // Legendenaufbau im Onboarding und dem Legendenbalken. Getroffen wird nur,
+  // was in diesem Frame gezeichnet wurde — deshalb reicht eine Prüfung für
+  // beide. Der Projekttext deckt sie zu und geht vor.
+  if (!projekttextOffen) {
     let kategorie = kategorieZeileGetroffen(mouseX, mouseY);
     if (kategorie) { spieleKategorieKlang(kategorie); return; }
+  }
+  // Sonst fängt der offene Projekttext jeden Klick ab.
+  if (projekttextOffen) { schliesseProjekttext(); return; }
+  // Die beiden Reiter. «Info» fährt über alles, deshalb geht der Balken zu.
+  let reiter = reiterGetroffen(mouseX, mouseY);
+  if (reiter === 'legende') { legendenLeisteOffen = !legendenLeisteOffen; return; }
+  if (reiter === 'info') {
+    legendenLeisteOffen = false;
+    projekttextPerRegister = true;
+    return;
   }
   if (kapitelHover === '01') { scrolleZuKapitel1(); return; }
   // ACHTUNG über springeZuKapitelZoom, nicht direkt über oeffneKapitelZoom:
