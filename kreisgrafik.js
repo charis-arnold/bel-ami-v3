@@ -260,17 +260,17 @@ function sammleKreisFormen(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF_PI
   return formen;
 }
 
-// Zwei Ebenen, in beiden gross zuunterst und klein zuoberst: erst alle
-// Schraffuren, dann alle Valenzflächen. Reine Grössenordnung über beide hinweg
-// brachte kleine Schraffuren VOR die Flächen — ihre Linien lagen dann quer
-// über den ausgefüllten Hälften und machten sie unruhig.
+// Eine einzige Reihenfolge, allein nach Grösse: die grössten zuunterst, die
+// kleinsten zuoberst. Schraffuren und Flächen mischen sich dabei — eine kleine
+// Schraffur liegt also vor einer grösseren Fläche. Genau so soll es sein,
+// sonst verschwände eine Kategorie mit wenigen Nennungen unter den Flächen der
+// anderen: Sie hat keine eigene Fläche, wenn ihre Nennungen ohne Valenz sind.
 // ACHTUNG die Liste kommt über ALLE Orte zugleich herein. Ortweise gezeichnet
 // legte die Schraffur des nächsten Ortes sich über die Flächen des vorigen,
 // sobald zwei Kreise einander überlappen — und auf der Karte tun sie das.
 function zeichneKreisFormen(formen) {
-  let ebene = f => f.art === 'schraffur' ? 0 : 1;
   push(); // schreibt direkt in fill-/strokeStyle, siehe ACHTUNG oben
-  formen.sort((a, b) => ebene(a) - ebene(b) || b.r - a.r).forEach(f => {
+  formen.sort((a, b) => b.r - a.r).forEach(f => {
     if (f.art === 'schraffur') drawHatchedCircle(f.cx, f.cy, f.r, rgbZuHex(f.farbe), f.alphaSkala);
     else zeichneHalbkreis(f.cx, f.cy, f.r, f.winkel + (f.art === 'oben' ? HALF_PI : -HALF_PI), f.farbe, f.alphaSkala);
   });

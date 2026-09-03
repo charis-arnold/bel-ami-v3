@@ -32,6 +32,25 @@ let startBbox = { west: 2.221893023741224, east: 2.4280563814466545, south: 48.8
 // QGIS EPSG:3857: X 247907.651 .. 270857.651, Y 6244994.107 .. 6256724.107
 let uebersichtBbox = { west: 2.2269923194085774, east: 2.4331556771226127, south: 48.82366665448583, north: 48.892993566082404 };
 
+// kapitel01-qgis-karte-web.png (Kapitel 1). Die QGIS-Vorlage zeigt ganz Paris
+// im selben Fenster wie die Übersichtskarte. Gespeichert ist aber nur der
+// Ausschnitt um die Place de l'Opéra, dafür in voller Auflösung der Vorlage
+// (3600 × 1800 px, 51 556 px je Längengrad).
+//
+// Warum ausgeschnitten: Kapitel 1 zeigt immer nur dieses Viertel. Auf ganz
+// Paris skaliert hätte dieselbe Dateigrösse dort nur halb so viele Pixel — das
+// Bild wirkte unscharf, sobald es gross gezogen wird.
+// Der Rand ringsum ist Reserve, damit der Ausschnitt bei jedem Fensterformat
+// innerhalb des Bildes bleibt (siehe bboxZuLeinwandCrop unten).
+let ch1ImgBbox = { west: 2.3001939857941989, east: 2.3700206945881144, south: 48.8628664101318222, north: 48.8858350169556459 };
+
+// Das Bild zeigt ganz Paris, Kapitel 1 spielt aber nur im Viertel um die Place
+// de l'Opéra. Diese vier Ränder sagen, welchen Teil des Bildes die
+// Kapitelansicht zeigt — sie sind das Zoomziel. Solange das Kapitelbild selbst
+// nur dieses Viertel enthielt, brauchte es die Angabe nicht.
+// Kleinere Werte für west/east zoomen näher heran, grössere weiter weg.
+const KAPITEL1_AUSSCHNITT = { west: 2.317834413581757, east: 2.352393886019969, south: 48.86683338890839, north: 48.881871498351956 };
+
 // Der Bereich, den beide Übersichtskarten gemeinsam abdecken. Beim Überblenden
 // von der einen auf die andere bleibt der gezeigte Ausschnitt in diesem
 // Bereich. Sonst zeigten die beiden Bilder verschiedene Gegenden und das Bild
@@ -43,14 +62,9 @@ const UEBERSICHT_SCHNITT_BBOX = {
   north: Math.min(startBbox.north, uebersichtBbox.north),
 };
 
-// Die Karte von Kapitel 1 (kapitel01-qgis-karte-web.png). Die Zahlen stimmen
-// nachweislich, aber es ist nicht mehr aufgeschrieben, aus welchem
-// QGIS-Export sie stammen.
-//
 // ACHTUNG die .pgw-Dateien in data-prep/export sehen aus, als gehörten sie zu
-// diesem Bild — sie tun es nicht. Mit ihren Werten läge die ganze Route 1.5 km
-// zu weit östlich. Siehe docs/cleanup-log.md, Schritt 10.
-let ch1ImgBbox = { west: 2.317834413581757, east: 2.352393886019969, south: 48.86683338890839, north: 48.881871498351956 };
+// diesen Bildern — sie tun es nicht. Mit ihren Werten läge die ganze Route
+// 1.5 km zu weit östlich. Siehe docs/cleanup-log.md, Schritt 10.
 
 // Die Karte sitzt nicht mittig im Fenster, sondern 250 px nach links versetzt:
 // rechts steht das Kapitelmenü, links soll trotzdem Paris zu sehen sein.
@@ -111,6 +125,28 @@ function cropToBbox(crop, refBbox, imgW, imgH) {
     north: map(crop.y, 0, imgH, refBbox.north, refBbox.south),
     south: map(crop.y + crop.h, 0, imgH, refBbox.north, refBbox.south),
   };
+}
+
+// Ausschnitt im Bild zu einem Gebiet — aber auf das Seitenverhältnis der
+// Kartenfläche gebracht. Ohne das zöge image() das Bild in die Länge, weil der
+// Ausschnitt eine andere Form hätte als die Fläche, auf die er gezeichnet wird.
+// Ergänzt wird immer die zu kurze Seite, gleichmässig nach beiden Rändern.
+function bboxZuLeinwandCrop(bbox, refBbox, imgW, imgH, offsetX = mapOffsetX) {
+  let crop = bboxToImgCrop(bbox, refBbox, imgW, imgH);
+  let ziel = (width - offsetX) / height;
+  if (crop.w / crop.h < ziel) {
+    let breiter = crop.h * ziel;
+    crop.x -= (breiter - crop.w) / 2;
+    crop.w = breiter;
+  } else {
+    let hoeher = crop.w / ziel;
+    crop.y -= (hoeher - crop.h) / 2;
+    crop.h = hoeher;
+  }
+  // Nicht über den Bildrand hinaus, sonst klemmt image() und verzerrt dabei.
+  crop.x = constrain(crop.x, 0, Math.max(0, imgW - crop.w));
+  crop.y = constrain(crop.y, 0, Math.max(0, imgH - crop.h));
+  return crop;
 }
 
 // Schiebt ein Gebiet so zurecht, dass es ganz in einen erlaubten Rahmen passt,

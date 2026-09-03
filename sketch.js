@@ -409,7 +409,10 @@ function draw() {
   // Spine-Panel beim Ausblenden noch die richtigen Daten zeigt.
   if (zoomedKapitel) letzterZoomKapitel = zoomedKapitel;
   stelleSpineDatenBereit(letzterZoomKapitel);
-  let targetCrop = coverCrop(ch1Image.width, ch1Image.height);
+  // Zoomziel von Kapitel 1: nicht das ganze Kartenbild, sondern der Ausschnitt
+  // um die Place de l'Opéra (KAPITEL1_AUSSCHNITT in geo-projektion.js). Das
+  // Bild zeigt seit dem Neuexport ganz Paris.
+  let targetCrop = bboxZuLeinwandCrop(KAPITEL1_AUSSCHNITT, ch1ImgBbox, ch1Image.width, ch1Image.height);
   let targetBbox = cropToBbox(targetCrop, ch1ImgBbox, ch1Image.width, ch1Image.height);
 
   let progress = getScrollProgress();

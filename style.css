@@ -247,8 +247,8 @@ h2 {
    Bedienschrift oben, damit die Knöpfe nicht auf Registermass schrumpfen. */
 .kapitel-ende-knopf {
   border: none;
-  border-bottom: 1px solid rgba(26, 26, 26, 0.15);
-  background: var(--ink);
+  border-bottom: 1px solid rgba(58, 80, 88, 0.15);
+  background: var(--menue);
   padding: 10px 20px;
   color: #c6d2d7;
   cursor: pointer;
@@ -256,8 +256,8 @@ h2 {
 }
 
 .kapitel-ende-knopf:hover {
-  background: rgba(26, 26, 26, 0.08);
-  color: var(--ink);
+  background: rgba(58, 80, 88, 0.08);
+  color: var(--menue);
 }
 
 /* Kapitel 18 hat kein nächstes Kapitel — dort bleibt nur "Übersicht". */
