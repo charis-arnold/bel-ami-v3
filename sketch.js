@@ -11,6 +11,7 @@
 (function () {
 
 let stage, heroText, begleitTexte, kapitelEinstiegsTexte;
+let scrollHinweisEl; // «Scrollen»: im Intro mit dem Titel, danach zu Beginn jedes Akts
 let demoGruppenTexte; // die neun .begleittext mit data-demo-gruppe — ihre Fenster steuern auch die Stufen des Legendenaufbaus
 let fotoHinweisText;  // der .begleittext mit data-foto-hinweis — sein Fenster und sein Zielmarker steuern den Bedienhinweis an der Karte
 
@@ -57,6 +58,9 @@ function starteKapitelEinstieg() {
 // Annotationen ein. Kurz gehalten — steht der Text einmal, soll ein knapper
 // Scroll genügen. Dasselbe Mass hat der Einstieg von Kapitel 1, dort über
 // data-von/data-bis in index.html.
+// Ausblendweg des «Scrollen»-Hinweises am Anfang eines Akts.
+const SCROLL_HINWEIS_VH = 100;
+
 const KAPITEL_EINSTIEG_HALT_VH = 26;
 const KAPITEL_EINSTIEG_WEG_VH = 59;
 
@@ -288,7 +292,10 @@ function setup() {
   bereinigeEingangsdaten();
 
   stage = document.getElementById('scrollyStage');
-  heroText = document.querySelectorAll('h1, h2, .lead, .scroll-hinweis');
+  // .scroll-hinweis NICHT hier: er hängt nicht mehr allein am Titel, sondern
+  // steht am Anfang jedes Akts wieder da, siehe draw().
+  heroText = document.querySelectorAll('h1, h2, .lead');
+  scrollHinweisEl = document.querySelector('.scroll-hinweis');
   begleitTexte = document.querySelectorAll('.begleittext');
   demoGruppenTexte = [...begleitTexte].filter(el => el.dataset.demoGruppe)
     .sort((a, b) => a.dataset.demoGruppe - b.dataset.demoGruppe);
@@ -764,6 +771,19 @@ function draw() {
   let heroProgress = constrain(map(progress, SCROLL_MEILENSTEINE.heroFadeStart, SCROLL_MEILENSTEINE.heroFadeEnd, 0, 1), 0, 1);
   let heroOpacity = 1 - heroProgress;
   heroText.forEach(el => el.style.opacity = heroOpacity);
+
+  // «Scrollen» steht am Anfang jedes Akts: im Intro mit dem Titel, danach zu
+  // Beginn von Kapitel 1 (ab dem Zoomende), der Kapitel 02–18 und der
+  // Überblickskarte. Es blendet über die ersten SCROLL_HINWEIS_VH aus, sobald
+  // man losscrollt — in der Graph-Ansicht gar nicht, dort treibt der
+  // Play-Knopf und der Hinweis wäre eine falsche Auskunft.
+  let aktAnfang = (zoomedKapitel || inUebersicht)
+    ? SCROLL_MEILENSTEINE.uebersichtRoutenStart : SCROLL_MEILENSTEINE.zoomEnd;
+  let hinweisAkt = (progress < aktAnfang || inKapitelGrafikAnsicht || imOrtsvergleich) ? 0
+    : 1 - constrain((progress - aktAnfang) * SCROLL_TRACK_VH / SCROLL_HINWEIS_VH, 0, 1);
+  scrollHinweisEl.style.opacity = Math.max(heroOpacity, hinweisAkt);
+  // Weiss auf der dunklen Startkarte, danach in der Tinte der Bedienelemente.
+  scrollHinweisEl.classList.toggle('auf-hell', progress >= SCROLL_MEILENSTEINE.kartenwechselEnd);
 
   // Begleittexte: jedes <p class="begleittext"> blendet in seinem eigenen
   // data-von/data-bis-Fenster ein und aus. Neue Texte brauchen kein JS.

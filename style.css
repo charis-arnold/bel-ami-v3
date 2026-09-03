@@ -186,6 +186,14 @@ h2 {
   color: #ffffff;
 }
 
+/* Auf den hellen Karten trägt der Hinweis die Tinte der übrigen
+   Bedienelemente statt des Weiss der dunklen Startkarte. */
+.scroll-hinweis.auf-hell,
+.scroll-hinweis.auf-hell .scroll-hinweis-text,
+.scroll-hinweis.auf-hell .scroll-hinweis-arrow {
+  color: var(--menue);
+}
+
 /* Bedienschrift: der Scrollen-Hinweis, die Kapitelende-Knöpfe und die
    Beschriftung über dem Play-Knopf tragen dieselbe Schrift. Die Farbe steht
    bei jedem einzeln — sie hängt am Untergrund, siehe .kapitel-ende-knopf. */
@@ -194,16 +202,13 @@ h2 {
 .grafik-play-button::before {
   font-family: var(--sans);
   font-size: 14px;
-  font-weight: 300;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .scroll-hinweis-text {
   color: #ffffff;
-  /* Fett statt der 300 aus der Bedienschrift oben, wie die Kapitelende-Knöpfe.
-     Bei der Beschriftung des Play-Knopfs bleibt es bei 300. */
-  font-weight: 700;
 }
 
 /* Kapitelende: zwei Klickziele am Ende jedes Kapitels — weiter ins nächste
@@ -247,9 +252,6 @@ h2 {
   padding: 10px 20px;
   color: #c6d2d7;
   cursor: pointer;
-  /* Fett statt der 300 aus der Bedienschrift oben; die Versalien kommen von
-     dort. Wie die Registereinträge, die ebenfalls fett stehen. */
-  font-weight: 700;
   transition: background 0.2s ease, color 0.2s ease;
 }
 
