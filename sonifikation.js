@@ -15,7 +15,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 19 von 25 Namen intern, 6 exportiert. Konvention: docs/architektur.md.
+// 39 von 46 Namen intern, 7 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 // Dieselben zwei CDN-Quellen, die strudel.cc selbst lädt. @strudel/web bringt

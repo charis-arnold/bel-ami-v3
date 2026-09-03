@@ -1,5 +1,5 @@
 /* =============================================================================
-   kartendekor.js — Route, Massstabsleiste und Windrose
+   kartendekor.js — Route, Massstabsleiste und Fortschrittsleiste
 
    Reine Zeichenroutinen ohne Zugriff auf den Erzählzustand: sie bekommen
    sichtbare Bbox, Kartenoffset, Alpha und beim Routenzug den Endindex als
@@ -8,7 +8,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 10 von 13 Namen intern, 3 exportiert. Konvention: docs/architektur.md.
+// 14 von 17 Namen intern, 3 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 // ---------------------------------------------------------------------------
@@ -93,115 +93,6 @@ function zeichneScrollFortschritt(anteil) {
   drawingContext.fillRect(FORTSCHRITT_RAND, y, breite * constrain(anteil, 0, 1), FORTSCHRITT_HOEHE);
   pop();
 }
-
-// ---------------------------------------------------------------------------
-// Windrose oben rechts. Winkel werden in Grad notiert (0 = Norden) und mit
-// radians(winkel - 90) auf p5s Radiant-Modus und 0°=Osten umgerechnet.
-//
-// ACHTUNG derzeit ohne Aufrufer: der Aufruf in draw() (sketch.js) ist
-// auskommentiert, weil oben rechts das Kreisgrafik-Icon steht. Funktion und
-// Export bleiben absichtlich stehen.
-// ---------------------------------------------------------------------------
-
-function zeichneWindrose(x, y, groesse, alphaMultiplier = 1) {
-  if (alphaMultiplier <= 0) return;
-
-  const zinkgrau = '#9DA69D';
-  const kalksteinCreme = '#212B2E';
-  const schmiedeeisenSchwarz = '#9DA69D';
-  const cafeRot = '#212B2E';
-  const messingGold = '#212B2E';
-
-  // Zweigeteilter Zacken. winkel: 0 = Norden, im Uhrzeigersinn.
-  function zeichneZacke(winkel, radius, basisBreite, farbeLinks, farbeRechts) {
-    const w = radians(winkel - 90);
-    const spitzeX = radius * cos(w);
-    const spitzeY = radius * sin(w);
-    const basis1X = basisBreite * cos(w + HALF_PI);
-    const basis1Y = basisBreite * sin(w + HALF_PI);
-    const basis2X = basisBreite * cos(w - HALF_PI);
-    const basis2Y = basisBreite * sin(w - HALF_PI);
-    
-
-    // Helle Kontur, sonst wirkt die Zacke auf der dunklen Startkarte
-    // einseitig — die dunkle Hälfte verschwindet.
-    stroke('#9DA69D');
-    strokeWeight(0.75);
-    fill(farbeLinks);
-    triangle(0, 0, spitzeX, spitzeY, basis1X, basis1Y);
-    fill(farbeRechts);
-    triangle(0, 0, spitzeX, spitzeY, basis2X, basis2Y);
-  }
-
-  push();
-  drawingContext.globalAlpha = alphaMultiplier;
-  translate(x, y);
-
-  const rHaupt = groesse;
-  const rNeben = groesse * 0.6;
-
- // Äussere Ringe
-  noStroke();
-  fill(226, 230, 225, 40); // #E2E6E1, sehr leicht
-  circle(0, 0, rHaupt * 2 + 20);
-  circle(0, 0, rHaupt * 2);
-
-  // Haupt-Zacken: Nord, Ost, Süd, West
-  const richtungenHaupt = [
-    { winkel: 0, farbeLinks: cafeRot, farbeRechts: schmiedeeisenSchwarz },
-    { winkel: 90, farbeLinks: kalksteinCreme, farbeRechts: schmiedeeisenSchwarz },
-    { winkel: 180, farbeLinks: kalksteinCreme, farbeRechts: schmiedeeisenSchwarz },
-    { winkel: 270, farbeLinks: kalksteinCreme, farbeRechts: schmiedeeisenSchwarz },
-  ];
-  const breite = groesse * 0.08;
-  richtungenHaupt.forEach(r => zeichneZacke(r.winkel, rHaupt, breite, r.farbeLinks, r.farbeRechts));
-
-  // Neben-Zacken: NO, SO, SW, NW
-  const richtungenNeben = [45, 135, 225, 315];
-  const breiteNeben = groesse * 0.05;
-  richtungenNeben.forEach(w => zeichneZacke(w, rNeben, breiteNeben, messingGold, zinkgrau));
-
-  // Zentrum
-  stroke(messingGold);
-  strokeWeight(1);
-  fill(kalksteinCreme);
-  circle(0, 0, groesse * 0.18);
-  noStroke();
-  fill(schmiedeeisenSchwarz);
-  circle(0, 0, groesse * 0.05);
-
-  // Eigene Farbe, weil die Zacken-Konstanten dafür zu hell sind.
-  // fillText direkt: p5s text() bleibt bei Animation manchmal unsichtbar.
-  function zeichneBeschriftung(label, x, y) {
-    drawingContext.fillText(label, x, y);
-  }
-
-  const beschriftungsFarbe = '#A4860A';
-  noStroke();
-  fill(beschriftungsFarbe);
-  textAlign(CENTER, CENTER);
-  textSize(groesse * 0.2);
-  textFont(SCHRIFT_SANS);
-  textStyle(BOLD);
-  zeichneBeschriftung('N', 0, -rHaupt - 16);
-  zeichneBeschriftung('O', rHaupt + 16, 0);
-  zeichneBeschriftung('S', 0, rHaupt + 16);
-  zeichneBeschriftung('W', -rHaupt - 16, 0);
-
-  // Dieselbe -90-Ausrichtung wie die Zacken, sonst landet "NO" auf SO.
-  fill(beschriftungsFarbe);
-  textSize(groesse * 0.1);
-  const offsetNeben = rNeben + 14;
-  richtungenNeben.forEach((w, i) => {
-    const label = ['NO', 'SO', 'SW', 'NW'][i];
-    const a = radians(w - 90);
-    zeichneBeschriftung(label, offsetNeben * cos(a), offsetNeben * sin(a));
-  });
-
-  pop();
-}
-
-
 
 // ---------------------------------------------------------------------------
 // Die Route: eine Farbe, nach hinten verblassend. Gezeichnet wird in einen
@@ -335,7 +226,6 @@ function zeichneRoute(punkte, upToIndex, bbox, strichstaerke = 2, offsetX = mapO
 // Drei Zeichenfunktionen. Leser: docs/architektur.md.
 window.zeichneMassstabsleiste = zeichneMassstabsleiste;
 window.zeichneScrollFortschritt = zeichneScrollFortschritt;
-window.zeichneWindrose = zeichneWindrose;
 window.zeichneRoute = zeichneRoute;
 
 })(); // Ende der Modulkapselung, siehe Kommentar oben

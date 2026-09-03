@@ -6,7 +6,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 14 von 53 Namen intern, 39 exportiert. Konvention: docs/architektur.md.
+// 14 von 54 Namen intern, 40 exportiert. Konvention: docs/architektur.md.
 // ACHTUNG Skript 1 in index.html. kreisgrafik.js liest hexZuRgb beim Laden
 // — diese Datei nach hinten schieben bricht kreisgrafik.js.
 (function () {
@@ -34,8 +34,8 @@ function hexZuRgb(hex) {
 const ROUTE_COLOR_RGB = hexZuRgb(ROUTE_COLOR);
 
 // Gegenrichtung: r/g/b-Tripel zu Hexstring. Nötig, wo eine Farbe als String
-// gebraucht wird — der CSS-Verlauf der Annotationsleiste, der strokeStyle des
-// Icons, drawHatchedCircle.
+// gebraucht wird — der CSS-Verlauf der Annotationsleiste und
+// drawHatchedCircle.
 function rgbZuHex(rgb) {
   return '#' + rgb.map(v => Math.round(v).toString(16).padStart(2, '0').toUpperCase()).join('');
 }
@@ -131,7 +131,7 @@ const KREIS_KATEGORIEN = [
 ];
 
 // Dieselben drei Farben als Hexstrings, für die Aufrufer, die keine Tripel
-// nehmen (Annotationsleiste in sketch.js, Icon in kreisgrafik.js).
+// nehmen (Annotationsleiste in sketch.js, Legendenzeilen in kreisgrafik.js).
 // ACHTUNG abgeleitet, nicht zweitgeschrieben: als eigene Liste driften die
 // beiden Schreibweisen auseinander, sobald jemand nur eine davon anfasst.
 const CATEGORY_COLORS = Object.fromEntries(
@@ -271,7 +271,7 @@ const SCROLL_MEILENSTEINE = {
   // GEÖFFNETES Kapitel hält sich nicht daran: sein Akt beginnt zwar ebenfalls
   // auf uebersichtRoutenStart, endet aber dort, wo ihm der Takt seine
   // Annotationen zumisst (kapitelAktEnde in sketch.js) — Kapitel 05 nach
-  // 31581vh, Kapitel 14 nach 6640vh. Die Strecke ist so lang, dass das längste
+  // 31581vh, Kapitel 14 nach 6638vh. Die Strecke ist so lang, dass das längste
   // Kapitel hineinpasst.
 
   // ACHTUNG uebersichtRoutenStart ist zugleich die Klemme am Ende von

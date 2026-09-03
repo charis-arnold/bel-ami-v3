@@ -8,7 +8,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 86 von 98 Namen intern, 12 exportiert. Konvention: docs/architektur.md.
+// 103 von 116 Namen intern, 13 exportiert. Konvention: docs/architektur.md.
 // ACHTUNG Ladezeit: hexZuRgb() und baueDemoAnnotationen() laufen schon in der
 // IIFE — diese Datei muss nach datenbereinigung.js stehen, sonst ReferenceError.
 // p5s Konstanten (PI, HALF_PI) gibt es hier noch nicht, die setzt p5 erst beim
@@ -33,11 +33,6 @@ const LABEL_ABSTAND = 4;
 // die Kategorienzeile der Annotationsbox ist DOM, nicht Canvas. Wird der Wert
 // hier geändert, muss er dort mit, sonst laufen die beiden auseinander.
 const LABEL_GROESSE = 13;
-
-// ACHTUNG gehört zur stillgelegten neutralen Vollfläche in
-// zeichneKreiseFuerRun und hat solange keinen Leser. Bleibt stehen, weil der
-// Aufruf nur auskommentiert ist — wie zeichneWindrose in kartendekor.js.
-const NEUTRAL_DAEMPFUNG = 0.35;
 
 // ---------------------------------------------------------------------------
 // Kreise
@@ -207,20 +202,6 @@ function zeichneHalbkreis(cx, cy, r, winkelMitte, farbeRgb, alphaSkala = 1) {
   pop();
 }
 
-// Neutral hat keine Seite, deshalb ganze Fläche statt Halbkreis.
-// ACHTUNG derzeit ohne Aufrufer, siehe die stillgelegte neutrale Vollfläche in
-// zeichneKreiseFuerRun.
-function zeichneVollkreis(cx, cy, r, farbeRgb, alphaSkala = 1) {
-  if (r <= 0) return;
-  push();
-  let ctx = drawingContext;
-  ctx.fillStyle = `rgba(${farbeRgb[0]}, ${farbeRgb[1]}, ${farbeRgb[2]}, ${alphaSkala})`;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, TWO_PI);
-  ctx.fill();
-  pop();
-}
-
 // winkel: feste Basis der Valenz-Teilung (PI für Karte/Graph, Default
 // -HALF_PI für die Ortsveränderung). radiusSkala/maxRadius nur dort genutzt.
 
@@ -248,9 +229,9 @@ function sammleKreisFormen(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF_PI
     let posR = kreisRadius(bc.pos || 0, maxRadius) * radiusSkala;
     if (negR > 0) neu('unten', negR, k.farbe);
     if (posR > 0) neu('oben', posR, k.farbe);
-    // Die neutrale Vollfläche ist stillgelegt: sie legte sich als geschlossene
-    // Scheibe über beide Hälften und machte die Mitte unlesbar. Neutrales zählt
-    // weiterhin in die Schraffur und damit in den Aussenradius.
+    // Neutrale Nennungen bekommen keine eigene Fläche. Als ganzer Kreis legten
+    // sie sich über beide Hälften und machten die Mitte unlesbar. Gezählt
+    // werden sie trotzdem: in der Schraffur, und damit in der Kreisgrösse.
   });
 
   (nurHaelften || []).forEach(e => {
@@ -327,7 +308,7 @@ const FWERT_PUNKT_LUECKE = 2;       // Mindestabstand zwischen benachbarten Punk
 
 // Mitte des 120°-Drittels je Valenzgruppe: neg unten, pos oben, neutral rechts.
 // Einzige Quelle dieser Konvention — zeichneFwertPunkte() setzt die Punkte
-// danach, demoBeschriftungen() zeigt mit den Hilfslinien darauf.
+// danach, und der Wahrnehmungsbogen der Legende zeigt auf dieselben Stellen.
 // Math.PI statt HALF_PI: siehe ACHTUNG zur Ladezeit oben.
 // Jede Valenzgruppe bekommt einen Bogenabschnitt von 100°, dazwischen 20°
 // Luft — 3 × 100° + 3 × 20° ergeben die vollen 360°. Neutral zeigt nach
@@ -447,10 +428,11 @@ const LEGENDE_TINTE = '#3A5058';
 // Lage der Kategorienzeilen im Legendenblock. Der Legendenaufbau und die
 // Registerleiste tragen sie ein, siehe kategorieZeileGetroffen().
 
-// ACHTUNG je Frame beim ERSTEN Eintrag leeren, nicht beim Zeichnen des Blocks:
-// demoLegende() läuft zweimal pro Frame, wenn die Erklärung offen ist — einmal
-// für sie, einmal für das Icon oben rechts. Ein Zurücksetzen im zweiten Lauf
-// löschte die Flächen, bevor mousePressed() sie sehen kann.
+// ACHTUNG die Liste wird je Frame beim ERSTEN Eintrag geleert, nicht beim
+// Zeichnen des Blocks. Der Block wird nämlich zweimal pro Frame gezeichnet,
+// wenn der Legendenbalken während des Onboardings offen ist — einmal für den
+// Balken, einmal für die Legende im Bild. Beim zweiten Mal geleert, wären die
+// Flächen weg, bevor mousePressed() sie lesen kann.
 let letzteKategorieZeilen = [];
 let kategorieZeilenFrame = -1;
 

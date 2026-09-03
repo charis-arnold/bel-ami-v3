@@ -7,7 +7,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 39 von 67 Namen intern, 28 exportiert. Konvention: docs/architektur.md.
+// 58 von 88 Namen intern, 30 exportiert. Konvention: docs/architektur.md.
 (function () {
 
 let stage, heroText, begleitTexte, kapitelEinstiegsTexte;
@@ -570,9 +570,6 @@ function draw() {
   // wird — bei 60 Bildern in der Sekunde nicht zu sehen.
   zeichneMassstabsleiste(activeBbox, massstabOffsetX,
     Math.max(0, legendenLeisteHoehe(legendeAus) - 80));
-  // Windrose stillgelegt; der Platz oben rechts ist inzwischen frei.
-  // Zum Wiedereinschalten diese Zeile entkommentieren.
-  // zeichneWindrose(width - 90, 150, 50, 1);
 
   let routeAmount = constrain(map(progress, SCROLL_MEILENSTEINE.routeStart, SCROLL_MEILENSTEINE.routeEnd, 0, 1), 0, 1);
 
@@ -869,8 +866,8 @@ function draw() {
   // Monoton: jeder Schritt blendet mit seinem Erklärungstext ein und bleibt
   // dann stehen. Der Schleier geht getrennt davon in zeichneDemoKreisgrafik
   // ein — er nimmt am Ende die Beschriftungen mit, nicht aber die
-  // Differenzierung des Kreises. Sonst fiele das Icon oben rechts auf den
-  // schlichten Streifenkreis der ersten Stufe zurück.
+  // Differenzierung des Kreises. Sonst fiele die Grafik beim Ausblenden auf
+  // den schlichten Streifenkreis der ersten Stufe zurück.
   let legendeSchritte = demoGruppenTexte.map(el =>
     legendenSchrittDeckkraft(progress, parseFloat(el.dataset.von), parseFloat(el.dataset.bis)));
 
@@ -913,10 +910,10 @@ function draw() {
 // ---------------------------------------------------------------------------
 // Klicks auf dem Canvas
 // ---------------------------------------------------------------------------
-// Drei anklickbare Familien: Icons (kreisgrafik.js), Kapitel-Startpunkte
-// (uebersichtsrouten.js), Fotomarker (fotomarker.js). Sieben Prüfungen, der
-// erste Treffer gewinnt. Die Startpunkte bringen ihren Treffer als
-// kapitelHover schon mit, die anderen beiden nur ihre Lage.
+// Vier anklickbare Familien: die Klangsymbole der Legende und die beiden
+// Reiter (kreisgrafik.js), die Kapitel-Startpunkte (uebersichtsrouten.js) und
+// die Fotomarker (fotomarker.js). Der erste Treffer gewinnt. Die Startpunkte
+// bringen ihren Treffer als kapitelHover schon mit, die anderen nur ihre Lage.
 
 // Nicht hier: Kapitelregister (dom-aufbau.js) und Play-Knopf sind HTML mit
 // eigenen Listenern.

@@ -14,13 +14,13 @@ Neun der zwölf Module sind gekapselt und geben nur die genannten Namen über
 | Modul | Exporte |
 |---|---|
 | `datenbereinigung.js` | 40 |
-| `sketch.js` | 29 (11 Wert, 13 Lesebindung, **5 p5-Hooks**) |
+| `sketch.js` | 30 (12 Wert, 13 Lesebindung, **5 p5-Hooks**) |
 | `kreisgrafik.js` | 13 |
 | `spine-horizontal.js` | 11 (3 Lesebindungen) |
 | `uebersichtsrouten.js` | 12 (3 Lesebindungen) |
 | `ortsveraenderung.js` | 3 |
-| `sonifikation.js` | 6 (1 Lesebindung) |
-| `kartendekor.js` | 4 |
+| `sonifikation.js` | 7 (1 Lesebindung) |
+| `kartendekor.js` | 3 |
 | `annotationsbox.js` | 2 |
 
 Die drei übrigen sind bewusst ungekapselt: Bei ihnen wird **jeder**
@@ -134,7 +134,7 @@ Zwei Dinge deshalb bei jeder Änderung mitprüfen —
 | 1 | `datenbereinigung.js` | Datenfunktionen und Konstanten, keine Zeichenaufrufe |
 | 2 | `geo-projektion.js` | Geografie: Bboxen und Projektion lon/lat → Bildschirm |
 | 3 | `kreisgrafik.js` | Kreisdiagramme der Orte |
-| 4 | `kartendekor.js` | Routenzug, Massstabsleiste (und die stillgelegte Windrose) |
+| 4 | `kartendekor.js` | Routenzug, Massstabsleiste, Fortschrittsleiste |
 | 5 | `ortsveraenderung.js` | Ansicht „Ortsvergleich" |
 | 6 | `spine-horizontal.js` | Graph-Ansicht: waagrechte Zeitleiste + Play |
 | 7 | `fotomarker.js` | Foto-Marker und Bild-Popup |
@@ -239,7 +239,7 @@ eigenen Header-Abschnitt aus.
 | 1 | `datenbereinigung.js` | 472 | `bereinigeStationenDaten`, `baueSpineDaten`, `sammleAnnotationenNachOrtBasis`, `zaehleBandCounts`, `zaehleAnnotationenLiveNachOrtBasis`, `ortRunsFuerSpine`, `ortRunSichtbar`, `kreisRadius`, `groessterKreisRadius`, `hexZuRgb` | `KREIS_KATEGORIEN`, `SCROLL_MEILENSTEINE`, `ROUTE_COLOR_RGB`, `FWERT_COLOR`/`FWERT_COLOR_RGB`, `FWERT_PUNKTGROESSE`, `FWERT_PUNKT_DURCHMESSER`, beide `FOTO_MARKER_*_RGB`, `KAPITEL_MIT_SPINE_PANEL`, `WOHNUNG_SAMMELPUNKT_ANKER`, `SCHRIFT_SANS`/`SCHRIFT_SERIF`, `hexZuRgb`/`rgbZuHex`, die Legendenbegriffe aus dem PDF (`WAHRNEHMUNG_LABELS`, `LEGENDE_BLOCK_TITEL`, `LEGENDE_KREISGROESSE`, `LEGENDE_VALENZ`, `LEGENDE_ORTSBESCHRIFTUNG`, `LEGENDE_TITEL`/`LEGENDE_UNTERTITEL`) — **gekapselt**, 39 Exporte. Intern: alle drei `GEDANKEN_*`, die übrigen drei `WOHNUNG_*`, die beiden Fotomarker-Hexwerte und `valenzBucket` |
 | 2 | `geo-projektion.js` | 96 | `lonLatToScreen`, `coverCrop`, `cropToBbox`, `bboxToImgCrop`, `passeBboxInRahmen` | `startBbox`, `uebersichtBbox`, `ch1ImgBbox`, `UEBERSICHT_SCHNITT_BBOX`, `mapOffsetX`, `mapOffsetY` |
 | 3 | `kreisgrafik.js` | 1164 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `zeichneKreisLabels`, `zeichneDemoKreisgrafik`, `zeichneSchleier`, `kategorieZeileGetroffen`, `zeichneRegisterleiste`, `zeichneInfoLeiste`, `reiterGetroffen`, `legendenLeisteHoehe`, `registerHoehe`, `leereBandCounts` | **gekapselt**, 13 Exporte; die übrigen Namen (u. a. `HATCH_SPACING`, `schraffiere`, alle `DEMO_*`, `LEGENDE_*` und `LEISTE_*`) sind modulintern. Beherbergt seit dem Onboarding-Umbau auch den neunstufigen Legendenaufbau (`demoLegende` und seine Zeichenroutinen) und beide Register am unteren Rand |
-| 4 | `kartendekor.js` | 337 | `zeichneRoute`, `zeichneMassstabsleiste`, `zeichneScrollFortschritt`, `zeichneWindrose` | — **gekapselt**, 4 Exporte; intern `haversineMeter`, `MASSSTAB_SCHRITTE`, der Routenpuffer und seine Helfer (`routenPufferBereit`, `routenStufenZuege`, `routenStufenAlpha`, alle `ROUTE_*`). `zeichneWindrose` hat derzeit keinen Aufrufer: der Aufruf in `draw()` ist auskommentiert. `zeichneScrollFortschritt` liegt hier und nicht im DOM, weil die Reiter der Register an derselben Stelle sitzen und davor liegen müssen |
+| 4 | `kartendekor.js` | 231 | `zeichneRoute`, `zeichneMassstabsleiste`, `zeichneScrollFortschritt` | — **gekapselt**, 3 Exporte; intern `haversineMeter`, `MASSSTAB_SCHRITTE`, der Routenpuffer und seine Helfer (`routenPufferBereit`, `routenStufenZuege`, `routenStufenAlpha`, alle `ROUTE_*`). `zeichneScrollFortschritt` liegt hier und nicht im DOM, weil die Reiter der Register an derselben Stelle sitzen und davor liegen müssen |
 | 5 | `ortsveraenderung.js` | 489 | `zeichneOrtsveraenderung` | **Zwei Exporte**: die Zeichenfunktion und `OV_KAPITEL_ZAHL`, aus der `spine-horizontal.js` die Abspieldauer rechnet. Die Ansicht bringt Reihenfolge, Linienlayout und gemeinsame Kreis-Skala (`ovBerechneLayout`) selbst mit, `draw()` übergibt nur `grafikFortschritt`. Alles Übrige ist modulintern |
 | 6 | `spine-horizontal.js` | 363 | `zeichneSpineHorizontal`, `toggleGrafikPlay`, `setzeKapitelAnsichtModus`, `setzeGrafikZurueck`, `stelleSpineDatenBereit`, `spineEintraegeFuer`, `aktuelleGrafikAnimationDauer`, `aktualisiereGrafikFortschritt` | `grafikSpielt`, `grafikFortschritt`, `grafikPlayAusblendStart` (Lesebindungen) — **gekapselt**, intern: beide Spine-Caches, alle `SPINE_*`, `spineLayout` |
 | 7 | `fotomarker.js` | 116 | `zeichneFotoMarker`, `merkeKartenlage`, `oeffneFotoPopup`, `schliesseFotoPopup` | `fotoMarkerListe`, `letzteActiveBbox`, `letzterFotoOffsetX/Y`, `FOTO_MARKER_TREFFER_RADIUS`. Zeichnet einen Punkt mit hellem Kern; Grösse abgeleitet aus `FWERT_PUNKT_DURCHMESSER`, Beschriftung über `zeichneKreisLabels` |
@@ -556,12 +556,11 @@ das Farbfeld der Legende stimmte nicht mit dem Band daneben überein. Der Preis
 ist, dass sich die drei Goldtöne nur noch über ihren eigenen Abstand
 unterscheiden — sie liegen mit 176/184/193 im Grünkanal nahe beieinander.
 
-**Die neutrale Vollfläche ist stillgelegt.** Sie legte sich als geschlossene
-Scheibe über beide Kreishälften. Der Aufruf in `zeichneKreiseFuerRun()` ist
-auskommentiert; `zeichneVollkreis()` und `NEUTRAL_DAEMPFUNG` haben damit keinen
-Leser mehr und bleiben nur deshalb stehen — dieselbe Behandlung wie
-`zeichneWindrose` in `kartendekor.js`. Neutrale Nennungen zählen weiterhin in
-die Schraffur und damit in den Aussenradius.
+**Neutrale Nennungen bekommen keine eigene Fläche.** Als ganzer Kreis legten
+sie sich über beide Kreishälften und machten die Mitte unlesbar. Gezählt werden
+sie trotzdem: in der Schraffur, und damit in der Kreisgrösse. Die zugehörige
+Zeichenroutine und ihr Dämpfungswert sind entfernt, ebenso die Windrose in
+`kartendekor.js` — beide hatten keinen Aufrufer mehr.
 
 ACHTUNG das PDF ist für den **Wortlaut** verbindlich, nicht für Farben und
 Grössen: es setzt eigene Goldtöne und ordnet die mittlere und die kleine

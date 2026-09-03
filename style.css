@@ -316,6 +316,15 @@ h2 {
   color: #212B2E;
 }
 
+/* Der Text am Kapitelende steht höher als die übrigen: auf denselben 42 %
+   wie der hochgesetzte Begleittext (.begleittext-hoch), nicht auf 72 %.
+   Versalien wie bei den übrigen Bedienelementen; im HTML steht der Text
+   deshalb in normaler Schreibweise. */
+.kapitel-ende-text {
+  top: 42%;
+  text-transform: uppercase;
+}
+
 /* Feste Bezugshöhe statt Eigenhöhe, Teil 1: die Begleittexte.
 
    Sie lösen einander überblendend ab, und weil jeder um seine eigene Mitte
