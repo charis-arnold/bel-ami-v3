@@ -225,47 +225,63 @@ function ortRunsFuerSpine(daten) {
   );
 }
 
-// Anteil 0..1 der Scrollstrecke (7343vh, .scroll-track in index.html).
+// Höhe der Scrollstrecke, wie .scroll-track sie in index.html setzt. Wer in vh
+// statt in Anteilen rechnet, braucht sie — etwa der Kapiteltakt in sketch.js.
+const SCROLL_TRACK_VH = 49425;
+
+// Anteil 0..1 der Scrollstrecke (SCROLL_TRACK_VH, .scroll-track in
+// index.html). Bis routeStart sind es feste vh-Lagen; ab routeEnd hängt alles
+// am Kapiteltakt (KAPITEL_TAKT_VH in sketch.js).
 // ACHTUNG bei geänderter Streckenlänge alle Werte umrechnen, sonst
 // verschieben sich die Akte gegeneinander.
 const SCROLL_MEILENSTEINE = {
-  heroFadeStart: 0.014981, heroFadeEnd: 0.044941,
-  // 960vh davor für den zwölfteiligen Intro-Crawl (.begleittext in
-  // index.html), 80vh je Text, danach 874vh Legendenaufbau.
+  // Titel und Intro-Crawl teilen sich einen Takt: dreizehn gleiche Schritte à
+  // 98vh, der Titel als erster, danach die zwölf .begleittext-Texte aus
+  // index.html. Er hält bis zum ersten Text und überblendet dann über dieselbe
+  // Strecke wie jeder Textwechsel — 0.35 des Textfensters, siehe
+  // fadeDauerFuer() in sketch.js. Der letzte Text setzt damit genau auf
+  // kartenwechselStart zum Ausblenden an.
+  heroFadeStart: 0.001986, heroFadeEnd: 0.003056,
+  // 1276vh für Titel und Crawl zusammen, danach 874vh Legendenaufbau.
   // Zoomdauer unverändert 440vh.
-  zoomStart: 0.303691, zoomEnd: 0.363612,
+  zoomStart: 0.045119, zoomEnd: 0.054021,
   // Crossfade Startkarte -> helle Überblickskarte, 80vh.
-  kartenwechselStart: 0.173798, kartenwechselEnd: 0.184693,
+  kartenwechselStart: 0.025821, kartenwechselEnd: 0.027440,
   // Demo-Kreisgrafik: wächst über den Kreisgrössen-Schritt heran und blendet
   // ab zoomStart aus, während die Kapitelkarte aufzieht. Davor steht nur der
   // Mittelpunkt mit seiner Ortsbeschriftung da (PDF-Seite 1); der Schleier
   // blendet in dieser Zeit ein, also von kartenwechselEnd bis demoStart.
-  demoStart: 0.195587, demoVoll: 0.206482,
+  demoStart: 0.029058, demoVoll: 0.030677,
   // Legendenaufbau: neun Stufen à 80vh (PDF-Seiten 1-9), gesteuert von den neun
   // data-demo-gruppe-Texten in index.html. Ab legendeSchleierAus blendet der
   // Schleier über 80vh aus, erst danach beginnt der Zoom.
-  legendeSchleierAus: 0.288614, legendeEnde: 0.299509,
+  legendeSchleierAus: 0.042879, legendeEnde: 0.044498,
   // Spine blendet gleichzeitig mit dem Zoom-Beginn ein.
-  spineFadeStart: 0.143266, spineFadeEnd: 0.203187,
-  // 200vh Lesezeit davor für den Kapitel-Einstiegstext.
-  routeStart: 0.390849, routeEnd: 0.540651,
+  spineFadeStart: 0.021285, spineFadeEnd: 0.030187,
+  // 200vh Lesezeit davor für den Kapitel-Einstiegstext. Die Route selbst misst
+  // 148 Annotationen × Takt = 14534vh.
+  routeStart: 0.058068, routeEnd: 0.352121,
   // Kapitel-1-Ende: ab routeEnd der Projekttext-Einblender (140vh), ab
   // kapitelEndeStart die Kartenansicht mit Hinweis und den beiden Buttons
   // (100vh bis zur Klemme).
-  kapitelEndeStart: 0.559717,
-  // Übersichtsrouten 02–18. 2933vh breit, damit auch Kapitel 8 auf
-  // ~7.3vh/Annotation kommt wie Kapitel 1.
+  kapitelEndeStart: 0.354954,
+  // Übersichtsakt 02–18 (alle Routen nacheinander), 2933vh breit. Ein
+  // GEÖFFNETES Kapitel hält sich nicht daran: sein Akt beginnt zwar ebenfalls
+  // auf uebersichtRoutenStart, endet aber dort, wo ihm der Takt seine
+  // Annotationen zumisst (kapitelAktEnde in sketch.js) — Kapitel 05 nach
+  // 31581vh, Kapitel 14 nach 6640vh. Die Strecke ist so lang, dass das längste
+  // Kapitel hineinpasst.
 
   // ACHTUNG uebersichtRoutenStart ist zugleich die Klemme am Ende von
   // Kapitel 1: weiter scrollt draw() nicht. Einen Rauszoom-Akt gibt es nicht
   // mehr, in den Übersichtsakt führt nur noch ein Klick auf "Übersicht" oder
   // "Alle".
 
-  // ACHTUNG uebersichtRoutenEnd ist die zweite Klemme und zugleich das Ende
-  // der Strecke: dahinter liegen nur noch 200vh Auslauf, damit die Marke
-  // überhaupt erreichbar bleibt. Der Ortsvergleich hat keine eigene Strecke
-  // mehr — er läuft über den Play-Knopf, nicht über den Scroll.
-  uebersichtRoutenStart: 0.573335, uebersichtRoutenEnd: 0.972764,
+  // ACHTUNG uebersichtRoutenEnd ist die zweite Klemme und das Ende des
+  // Übersichtsakts, nicht das Ende der Strecke: die läuft für die langen
+  // Kapitel weiter. Der Ortsvergleich hat keine eigene Strecke mehr — er
+  // sitzt auf dieser Klemme und läuft über den Play-Knopf.
+  uebersichtRoutenStart: 0.356977, uebersichtRoutenEnd: 0.416320,
 };
 
 // ---------------------------------------------------------------------------
@@ -416,7 +432,7 @@ function baueSpineDaten(daten, hauptorte) {
 
 
 // --- Export ------------------------------------------------------------
-// 33 Namen, die grösste Schnittstelle im Projekt. Leser: docs/architektur.md.
+// 40 Namen, die grösste Schnittstelle im Projekt. Leser: docs/architektur.md.
 
 // Farben, Kategorien, Punktgrössen
 window.CATEGORY_COLORS = CATEGORY_COLORS;
@@ -445,6 +461,7 @@ window.SCHRIFT_SERIF = SCHRIFT_SERIF;
 // Stammdaten: welche Kapitel, welche Scroll-Marken, welcher Sammelpunkt
 window.KAPITEL_MIT_SPINE_PANEL = KAPITEL_MIT_SPINE_PANEL;
 window.SCROLL_MEILENSTEINE = SCROLL_MEILENSTEINE;
+window.SCROLL_TRACK_VH = SCROLL_TRACK_VH;
 window.WOHNUNG_SAMMELPUNKT_ANKER = WOHNUNG_SAMMELPUNKT_ANKER;
 
 // Eingangsdaten bereinigen (nur preload/setup in sketch.js)

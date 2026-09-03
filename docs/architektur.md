@@ -13,14 +13,14 @@ Neun der zwölf Module sind gekapselt und geben nur die genannten Namen über
 
 | Modul | Exporte |
 |---|---|
-| `datenbereinigung.js` | 38 |
+| `datenbereinigung.js` | 40 |
 | `sketch.js` | 29 (11 Wert, 13 Lesebindung, **5 p5-Hooks**) |
-| `kreisgrafik.js` | 12 |
+| `kreisgrafik.js` | 13 |
 | `spine-horizontal.js` | 11 (3 Lesebindungen) |
 | `uebersichtsrouten.js` | 12 (3 Lesebindungen) |
 | `ortsveraenderung.js` | 3 |
 | `sonifikation.js` | 6 (1 Lesebindung) |
-| `kartendekor.js` | 3 |
+| `kartendekor.js` | 4 |
 | `annotationsbox.js` | 2 |
 
 Die drei übrigen sind bewusst ungekapselt: Bei ihnen wird **jeder**
@@ -238,8 +238,8 @@ eigenen Header-Abschnitt aus.
 |---|---|---|---|---|
 | 1 | `datenbereinigung.js` | 472 | `bereinigeStationenDaten`, `baueSpineDaten`, `sammleAnnotationenNachOrtBasis`, `zaehleBandCounts`, `zaehleAnnotationenLiveNachOrtBasis`, `ortRunsFuerSpine`, `ortRunSichtbar`, `kreisRadius`, `groessterKreisRadius`, `hexZuRgb` | `KREIS_KATEGORIEN`, `SCROLL_MEILENSTEINE`, `ROUTE_COLOR_RGB`, `FWERT_COLOR`/`FWERT_COLOR_RGB`, `FWERT_PUNKTGROESSE`, `FWERT_PUNKT_DURCHMESSER`, beide `FOTO_MARKER_*_RGB`, `KAPITEL_MIT_SPINE_PANEL`, `WOHNUNG_SAMMELPUNKT_ANKER`, `SCHRIFT_SANS`/`SCHRIFT_SERIF`, `hexZuRgb`/`rgbZuHex`, die Legendenbegriffe aus dem PDF (`WAHRNEHMUNG_LABELS`, `LEGENDE_BLOCK_TITEL`, `LEGENDE_KREISGROESSE`, `LEGENDE_VALENZ`, `LEGENDE_ORTSBESCHRIFTUNG`, `LEGENDE_TITEL`/`LEGENDE_UNTERTITEL`) — **gekapselt**, 39 Exporte. Intern: alle drei `GEDANKEN_*`, die übrigen drei `WOHNUNG_*`, die beiden Fotomarker-Hexwerte und `valenzBucket` |
 | 2 | `geo-projektion.js` | 96 | `lonLatToScreen`, `coverCrop`, `cropToBbox`, `bboxToImgCrop`, `passeBboxInRahmen` | `startBbox`, `uebersichtBbox`, `ch1ImgBbox`, `UEBERSICHT_SCHNITT_BBOX`, `mapOffsetX`, `mapOffsetY` |
-| 3 | `kreisgrafik.js` | 1164 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `zeichneKreisLabels`, `zeichneDemoKreisgrafik`, `zeichneSchleier`, `kategorieZeileGetroffen`, `zeichneRegisterleiste`, `zeichneInfoLeiste`, `reiterGetroffen`, `legendenLeisteHoehe`, `leereBandCounts` | **gekapselt**, 12 Exporte; die übrigen Namen (u. a. `HATCH_SPACING`, `schraffiere`, alle `DEMO_*`, `LEGENDE_*` und `LEISTE_*`) sind modulintern. Beherbergt seit dem Onboarding-Umbau auch den neunstufigen Legendenaufbau (`demoLegende` und seine Zeichenroutinen) und beide Register am unteren Rand |
-| 4 | `kartendekor.js` | 312 | `zeichneRoute`, `zeichneMassstabsleiste`, `zeichneWindrose` | — **gekapselt**, 3 Exporte; intern `haversineMeter`, `MASSSTAB_SCHRITTE`, der Routenpuffer und seine Helfer (`routenPufferBereit`, `routenStufenZuege`, `routenStufenAlpha`, alle `ROUTE_*`). `zeichneWindrose` hat derzeit keinen Aufrufer: der Aufruf in `draw()` ist auskommentiert |
+| 3 | `kreisgrafik.js` | 1164 | `zeichneKreiseOrtRuns`, `zeichneKreiseFuerRun`, `zeichneFwertPunkte`, `zeichneKreisLabels`, `zeichneDemoKreisgrafik`, `zeichneSchleier`, `kategorieZeileGetroffen`, `zeichneRegisterleiste`, `zeichneInfoLeiste`, `reiterGetroffen`, `legendenLeisteHoehe`, `registerHoehe`, `leereBandCounts` | **gekapselt**, 13 Exporte; die übrigen Namen (u. a. `HATCH_SPACING`, `schraffiere`, alle `DEMO_*`, `LEGENDE_*` und `LEISTE_*`) sind modulintern. Beherbergt seit dem Onboarding-Umbau auch den neunstufigen Legendenaufbau (`demoLegende` und seine Zeichenroutinen) und beide Register am unteren Rand |
+| 4 | `kartendekor.js` | 337 | `zeichneRoute`, `zeichneMassstabsleiste`, `zeichneScrollFortschritt`, `zeichneWindrose` | — **gekapselt**, 4 Exporte; intern `haversineMeter`, `MASSSTAB_SCHRITTE`, der Routenpuffer und seine Helfer (`routenPufferBereit`, `routenStufenZuege`, `routenStufenAlpha`, alle `ROUTE_*`). `zeichneWindrose` hat derzeit keinen Aufrufer: der Aufruf in `draw()` ist auskommentiert. `zeichneScrollFortschritt` liegt hier und nicht im DOM, weil die Reiter der Register an derselben Stelle sitzen und davor liegen müssen |
 | 5 | `ortsveraenderung.js` | 489 | `zeichneOrtsveraenderung` | **Zwei Exporte**: die Zeichenfunktion und `OV_KAPITEL_ZAHL`, aus der `spine-horizontal.js` die Abspieldauer rechnet. Die Ansicht bringt Reihenfolge, Linienlayout und gemeinsame Kreis-Skala (`ovBerechneLayout`) selbst mit, `draw()` übergibt nur `grafikFortschritt`. Alles Übrige ist modulintern |
 | 6 | `spine-horizontal.js` | 363 | `zeichneSpineHorizontal`, `toggleGrafikPlay`, `setzeKapitelAnsichtModus`, `setzeGrafikZurueck`, `stelleSpineDatenBereit`, `spineEintraegeFuer`, `aktuelleGrafikAnimationDauer`, `aktualisiereGrafikFortschritt` | `grafikSpielt`, `grafikFortschritt`, `grafikPlayAusblendStart` (Lesebindungen) — **gekapselt**, intern: beide Spine-Caches, alle `SPINE_*`, `spineLayout` |
 | 7 | `fotomarker.js` | 116 | `zeichneFotoMarker`, `merkeKartenlage`, `oeffneFotoPopup`, `schliesseFotoPopup` | `fotoMarkerListe`, `letzteActiveBbox`, `letzterFotoOffsetX/Y`, `FOTO_MARKER_TREFFER_RADIUS`. Zeichnet einen Punkt mit hellem Kern; Grösse abgeleitet aus `FWERT_PUNKT_DURCHMESSER`, Beschriftung über `zeichneKreisLabels` |
@@ -287,14 +287,55 @@ Ende von Kapitel 1: `draw()` hält die Scrollposition dort fest
 (`klemmeScroll`), einen Rauszoom-Akt gibt es nicht mehr. In den Übersichtsakt
 führt nur ein Klick — `springeZurUebersicht()` und `springeZuKapitelZoom()`
 rufen dafür `loeseKapitel1Klemme()`, sonst zöge der nächste Frame sofort
-zurück. Ein Zurückscrollen unter die Marke setzt die Klemme neu. An demselben
-Merker hängt `zoomOutAmount`: solange die Klemme steht, liegt die Karte in
-Kapitel 1, danach auf der Überblickskarte — ein Schnitt, keine Rampe, weil der
-Sprung selbst ein Schnitt ist.
+zurück. Zurück nach Kapitel 1 führt ebenfalls nur ein Klick:
+`scrolleZuKapitel1()` setzt die Klemme über `klemmeKapitel1()` wieder. An
+demselben Merker hängt `zoomOutAmount`: solange die Klemme steht, liegt die
+Karte in Kapitel 1, danach auf der Überblickskarte — ein Schnitt, keine Rampe,
+weil der Sprung selbst ein Schnitt ist.
+
+**Jeder Akt ist auch nach oben geklemmt.** Ist ein Kapitel offen oder läuft die
+Übersicht, hält `draw()` die Scrollposition bei `uebersichtRoutenStart` fest:
+weiter hinauf führt nur das Kapitelmenü. Vorher schloss ein Hochscrollen den
+Kapitel-Zoom (`uebersichtRoutenFortschritt <= 0`) und stellte Kapitel 1s Klemme
+wieder her — man fiel aus einem Kapitel unversehens dorthin zurück. Beide
+Einsprünge zielen deshalb genau auf die Marke: jedes Kapitel und die
+Überblickskarte beginnen bei 0, die Routen wachsen von dort.
+
+**ACHTUNG** `inUebersicht` fragt seither den Zustand ab
+(`!zoomedKapitel && !kapitel1Geklemmt`) statt den Scrollfortschritt. Am Anfang
+des Akts steht der auf 0, die Übersicht läuft aber schon — mit der alten
+Bedingung `> 0` fehlten dort Register und Menü.
+
+**Ein Takt für alle Kapitel.** Jede Annotation bekommt denselben Scrollweg,
+`KAPITEL_TAKT_VH` in `sketch.js` — **98.2 vh**, dasselbe Mass, in dem die
+Einstiegstexte des Intros einander ablösen (dreizehn Schritte auf 1276 vh).
+Daraus folgt alles Weitere: `kapitelAktVh()` misst einem Kapitel
+`59 + Annotationen × Takt` zu, `kapitelAktEnde()` macht daraus die Scrollmarke,
+an der es endet, und dort steht auch seine Klemme. Kapitel 01 kommt so auf
+14 534 vh Route, Kapitel 05 (321 Annotationen) auf 31 581 vh, Kapitel 14 (67)
+auf 6638 vh. Denselben Wert lesen die Annotationsbox in `draw()` und die
+Routenzeichnung in `uebersichtsrouten.js` — Route und Kreise wachsen an
+derselben Annotationsfolge, also im selben Takt.
+
+**Der Akt hat zwei Längen.** `uebersichtRoutenStart` ist für beide der Anfang,
+das Ende nicht: Die Übersicht (alle Routen nacheinander) läuft über ihre festen
+2933 vh bis `uebersichtRoutenEnd`, ein geöffnetes Kapitel über seine eigene,
+vom Takt bestimmte Strecke. `draw()` wählt die Marke, aus der es
+`uebersichtRoutenFortschritt` rechnet, deshalb je Frame neu. Der Übersichtsakt
+selbst behält seine Aufteilung: `kapitelScheiben()` gibt jedem Kapitel einen
+Sockel, damit auch kurze ein lesbares Fenster für ihren Einstiegstext haben.
+
+**ACHTUNG die Streckenlänge hängt am Takt.** `.scroll-track` muss das längste
+Kapitel fassen: `uebersichtRoutenStart + 59 + 321 × Takt + 200 vh Auslauf`,
+derzeit 49 425 vh. Wer `KAPITEL_TAKT_VH` ändert, muss `routeEnd` und alles
+dahinter (`kapitelEndeStart`, `uebersichtRoutenStart`, `uebersichtRoutenEnd`)
+sowie `SCROLL_TRACK_VH` und die `data-von`/`data-bis` in `index.html`
+nachrechnen — die Marken bis `routeStart` behalten ihre vh-Lage, der
+Fotohinweis seinen Anteil an der Route.
 
 **Eine zweite Klemme trennt Überblickskarte und Ortsvergleich.** Sie liegt auf
-`uebersichtRoutenEnd`, dem Ende der Scrollstrecke — dahinter stehen nur noch
-200 vh Auslauf, damit die Marke überhaupt erreichbar bleibt. Der Ortsvergleich
+`uebersichtRoutenEnd`, dem Ende des Übersichtsakts — nicht dem Ende der
+Strecke: die läuft für die langen Kapitel weiter. Der Ortsvergleich
 hat **keine eigene Strecke**: er sitzt auf der Klemme und läuft über den
 Play-Knopf. Welche der beiden Ansichten gilt, entscheidet deshalb nicht die
 Scrollposition, sondern `kapitelAnsichtsModus`; `draw()` klemmt in der
@@ -358,8 +399,8 @@ Vor der Klemme liegen zwei Strecken: 140 vh Projekttext-Einblender ab
 `routeEnd`, dann ab `kapitelEndeStart` 100 vh Kartenansicht mit Hinweis und
 den beiden Kapitelbuttons. **Sichtbar wird dieses Kapitelende aber nicht an
 einer Scrollmarke, sondern sobald der Projekttext zu ist** — sonst zeigte der
-Weg über das Schliesskreuz die blanke Karte, bis man bis zur Klemme
-durchgescrollt hätte. Die Marke begrenzt nur, wie weit das Panel den Scroll
+Weg über den Reiter die blanke Karte, bis man bis zur Klemme durchgescrollt
+hätte. Die Marke begrenzt nur, wie weit das Panel den Scroll
 für sich behält.
 
 **Zwei Register am unteren Rand, ein Mechanismus.** Beide Reiter stehen
@@ -370,15 +411,29 @@ nebeneinander rechts unten und fahren ihre Fläche von unten herauf.
 Ausfahrgrad liegt in `sketch.js` als `legendeAus` und `infoAus` (0..1), je
 Frame über `naehereRegister()` an den Sollwert herangeführt; die Reiter reiten
 auf der Oberkante des Legendenbalkens, die Info-Fläche deckt sie beim
-Ausfahren mit zu. Gezeichnet wird zuletzt und in dieser Reihenfolge:
+Ausfahren mit zu. **«Legende» gehört zum Kapitelmenü** und erscheint mit ihm
+(`imRegisterbereich`): auf der dunklen Startkarte und im Legendenaufbau gibt es
+noch keine Kreisgrafik zu erklären, dort steht «Info» allein. Ausserhalb wird
+der Balken zwangsweise geschlossen, damit er beim Zurückscrollen nicht offen
+stehen bleibt. Gezeichnet wird zuletzt und in dieser Reihenfolge:
 `zeichneRegisterleiste(legendeAus)`, dann `zeichneInfoLeiste(infoAus)`.
 
 Der Projekttext hat zwei Wege hinein (automatisch am Ende der Route, jederzeit
 über den Reiter «Info») und trägt deshalb zwei Merker: `projekttextPerRegister`
 und `projekttextWeggeklickt`; `projekttextOffen` wird je Frame daraus
-abgeleitet und ist zugleich der Sollwert für `infoAus`. Text, Schliesskreuz und
-die Sperre der DOM-Ebene (`body.projekttext-offen`) hängen dagegen an
-`infoAus > 0.99` — sie erscheinen erst auf der ganz ausgefahrenen Fläche.
+abgeleitet und ist zugleich der Sollwert für `infoAus`. Der Text hängt dagegen
+an `infoAus > 0.99` — er erscheint erst auf der ganz ausgefahrenen Fläche;
+die DOM-Ebene wird umgekehrt schon bei `> 0.01` gesperrt
+(`body.projekttext-offen`), weil sie über dem Canvas liegt und sonst hell auf
+der heraufziehenden Fläche stünde.
+
+**Der Info-Reiter zeichnet sich selbst, nach seiner Fläche.** Deshalb liegt er
+in `zeichneInfoLeiste()` und nicht bei seinem Nachbarn in
+`zeichneRegisterleiste()`: über der dunklen Fläche erscheint er negativ (keine
+Platte, helle Schrift und Pfeil) und bleibt anklickbar — ein eigenes
+Schliesskreuz braucht es nicht mehr. Solange die Fläche steht, leert er
+ausserdem `letzteReiterLagen`, damit der zugedeckte Legendenreiter keine
+Klicks mehr annimmt.
 
 **Die drei Kategorienzeilen der Legende sind anklickbar** und spielen ihren
 Klang vor. `zeichneLegendenBlock()` merkt sich dafür je Frame ihre Flächen,

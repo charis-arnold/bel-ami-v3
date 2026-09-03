@@ -45,7 +45,9 @@ function zeichneMassstabsleiste(bbox, offsetX, offsetY = 0) {
   let balkenBreite = ziel / meterProPixel;
   let label = ziel >= 1000 ? `${ziel / 1000} km` : `${ziel} m`;
 
-  let randX = 40, randY = 36, tickHoehe = 6;
+  // randY hält die Leiste über den beiden Registerreitern am unteren Rand
+  // (LEISTE_REITER_H = 30 in kreisgrafik.js) frei.
+  let randX = 40, randY = 76, tickHoehe = 6;
   let x1 = width - randX - balkenBreite;
   let x2 = width - randX;
   let y = height - randY - offsetY;
@@ -63,6 +65,32 @@ function zeichneMassstabsleiste(bbox, offsetX, offsetY = 0) {
   textSize(11);
   textAlign(CENTER, BOTTOM);
   drawingContext.fillText(label, (x1 + x2) / 2, y - tickHoehe - 4); // fillText: p5s text() bleibt bei Animation manchmal unsichtbar
+  pop();
+}
+
+// ---------------------------------------------------------------------------
+// Fortschrittsleiste am unteren Rand
+// ---------------------------------------------------------------------------
+
+// Wie weit man im laufenden Akt ist, 0..1. Liegt im Canvas und nicht im DOM:
+// die Reiter der beiden Register sitzen an derselben Stelle und müssen davor
+// liegen — als DOM-Element läge die Leiste immer darüber. Wer danach zeichnet,
+// deckt sie zu; genau das tun der Legendenbalken und die Info-Fläche.
+const FORTSCHRITT_RAND = 24;   // Abstand links und rechts
+const FORTSCHRITT_UNTEN = 16;  // Unterkante zum Fensterrand
+const FORTSCHRITT_HOEHE = 4;
+const FORTSCHRITT_GRUND = 'rgba(0, 0, 0, 0.08)';
+
+function zeichneScrollFortschritt(anteil) {
+  let breite = width - 2 * FORTSCHRITT_RAND;
+  if (breite <= 0) return;
+  let y = height - FORTSCHRITT_UNTEN - FORTSCHRITT_HOEHE;
+  push(); // schreibt fillStyle direkt, wie die Massstabsleiste oben
+  noStroke();
+  drawingContext.fillStyle = FORTSCHRITT_GRUND;
+  drawingContext.fillRect(FORTSCHRITT_RAND, y, breite, FORTSCHRITT_HOEHE);
+  drawingContext.fillStyle = ROUTE_COLOR;
+  drawingContext.fillRect(FORTSCHRITT_RAND, y, breite * constrain(anteil, 0, 1), FORTSCHRITT_HOEHE);
   pop();
 }
 
@@ -306,6 +334,7 @@ function zeichneRoute(punkte, upToIndex, bbox, strichstaerke = 2, offsetX = mapO
 // --- Export ------------------------------------------------------------
 // Drei Zeichenfunktionen. Leser: docs/architektur.md.
 window.zeichneMassstabsleiste = zeichneMassstabsleiste;
+window.zeichneScrollFortschritt = zeichneScrollFortschritt;
 window.zeichneWindrose = zeichneWindrose;
 window.zeichneRoute = zeichneRoute;
 

@@ -50,7 +50,12 @@ function schraffiere(x0, x1, y0, y1, farbe, alphaSkala) {
   ctx.strokeStyle = farbe;
   ctx.globalAlpha = 0.55 * alphaSkala;
   ctx.lineWidth = 1.8;
-  for (let ly = y0; ly <= y1; ly += HATCH_SPACING) {
+  // ACHTUNG die Zeilen sitzen auf EINEM Raster für die ganze Fläche, nicht ab
+  // der Oberkante der jeweiligen Form. Sonst begänne jeder Kreis auf seiner
+  // eigenen Höhe: zwei Schraffuren übereinander fielen versetzt ineinander und
+  // deckten sich gegenseitig zu — 1.8 px Strich auf 3 px Abstand lassen keine
+  // Lücke mehr, die Fläche sähe gefüllt aus statt gestreift.
+  for (let ly = Math.ceil(y0 / HATCH_SPACING) * HATCH_SPACING; ly <= y1; ly += HATCH_SPACING) {
     ctx.beginPath();
     ctx.moveTo(x0, ly);
     ctx.lineTo(x1, ly);
@@ -85,6 +90,12 @@ function zeichneKreiseOrtRuns(punktIndex, annIndex, activeBbox, offsetX = mapOff
   let runs = daten.ortRuns || [];
   let labelKandidaten = [];
 
+  // Erst alle Orte sammeln, dann in EINEM Durchgang zeichnen: die Kreise
+  // benachbarter Orte überlappen einander, ortweise gezeichnet läge die
+  // Schraffur des späteren über den Flächen des früheren.
+  let formen = [];
+  let nachtrag = [];
+
   runs.forEach(r => {
     // Wer einen Kreis bekommt, entscheidet datenbereinigung.js — vier
     // Ausschlussgründe, alle Aussagen über die Daten.
@@ -97,9 +108,8 @@ function zeichneKreiseOrtRuns(punktIndex, annIndex, activeBbox, offsetX = mapOff
     let bandCounts = zaehleBandCounts(treffer);
     // winkel PI wie in der Graph-Ansicht: positiv oben, negativ unten.
     let radius = groessterKreisRadius(bandCounts);
-    zeichneKreiseFuerRun(pos.x, pos.y, bandCounts, 1, PI);
-    let fwertAnnotationen = treffer.filter(a => a.hasFwert);
-    zeichneFwertPunkte(pos.x, pos.y, radius, fwertAnnotationen, 1);
+    formen = formen.concat(sammleKreisFormen(pos.x, pos.y, bandCounts, 1, PI));
+    nachtrag.push({ pos, radius, fwerte: treffer.filter(a => a.hasFwert) });
     if (radius > 0) {
       // Erst sammeln, Kollisionen nach der Schleife (zeichneKreisLabels).
       // Der Routen-Startpunkt blendet erst mit dem Kapitel-1-Ausschnitt ein.
@@ -112,6 +122,14 @@ function zeichneKreiseOrtRuns(punktIndex, annIndex, activeBbox, offsetX = mapOff
         alpha: istRoutenStart ? kapitel1ZoomAmount : 1,
       });
     }
+  });
+
+  zeichneKreisFormen(formen);
+  // Mittelpunkte und F-Wert-Punkte danach: sie gehören über jede Fläche,
+  // auch über die eines Nachbarortes.
+  nachtrag.forEach(n => {
+    if (n.radius > 0) zeichneMittelpunkt(n.pos.x, n.pos.y);
+    zeichneFwertPunkte(n.pos.x, n.pos.y, n.radius, n.fwerte, 1);
   });
 
   zeichneKreisLabels(labelKandidaten);
@@ -208,52 +226,101 @@ function zeichneVollkreis(cx, cy, r, farbeRgb, alphaSkala = 1) {
 
 // ACHTUNG kein Rückgabewert. Radius holt groessterKreisRadius() — dessen
 // letzte zwei Parameter stehen UMGEKEHRT zu denen hier.
-function zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF_PI, radiusSkala = 1, maxRadius = 100) {
-  // Schraffur immer unten, Valenzflächen darüber; innerhalb jeder Ebene
-  // grösste zuunterst. Sonst deckt eine Schraffur fremde Flächen zu.
-  push(); // schreibt unten direkt in fillStyle (Mittelpunkt)
-  let hatchFormen = [];
-  let flaechenFormen = [];
-  // Dieselbe Funktion, die auch die Aufrufer vor dem Zeichnen benutzen.
-  let aussenRadius = groessterKreisRadius(bandCounts, maxRadius, radiusSkala);
+// nurHaelften: weitere Kategorien, die allein ihre Valenzhälften beisteuern
+// und keine Schraffur. Der Legendenaufbau baut damit Band um Band auf, ohne
+// dass der Aussenradius mitwächst — sie laufen aber in derselben Reihenfolge
+// und im selben Gleichstand-Versatz mit wie alles andere.
+//
+// Sammelt nur, zeichnet nicht: über die Reihenfolge muss zusammen mit allen
+// anderen Orten entschieden werden, siehe zeichneKreisFormen().
+function sammleKreisFormen(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF_PI, radiusSkala = 1, maxRadius = 100, nurHaelften = null) {
+  let formen = [];
+  let neu = (art, r, farbe) => formen.push({ art, r, farbe, cx, cy, winkel, alphaSkala });
 
   KREIS_KATEGORIEN.forEach(k => {
     let bc = bandCounts[k.key] || {};
     let n = (bc.neg || 0) + (bc.pos || 0) + (bc.neutral || 0) + (bc.unrated || 0);
     let hatchR = kreisRadius(n, maxRadius) * radiusSkala;
-    if (hatchR > 0) {
-      let hex = rgbZuHex(k.farbe);
-      hatchFormen.push({ r: hatchR, zeichne: () => drawHatchedCircle(cx, cy, hatchR, hex, alphaSkala) });
-    }
+    if (hatchR > 0) neu('schraffur', hatchR, k.farbe);
 
     // Alle drei Ansichten übergeben winkel PI: positiv oben, negativ unten.
     let negR = kreisRadius(bc.neg || 0, maxRadius) * radiusSkala;
     let posR = kreisRadius(bc.pos || 0, maxRadius) * radiusSkala;
-    if (negR > 0) flaechenFormen.push({ r: negR, zeichne: () => zeichneHalbkreis(cx, cy, negR, winkel - HALF_PI, k.farbe, alphaSkala) });
-    if (posR > 0) flaechenFormen.push({ r: posR, zeichne: () => zeichneHalbkreis(cx, cy, posR, winkel + HALF_PI, k.farbe, alphaSkala) });
+    if (negR > 0) neu('unten', negR, k.farbe);
+    if (posR > 0) neu('oben', posR, k.farbe);
     // Die neutrale Vollfläche ist stillgelegt: sie legte sich als geschlossene
     // Scheibe über beide Hälften und machte die Mitte unlesbar. Neutrales zählt
     // weiterhin in die Schraffur und damit in den Aussenradius.
-    // let neutralR = kreisRadius(bc.neutral || 0, maxRadius) * radiusSkala;
-    // if (neutralR > 0) flaechenFormen.push({ r: neutralR, zeichne: () => zeichneVollkreis(cx, cy, neutralR, k.farbe, alphaSkala * NEUTRAL_DAEMPFUNG) });
   });
 
-  hatchFormen.sort((a, b) => b.r - a.r).forEach(f => f.zeichne());
-  flaechenFormen.sort((a, b) => b.r - a.r).forEach(f => f.zeichne());
+  (nurHaelften || []).forEach(e => {
+    let negR = kreisRadius((e.bc && e.bc.neg) || 0, maxRadius) * radiusSkala;
+    let posR = kreisRadius((e.bc && e.bc.pos) || 0, maxRadius) * radiusSkala;
+    if (negR > 0) neu('unten', negR, e.kat.farbe);
+    if (posR > 0) neu('oben', posR, e.kat.farbe);
+  });
 
-  if (aussenRadius > 0) {
-    // Mittelpunkt. Canvas-Pfad, siehe ACHTUNG oben.
-    drawingContext.fillStyle = `rgba(0, 0, 0, ${alphaSkala})`;
-    drawingContext.beginPath();
-    drawingContext.arc(cx, cy, 4, 0, TWO_PI);
-    drawingContext.fill();
-  }
+  // Gleich viele Annotationen ergeben denselben Radius. Zwei deckungsgleiche
+  // Formen derselben Art wären eine: die obere verdeckte die untere ganz. Jede
+  // weitere wächst deshalb um ein paar Pixel und schaut als Rand darum hervor.
+  // ACHTUNG damit steht sie bis zu KREIS_GLEICHSTAND_VERSATZ über dem Radius,
+  // den groessterKreisRadius() meldet — die Beschriftungen und der
+  // Wahrnehmungsbogen rücken also nicht mit. Bei 6 px Luft (siehe
+  // FWERT_PUNKT_RAND_ABSTAND) bleibt genug Abstand.
+  // Nur je Art: oben und unten liegen ohnehin auf verschiedenen Seiten der
+  // Mitte, dort wäre der Versatz eine Verfälschung ohne Nutzen.
+  let gleiche = {};
+  formen.forEach(f => {
+    let schluessel = f.art + '|' + f.r.toFixed(3);
+    let schon = gleiche[schluessel] || 0;
+    gleiche[schluessel] = schon + 1;
+    f.r += schon * KREIS_GLEICHSTAND_VERSATZ * radiusSkala;
+  });
+  return formen;
+}
+
+// Zwei Ebenen, in beiden gross zuunterst und klein zuoberst: erst alle
+// Schraffuren, dann alle Valenzflächen. Reine Grössenordnung über beide hinweg
+// brachte kleine Schraffuren VOR die Flächen — ihre Linien lagen dann quer
+// über den ausgefüllten Hälften und machten sie unruhig.
+// ACHTUNG die Liste kommt über ALLE Orte zugleich herein. Ortweise gezeichnet
+// legte die Schraffur des nächsten Ortes sich über die Flächen des vorigen,
+// sobald zwei Kreise einander überlappen — und auf der Karte tun sie das.
+function zeichneKreisFormen(formen) {
+  let ebene = f => f.art === 'schraffur' ? 0 : 1;
+  push(); // schreibt direkt in fill-/strokeStyle, siehe ACHTUNG oben
+  formen.sort((a, b) => ebene(a) - ebene(b) || b.r - a.r).forEach(f => {
+    if (f.art === 'schraffur') drawHatchedCircle(f.cx, f.cy, f.r, rgbZuHex(f.farbe), f.alphaSkala);
+    else zeichneHalbkreis(f.cx, f.cy, f.r, f.winkel + (f.art === 'oben' ? HALF_PI : -HALF_PI), f.farbe, f.alphaSkala);
+  });
   pop();
+}
+
+// Schwarzer Punkt in der Ortsmitte, immer zuoberst.
+function zeichneMittelpunkt(cx, cy, alphaSkala = 1) {
+  push(); // Canvas-Pfad, siehe ACHTUNG oben
+  drawingContext.fillStyle = `rgba(0, 0, 0, ${alphaSkala})`;
+  drawingContext.beginPath();
+  drawingContext.arc(cx, cy, 4, 0, TWO_PI);
+  drawingContext.fill();
+  pop();
+}
+
+// Ein einzelner Ort: sammeln und gleich zeichnen. Für alle Ansichten, die
+// jeweils nur einen Kreis auf einmal setzen (Legendenaufbau, Ortsvergleich,
+// Spine). Die Karte geht über sammleKreisFormen(), siehe zeichneKreiseOrtRuns.
+function zeichneKreiseFuerRun(cx, cy, bandCounts, alphaSkala = 1, winkel = -HALF_PI, radiusSkala = 1, maxRadius = 100, nurHaelften = null) {
+  zeichneKreisFormen(sammleKreisFormen(cx, cy, bandCounts, alphaSkala, winkel, radiusSkala, maxRadius, nurHaelften));
+  if (groessterKreisRadius(bandCounts, maxRadius, radiusSkala) > 0) zeichneMittelpunkt(cx, cy, alphaSkala);
 }
 
 // Ringabstände der F-Wert-Punkte; die Durchmesser selbst stehen als
 // FWERT_PUNKT_DURCHMESSER in datenbereinigung.js, weil fotomarker.js sie
 // ebenfalls liest.
+// Versatz für deckungsgleiche Formen: gleich viele Annotationen ergeben
+// denselben Radius, und ohne diesen Abstand sähe man nur die oberste.
+const KREIS_GLEICHSTAND_VERSATZ = 3;
+
 const FWERT_PUNKT_RAND_ABSTAND = 6; // Luft zwischen Kreisrand und erstem Punkte-Ring
 const FWERT_PUNKT_RING_ABSTAND = 8; // Abstand zwischen zwei Punkte-Ringen, falls ein Abschnitt nicht in einen Ring passt
 const FWERT_PUNKT_LUECKE = 2;       // Mindestabstand zwischen benachbarten Punkten
@@ -544,7 +611,7 @@ function stufenBandCounts(bandCounts, mitKategorie, valenzen) {
   }*/
 
   // Mit Kategorie: das erste Band echt. Die weiteren kommen nicht hierher,
-  // sondern als blosse Valenzhälften dazu (zeichneKategorieHaelften) — bei
+  // sondern als blosse Valenzhälften dazu (nurHaelften) — bei
   // DEMO_BAND_COUNTS ist das erste zugleich das grösste, der Aussenradius
   // bleibt dadurch über alle Stufen stehen.
   let erste = KREIS_KATEGORIEN[0];
@@ -556,22 +623,19 @@ function stufenBandCounts(bandCounts, mitKategorie, valenzen) {
 // die Mitte zu dicht — mit drei Bändern lägen dort acht Kreise übereinander.
 // Dieselbe Regel gilt über VALENZEN auch für das erste Band.
 // Winkel wie in zeichneKreiseFuerRun (winkel PI): positiv oben, negativ unten.
-function zeichneKategorieHaelften(cx, cy, bc, kat, alphaSkala, skala) {
-  if (!bc) return;
-  let negR = kreisRadius(bc.neg || 0, DEMO_MAX_RADIUS) * skala;
-  let posR = kreisRadius(bc.pos || 0, DEMO_MAX_RADIUS) * skala;
-  if (negR > 0) zeichneHalbkreis(cx, cy, negR, HALF_PI, kat.farbe, alphaSkala);
-  if (posR > 0) zeichneHalbkreis(cx, cy, posR, -HALF_PI, kat.farbe, alphaSkala);
-}
-
 // Ein Zustand des Demo-Kreises: das erste Band ganz, jedes weitere nur mit
 // seinen Valenzhälften. kategorien 0 = noch gar keine, dann ein tonloses Band.
 function zeichneDemoStufe(cx, cy, bandCounts, kategorien, valenzen, alphaSkala, skala) {
   if (alphaSkala <= LEGENDE_SICHTBAR) return;
+  // Die weiteren Bänder gehen als reine Hälften in DENSELBEN Aufruf. Vorher
+  // zeichnete eine eigene Schleife sie danach: dort griffen weder die
+  // Grössenordnung noch der Versatz bei gleichem Radius, zwei gleich grosse
+  // Hälften lagen deckungsgleich übereinander.
+  let weitere = KREIS_KATEGORIEN.slice(1, kategorien)
+    .map(kat => ({ kat, bc: bandCounts[kat.key] }))
+    .filter(e => e.bc);
   zeichneKreiseFuerRun(cx, cy, stufenBandCounts(bandCounts, kategorien > 0, valenzen),
-    alphaSkala, PI, skala, DEMO_MAX_RADIUS);
-  KREIS_KATEGORIEN.slice(1, kategorien).forEach(kat =>
-    zeichneKategorieHaelften(cx, cy, bandCounts[kat.key], kat, alphaSkala, skala));
+    alphaSkala, PI, skala, DEMO_MAX_RADIUS, weitere);
 }
 
 // Schrift aller Canvas-Beschriftungen: wie .annotation-tag (var(--sans)),
@@ -968,7 +1032,13 @@ const LEISTE_HOEHE = 158;           // Höhe des offenen Legendenbalkens
 const LEISTE_RAND = 26;             // Innenabstand links und rechts
 const LEISTE_OBEN = 24;             // Oberkante des Balkens zur ersten Zeile
 const LEISTE_LUECKE = 42;           // Luft zwischen den Gruppen
-const LEISTE_REITER_B = 132;        // beide Reiter gleich breit
+// Jeder Reiter ist so breit, wie sein Wort braucht: Rand, Beschriftung, Luft,
+// Doppelpfeil, Rand. Gemessen an der eigenen Schrift, damit kein Wortmass fest
+// im Code steht — «LEGENDE» ergibt so 106 px, «INFO» 81 px.
+const LEISTE_REITER_RAND = 14;      // vor der Beschriftung
+const LEISTE_REITER_LUFT = 10;      // zwischen Beschriftung und Pfeil
+const LEISTE_REITER_PFEIL = 10;     // Breite des Doppelpfeils
+const LEISTE_REITER_RAND_R = 19;    // hinter dem Pfeil
 const LEISTE_REITER_H = 30;
 const LEISTE_REITER_LUECKE = 6;     // Fuge zwischen den beiden Reitern
 const LEISTE_REITER_INFO = 'Info';  // Beschriftung des zweiten Registers
@@ -987,26 +1057,49 @@ let letzteReiterLagen = [];
 // Wie weit der Legendenbalken gerade ins Bild ragt; der Massstab rückt darüber.
 function legendenLeisteHoehe(aus) { return LEISTE_HOEHE * aus; }
 
+// Oberkante des Legendenbalkens — darauf sitzen beide Reiter, auch der von
+// «Info», der seine eigene Fläche gar nicht kennt. Eingeklappt also direkt am
+// unteren Fensterrand, über der Fortschrittsleiste (zeichneScrollFortschritt
+// in kartendekor.js läuft davor).
+function leisteOberkante(legendeAus) { return height - LEISTE_HOEHE * legendeAus; }
+
+// Wie weit die Register vom unteren Rand her Platz belegen: der Balken und die
+// Reiter darüber. Das Kapitelmenü wird daran abgeschnitten (siehe draw() in
+// sketch.js), damit es weder auf dem Balken noch auf einem Reiter steht.
+function registerHoehe(legendeAus) { return LEISTE_HOEHE * legendeAus + LEISTE_REITER_H; }
+
 // Reiter mit Doppelpfeil. Beide sitzen rechts auf der Oberkante des
 // Legendenbalkens, eingeklappt also direkt am unteren Fensterrand.
-function zeichneReiter(name, x, oben, titel, offen) {
-  letzteReiterLagen.push({ name, x0: x, y0: oben - LEISTE_REITER_H, x1: x + LEISTE_REITER_B, y1: oben });
+function reiterBreite(titel) {
+  return LEISTE_REITER_RAND + beschriftungsBreite(titel) + LEISTE_REITER_LUFT
+    + LEISTE_REITER_PFEIL + LEISTE_REITER_RAND_R;
+}
+
+// negativ: der Reiter steht auf der dunklen Info-Fläche. Dort braucht er keine
+// eigene Platte — Schrift und Pfeil kehren sich einfach um und stehen hell
+// direkt darauf.
+function zeichneReiter(name, x, oben, titel, breite, offen, negativ = false) {
+  let mitte = oben - LEISTE_REITER_H / 2;
+  let tinte = negativ ? LEISTE_GRUND : LEGENDE_TINTE_RGB;
+  letzteReiterLagen.push({ name, x0: x, y0: oben - LEISTE_REITER_H, x1: x + breite, y1: oben });
   push();
   noStroke();
-  fill(LEISTE_GRUND.r, LEISTE_GRUND.g, LEISTE_GRUND.b);
-  rect(x, oben - LEISTE_REITER_H, LEISTE_REITER_B, LEISTE_REITER_H);
-  fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b);
+  if (!negativ) {
+    fill(LEISTE_GRUND.r, LEISTE_GRUND.g, LEISTE_GRUND.b);
+    rect(x, oben - LEISTE_REITER_H, breite, LEISTE_REITER_H);
+  }
+  fill(tinte.r, tinte.g, tinte.b);
   beschriftungsSchrift(LABEL_GROESSE);
   textAlign(LEFT, CENTER);
-  text(titel, x + 14, oben - LEISTE_REITER_H / 2);
+  text(titel, x + LEISTE_REITER_RAND, mitte);
   // Doppelpfeil: zeigt nach unten zum Einklappen, nach oben zum Aufklappen.
-  let px = x + LEISTE_REITER_B - 24, py = oben - LEISTE_REITER_H / 2, r = offen ? 1 : -1;
-  stroke(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b);
+  let px = x + breite - LEISTE_REITER_RAND_R - LEISTE_REITER_PFEIL / 2, r = offen ? 1 : -1;
+  stroke(tinte.r, tinte.g, tinte.b);
   strokeWeight(1.6);
   noFill();
   [-3, 2].forEach(v => {
-    line(px - 5, py + v * r - 1 * r, px, py + v * r + 3 * r);
-    line(px, py + v * r + 3 * r, px + 5, py + v * r - 1 * r);
+    line(px - 5, mitte + v * r - 1 * r, px, mitte + v * r + 3 * r);
+    line(px, mitte + v * r + 3 * r, px + 5, mitte + v * r - 1 * r);
   });
   pop();
 }
@@ -1078,11 +1171,14 @@ function leisteWahrnehmung(x, mitte) {
   return breit * 2 + 48 + bogen * 2;
 }
 
-// Der ganze Balken, aus 0..1 ausgefahren, mit beiden Reitern auf seiner
-// Oberkante. Sein Inhalt fährt mit hinaus und wird solange vom Fensterrand
-// beschnitten; die Klickflächen merkt sich zeichneReiter().
-function zeichneRegisterleiste(aus) {
-  let oben = height - LEISTE_HOEHE * aus;
+// Der ganze Balken, aus 0..1 ausgefahren, mit seinem Reiter auf der Oberkante.
+// Der Inhalt fährt mit hinaus und wird solange vom Fensterrand beschnitten;
+// die Klickfläche merkt sich zeichneReiter(). sichtbar false heisst: das
+// Register gibt es hier noch nicht (siehe draw() in sketch.js).
+function zeichneRegisterleiste(aus, sichtbar) {
+  letzteReiterLagen = [];
+  if (!sichtbar) return;
+  let oben = leisteOberkante(aus);
   if (aus > LEGENDE_SICHTBAR) {
     push();
     noStroke();
@@ -1119,24 +1215,37 @@ function zeichneRegisterleiste(aus) {
     x += legendenBlockBreite(LEGENDE_BLOCK_TITEL.fwerte, fwertZeilen) + LEISTE_LUECKE;
     leisteWahrnehmung(x, mitte);
   }
-  letzteReiterLagen = [];
-  let xLegende = width - LEISTE_RAND - LEISTE_REITER_B;
-  zeichneReiter('info', xLegende - LEISTE_REITER_B - LEISTE_REITER_LUECKE, oben,
-    LEISTE_REITER_INFO.toUpperCase(), false);
-  zeichneReiter('legende', xLegende, oben, LEGENDE_UNTERTITEL.toUpperCase(), aus > 0.5);
+  // Nur der eigene Reiter; den von «Info» zeichnet zeichneInfoLeiste, weil er
+  // über der Fläche liegen muss.
+  let titel = LEGENDE_UNTERTITEL.toUpperCase(), breite = reiterBreite(titel);
+  zeichneReiter('legende', infoReiterX() - breite - LEISTE_REITER_LUECKE, oben,
+    titel, breite, aus > 0.5);
+}
+
+// Linke Kante des Info-Reiters; er steht rechtsbündig, der Legendenreiter
+// hängt sich links an ihn.
+function infoReiterX() {
+  return width - LEISTE_RAND - reiterBreite(LEISTE_REITER_INFO.toUpperCase());
 }
 
 // «Info» fährt über die ganze Seite: eine dunkle Fläche von unten herauf, auf
 // der am Ende der Projekttext steht (siehe draw() in sketch.js). Zuletzt
-// gezeichnet, sie deckt auch die beiden Reiter zu.
-function zeichneInfoLeiste(aus) {
-  if (aus <= LEGENDE_SICHTBAR) return;
-  push();
-  noStroke();
-  drawingContext.globalAlpha = INFO_ALPHA;
-  drawingContext.fillStyle = INFO_GRUND;
-  drawingContext.fillRect(0, height - height * aus, width, height * aus);
-  pop();
+// gezeichnet, sie deckt den Legendenreiter zu — der eigene Reiter kommt danach
+// obendrauf und erscheint dort negativ, damit die Fläche wieder zugeht.
+function zeichneInfoLeiste(aus, legendeAus) {
+  let offen = aus > LEGENDE_SICHTBAR;
+  if (offen) {
+    push();
+    noStroke();
+    drawingContext.globalAlpha = INFO_ALPHA;
+    drawingContext.fillStyle = INFO_GRUND;
+    drawingContext.fillRect(0, height - height * aus, width, height * aus);
+    pop();
+    letzteReiterLagen = []; // der Legendenreiter liegt jetzt darunter
+  }
+  let titel = LEISTE_REITER_INFO.toUpperCase();
+  zeichneReiter('info', infoReiterX(), leisteOberkante(legendeAus), titel,
+    reiterBreite(titel), offen, offen);
 }
 
 // Name des getroffenen Reiters («legende» oder «info»), sonst null.
@@ -1147,7 +1256,7 @@ function reiterGetroffen(mx, my) {
 
 
 // --- Export ------------------------------------------------------------
-// Zwölf Namen. Leser: docs/architektur.md.
+// Dreizehn Namen. Leser: docs/architektur.md.
 window.leereBandCounts = leereBandCounts;
 window.zeichneSchleier = zeichneSchleier;
 window.zeichneKreisLabels = zeichneKreisLabels;
@@ -1160,5 +1269,6 @@ window.zeichneRegisterleiste = zeichneRegisterleiste;
 window.zeichneInfoLeiste = zeichneInfoLeiste;
 window.reiterGetroffen = reiterGetroffen;
 window.legendenLeisteHoehe = legendenLeisteHoehe;
+window.registerHoehe = registerHoehe;
 
 })(); // Ende der Modulkapselung, siehe Kommentar oben

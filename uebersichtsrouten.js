@@ -73,10 +73,6 @@ function zeichneUebersichtsrouten(bbox, fortschritt) {
   let kapitelListe = Object.entries(uebersichtsRouten).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
   let n = kapitelListe.length;
 
-  // Geöffnetes Kapitel bekommt den vollen Akt als Reveal-Skala, nicht nur
-  // seine Scheibe. Anfang gehört dem Einstiegstext.
-  let zoomedLokalerFortschritt = constrain(
-    map(fortschritt, KAPITEL_EINSTIEG_SCROLL_ENDE, 1, 0, 1), 0, 1);
   let aktuelleAnnotationZoom = null; // Rückgabewert für die Annotationsbox in draw()
 
   // Im Kapitel-Zoom blenden alle anderen Übersichtsrouten mit
@@ -110,10 +106,15 @@ function zeichneUebersichtsrouten(bbox, fortschritt) {
   });
 
   // Genaue Route des gezoomten Kapitels, mit fixem mapOffsetX/Y statt dem
-  // ch1-Blend. Erst nach dem Einstiegstext (KAPITEL_EINSTIEG_SCROLL_ENDE).
-  let kapitelEinstiegAbgeschlossen = fortschritt >= KAPITEL_EINSTIEG_SCROLL_ENDE;
+  // ch1-Blend. Erst nach dem Einstiegstext (kapitelEinstiegWeg in sketch.js).
+  let kapitelEinstiegAbgeschlossen = fortschritt >= kapitelEinstiegWeg(zoomedKapitel);
   if (zoomedKapitel && kapitelZoomAmount > 0.001 && kapitelEinstiegAbgeschlossen) {
     let daten = datenFuerKapitel(zoomedKapitel);
+    // Reveal-Skala des geöffneten Kapitels. Der Akt reicht genau bis zu seiner
+    // letzten Annotation (kapitelAktEnde in sketch.js), der Anfang gehört dem
+    // Einstiegstext — deshalb hier von kapitelEinstiegWeg bis 1.
+    let zoomedLokalerFortschritt = constrain(
+      map(fortschritt, kapitelEinstiegWeg(zoomedKapitel), 1, 0, 1), 0, 1);
     // routenPfadDetail statt routenPunkte: Letzteres ist auf 1 Punkt je
     // Annotation komprimiert, die Linie sähe wie eine Luftlinie aus.
     let routenLinie = (daten && daten.routenPfadDetail && daten.routenPfadDetail.length > 1)
@@ -288,11 +289,14 @@ function zeichneUebersichtsrouten(bbox, fortschritt) {
 }
 
 // Zurück in die Kapitel-1-Ansicht; schliesst einen offenen Kapitel-Zoom mit.
+// ACHTUNG ohne "smooth" und mit klemmeKapitel1(): die Klemme muss stehen,
+// bevor der nächste Frame läuft, sonst hält ihn die Aufwärtsklemme des
+// Übersichtsakts fest. Aus demselben Grund springt auch springeZuKapitelZoom.
 function scrolleZuKapitel1() {
   schliesseKapitelZoom();
+  klemmeKapitel1(); // sketch.js
   let trackEl = document.querySelector('.scroll-track');
-  let ziel = trackEl.offsetHeight * SCROLL_MEILENSTEINE.zoomEnd;
-  window.scrollTo({ top: ziel, behavior: 'smooth' });
+  window.scrollTo(0, trackEl.offsetHeight * SCROLL_MEILENSTEINE.zoomEnd);
 }
 
 // Setzt Ansichtsmodus und Play-Animation zurück, damit jede Kapitel-Ansicht
@@ -326,26 +330,23 @@ function schliesseKapitelZoom() {
   setzeKapitelAnsichtZurueck();
 }
 
-// Springt kurz hinter den Akt-Anfang und öffnet dort den Zoom, damit es von
-// jeder Scrollposition aus geht. ACHTUNG ohne "smooth": sonst laufen Frames
-// mit alter Position, und der <=0-Check setzt zoomedKapitel wieder auf null.
+// Springt an den Akt-Anfang und öffnet dort den Zoom, damit es von jeder
+// Scrollposition aus geht. Jedes Kapitel beginnt so bei 0.
+// ACHTUNG ohne "smooth": sonst laufen Frames mit alter Position.
 function springeZuKapitelZoom(nr) {
   if (!kapitelHatEigeneAnsicht(nr)) return;
   let trackEl = document.querySelector('.scroll-track');
-  let start = SCROLL_MEILENSTEINE.uebersichtRoutenStart
-    + 0.01 * (SCROLL_MEILENSTEINE.uebersichtRoutenEnd - SCROLL_MEILENSTEINE.uebersichtRoutenStart);
   loeseKapitel1Klemme(); // sonst zöge draw() sofort ans Kapitel-1-Ende zurück
-  window.scrollTo(0, trackEl.offsetHeight * start);
+  window.scrollTo(0, trackEl.offsetHeight * SCROLL_MEILENSTEINE.uebersichtRoutenStart);
   oeffneKapitelZoom(nr);
 }
 
-// "Alle"-Button und "Plan" in der Übersicht. Zielt auf die MITTE des Akts
-// (Routen gewachsen), nicht wie springeZuKapitelZoom auf den Anfang.
+// "Alle"-Button und "Plan" in der Übersicht. Zielt auf den Anfang des Akts:
+// die Überblickskarte beginnt immer bei 0, die Routen wachsen von dort.
 function springeZurUebersicht() {
   let trackEl = document.querySelector('.scroll-track');
-  let mitte = (SCROLL_MEILENSTEINE.uebersichtRoutenStart + SCROLL_MEILENSTEINE.uebersichtRoutenEnd) / 2;
   loeseKapitel1Klemme(); // sonst zöge draw() sofort ans Kapitel-1-Ende zurück
-  window.scrollTo(0, trackEl.offsetHeight * mitte);
+  window.scrollTo(0, trackEl.offsetHeight * SCROLL_MEILENSTEINE.uebersichtRoutenStart);
   schliesseKapitelZoom(); // setzt den Modus auf 'karte' zurück
 }
 

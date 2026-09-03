@@ -19,7 +19,7 @@ let fotoHinweisText;  // der .begleittext mit data-foto-hinweis — sein Fenster
 const FOTO_HINWEIS_TEXT = 'Diese Punkte lassen sich anklicken, um ein historisches Foto zu sehen.';
 let annotationBoxEl; // #annotationBox — trägt die Positionsklasse (pos-oben-links etc.), siehe annotationBoxPosition()
 let kapitelEndeEl, kapitelEndeWeiterEl, kapitelEndeTextEl; // Kapitelende: Buttonpaar und der Hinweis darüber (nur Kapitel 1), siehe draw()
-let projekttextEl, einblenderSchliessenEl; // #projekttext (dunkle Textfläche) und das Schliesskreuz, das sich beide Einblender teilen
+let projekttextEl; // #projekttext, die Textfläche des Registers «Info»
 
 
 // Nummer des folgenden Kapitels, oder null bei 18. Gilt für 02–18; Kapitel 1
@@ -52,10 +52,48 @@ function starteKapitelEinstieg() {
 }
 
 
-// Der Einstiegstext blendet zeitbasiert ein, dann übernimmt das Scrollen:
-// zwischen diesen Anteilen des Akts blendet er aus, erst danach die Route.
-const KAPITEL_EINSTIEG_SCROLL_START = 0.015;
-const KAPITEL_EINSTIEG_SCROLL_ENDE = 0.06;
+// Der Einstiegstext blendet zeitbasiert ein, dann übernimmt das Scrollen: nach
+// diesen Wegen beginnt er zu weichen und ist er weg, danach setzen Route und
+// Annotationen ein. Kurz gehalten — steht der Text einmal, soll ein knapper
+// Scroll genügen. Dasselbe Mass hat der Einstieg von Kapitel 1, dort über
+// data-von/data-bis in index.html.
+const KAPITEL_EINSTIEG_HALT_VH = 26;
+const KAPITEL_EINSTIEG_WEG_VH = 59;
+
+// Ein Takt für alle: jede Annotation bekommt denselben Scrollweg wie die
+// Einstiegstexte des Intros untereinander (dreizehn Schritte auf 1276vh).
+// Daraus folgt, wie lang ein Kapitel ist — und wie lang die Strecke sein muss,
+// die das längste fassen soll.
+// ACHTUNG wer diese Zahl ändert, muss die Meilensteine nachrechnen: routeEnd
+// und alles dahinter sowie die Höhe von .scroll-track hängen daran. Der
+// Rechenweg steht in docs/architektur.md, «Ein Takt für alle Kapitel».
+const KAPITEL_TAKT_VH = 98.2;
+
+// Annotationszahl eines Kapitels, 0 wenn keines offen ist.
+function annotationsZahl(kapitelNr) {
+  let daten = datenFuerKapitel(kapitelNr);
+  return daten && daten.annotationen ? daten.annotationen.length : 0;
+}
+
+// Länge des Kapitelakts in vh: Einstiegstext plus eine Taktlänge je Annotation.
+function kapitelAktVh(kapitelNr) {
+  return KAPITEL_EINSTIEG_WEG_VH + annotationsZahl(kapitelNr) * KAPITEL_TAKT_VH;
+}
+
+// Scrollmarke, an der ein geöffnetes Kapitel endet; dort steht seine Klemme.
+function kapitelAktEnde(kapitelNr) {
+  return SCROLL_MEILENSTEINE.uebersichtRoutenStart + kapitelAktVh(kapitelNr) / SCROLL_TRACK_VH;
+}
+
+// Anteile des Kapitelakts, zwischen denen der Einstiegstext ausblendet. Keine
+// festen Zahlen mehr: der Akt ist je Kapitel verschieden lang, der Text soll
+// aber überall gleich lange stehen.
+function kapitelEinstiegHalt(kapitelNr) {
+  return annotationsZahl(kapitelNr) ? KAPITEL_EINSTIEG_HALT_VH / kapitelAktVh(kapitelNr) : 0;
+}
+function kapitelEinstiegWeg(kapitelNr) {
+  return annotationsZahl(kapitelNr) ? KAPITEL_EINSTIEG_WEG_VH / kapitelAktVh(kapitelNr) : 0;
+}
 // bgImage: Startseite und Schlusskarte. bgImage2: Übersichtsakt.
 // ACHTUNG die beiden haben NICHT dieselbe Bbox — 568 m versetzt, deshalb
 // startBbox und uebersichtBbox getrennt. Siehe docs/bugfix-log.md, Fix 2.
@@ -82,8 +120,9 @@ let annotationText;
 let annotationInner;
 let annotationTag;
 let annotationBar;
-let scrollFortschritt, scrollFortschrittFuellung; // Fortschrittsleiste unten (Übersicht Scrollytelling-Hauptstrang) — ausgeblendet während einer Kapitel-Ansicht (siehe kapitelAnsichtsModus)
 let kapitelRegister; // Kapitelregister rechts (inkl. Plan/Graph + Alle), sichtbar während eines Kapitel-Zooms
+let kapitelRegisterRahmen; // schneidet es an der Oberkante des Legendenbalkens ab
+let registerSchnitt = -1;  // zuletzt gesetzte Unterkante, spart Stilschreiben
 let kapitelRegisterEintraege = {}; // nr -> Eintrags-Element, fürs Aktiv-Highlighting in draw()
 let planEintrag, graphEintrag; // "Plan"/"Graph"-Hälften oben im Register, fürs Aktiv-Highlighting in draw()
 let modusZeile, leerzeile, alleEintrag; // Plan/Graph-Zeile + Abstandshalter + "Alle" — in der Übersicht (kein Kapitel gezoomt) blendet draw() modusZeile/leerzeile aus und markiert alleEintrag als aktiv
@@ -95,6 +134,12 @@ let kapitel1Geklemmt = true;
 
 // Gerufen von uebersichtsrouten.js aus den beiden Sprungzielen hinter
 // Kapitel 1 ("Übersicht"/"Alle" und jeder Kapitel-Zoom).
+// Zurück in Kapitel 1, gerufen aus scrolleZuKapitel1(). Gegenstück zu
+// loeseKapitel1Klemme().
+function klemmeKapitel1() {
+  kapitel1Geklemmt = true;
+}
+
 function loeseKapitel1Klemme() {
   kapitel1Geklemmt = false;
 }
@@ -265,17 +310,13 @@ function setup() {
   projekttextEl = document.getElementById('projekttext');
   // Klicks im Text bleiben im Text — daneben schliesst p5 den Einblender.
   haltKlickAuf(document.getElementById('projekttextInner'));
-  einblenderSchliessenEl = document.getElementById('einblenderSchliessen');
-  haltKlickAuf(einblenderSchliessenEl, () => {
-    if (projekttextOffen) schliesseProjekttext();
-  });
   annotationBoxEl = document.getElementById('annotationBox');
   annotationText = document.getElementById('annotationText');
   annotationInner = document.getElementById('annotationInner');
   annotationTag = document.getElementById('annotationTag');
   annotationBar = document.getElementById('annotationBar');
   kapitelRegister = document.getElementById('kapitelRegister');
-  scrollFortschritt = document.getElementById('scrollFortschritt');
+  kapitelRegisterRahmen = document.getElementById('kapitelRegisterRahmen');
   grafikPlayButton = document.getElementById('grafikPlayButton');
   grafikPlayButton.addEventListener('click', toggleGrafikPlay);
 
@@ -284,7 +325,6 @@ function setup() {
   fotoPopupPlz = document.getElementById('fotoPopupPlz');
   fotoPopupBild = document.getElementById('fotoPopupBild');
   fotoPopupBeschreibung = document.getElementById('fotoPopupBeschreibung');
-  scrollFortschrittFuellung = document.getElementById('scrollFortschrittFuellung');
   document.getElementById('fotoPopupClose').addEventListener('click', schliesseFotoPopup);
   fotoPopup.addEventListener('click', e => { if (e.target === fotoPopup) schliesseFotoPopup(); });
   document.addEventListener('keydown', e => {
@@ -368,12 +408,22 @@ function draw() {
   let progress = getScrollProgress();
   // Ein offenes Kapitel endet mit seiner letzten Annotation: Scrollposition
   // wird nach unten festgehalten, nach oben bleibt sie frei — der Weg zurück.
-  if (zoomedKapitel && progress > SCROLL_MEILENSTEINE.uebersichtRoutenEnd) {
-    progress = klemmeScroll(SCROLL_MEILENSTEINE.uebersichtRoutenEnd);
+  // Wo das liegt, sagt der gemeinsame Takt — bei kurzen Kapiteln deutlich vor
+  // dem Ende der Strecke.
+  if (zoomedKapitel) {
+    let marke = kapitelAktEnde(zoomedKapitel);
+    if (progress > marke) progress = klemmeScroll(marke);
+  }
+  // Nach oben endet jeder Akt an seinem Anfang: aus einem Kapitel oder der
+  // Übersicht führt kein Scroll mehr zurück, nur das Kapitelmenü. Vorher fiel
+  // man beim Hochscrollen unversehens in Kapitel 1.
+  if ((zoomedKapitel || !kapitel1Geklemmt)
+    && progress < SCROLL_MEILENSTEINE.uebersichtRoutenStart) {
+    progress = klemmeScroll(SCROLL_MEILENSTEINE.uebersichtRoutenStart);
   }
   // Kapitel 1 endet genauso, nur liegt seine Grenze am Anfang des
-  // Übersichtsakts. Zurück in Kapitel 1 gescrollt, steht die Klemme wieder.
-  if (progress < SCROLL_MEILENSTEINE.uebersichtRoutenStart) kapitel1Geklemmt = true;
+  // Übersichtsakts. Gesetzt wird die Klemme allein von klemmeKapitel1(),
+  // gerufen aus scrolleZuKapitel1() — nicht mehr durch Zurückscrollen.
   if (!zoomedKapitel && kapitel1Geklemmt && progress > SCROLL_MEILENSTEINE.uebersichtRoutenStart) {
     progress = klemmeScroll(SCROLL_MEILENSTEINE.uebersichtRoutenStart);
   }
@@ -386,7 +436,19 @@ function draw() {
       : progress > SCROLL_MEILENSTEINE.uebersichtRoutenEnd;
     if (daneben) progress = klemmeScroll(SCROLL_MEILENSTEINE.uebersichtRoutenEnd);
   }
-  scrollFortschrittFuellung.style.width = (progress * 100) + '%';
+  // Die Leiste misst den laufenden Akt, nicht die ganze Strecke: Hauptstrang
+  // bis zum Ende von Kapitel 1, danach jedes Kapitel und die Übersicht für
+  // sich. Sonst zeigte sie nach der Takt-Umstellung für denselben Weg je nach
+  // Kapitel einen anderen Ausschlag — die Akte sind verschieden lang.
+  let leisteVon = 0, leisteBis = SCROLL_MEILENSTEINE.uebersichtRoutenStart;
+  if (zoomedKapitel) {
+    leisteVon = SCROLL_MEILENSTEINE.uebersichtRoutenStart;
+    leisteBis = kapitelAktEnde(zoomedKapitel);
+  } else if (!kapitel1Geklemmt) {
+    leisteVon = SCROLL_MEILENSTEINE.uebersichtRoutenStart;
+    leisteBis = SCROLL_MEILENSTEINE.uebersichtRoutenEnd;
+  }
+  let leisteAnteil = constrain(map(progress, leisteVon, leisteBis, 0, 1), 0, 1);
 
   // Startkarte blendet vor dem Zoom auf die helle Überblickskarte über.
   let kartenwechsel = constrain(map(progress,
@@ -421,13 +483,19 @@ function draw() {
 
   // Schon hier berechnet, weil activeBbox unten davon abhängt. Hochscrollen
   // vor den Aktanfang schliesst einen offenen Kapitel-Zoom wieder.
-  let uebersichtRoutenFortschritt = constrain(map(progress, SCROLL_MEILENSTEINE.uebersichtRoutenStart, SCROLL_MEILENSTEINE.uebersichtRoutenEnd, 0, 1), 0, 1);
-  if (zoomedKapitel && uebersichtRoutenFortschritt <= 0) schliesseKapitelZoom(); // zurückgescrollt
+  // Der Akt hat zwei Längen: die Übersicht läuft über ihre feste Strecke, ein
+  // geöffnetes Kapitel über die, die ihm der Takt zumisst — je nach Kapitel
+  // kürzer oder länger.
+  let aktEnde = zoomedKapitel ? kapitelAktEnde(zoomedKapitel) : SCROLL_MEILENSTEINE.uebersichtRoutenEnd;
+  let uebersichtRoutenFortschritt = constrain(map(progress, SCROLL_MEILENSTEINE.uebersichtRoutenStart, aktEnde, 0, 1), 0, 1);
 
   // Übersichtswelt hinter Kapitel 1, in zwei Ansichten: Überblickskarte mit
   // allen Routen oder Ortsvergleich. Welche läuft, sagt der Menümodus; die
   // Klemme oben trennt nur ihre Scrollstrecken.
-  let inUebersicht = uebersichtRoutenFortschritt > 0 && !zoomedKapitel;
+  // Kein Scrollmass mehr, sondern der Zustand: kein Kapitel offen und Kapitel 1
+  // verlassen. Am Anfang des Akts steht der Fortschritt auf 0, die Übersicht
+  // läuft aber schon — sonst fehlten dort Register und Menü.
+  let inUebersicht = !zoomedKapitel && !kapitel1Geklemmt;
   let imOrtsvergleich = laeuftOrtsvergleich(); // uebersichtsrouten.js
 
   // Kapitel-Zoom öffnet sofort mit voller Route, nur zeitlich eingeblendet.
@@ -488,11 +556,13 @@ function draw() {
   }
 
   let massstabOffsetX = (kapitelCrop && kapitelZoomAmount > 0.5) ? mapOffsetX : kartenOffsetX;
-  // Beim Ausfahren des Legendenbalkens rückt sie mit hinein, wie im PDF.
+  // Beim Ausfahren des Legendenbalkens rückt sie mit hinein, wie im PDF: der
+  // Ruheplatz liegt 76 px über dem unteren Rand, ganz offen kommen 78 dazu —
+  // dann steht sie 4 px innerhalb der 158 px hohen Balkenoberkante.
   // Ein Frame Verzug gegenüber legendeAus, das erst weiter unten nachgeführt
   // wird — bei 60 Bildern in der Sekunde nicht zu sehen.
   zeichneMassstabsleiste(activeBbox, massstabOffsetX,
-    Math.max(0, legendenLeisteHoehe(legendeAus) - 40));
+    Math.max(0, legendenLeisteHoehe(legendeAus) - 80));
   // Windrose stillgelegt; der Platz oben rechts ist inzwischen frei.
   // Zum Wiedereinschalten diese Zeile entkommentieren.
   // zeichneWindrose(width - 90, 150, 50, 1);
@@ -574,6 +644,12 @@ function draw() {
     && progress < SCROLL_MEILENSTEINE.kapitelEndeStart;
   if (progress < SCROLL_MEILENSTEINE.routeEnd) projekttextWeggeklickt = false;
   projekttextOffen = projekttextPerRegister || (imProjekttextFenster && !projekttextWeggeklickt);
+  // Das Register «Legende» gehört zum Kapitelmenü und kommt mit ihm: davor, auf
+  // der dunklen Startkarte und im Legendenaufbau, gibt es noch keine
+  // Kreisgrafik zu erklären. «Info» steht dort allein. Steht hier oben, weil
+  // der Ausfahrgrad gleich darauf aufbaut.
+  let imRegisterbereich = inKapitelAnsicht || inUebersicht;
+  if (!imRegisterbereich) legendenLeisteOffen = false;
   legendeAus = naehereRegister(legendeAus, legendenLeisteOffen ? 1 : 0);
   infoAus = naehereRegister(infoAus, projekttextOffen ? 1 : 0);
 
@@ -586,12 +662,11 @@ function draw() {
   // bis man bis zur Klemme durchgescrollt hätte.
   let kapitel1AmEnde = !zoomedKapitel && kapitel1Geklemmt && !projekttextOffen
     && progress >= SCROLL_MEILENSTEINE.routeEnd;
-  let kapitelLokalerFortschritt = constrain(
-    map(uebersichtRoutenFortschritt, KAPITEL_EINSTIEG_SCROLL_ENDE, 1, 0, 1), 0, 1);
   // Schwelle aus der Annotationszahl, nicht fest: dieselbe Rechnung wie
   // annIndexZoom. Ein fester Wert läge je nach Kapitellänge daneben.
-  let endDaten = datenFuerKapitel(zoomedKapitel);
-  let anzahl = endDaten && endDaten.annotationen ? endDaten.annotationen.length : 0;
+  let anzahl = annotationsZahl(zoomedKapitel);
+  let kapitelLokalerFortschritt = constrain(map(uebersichtRoutenFortschritt,
+    kapitelEinstiegWeg(zoomedKapitel), 1, 0, 1), 0, 1);
   let zoomAmEnde = !!zoomedKapitel && kapitelZoomAmount > 0.5
     && anzahl > 0 && kapitelLokalerFortschritt >= (anzahl - 1) / anzahl;
   // Nur in der Kartenansicht — in der Graph-Ansicht sitzt dort der Play-Button.
@@ -631,7 +706,7 @@ function draw() {
 
   // Kapitelregister: in jeder Kapitel-Ansicht und in beiden
   // Übersichtsansichten, damit man von dort direkt weiterspringen kann.
-  let imRegisterbereich = inKapitelAnsicht || inUebersicht;
+  // imRegisterbereich fällt weiter oben an, siehe dort.
   kapitelRegister.classList.toggle('sichtbar', imRegisterbereich);
 
   // Plan/Graph gilt in beiden Welten: im Kapitel schaltet es zwischen Karte
@@ -651,9 +726,6 @@ function draw() {
     Object.values(kapitelRegisterEintraege).forEach(eintrag => eintrag.classList.remove('aktiv'));
   }
 
-  // Fortschrittsleiste nur ausserhalb einer Kapitel-Ansicht; in der
-  // Graph-Ansicht steht dort der Play-Button.
-  scrollFortschritt.classList.toggle('versteckt', inKapitelAnsicht);
   grafikPlayButton.classList.toggle('sichtbar', inKapitelGrafikAnsicht || imOrtsvergleich);
   grafikPlayButton.textContent = grafikSpielt ? '❚❚' : '▶';
 
@@ -684,9 +756,11 @@ function draw() {
   }
 
   // Hero-Text ausblenden, kubisch — er bleibt dadurch lange stehen.
+  // Linear wie die Ausblendrampe der Begleittexte (begleittextDeckkraft): auf
+  // der kurzen Überblendstrecke bliebe eine Kurve fast bis zum Schluss oben
+  // und risse dann ab — der Titel läge dann über dem schon vollen ersten Text.
   let heroProgress = constrain(map(progress, SCROLL_MEILENSTEINE.heroFadeStart, SCROLL_MEILENSTEINE.heroFadeEnd, 0, 1), 0, 1);
-  let heroFade = heroProgress * heroProgress * heroProgress;
-  let heroOpacity = 1 - heroFade;
+  let heroOpacity = 1 - heroProgress;
   heroText.forEach(el => el.style.opacity = heroOpacity);
 
   // Begleittexte: jedes <p class="begleittext"> blendet in seinem eigenen
@@ -728,7 +802,7 @@ function draw() {
       let elapsed = millis() - kapitelEinstiegsStartMillis;
       let einblenden = constrain(map(elapsed, 0, KAPITEL_EINSTIEG_FADE_MS, 0, 1), 0, 1);
       let ausblenden = 1 - constrain(map(uebersichtRoutenFortschritt,
-        KAPITEL_EINSTIEG_SCROLL_START, KAPITEL_EINSTIEG_SCROLL_ENDE, 0, 1), 0, 1);
+        kapitelEinstiegHalt(zoomedKapitel), kapitelEinstiegWeg(zoomedKapitel), 0, 1), 0, 1);
       // Graph-Ansicht: zusätzlicher Ausblendweg ab dem Play-Klick, gleiche
       // Dauer wie das Einblenden.
       let ausblendenPlay = grafikPlayAusblendStart === null ? 1 :
@@ -783,20 +857,33 @@ function draw() {
 
   // Zuoberst die beiden Register: erst der Legendenbalken, dann die
   // Info-Fläche, die beim Ausfahren alles zudeckt, die Reiter eingeschlossen.
-  zeichneRegisterleiste(legendeAus);
-  zeichneInfoLeiste(infoAus);
+  // Fortschrittsleiste zuerst, die Register darüber: ihre Reiter sitzen an
+  // derselben Stelle am unteren Rand und sollen davor liegen.
+  zeichneScrollFortschritt(leisteAnteil);
+  zeichneRegisterleiste(legendeAus, imRegisterbereich);
+  zeichneInfoLeiste(infoAus, legendeAus);
 
   // Die DOM-Ebene geht schon beim Anfahren weg: sie liegt über dem Canvas und
-  // stünde sonst hell auf der heraufziehenden Fläche. Der Text und sein Kreuz
-  // kommen umgekehrt erst, wenn die Fläche ganz oben ist.
-  let infoVoll = infoAus > 0.99;
+  // stünde sonst hell auf der heraufziehenden Fläche. Der Text kommt umgekehrt
+  // erst, wenn die Fläche ganz oben ist.
+  // Das Kapitelmenü liegt als DOM über dem Canvas; der Rahmen schneidet es an
+  // der Oberkante des ausgefahrenen Registers ab, damit es dahinter
+  // verschwindet statt darauf zu stehen — beim flachen Legendenbalken wie bei
+  // der Info-Fläche, die bis nach oben zieht. registerHoehe zählt die Reiter
+  // mit: sie sitzen auf der Balkenkante und dürfen nie verdeckt sein. Nur bei
+  // Änderung schreiben, sonst rechnet der Browser jeden Frame das Layout neu.
+  let schnitt = Math.round(Math.max(registerHoehe(legendeAus), height * infoAus));
+  if (schnitt !== registerSchnitt) {
+    registerSchnitt = schnitt;
+    kapitelRegisterRahmen.style.bottom = schnitt + 'px';
+  }
+  document.body.classList.toggle('legende-offen', legendeAus > 0.01);
   document.body.classList.toggle('projekttext-offen', infoAus > 0.01);
-  projekttextEl.classList.toggle('offen', infoVoll);
-  einblenderSchliessenEl.classList.toggle('sichtbar', infoVoll);
+  projekttextEl.classList.toggle('offen', infoAus > 0.99);
 
   // Nach zeichneUebersichtsrouten, das den Cursor jeden Frame selbst setzt.
   if ((!projekttextOffen && kategorieZeileGetroffen(mouseX, mouseY))
-    || (infoAus < 0.01 && reiterGetroffen(mouseX, mouseY))) cursor(HAND);
+    || reiterGetroffen(mouseX, mouseY)) cursor(HAND);
 }
 
 // ---------------------------------------------------------------------------
@@ -846,12 +933,12 @@ function mousePressed() {
 }
 
 // --- Export ------------------------------------------------------------
-// 29 Namen: 11 als Wert, 5 p5-Hooks, 13 als Lesebindung.
+// 30 Namen: 12 als Wert, 5 p5-Hooks, 13 als Lesebindung.
 
 // Konstanten, Funktionen und die vier nur befüllten Container: Die Bindung
 // ändert sich nie, deshalb Wertzuweisung.
 window.WEITERE_KAPITEL_NUMMERN = WEITERE_KAPITEL_NUMMERN;
-window.KAPITEL_EINSTIEG_SCROLL_ENDE = KAPITEL_EINSTIEG_SCROLL_ENDE;
+window.kapitelEinstiegWeg = kapitelEinstiegWeg;
 window.kapitelRegisterEintraege = kapitelRegisterEintraege;
 window.markierungsEintraege = markierungsEintraege;
 window.stationsMarker = stationsMarker;
@@ -860,6 +947,7 @@ window.datenFuerKapitel = datenFuerKapitel;
 window.kapitelHatEigeneAnsicht = kapitelHatEigeneAnsicht;
 window.setzeAnsichtsModus = setzeAnsichtsModus;
 window.loeseKapitel1Klemme = loeseKapitel1Klemme;
+window.klemmeKapitel1 = klemmeKapitel1;
 window.starteKapitelEinstieg = starteKapitelEinstieg;
 
 // Die fünf p5-Hooks. Nicht optional: p5 sucht sie am window. Fehlt einer,
