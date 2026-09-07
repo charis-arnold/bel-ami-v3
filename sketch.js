@@ -862,7 +862,19 @@ function draw() {
   // ACHTUNG die Lage nur merken, solange die Marker wirklich im Bild stehen:
   // hinter "Graph" deckt Spine bzw. Ortsvergleich sie zu, und der Treffertest
   // in mousePressed() öffnete sonst Fotos an unsichtbaren Stellen.
-  let fotoMarkerSichtbar = !inKapitelGrafikAnsicht && !imOrtsvergleich;
+  // Nur auf den Kapitelkarten. Auf der Start- und der Überblickskarte liegt
+  // ganz Paris im Bild: die Marker stünden dort dicht beieinander und meinten
+  // Orte, die wenige Pixel gross sind — anklickbar, aber nicht auseinander zu
+  // halten.
+  //
+  // ACHTUNG die Schwelle 0.5 statt "ein Kapitel ist gewählt": zoomedKapitel
+  // steht schon, während der Zoom noch läuft und die Überblickskarte im Bild
+  // ist. Erst ab der Hälfte liegt die Kapitelkarte oben. kapitelCrop prüft
+  // zusätzlich, dass ihr Bild überhaupt geladen ist.
+  let aufKapitelkarte = zoomedKapitel
+    ? (!!kapitelCrop && kapitelZoomAmount > 0.5)
+    : inKapitel1Kartenausschnitt;
+  let fotoMarkerSichtbar = aufKapitelkarte && !inKapitelGrafikAnsicht && !imOrtsvergleich;
   merkeKartenlage(fotoMarkerSichtbar ? activeBbox : null, fotoOffsetX, fotoOffsetY);
   // Der Bedienhinweis teilt sich das Scroll-Fenster mit seinem Kommentartext,
   // damit beide zusammen erscheinen und wieder gehen.

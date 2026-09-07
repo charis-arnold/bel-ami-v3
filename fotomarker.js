@@ -123,10 +123,16 @@ function zeichneFotoMarker(activeBbox, offsetX = mapOffsetX, offsetY = mapOffset
     if (hinweis && f.titel === hinweis.titel) {
       // Auf die Seite mit mehr Platz, sonst läuft der Hinweis aus dem Bild.
       let links = pos.x > width / 2;
+      // Fläche in der Markerfarbe, Schrift hell darauf — dieselbe Paarung
+      // wie der Hover-Tooltip weiter unten. Der Hinweis erklärt die Bedienung
+      // und soll deshalb als Element lesen, nicht als Ortsbeschriftung.
+      let f = FOTO_MARKER_FARBE_RGB;
       hinweisLabel = {
         ankerX: pos.x, ankerY: pos.y,
         x: pos.x + (links ? -40 : 40), y: pos.y,
-        text: hinweis.text, farbe: null,
+        text: hinweis.text,
+        flaeche: `rgba(${f.r}, ${f.g}, ${f.b}, ${0.9 * hinweis.alpha})`,
+        farbe: `rgba(255, 255, 255, ${hinweis.alpha})`,
         hilfslinie: true, links, alpha: hinweis.alpha,
       };
     }

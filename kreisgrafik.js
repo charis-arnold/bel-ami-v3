@@ -27,6 +27,11 @@ const HATCH_SPACING = 3;
 // Legendenaufbau rechnet damit seinen Platzbedarf aus.
 const LABEL_HOEHE = 14;
 const LABEL_ABSTAND = 4;
+// Nur für Labels mit Fläche (k.flaeche): Polsterung seitlich, Höhe der Fläche.
+// Dieselben Masse wie der Hover-Tooltip der Fotomarker, damit Hinweis und
+// Tooltip als ein Element lesen.
+const LABEL_FLAECHE_LUFT = 8;
+const LABEL_FLAECHE_H = 20;
 // Schriftgrad aller Beschriftungen im Canvas: Ortsnamen, Legendentitel,
 // Blockzeilen, Valenz- und Wahrnehmungslabels.
 // ACHTUNG .annotation-tag in style.css führt denselben Wert als font-size —
@@ -168,9 +173,24 @@ function zeichneKreisLabels(kandidaten) {
         stroke(0, 255 * alpha);
         strokeWeight(0.8);
         drawingContext.setLineDash([2, 3]);
-        line(k.ankerX, k.ankerY, k.links ? k.x + k.w + 4 : k.x - 4, y);
+        // Mit Fläche endet die Linie an deren Kante, nicht am Textanfang —
+        // sonst liefe sie unter die Fläche und schiene darunter hervor.
+        let rand = k.flaeche ? LABEL_FLAECHE_LUFT + 4 : 4;
+        line(k.ankerX, k.ankerY, k.links ? k.x + k.w + rand : k.x - rand, y);
         drawingContext.setLineDash([]);
         noStroke();
+      }
+      // Optionale Fläche hinter dem Text. Ortsnamen stehen blank auf der
+      // Karte; ein Bedienhinweis soll dagegen als Element lesen und nicht als
+      // Beschriftung eines Orts — dafür trägt er eine eigene Fläche.
+      // ACHTUNG rect() statt roundRect(): letzteres kennt Safari erst ab 16,
+      // und es wäre der einzige Aufruf im Projekt. Scharfe Ecken tragen
+      // ohnehin dieselbe Form wie die Knöpfe am Kapitelende.
+      if (k.flaeche) {
+        drawingContext.fillStyle = k.flaeche;
+        drawingContext.fillRect(
+          k.x - LABEL_FLAECHE_LUFT, y - LABEL_FLAECHE_H / 2,
+          k.w + 2 * LABEL_FLAECHE_LUFT, LABEL_FLAECHE_H);
       }
       // Direkt statt fill(): die Farbe wechselt je Label (alpha).
       drawingContext.fillStyle = k.farbe
