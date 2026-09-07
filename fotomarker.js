@@ -36,13 +36,73 @@ function merkeKartenlage(bbox, offsetX, offsetY) {
 // hinweis (optional): { titel, text, alpha } — hängt ein beschriftetes Label
 // mit Zuführungslinie an genau den Marker mit diesem Titel. Zeitpunkt und
 // Deckkraft bestimmt der Aufrufer, siehe draw() in sketch.js.
+// Blendensymbol: voller Kreis, darin ein sechseckiges Loch und sechs gerade
+// Spalten. Die Spalten sind die VERLÄNGERTEN Sechseckseiten — genau daraus
+// entsteht der Drall, den eine Objektivblende hat. Radial gezogene Spalten
+// ergäben ein Wagenrad.
+//
+// ACHTUNG ab hier wird auf den Kreis geclippt. Die Spalten laufen über den
+// Rand hinaus (sie müssen ihn sicher erreichen, auch in der flachsten Ecke);
+// ohne Clip zeichneten sie helle Striche auf die Karte.
+function zeichneBlende(x, y, r, ringRgb, kernRgb) {
+  const ECKEN = 6;
+  // Verhältnisse nach der Vorlage eingestellt: Loch enger, Spalten schlanker
+  // als beim ersten Wurf (0.46/0.17), sonst wirkte das Zeichen bei 16 px wie
+  // ein Zahnrad. Weiter hinunter geht es nicht — bei 0.12 fällt die Spaltweite
+  // in der Ruhegrösse unter ein Pixel und die Klemme unten greift.
+  let innen = r * 0.42;
+  let spalt = Math.max(1, r * 0.14);
+  let dreh = -Math.PI / 2; // eine Sechseckecke nach oben
+  let vx = i => x + innen * Math.cos(dreh + i * TWO_PI / ECKEN);
+  let vy = i => y + innen * Math.sin(dreh + i * TWO_PI / ECKEN);
+  let ctx = drawingContext;
+
+  ctx.fillStyle = `rgb(${ringRgb.r}, ${ringRgb.g}, ${ringRgb.b})`;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, TWO_PI);
+  ctx.fill();
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, TWO_PI);
+  ctx.clip();
+
+  let kern = `rgb(${kernRgb.r}, ${kernRgb.g}, ${kernRgb.b})`;
+  ctx.fillStyle = kern;
+  ctx.beginPath();
+  for (let i = 0; i < ECKEN; i++) {
+    if (i === 0) ctx.moveTo(vx(i), vy(i));
+    else ctx.lineTo(vx(i), vy(i));
+  }
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = kern;
+  ctx.lineWidth = spalt;
+  ctx.lineCap = 'butt';
+  for (let i = 0; i < ECKEN; i++) {
+    let j = (i + 1) % ECKEN;
+    let dx = vx(j) - vx(i), dy = vy(j) - vy(i);
+    let len = Math.hypot(dx, dy) || 1;
+    ctx.beginPath();
+    ctx.moveTo(vx(j), vy(j));
+    ctx.lineTo(vx(j) + dx / len * r * 2, vy(j) + dy / len * r * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 function zeichneFotoMarker(activeBbox, offsetX = mapOffsetX, offsetY = mapOffsetY, hinweis = null) {
-  // Aussen so gross wie der grösste F-Wert-Punkt, der Kern so gross wie der
-  // kleinste. Abgeleitet statt fest, damit der Marker mitwandert, wenn sich
-  // die Punktgrössen ändern. Wie jene skaliert er nicht mit dem Zoom.
-  let punktGroessen = Object.values(FWERT_PUNKT_DURCHMESSER);
-  let aussenRadius = Math.max(...punktGroessen) / 2;
-  let kernRadius = Math.min(...punktGroessen) / 2;
+  // Das Blendensymbol braucht mehr Durchmesser als der frühere Punkt: sechs
+  // Segmente und ein Sechseck in 10 px sind Matsch. 16 px ist die Grenze, ab
+  // der die Spalten noch als Spalten lesen.
+  //
+  // ACHTUNG damit hält sich der Marker NICHT mehr an die Reihe der
+  // F-Wert-Punkte (grösster 10 px), an die er vorher gebunden war. Das war
+  // vertretbar, solange beide Punkte waren und sich nur in der Farbe
+  // unterschieden — jetzt trägt die FORM den Unterschied, und die braucht
+  // ihren Platz. Wie zuvor skaliert er nicht mit dem Zoom.
+  let aussenRadius = 8;
   // Tooltip und Hinweis erst nach der Schleife, sonst überzeichnet sie ein
   // später gezeichneter Marker.
   let unterCursor = null;
@@ -50,20 +110,14 @@ function zeichneFotoMarker(activeBbox, offsetX = mapOffsetX, offsetY = mapOffset
 
   push(); // schreibt fillStyle direkt, wie zeichneFwertPunkte in kreisgrafik.js
   noStroke();
-  let scheibe = (x, y, r, rgb) => {
-    drawingContext.fillStyle = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
-    drawingContext.beginPath();
-    drawingContext.arc(x, y, r, 0, TWO_PI);
-    drawingContext.fill();
-  };
   fotoMarkerListe.forEach(f => {
     let pos = lonLatToScreen(f.lon, f.lat, activeBbox, offsetX, offsetY);
     let hover = dist(mouseX, mouseY, pos.x, pos.y) < FOTO_MARKER_TREFFER_RADIUS;
     // Farbe bleibt beim Hover gleich — ein Wechsel ins Orange brächte genau
     // die Verwechslung zurück, die FOTO_MARKER_FARBE vermeidet.
     let skala = hover ? 1.5 : 1;
-    scheibe(pos.x, pos.y, aussenRadius * skala, FOTO_MARKER_FARBE_RGB);
-    scheibe(pos.x, pos.y, kernRadius * skala, FOTO_MARKER_KERN_FARBE_RGB);
+    zeichneBlende(pos.x, pos.y, aussenRadius * skala,
+      FOTO_MARKER_FARBE_RGB, FOTO_MARKER_KERN_FARBE_RGB);
 
     if (hover) unterCursor = { titel: f.titel, pos };
     if (hinweis && f.titel === hinweis.titel) {
