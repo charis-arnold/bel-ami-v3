@@ -63,9 +63,14 @@ const FWERT_PUNKT_DURCHMESSER = { 1: 5, 2: 7.5, 3: 10 };
 
 // Ausformulierte Namen der drei F-Wert-Typen, Gegenstück zu CATEGORY_LABELS.
 // Wortlaut wie im PDF, ohne das frühere Präfix «Wechselwirkung:».
+// ACHTUNG das \n ist ein gesetzter Umbruch, keine Wortlautänderung: die Zeile
+// ist mit Abstand die längste der drei und zog den ganzen Block in die Breite.
+// Automatisch umbrechen liesse sich das nicht sinnvoll — die Stelle ist
+// gewählt, nicht gerechnet. zeichneLegendenBlock (kreisgrafik.js) trennt
+// daran; Labels ohne \n bleiben einzeilig.
 const FWERT_LABELS = {
   ort_loest_emotion_aus: 'Der Raum löst die Emotion aus',
-  emotion_faerbt_raum: 'Die Emotion beeinflusst die Raumwahrnehmung',
+  emotion_faerbt_raum: 'Die Emotion beeinflusst\ndie Raumwahrnehmung',
   koerper_als_sensor: 'Der Körper spürt',
 };
 

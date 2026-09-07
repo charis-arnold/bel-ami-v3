@@ -220,13 +220,17 @@ h2 {
    gehört zum Titelbild und verschwindet mit ihm. Trägt die Bedienschrift von
    oben.
 
-   ACHTUNG 62% ist die Mitte zwischen .lead-1 (45%) und .lead-2 (79%), und
-   top misst bei allen dreien die MITTE, nicht die Oberkante: sie teilen sich
-   dasselbe translate(-50%, -50%). Wird eine der beiden Leadzeilen verschoben,
-   muss dieser Wert mit. */
+   ACHTUNG 58.5% ist die Mitte zwischen .lead-1 (45%) und .begleittext (72%),
+   und top misst bei allen dreien die MITTE, nicht die Oberkante: sie teilen
+   sich dasselbe translate(-50%, -50%). Wird eine der beiden Bezugszeilen
+   verschoben, muss dieser Wert mit.
+
+   ACHTUNG der Bezug unten ist .begleittext, NICHT .lead-2 (79%) — der
+   Crawl-Text setzt genau dort ein, wo der Titel ausblendet, und er ist der
+   Nachbar, gegen den der Knopf steht. */
 .intro-ton {
   position: absolute;
-  top: 62%;
+  top: 58.5%;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 5;
@@ -770,8 +774,18 @@ body.legende-offen .annotation-box.pos-unten-links {
   visibility: visible;
 }
 
+/* Spalte genau so breit wie .begleittext / .kapitel-einstiegstext.
+
+   ACHTUNG die font-size hier ist KEINE Textgrösse — dieser Knoten zeigt selbst
+   keinen Text, die Absätze darunter setzen ihre eigene. Sie steht nur da,
+   damit ch dieselbe Bezugsgrösse bekommt wie dort: ch misst in Zeichen der
+   Schriftgrösse des Elements, an dem max-width hängt. Ohne diese Zeile
+   rechnete 42ch gegen die kleinere Absatzschrift und die Spalte fiele
+   schmaler aus als die Einstiegstexte.
+   Beide Werte gehören zusammen und müssen mit .begleittext mitwandern. */
 .projekttext-inner {
-  max-width: 58ch;
+  font-size: clamp(16px, 3vw, 30px);
+  max-width: 42ch;
   max-height: 80vh;
   overflow-y: auto;
   pointer-events: auto;
@@ -779,10 +793,15 @@ body.legende-offen .annotation-box.pos-unten-links {
 
 /* Helle Serifenschrift auf dunklem Grund — derselbe Ton wie der Intro-Crawl
    am Anfang, auf den der Projekttext bewusst zurückverweist. */
+/* Eigene, kleinere Schrift als die Einstiegstexte: die stehen als einzelner
+   Satz über der Karte, hier laufen drei Absätze am Stück — dafür kleinerer
+   Grad und lockerer Zeilenabstand. Nur die Spaltenbreite ist gemeinsam,
+   siehe .projekttext-inner oben. */
 .projekttext-inner p {
   font-family: var(--serif-text);
   font-size: clamp(16px, 1.5vw, 22px);
   line-height: 1.65;
+  text-align: left;
   color: #E2E6E1;
 }
 

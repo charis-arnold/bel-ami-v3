@@ -484,8 +484,13 @@ function legendenKopfraum() {
 
 // Höhe der Blockzeile: Kategorienblock und Luft zum Begleittext. Wächst sie,
 // bleibt dem Kreis weniger Raum (demoKreisLage).
+// ACHTUNG die Folgezeile muss mit: seit «Die Emotion beeinflusst die
+// Raumwahrnehmung» umbricht, reicht der F-Wert-Block eine Zeile tiefer, und
+// blockY rechnet von der Oberkante des Begleittexts rückwärts. Ohne sie liefe
+// die letzte Zeile in den Text hinein.
 function blockZeileHoehe() {
-  return LEGENDE_TITEL_ABSTAND + 2 * LEGENDE_ZEILE + LEGENDE_BLOCK_LUFT;
+  return LEGENDE_TITEL_ABSTAND + 2 * LEGENDE_ZEILE + LEGENDE_TEXTZEILE
+    + LEGENDE_BLOCK_LUFT;
 }
 
 // Radius des fertig aufgebauten Demo-Kreises bei Massstab 1. Hängt nur an
@@ -556,7 +561,11 @@ const LEGENDE_MARKE_SPALTE = 26;    // Feld- bzw. Punktspalte zum Text
 const LEGENDE_BLOCK_LUECKE = 40;    // Luft zwischen den beiden Blöcken
 const LEGENDE_BLOCK_LUFT = 22;      // Blockzeile zur Oberkante des Begleittexts
 const LEGENDE_RAND_LINKS = 46;      // Titel und linker Block zum Fensterrand
-const LEGENDE_TEXTZEILE = 17;       // Zeilenabstand im Kreisgrössen-Block
+// Zeilenabstand INNERHALB eines mehrzeiligen Textblocks: der Kreisgrössen-Block,
+// die zweizeiligen Wahrnehmungs-Labels und die über \n umbrochene Zeile in
+// FWERT_LABELS teilen ihn sich. Enger als LEGENDE_ZEILE, das den Abstand
+// zwischen zwei EIGENSTÄNDIGEN Zeilen setzt.
+const LEGENDE_TEXTZEILE = 17;
 const LEGENDE_TEXT_ABSTAND = 60;    // Kreisrand zum Text rechts
 const LEGENDE_ECKE = 46;            // Höhe des Knicks über dem Kreisscheitel
 const LEGENDE_KLAMMER_TIEFE = 90;   // Wie weit die Valenzklammern nach links greifen
@@ -663,6 +672,26 @@ function beschriftungsSchrift(groesse) {
   textStyle(BOLD);
 }
 
+// Leichter Schnitt (300) für die erläuternden Legendenzeilen — «Der Kreis
+// wächst mit jedem geäusserten Gefühl.» steht damit unter der Regel, die es
+// erläutert, statt gleichrangig daneben.
+//
+// ACHTUNG p5s textStyle() kennt nur BOLD, NORMAL und ITALIC. Ein echtes Light
+// geht nur über die Schriftzeile des Kontexts — und dann muss auch fillText()
+// direkt gerufen werden: p5s text() setzt die Schrift aus seinem eigenen
+// Zustand neu und überschriebe den Wert sofort wieder.
+//
+// ACHTUNG Ausrichtung, Grundlinie und Farbe kommen vom Kontext, nicht von
+// hier. Beide Aufrufer zeichnen vorher die fetten Zeilen mit p5s text(), das
+// die Werte setzt. Wer das als erste Zeile ruft, muss textAlign und fill
+// selbst mitbringen.
+const SCHRIFT_LEICHT_GEWICHT = 300;
+
+function beschriftungLeicht(txt, x, y, groesse = LABEL_GROESSE) {
+  drawingContext.font = `${SCHRIFT_LEICHT_GEWICHT} ${groesse}px ${SCHRIFT_SANS}`;
+  drawingContext.fillText(txt, x, y);
+}
+
 // Gestrichelte Linien der Legende. Kapselt das setLineDash-Paar, das sonst in
 // jeder der drei Zeichenroutinen stünde.
 function legendenStrich(farbe, alpha, zeichnen) {
@@ -722,9 +751,13 @@ function zeichneKreisgroessenBlock(cx, cy, aussen, alpha) {
   LEGENDE_KREISGROESSE.forEach((zeile, i) => {
     // Die ersten drei Zeilen benennen die Regel, die letzten beiden erläutern
     // sie — im PDF derselbe Gewichtswechsel.
-    textStyle(i < 3 ? BOLD : NORMAL);
     fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b, 255 * alpha);
-    text(zeile, x, ecke + i * LEGENDE_TEXTZEILE);
+    if (i < 3) {
+      textStyle(BOLD);
+      text(zeile, x, ecke + i * LEGENDE_TEXTZEILE);
+    } else {
+      beschriftungLeicht(zeile, x, ecke + i * LEGENDE_TEXTZEILE);
+    }
   });
   pop();
 }
@@ -806,10 +839,28 @@ function zeichneSchraffurFeld(x, y, farbe, alphaSkala) {
 
 // Breite eines Blocks: Textspalte plus längste Zeile. Nur der rechte Block
 // braucht sie, um am Fensterrand zu enden.
+// Eine Blockzeile kann über \n umbrechen (siehe FWERT_LABELS). Alles, was
+// misst oder platziert, geht durch diese beiden Helfer — sonst rechnet die
+// eine Stelle mit einer Zeile und die andere mit zweien.
+function legendenZeilenText(z) {
+  return String(z.text).split('\n');
+}
+
+// Höhe, die eine Zeile im Block belegt: die Grundzeile plus je Folgezeile
+// LEGENDE_TEXTZEILE. Die Folgezeile ist enger als LEGENDE_ZEILE — mit dem
+// vollen Mass passte der Block nicht mehr in den Legendenbalken (110 px
+// Innenraum, siehe LEISTE_HOEHE und LEISTE_OBEN).
+function legendenZeilenHoehe(z) {
+  return LEGENDE_ZEILE + (legendenZeilenText(z).length - 1) * LEGENDE_TEXTZEILE;
+}
+
 function legendenBlockBreite(titel, zeilen) {
   let spalte = legendenTextSpalte(zeilen);
+  // Je Teilzeile messen, nicht den ganzen String: genau dafür ist der Umbruch
+  // da — die längste Teilzeile bestimmt die Breite.
   return Math.max(beschriftungsBreite(titel),
-    ...zeilen.map(z => spalte + beschriftungsBreite(z.text)));
+    ...zeilen.flatMap(z => legendenZeilenText(z)
+      .map(t => spalte + beschriftungsBreite(t))));
 }
 
 // Schritte 4 und 5: ein Block mit Überschrift und Zeilen. Eine Zeile trägt
@@ -826,10 +877,22 @@ function zeichneLegendenBlock(x, y, titel, zeilen, alpha) {
   text(titel, x, y);
   let textSpalte = legendenTextSpalte(zeilen);
   let feldX = x + legendenFeldSpalte(zeilen);
-  zeilen.forEach((z, i) => {
+  // ACHTUNG aufsummiert statt i * LEGENDE_ZEILE: eine umbrochene Zeile ist
+  // höher, die folgenden müssen ihr ausweichen. Der Lauf zählt auch
+  // ausgeblendete Zeilen mit — sonst rutschten die sichtbaren nach oben,
+  // sobald eine Kategorie noch nicht eingeblendet ist.
+  let lauf = y + LEGENDE_TITEL_ABSTAND;
+  zeilen.forEach(z => {
+    let zeilenText = legendenZeilenText(z);
+    // Marke, Lautsprecher und Klickfläche sitzen auf der ERSTEN Textzeile,
+    // nicht auf der Mitte des Blocks: so stehen die Punkte aller Zeilen im
+    // selben Abstand zur Überschrift, egal ob eine davon umbricht. Auf der
+    // Blockmitte rutschte der Punkt der umbrochenen Zeile aus der Reihe.
+    let zy = lauf;
+    let hoehe = legendenZeilenHoehe(z);
+    lauf += hoehe;
     let a = z.alpha === undefined ? alpha : z.alpha;
     if (a <= LEGENDE_SICHTBAR) return;
-    let zy = y + LEGENDE_TITEL_ABSTAND + i * LEGENDE_ZEILE;
     if (z.klang) zeichneKlangIkon(x, zy - LEGENDE_KLANG_IKON / 2, a);
     if (z.feld) {
       // Drei Marken in der Reihenfolge, in der die Grafik sie aufbaut: erst
@@ -847,13 +910,16 @@ function zeichneLegendenBlock(x, y, titel, zeilen, alpha) {
       circle(feldX + LEGENDE_FELD / 2, zy, z.punkt);
     }
     fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b, 255 * a);
-    text(z.text, x + textSpalte, zy);
+    zeilenText.forEach((t, j) =>
+      text(t, x + textSpalte, zy + j * LEGENDE_TEXTZEILE));
     // Klickfläche ist allein der Lautsprecher, nicht die ganze Zeile.
     if (z.klang) {
       if (klangZeilenFrame !== frameCount) {
         letzteKlangZeilen = [];
         klangZeilenFrame = frameCount;
       }
+      // Nur die erste Zeile hoch: dort sitzt der Lautsprecher, und die
+      // Folgezeilen einer umbrochenen Zeile sollen kein Klickziel werden.
       letzteKlangZeilen.push({
         klang: z.klang,
         x0: x - 3, x1: x + LEGENDE_KLANG_IKON + 3,
@@ -1054,7 +1120,13 @@ function klangZeileGetroffen(mx, my) {
 const LEISTE_HOEHE = 158;           // Höhe des offenen Legendenbalkens
 const LEISTE_RAND = 26;             // Innenabstand links und rechts
 const LEISTE_OBEN = 24;             // Oberkante des Balkens zur ersten Zeile
-const LEISTE_LUECKE = 42;           // Luft zwischen den Gruppen
+// Luft zwischen den fünf Gruppen des Balkens. Von 42 heruntergesetzt, weil die
+// letzte Gruppe rechts aus dem Fenster lief.
+//
+// ACHTUNG die Lücken sind NICHT der Haupttreiber der Balkenbreite: fünf davon
+// machen zusammen 120 px, die Gruppen selbst rund 1300 px. Wer weiter kürzen
+// muss, kommt hier nicht mehr weit — dann sind die Gruppeninhalte dran.
+const LEISTE_LUECKE = 24;
 // Jeder Reiter ist so breit, wie sein Wort braucht: Rand, Beschriftung, Luft,
 // Doppelpfeil, Rand. Gemessen an der eigenen Schrift, damit kein Wortmass fest
 // im Code steht — «LEGENDE» ergibt so 106 px, «INFO» 81 px.
@@ -1081,10 +1153,45 @@ const LEISTE_AKTIV_TINTE = hexZuRgb('#C6D2D7');
 // (zeichneRegisterleiste weiter unten), und die soll hell bleiben.
 const LEISTE_REITER_ZU_GRUND = hexZuRgb(ROUTE_COLOR);
 const LEISTE_REITER_ZU_TINTE = LEISTE_GRUND;
-const LEISTE_KREIS_R = 34;          // Beispielkreis der Gruppe «Kreisgrösse»
-const LEISTE_VALENZ_R = 30;         // Halbkreise der Gruppe «Anteil»
-const LEISTE_WAHRNEHMUNG_R = 12;    // Kreis des Wahrnehmungsbogens
+// Senkrechte Trennlinie zwischen den beiden Hälften des Balkens. Eigener,
+// heller Ton statt der Legendentinte: die Linie ordnet nur, sie benennt
+// nichts — in Tintenstärke las sie sich als Rahmen und nahm den Gruppen
+// daneben das Gewicht.
+const LEISTE_TRENNLINIE = hexZuRgb('#CDD5CF');
+const LEISTE_KREIS_R = 34;          // Platz, den der Beispielkreis im Layout belegt
+// Gezeichnete Grösse und optischer Versatz des Beispielkreises. Getrennt vom
+// Layoutmass darüber: der Kreis soll kleiner und nach oben links rücken, ohne
+// dass Text und Nachbargruppe mitwandern. Reine Gestaltungswerte, per Auge zu
+// verstellen.
+//
+// ACHTUNG der Versatz muss GRÖSSER sein als die Verkleinerung, sonst rückt
+// nichts: bei Radius 28 und Versatz -6 läge die obere linke Kante exakt wie
+// zuvor, der Kreis wäre nur nach unten rechts geschrumpft. Mit -12 wandern
+// die Kanten um sechs Pixel.
+//
+// Beides bleibt im Rahmen: der Balken hat ±55 px Innenraum um die Mitte, und
+// nach links steht die Gruppenlücke zur Verfügung (LEISTE_LUECKE, 24 px).
+// GEMEINSAME GRUNDFORM der drei Kreiszeichen im Balken: der schraffierte Kreis
+// bei «Kreisgrösse», die beiden Valenzhälften und der Wahrnehmungsbogen sitzen
+// auf demselben Radius und derselben Höhe. Vorher hatte jede Gruppe ihr
+// eigenes Mass (28 / 30 / 30) und zwei verschiedene Höhen — nebeneinander las
+// sich das als drei unabhängige Zeichen statt als eine Familie.
+const LEISTE_GRUNDKREIS_R = 28;
+const LEISTE_GRUNDKREIS_DY = -12;   // Höhenversatz zur Balkenmitte, für alle drei
+const LEISTE_KREIS_VERSATZ_X = -12; // nur «Kreisgrösse»: Lage in ihrem Layoutplatz
+// Luft zwischen der gezeichneten Kreiskante und dem Text daneben. Misst ab
+// der Kante, nicht ab dem Layoutplatz — siehe kreisRechts in
+// leisteKreisgroesse.
+const LEISTE_KREIS_TEXT_LUFT = 18;
+// Spalt zwischen oberer und unterer Hälfte, siehe ACHTUNG bei leisteValenz.
+// Unter etwa 6 px schliesst sich die Lücke optisch wieder und die beiden
+// Formen fliessen zusammen.
+const LEISTE_VALENZ_SPALT = 8;
 const LEISTE_BOGEN_ABSTAND = 18;    // enger als im Vollbild, der Balken ist flach
+// Abstand zwischen Ringpunkt und Beschriftung. Zugleich die Länge, über die
+// die gestrichelte Zuführungslinie läuft — wächst der Wert, wird auch sie
+// länger. Die Gruppenbreite rechnet damit, siehe leisteWahrnehmung.
+const LEISTE_WAHRNEHMUNG_LABEL_LUFT = 22;
 const LEISTE_RING_R = 4.5;          // die drei offenen Ringe auf dem Bogen
 
 let letzteReiterLagen = [];
@@ -1146,55 +1253,122 @@ function zeichneReiter(name, x, oben, titel, breite, offen, negativ = false) {
 
 // Gruppe 2: leerer Beispielkreis mit dem Kreisgrössen-Text daneben.
 function leisteKreisgroesse(x, mitte) {
+  // Schraffierte Fläche ohne Umriss — dieselbe Schraffur, mit der die echten
+  // Ortskreise ihre Gesamtzahl zeigen (drawHatchedCircle in zeichneKreiseFuerRun).
+  // Damit sagt das Zeichen dasselbe wie der Text daneben: die Schraffur IST die
+  // Anzahl. Ein gestrichelter Umriss stand dagegen für nichts.
+  //
+  // ACHTUNG nur das Zeichen rückt, NICHT das Layout: tx und die zurückgegebene
+  // Breite rechnen weiter mit LEISTE_KREIS_R. Der Kreis sitzt damit optisch
+  // versetzt in seinem Platz, statt Text und Nachbargruppe mitzuziehen — sonst
+  // wäre «nach links» nur eine schmalere Gruppe.
+  drawHatchedCircle(x + LEISTE_KREIS_R + LEISTE_KREIS_VERSATZ_X,
+    mitte + LEISTE_GRUNDKREIS_DY, LEISTE_GRUNDKREIS_R, LEGENDE_TINTE, 1);
   push();
-  noFill();
-  stroke(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b);
-  strokeWeight(1);
-  circle(x + LEISTE_KREIS_R, mitte, LEISTE_KREIS_R * 2);
   noStroke();
   fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b);
   beschriftungsSchrift(LABEL_GROESSE);
   textAlign(LEFT, CENTER);
-  let tx = x + LEISTE_KREIS_R * 2 + 18;
+  // An der GEZEICHNETEN Kreiskante ausrichten, nicht am Layoutplatz: seit der
+  // Kreis kleiner ist und nach links rückt, stünde der Text sonst 36 px
+  // entfernt statt der gedachten Luft. So folgt er von selbst, wenn Radius
+  // oder Versatz nochmals verstellt werden.
+  let kreisRechts = LEISTE_KREIS_R + LEISTE_KREIS_VERSATZ_X + LEISTE_GRUNDKREIS_R;
+  let tx = x + kreisRechts + LEISTE_KREIS_TEXT_LUFT;
   let oben = mitte - (LEGENDE_KREISGROESSE.length - 1) * LEGENDE_TEXTZEILE / 2;
-  LEGENDE_KREISGROESSE.forEach((z, i) => text(z, tx, oben + i * LEGENDE_TEXTZEILE));
+  // Gewichtswechsel wie in der Vollbild-Legende: die ersten drei Zeilen
+  // benennen die Regel, die letzten beiden erläutern sie.
+  LEGENDE_KREISGROESSE.forEach((z, i) => {
+    if (i < 3) text(z, tx, oben + i * LEGENDE_TEXTZEILE);
+    else beschriftungLeicht(z, tx, oben + i * LEGENDE_TEXTZEILE);
+  });
   pop();
-  return LEISTE_KREIS_R * 2 + 18 + Math.max(...LEGENDE_KREISGROESSE.map(beschriftungsBreite));
+  // Aus derselben Rechnung wie tx, damit die Gruppe genau so breit gemeldet
+  // wird, wie sie steht — sonst bliebe rechts eine Lücke in Höhe des Versatzes.
+  return kreisRechts + LEISTE_KREIS_TEXT_LUFT
+    + Math.max(...LEGENDE_KREISGROESSE.map(z => beschriftungsBreite(z)));
 }
 
-// Gruppe 3: die beiden Valenzhälften, jede in einem gestrichelten Kasten.
+// Gruppe 3: die beiden Valenzhälften, durch einen Spalt getrennt.
+//
+// ACHTUNG der Spalt ist das Entscheidende an dieser Gruppe. Lagen die beiden
+// Hälften an der Mittellinie aneinander, verschmolzen sie zu EINER Form — je
+// nach Radienverhältnis zu einem Pilz oder schlicht zu einem Vollkreis. Keine
+// der beiden las sich dann als Halbkreis. Erst der Spalt gibt jeder Hälfte
+// ihre gerade Kante zurück.
+//
+// Die früheren gestrichelten Kästen um jede Hälfte sind heraus: ein Kasten von
+// 2r x r berührt seinen Halbkreis nur im Scheitel, die leeren oberen Ecken
+// liessen ihn gedrückt wirken. Kommt aus der Legenden-PDF — falls sie dort
+// zwingend sind, gehören sie zurück, aber dann mit dem Spalt zusammen.
 function leisteValenz(x, mitte) {
-  let cx = x + LEISTE_VALENZ_R;
-  let oben = LEISTE_VALENZ_R, unten = LEISTE_VALENZ_R * 0.72;
+  let cx = x + LEISTE_GRUNDKREIS_R;
+  // Obere Hälfte auf dem vollen Grundkreis, untere kleiner — sie zeigt einen
+  // geringeren Anteil. Beide auf derselben Höhe wie der schraffierte Kreis
+  // der Nachbargruppe.
+  let oben = LEISTE_GRUNDKREIS_R, unten = LEISTE_GRUNDKREIS_R * 0.72;
+  let achse = mitte + LEISTE_GRUNDKREIS_DY;
+  // Jede Hälfte rückt um die halbe Spaltbreite von der Achse weg.
+  let versatz = LEISTE_VALENZ_SPALT / 2;
+  let obenMitte = achse - versatz, untenMitte = achse + versatz;
   push();
   noStroke();
-  fill(150, 150, 150);
-  arc(cx, mitte, oben * 2, oben * 2, PI, TWO_PI, OPEN);
-  arc(cx, mitte, unten * 2, unten * 2, 0, PI, OPEN);
+  fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b);
+  arc(cx, obenMitte, oben * 2, oben * 2, PI, TWO_PI, OPEN);
+  arc(cx, untenMitte, unten * 2, unten * 2, 0, PI, OPEN);
   pop();
+  let tx = cx + oben + 16;
+  // Auf die Mitte der jeweiligen Hälfte, nicht auf die der ganzen Gruppe.
+  let yPos = obenMitte - oben / 2, yNeg = untenMitte + unten / 2;
+
+  // Zuführungslinien wie bei den Wahrnehmungs-Beschriftungen. Sie setzen an
+  // der Rundung an, nicht am gedachten Radius: auf halber Höhe steht die
+  // Kante bei sqrt(r² - dy²), also spürbar weiter innen als bei r. Ohne diese
+  // Rechnung begänne die Linie im Leeren neben dem Halbkreis.
+  let kante = (r, dy) => cx + Math.sqrt(Math.max(0, r * r - dy * dy));
   legendenStrich(LEGENDE_TINTE_RGB, 1, () => {
-    rect(cx - oben, mitte - oben, oben * 2, oben);
-    rect(cx - unten, mitte, unten * 2, unten);
-    line(cx - oben, mitte, cx + oben, mitte);
+    line(kante(oben, oben / 2) + 3, yPos, tx - 3, yPos);
+    line(kante(unten, unten / 2) + 3, yNeg, tx - 3, yNeg);
   });
+
   push();
   noStroke();
   fill(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b);
   beschriftungsSchrift(LABEL_GROESSE);
   textAlign(LEFT, CENTER);
-  let tx = cx + oben + 16;
-  text(LEGENDE_VALENZ.pos, tx, mitte - oben / 2);
-  text(LEGENDE_VALENZ.neg, tx, mitte + unten / 2);
+  text(LEGENDE_VALENZ.pos, tx, yPos);
+  text(LEGENDE_VALENZ.neg, tx, yNeg);
   pop();
   return oben * 2 + 16 + Math.max(beschriftungsBreite(LEGENDE_VALENZ.pos), beschriftungsBreite(LEGENDE_VALENZ.neg));
 }
 
 // Gruppe 5: der Wahrnehmungsbogen mit seinen drei Ringpunkten, beschriftet.
+// Zweizeilig gesetzt: «Positive» über «Wahrnehmung». Damit misst die Gruppe
+// nur noch das längste EINZELNE Wort statt der ganzen Zeile und wird im
+// flachen Balken deutlich schmaler.
+//
+// ACHTUNG die Zeilen entstehen aus dem Leerzeichen des Labels, nicht aus einer
+// zweiten Liste — WAHRNEHMUNG_LABELS bleibt die eine Quelle, und der Wortlaut
+// stammt wörtlich aus dem PDF. Ein Label ohne Leerzeichen bliebe einzeilig.
+function wahrnehmungZeilen(bucket) {
+  return WAHRNEHMUNG_LABELS[bucket].split(' ');
+}
+
 function leisteWahrnehmung(x, mitte) {
-  let breit = Math.max(...Object.values(WAHRNEHMUNG_LABELS).map(beschriftungsBreite));
-  let bogen = LEISTE_WAHRNEHMUNG_R + LEISTE_BOGEN_ABSTAND;
-  let cx = x + breit + 24 + bogen;
-  let ringe = zeichneWahrnehmungsbogen(cx, mitte, LEISTE_WAHRNEHMUNG_R,
+  let breit = Math.max(...Object.keys(WAHRNEHMUNG_LABELS)
+    .flatMap(wahrnehmungZeilen).map(t => beschriftungsBreite(t)));
+  // Der Bogen läuft auf dem Grundkreis, wie die Nachbargruppen: sein Radius
+  // ist aussen + abstand, also wird aussen so gewählt, dass die Summe stimmt.
+  // Höhe ebenfalls auf der gemeinsamen Achse.
+  let bogen = LEISTE_GRUNDKREIS_R;
+  let luft = LEISTE_WAHRNEHMUNG_LABEL_LUFT;
+  // Wie weit die beiden linken Ringpunkte vom Mittelpunkt nach links reichen.
+  // Aus dem Winkel gerechnet, nicht als Zahl gesetzt: bei 120° ist es der
+  // halbe Bogenradius, und die Gruppenränder unten hängen davon ab.
+  let linksTief = -Math.cos(FWERT_GRUPPEN_VERSATZ) * bogen;
+  let cx = x + breit + luft + linksTief;
+  let ringe = zeichneWahrnehmungsbogen(cx, mitte + LEISTE_GRUNDKREIS_DY,
+    bogen - LEISTE_BOGEN_ABSTAND,
     { pos: 1, neg: 1, neutral: 1 }, LEISTE_BOGEN_ABSTAND, LEISTE_RING_R);
   push();
   noStroke();
@@ -1203,12 +1377,19 @@ function leisteWahrnehmung(x, mitte) {
     let links = ring.x < cx;
     textAlign(links ? RIGHT : LEFT, CENTER);
     fill(FWERT_COLOR_RGB.r, FWERT_COLOR_RGB.g, FWERT_COLOR_RGB.b);
-    let lx = links ? ring.x - 12 : ring.x + 12;
-    text(WAHRNEHMUNG_LABELS[ring.bucket], lx, ring.y);
+    let lx = links ? ring.x - luft : ring.x + luft;
+    // Der Block sitzt mittig auf ring.y, damit die Zuführungslinie weiterhin
+    // auf seine Mitte trifft und nicht auf die erste Zeile.
+    let zeilen = wahrnehmungZeilen(ring.bucket);
+    let oben = ring.y - (zeilen.length - 1) * LEGENDE_TEXTZEILE / 2;
+    zeilen.forEach((z, i) => text(z, lx, oben + i * LEGENDE_TEXTZEILE));
     legendenStrich(FWERT_COLOR_RGB, 1, () => line(links ? lx + 3 : ring.x + 3, ring.y, links ? ring.x - 3 : lx - 3, ring.y));
   });
   pop();
-  return breit * 2 + 48 + bogen * 2;
+  // Aus derselben Geometrie wie cx: linker Rand ist der linke Beschriftungs-
+  // anfang, rechter der rechte. Die früheren festen 48 und bogen*2 meldeten
+  // 12 px zu viel und rechneten den Abstand nicht mit.
+  return breit * 2 + 2 * luft + linksTief + bogen;
 }
 
 // Der ganze Balken, aus 0..1 ausgefahren, mit seinem Reiter auf der Oberkante.
@@ -1245,7 +1426,7 @@ function zeichneRegisterleiste(aus, sichtbar) {
 
     // Senkrechte Trennlinie zwischen den beiden Hälften, wie im PDF.
     push();
-    stroke(LEGENDE_TINTE_RGB.r, LEGENDE_TINTE_RGB.g, LEGENDE_TINTE_RGB.b);
+    stroke(LEISTE_TRENNLINIE.r, LEISTE_TRENNLINIE.g, LEISTE_TRENNLINIE.b);
     strokeWeight(2);
     line(x, oben + LEISTE_OBEN, x, oben + LEISTE_HOEHE - LEISTE_OBEN);
     pop();
