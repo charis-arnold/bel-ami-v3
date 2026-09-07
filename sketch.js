@@ -157,13 +157,12 @@ let legendeAus = 0;
 let infoAus = 0;
 const REGISTER_TEMPO = 0.18;   // Anteil des Rests je Frame, wie kapitelZoomAmount
 
-// Der Projekttext hat zwei Wege hinein: am Ende der Route geht er von selbst
-// auf, und das Register «Info» holt ihn jederzeit zurück. Deshalb zwei Merker
-// statt einem — sonst liesse sich der automatische nicht wegklicken, ohne den
-// von Hand geöffneten mitzuschliessen.
+// Der Projekttext hat genau einen Weg hinein: das Register «Info». Früher ging
+// er am Routenende zusätzlich von selbst auf; dafür brauchte es einen zweiten
+// Merker, der den automatischen für den laufenden Durchgang abhakte. Mit dem
+// Einblender ist auch der Merker weg.
 let projekttextPerRegister = false; // über den Reiter geholt, bleibt bis zum nächsten Klick
-let projekttextWeggeklickt = false; // der automatische wurde von Hand geschlossen
-let projekttextOffen = false;     // je Frame aus den beiden abgeleitet
+let projekttextOffen = false;       // je Frame daraus abgeleitet
 
 // Heller Schleier unter dem Legendenaufbau. Derselbe Ton wie der Grund der
 // Registerleiste in kreisgrafik.js: die helle Karte bleibt darunter als
@@ -171,11 +170,8 @@ let projekttextOffen = false;     // je Frame aus den beiden abgeleitet
 const LEGENDE_SCHLEIER = '#E2E6E1';
 const LEGENDE_SCHLEIER_ALPHA = 0.8;
 
-// Zu heisst je nach Weg etwas anderes: den über den Reiter geholten einfach
-// wieder weg, den automatischen für diesen Durchlauf abhaken.
 function schliesseProjekttext() {
-  if (projekttextPerRegister) projekttextPerRegister = false;
-  else projekttextWeggeklickt = true;
+  projekttextPerRegister = false;
 }
 
 // Register fahren geglättet aus. Am Ende auf den Sollwert einrasten, sonst
@@ -302,10 +298,20 @@ function setup() {
   // Klick-Handler kommen — Scrollen zählt nicht als Nutzergeste, sonst bleibt
   // Strudel stumm. haltKlickAuf hält den mousedown fest, damit der Klick nicht
   // zusätzlich auf der Leinwand landet.
+  // Die Beschriftung sagt, was der Klick TUT, nicht was gerade ist: im
+  // ausgeschalteten Zustand steht «Ton an». Den Zustand trägt der Ring
+  // daneben, der sich beim Einschalten füllt — Text und Ring sagen damit
+  // zweierlei, statt sich zu wiederholen.
   introTonEl = document.getElementById('introTon');
+  let introTonTextEl = introTonEl.querySelector('.intro-ton-text');
+  let zeigeIntroTonZustand = (an) => {
+    introTonEl.setAttribute('aria-pressed', an ? 'true' : 'false');
+    introTonTextEl.textContent = an ? 'Ton aus' : 'Ton an';
+  };
+  zeigeIntroTonZustand(false);
   haltKlickAuf(introTonEl, () => {
     let an = introTonEl.getAttribute('aria-pressed') !== 'true';
-    introTonEl.setAttribute('aria-pressed', an ? 'true' : 'false');
+    zeigeIntroTonZustand(an);
     schalteIntroTon(an);
   });
   begleitTexte = document.querySelectorAll('.begleittext');
@@ -657,14 +663,11 @@ function draw() {
   // das Kapitelende darauf aufbaut.
   let demoAlpha = progress < SCROLL_MEILENSTEINE.kartenwechselEnd ? 0 : 1;
 
-  // Der Projekttext geht am Ende der Route von selbst auf und bleibt, bis er
-  // weggeklickt oder durchgescrollt ist. Zurückgescrollt zählt als neuer
-  // Durchlauf, dann geht er wieder auf.
-  let imProjekttextFenster = !zoomedKapitel
-    && progress >= SCROLL_MEILENSTEINE.routeEnd
-    && progress < SCROLL_MEILENSTEINE.kapitelEndeStart;
-  if (progress < SCROLL_MEILENSTEINE.routeEnd) projekttextWeggeklickt = false;
-  projekttextOffen = projekttextPerRegister || (imProjekttextFenster && !projekttextWeggeklickt);
+  // Der Projekttext kommt ausschliesslich über das Register «Info». Der
+  // frühere Einblender am Routenende ist heraus: er hielt den Scroll genau
+  // dort an, wo Kapitel 1 zu Ende geht, und schob sich zwischen die Route und
+  // die beiden Klickziele.
+  projekttextOffen = projekttextPerRegister;
   // Das Register «Legende» gehört zum Kapitelmenü und kommt mit ihm: davor, auf
   // der dunklen Startkarte und im Legendenaufbau, gibt es noch keine
   // Kreisgrafik zu erklären. «Info» steht dort allein. Steht hier oben, weil
@@ -675,12 +678,12 @@ function draw() {
   infoAus = naehereRegister(infoAus, projekttextOffen ? 1 : 0);
 
   // Kapitelende, in jedem Kapitel: die beiden Klickziele. In 02–18 steht der
-  // Scroll dort geklemmt, Kapitel 1 hat dafür seine eigene Strecke zwischen
-  // Projekttext und Klemme.
+  // Scroll dort geklemmt, Kapitel 1 hat dafür seine eigene Strecke bis zur
+  // Klemme.
 
-  // Nicht an eine Scrollmarke allein gebunden, sondern an "der Projekttext ist
-  // zu": sonst zeigte der X-Weg die Kartenansicht ohne Hinweis und Buttons,
-  // bis man bis zur Klemme durchgescrollt hätte.
+  // !projekttextOffen bleibt in der Bedingung, obwohl der automatische
+  // Einblender heraus ist: das über «Info» geholte Textfeld deckt die
+  // Kartenansicht zu, und darunter sollen Hinweis und Buttons nicht stehen.
   let kapitel1AmEnde = !zoomedKapitel && kapitel1Geklemmt && !projekttextOffen
     && progress >= SCROLL_MEILENSTEINE.routeEnd;
   // Schwelle aus der Annotationszahl, nicht fest: dieselbe Rechnung wie

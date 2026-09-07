@@ -194,10 +194,15 @@ h2 {
   color: var(--menue);
 }
 
-/* Bedienschrift: der Scrollen-Hinweis, die Kapitelende-Knöpfe und die
-   Beschriftung über dem Play-Knopf tragen dieselbe Schrift. Die Farbe steht
-   bei jedem einzeln — sie hängt am Untergrund, siehe .kapitel-ende-knopf. */
+/* Bedienschrift: der Scrollen-Hinweis, der Tonschalter, die Kapitelende-Knöpfe
+   und die Beschriftung über dem Play-Knopf tragen dieselbe Schrift. Die Farbe
+   steht bei jedem einzeln — sie hängt am Untergrund, siehe .kapitel-ende-knopf.
+
+   ACHTUNG .intro-ton steht weiter unten und darf die vier Angaben hier NICHT
+   noch einmal setzen: gleiche Spezifität, spätere Regel — sie gewönne und die
+   Schrift liefe wieder auseinander. */
 .scroll-hinweis-text,
+.intro-ton,
 .kapitel-ende-knopf,
 .grafik-play-button::before {
   font-family: var(--sans);
@@ -211,39 +216,36 @@ h2 {
   color: #ffffff;
 }
 
-/* Tonschalter des Introstücks. Zentriert am oberen Bildrand, gegenüber dem
-   Scrollen-Hinweis unten — beide gehören zum Titelbild und verschwinden mit
-   ihm. Trägt die Bedienschrift von oben.
+/* Tonschalter des Introstücks. Steht mittig zwischen den beiden Leadzeilen —
+   gehört zum Titelbild und verschwindet mit ihm. Trägt die Bedienschrift von
+   oben.
 
-   ACHTUNG top in Pixeln, nicht in Prozent: der Knopf soll den Rand in jeder
-   Fensterhöhe gleich weit halten. Die Bühne ist sticky auf top 0, der Wert
-   misst also vom oberen Fensterrand. */
+   ACHTUNG 62% ist die Mitte zwischen .lead-1 (45%) und .lead-2 (79%), und
+   top misst bei allen dreien die MITTE, nicht die Oberkante: sie teilen sich
+   dasselbe translate(-50%, -50%). Wird eine der beiden Leadzeilen verschoben,
+   muss dieser Wert mit. */
 .intro-ton {
   position: absolute;
-  top: 22px;
+  top: 62%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   z-index: 5;
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 8px 14px 8px 12px;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  border-radius: 999px;
+  padding: 9px 18px 9px 15px;
+  background: var(--gold);
+  border: none;
   color: #ffffff;
-  font-family: var(--sans);
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   cursor: pointer;
-  transition: opacity 0.4s ease, border-color 0.3s ease, background-color 0.3s ease;
+  transition: opacity 0.4s ease, background-color 0.3s ease;
 }
 
+/* Aufgehellte Fläche statt Rahmenwechsel — der Knopf hat keinen Rahmen mehr.
+   Schrift und Ring bleiben weiss und tragen den Kontrast (7,2:1 auf dem
+   Gold, siehe unten). */
 .intro-ton:hover {
-  border-color: #ffffff;
-  background: rgba(255, 255, 255, 0.10);
+  background: #7A6B27;
 }
 
 .intro-ton:focus-visible {
@@ -256,14 +258,14 @@ h2 {
 .intro-ton-zeichen {
   width: 11px;
   height: 11px;
-  border: 1px solid #ffffff;
+  border: 1px solid currentColor;
   border-radius: 50%;
   background: transparent;
   transition: background-color 0.3s ease;
 }
 
 .intro-ton[aria-pressed="true"] .intro-ton-zeichen {
-  background: #ffffff;
+  background: currentColor;
 }
 
 /* Blendet mit der dunklen Karte weg; gesetzt aus draw(). pointer-events aus,

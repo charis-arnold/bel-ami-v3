@@ -6,7 +6,7 @@
 ============================================================================= */
 
 // --- Modulkapselung ---------------------------------------------------
-// 14 von 54 Namen intern, 40 exportiert. Konvention: docs/architektur.md.
+// 14 von 53 Namen intern, 39 exportiert. Konvention: docs/architektur.md.
 // ACHTUNG Skript 1 in index.html. kreisgrafik.js liest hexZuRgb beim Laden
 // — diese Datei nach hinten schieben bricht kreisgrafik.js.
 (function () {
@@ -84,12 +84,7 @@ const WAHRNEHMUNG_LABELS = {
 const LEGENDE_BLOCK_TITEL = {
   kategorien: 'GEFÜHLSKATEGORIEN',
   fwerte: 'KÖRPER UND RAUM',
-  sonifikation: 'SONIFIKATION',
 };
-
-// Einzige Zeile der Sonifikations-Box. Die Klangsymbole der Zeilen darüber
-// sind anklickbar, siehe klangZeileGetroffen() in kreisgrafik.js.
-const LEGENDE_SONIFIKATION_HINWEIS = 'Klicke auf die Kategorien und höre, wie sie klingen.';
 
 // Beschriftungen rund um den Legendenkreis, ebenfalls wortgetreu aus dem PDF.
 // Die Kreisgrösse steht mehrzeilig, damit der Block rechts nicht überbreit wird.
@@ -272,10 +267,10 @@ const SCROLL_MEILENSTEINE = {
   // 200vh Lesezeit davor für den Kapitel-Einstiegstext. Die Route selbst misst
   // 148 Annotationen × Takt = 14534vh.
   routeStart: 0.058068, routeEnd: 0.352121,
-  // Kapitel-1-Ende: ab routeEnd der Projekttext-Einblender (140vh), ab
-  // kapitelEndeStart die Kartenansicht mit Hinweis und den beiden Buttons
-  // (100vh bis zur Klemme).
-  kapitelEndeStart: 0.354954,
+  // Kapitel-1-Ende: ab routeEnd stehen Kartenansicht, Hinweis und die beiden
+  // Buttons, 240vh bis zur Klemme. Die ersten 140vh davon gehörten dem
+  // Projekttext-Einblender; er ist heraus, der Weg bleibt als Auslauf.
+  // Die Marke kapitelEndeStart, die ihn begrenzte, wird nicht mehr gelesen.
   // Übersichtsakt 02–18 (alle Routen nacheinander), 14850vh breit — rund 873vh
   // je Kapitelroute. Nach oben ist Luft bis 31581vh: so lang ist das längste
   // Kapitel, und weiter reicht die Strecke nicht. Ein
@@ -460,7 +455,6 @@ window.FWERT_PUNKT_DURCHMESSER = FWERT_PUNKT_DURCHMESSER;
 window.FWERT_LABELS = FWERT_LABELS;
 window.WAHRNEHMUNG_LABELS = WAHRNEHMUNG_LABELS;
 window.LEGENDE_BLOCK_TITEL = LEGENDE_BLOCK_TITEL;
-window.LEGENDE_SONIFIKATION_HINWEIS = LEGENDE_SONIFIKATION_HINWEIS;
 window.LEGENDE_KREISGROESSE = LEGENDE_KREISGROESSE;
 window.LEGENDE_VALENZ = LEGENDE_VALENZ;
 window.LEGENDE_ORTSBESCHRIFTUNG = LEGENDE_ORTSBESCHRIFTUNG;

@@ -462,11 +462,10 @@ function legendenKopfraum() {
   return height - (height * LEGENDE_TEXT_MITTE + begleittextHalbeHoehe());
 }
 
-// Höhe der Blockzeile: Kategorienblock, Sonifikationsbox, Luft zum
-// Begleittext. Wächst sie, bleibt dem Kreis weniger Raum (demoKreisLage).
+// Höhe der Blockzeile: Kategorienblock und Luft zum Begleittext. Wächst sie,
+// bleibt dem Kreis weniger Raum (demoKreisLage).
 function blockZeileHoehe() {
-  return LEGENDE_TITEL_ABSTAND + 2 * LEGENDE_ZEILE
-    + LEGENDE_BLOCK_ABSTAND + LEGENDE_TITEL_ABSTAND + LEGENDE_BLOCK_LUFT;
+  return LEGENDE_TITEL_ABSTAND + 2 * LEGENDE_ZEILE + LEGENDE_BLOCK_LUFT;
 }
 
 // Radius des fertig aufgebauten Demo-Kreises bei Massstab 1. Hängt nur an
@@ -536,7 +535,6 @@ const LEGENDE_KLANG_LUECKE = 8;     // Luft zwischen Lautsprecher und Farbfeld
 const LEGENDE_MARKE_SPALTE = 26;    // Feld- bzw. Punktspalte zum Text
 const LEGENDE_BLOCK_LUECKE = 40;    // Luft zwischen den beiden Blöcken
 const LEGENDE_BLOCK_LUFT = 22;      // Blockzeile zur Oberkante des Begleittexts
-const LEGENDE_BLOCK_ABSTAND = 26;   // Luft zwischen Kategorien- und Sonifikationsbox
 const LEGENDE_RAND_LINKS = 46;      // Titel und linker Block zum Fensterrand
 const LEGENDE_TEXTZEILE = 17;       // Zeilenabstand im Kreisgrössen-Block
 const LEGENDE_TEXT_ABSTAND = 60;    // Kreisrand zum Text rechts
@@ -737,7 +735,7 @@ function legendenTextSpalte(zeilen) {
   // Drei Marken je Kategorienzeile: Schraffur und zwei halbe Felder.
   if (zeilen.some(z => z.feld)) return feldX + LEGENDE_MARKE_SPALTE + 2 * (LEGENDE_FELD + LEGENDE_FELD_LUECKE);
   if (zeilen.some(z => z.punkt)) return feldX + LEGENDE_MARKE_SPALTE;
-  return 0; // reine Textzeile, etwa der Hinweis der Sonifikationsbox
+  return 0; // reine Textzeile ohne Marke
 }
 
 // Kleiner Lautsprecher: Korpus, Trichter, zwei Schallbögen. Trägt die Tinte
@@ -948,24 +946,14 @@ function demoLegende(cx, cy, aussen, gruppenAlpha, kreisDa) {
   // — dort, wo die Bänder und Punkte liegen, die sie benennen. Die Breite des
   // zweiten wird auch dann schon eingerechnet, wenn er noch gar nicht sichtbar
   // ist; sonst spränge der erste zur Seite, sobald der zweite dazukommt.
-  // Dritte Box unter dem Kategorienblock: sie sagt, dass die Zeilen darüber
-  // klingen. Ihr Hinweis trägt keine Marke, steht also ohne Einzug.
-  let sonifikationZeilen = [{ text: LEGENDE_SONIFIKATION_HINWEIS, alpha: aPos }];
-
   let bKat = legendenBlockBreite(LEGENDE_BLOCK_TITEL.kategorien, kategorieZeilen);
   let bFwert = legendenBlockBreite(LEGENDE_BLOCK_TITEL.fwerte, fwertZeilen);
-  let bSon = legendenBlockBreite(LEGENDE_BLOCK_TITEL.sonifikation, sonifikationZeilen);
   let blockY = begleittextOben() - blockZeileHoehe();
-  // Die Sonifikationsbox kann breiter sein als die beiden darüber — dann
-  // richtet sich die Mitte nach ihr, sonst stünde sie rechts heraus.
-  let blockX = (width - Math.max(bKat + LEGENDE_BLOCK_LUECKE + bFwert, bSon)) / 2;
+  let blockX = (width - (bKat + LEGENDE_BLOCK_LUECKE + bFwert)) / 2;
 
   zeichneLegendenBlock(blockX, blockY, LEGENDE_BLOCK_TITEL.kategorien, kategorieZeilen, aPos);
   zeichneLegendenBlock(blockX + bKat + LEGENDE_BLOCK_LUECKE, blockY,
     LEGENDE_BLOCK_TITEL.fwerte, fwertZeilen, aWpos);
-  zeichneLegendenBlock(blockX,
-    blockY + LEGENDE_TITEL_ABSTAND + 2 * LEGENDE_ZEILE + LEGENDE_BLOCK_ABSTAND,
-    LEGENDE_BLOCK_TITEL.sonifikation, sonifikationZeilen, aPos);
 
   // Stufen 6 bis 8: ein Bogenabschnitt je Wahrnehmung. neutral sitzt rechts,
   // positiv und negativ auf der Klammerseite.
@@ -1064,6 +1052,15 @@ const INFO_GRUND = '#3A5058';
 const INFO_ALPHA = 0.94;
 // Schrift des offenen Reiters, wie .kapitel-register-item.aktiv in style.css.
 const LEISTE_AKTIV_TINTE = hexZuRgb('#C6D2D7');
+// Fläche des GESCHLOSSENEN Reiters: das Gold der Route, damit die beiden
+// Register auch bei eingefahrener Leiste als Bedienflächen dastehen. Die
+// Schrift darauf kehrt sich um und nimmt den hellen Leistengrund — dunkle
+// Tinte auf dem Gold wäre nicht zu lesen.
+//
+// ACHTUNG nicht LEISTE_GRUND umdefinieren: der färbt auch die Leiste selbst
+// (zeichneRegisterleiste weiter unten), und die soll hell bleiben.
+const LEISTE_REITER_ZU_GRUND = hexZuRgb(ROUTE_COLOR);
+const LEISTE_REITER_ZU_TINTE = LEISTE_GRUND;
 const LEISTE_KREIS_R = 34;          // Beispielkreis der Gruppe «Kreisgrösse»
 const LEISTE_VALENZ_R = 30;         // Halbkreise der Gruppe «Anteil»
 const LEISTE_WAHRNEHMUNG_R = 12;    // Kreis des Wahrnehmungsbogens
@@ -1099,12 +1096,15 @@ function reiterBreite(titel) {
 // sonst zeichnete sie sich mit voller Deckung als Rechteck darauf ab.
 function zeichneReiter(name, x, oben, titel, breite, offen, negativ = false) {
   let mitte = oben - LEISTE_REITER_H / 2;
-  let tinte = (offen || negativ) ? LEISTE_AKTIV_TINTE : LEGENDE_TINTE_RGB;
+  // negativ heisst: der Reiter sitzt schon auf einer dunklen Fläche, es wird
+  // keine Platte gezeichnet — dort trägt dieselbe helle Schrift wie beim
+  // offenen Reiter. Nur der geschlossene mit eigener Platte steht auf Gold.
+  let tinte = (offen || negativ) ? LEISTE_AKTIV_TINTE : LEISTE_REITER_ZU_TINTE;
   letzteReiterLagen.push({ name, x0: x, y0: oben - LEISTE_REITER_H, x1: x + breite, y1: oben });
   push();
   noStroke();
   if (!negativ) {
-    let grund = offen ? LEGENDE_TINTE_RGB : LEISTE_GRUND;
+    let grund = offen ? LEGENDE_TINTE_RGB : LEISTE_REITER_ZU_GRUND;
     fill(grund.r, grund.g, grund.b);
     rect(x, oben - LEISTE_REITER_H, breite, LEISTE_REITER_H);
   }
