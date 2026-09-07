@@ -63,6 +63,24 @@ def y2lat(y): return math.degrees(2 * math.atan(math.exp(y / R)) - math.pi / 2)
 # Spine-Fläche (.spine-panel, 220 px, right: 0). "anker" wird auf "position"
 # der SICHTBAREN Breite gelegt, "breite_m" bestimmt den Massstab.
 FEINJUSTIERUNG = {
+    # Kapitel 2 spielt an einem einzigen Ort und bekam seinen Ausschnitt allein
+    # aus MIN_HOEHE_M: 2.45 * 1300 = 3185 m. Damit zeigte es rund die halbe
+    # Bodenbreite von Kapitel 1 und stand eine Massstabsstufe darunter.
+    #
+    # 6350 m gleicht es an. Der Wert ist gegen KAPITEL1_AUSSCHNITT
+    # (geo-projektion.js) über 993 Fensterformate durchgerechnet; zusammen mit
+    # MASSSTAB_MAX_PX = 240 in kartendekor.js zeigen 93,8 % davon dieselbe
+    # Stufe wie Kapitel 1.
+    #
+    # ACHTUNG hundert Prozent sind nicht erreichbar, und zwar aus einem
+    # strukturellen Grund: Kapitel 1 hat ein von Hand gesetztes Zoomziel, das
+    # bboxZuLeinwandCrop auf das Fensterformat AUFZIEHT; die Kapitel 02-18
+    # beschneiden dagegen ihr ganzes Bild mit coverCrop. Bei extremen
+    # Seitenverhältnissen laufen die beiden Verfahren um bis zu 23 %
+    # auseinander — dann trennt jede gestufte Skala sie irgendwann.
+    #
+    # Kein "anker" nötig: die Route ist ein einzelner Punkt und liegt mittig.
+    "02": {"breite_m": 6350},
     # Georges' Wohnung stand bei 33 % und damit unter der Annotationsbox.
     # Reines Verschieben genügt nicht — dann rutscht die Redaktion am anderen
     # Ende unter die Spine. Deshalb zusätzlich verbreitert.

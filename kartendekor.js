@@ -28,6 +28,24 @@ function haversineMeter(lon1, lat1, lon2, lat2) {
 // Rundwerte für die Balkenlänge in Metern, Übersicht bis Kapitel-Zoom.
 const MASSSTAB_SCHRITTE = [10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 20000, 25000, 50000, 100000];
 
+// Längste erlaubte Balkenbreite. Klingt nach Kosmetik, entscheidet aber, WELCHE
+// Stufe erscheint — und bei 160 fiel sie auf grossen Bildschirmen nach unten
+// durch: 200 m hätten dort 172 px gebraucht, zwölf zu viel, also blieben 100 m
+// mit 86 px übrig. Der Balken wurde damit kürzer, je grösser das Fenster.
+// Dasselbe im Übersichtsakt, wo 1 km auf 500 m fiel.
+//
+// Ursache ist die Lücke in der Reihe oben: zwischen 100 und 200 liegt ein
+// Faktor 2, zwischen 200 und 250 nur 1.25. Reisst die Kappung, geht es
+// gleich eine ganze Verdopplung hinunter.
+//
+// 240 px fängt diese Fälle und hält zugleich Kapitel 1 und 2 auf derselben
+// Stufe. Über 993 durchgerechnete Fensterformate stimmen damit 93,8 % überein
+// (bei 160 px waren es 70,9 %), und im üblichen Bereich um 1800x1300 alle.
+// Der Wert hängt an breite_m 6350 für Kapitel 2, siehe FEINJUSTIERUNG in
+// data-prep/05 bereinigen/schneide-kapitelkarten.py — wer eines ändert, muss
+// das andere nachrechnen.
+const MASSSTAB_MAX_PX = 240;
+
 function zeichneMassstabsleiste(bbox, offsetX, offsetY = 0) {
   let mapPixelWidth = width - offsetX;
   if (mapPixelWidth <= 0) return;
@@ -36,10 +54,10 @@ function zeichneMassstabsleiste(bbox, offsetX, offsetY = 0) {
   let meterProPixel = breiteMeter / mapPixelWidth;
   if (!isFinite(meterProPixel) || meterProPixel <= 0) return;
 
-  // Grösster "schöner" Wert, dessen Balken noch unter ~160px bleibt.
+  // Grösster "schöner" Wert, dessen Balken noch unter MASSSTAB_MAX_PX bleibt.
   let ziel = MASSSTAB_SCHRITTE[0];
   for (let schritt of MASSSTAB_SCHRITTE) {
-    if (schritt / meterProPixel <= 160) ziel = schritt;
+    if (schritt / meterProPixel <= MASSSTAB_MAX_PX) ziel = schritt;
     else break;
   }
   let balkenBreite = ziel / meterProPixel;
