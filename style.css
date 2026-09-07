@@ -211,14 +211,18 @@ h2 {
   color: #ffffff;
 }
 
-/* Tonschalter des Introstücks. Sitzt auf derselben Höhe wie der
-   Scrollen-Hinweis, aber am rechten Rand — beide gehören zum Titelbild und
-   verschwinden mit ihm. Trägt die Bedienschrift von oben. */
+/* Tonschalter des Introstücks. Zentriert am oberen Bildrand, gegenüber dem
+   Scrollen-Hinweis unten — beide gehören zum Titelbild und verschwinden mit
+   ihm. Trägt die Bedienschrift von oben.
+
+   ACHTUNG top in Pixeln, nicht in Prozent: der Knopf soll den Rand in jeder
+   Fensterhöhe gleich weit halten. Die Bühne ist sticky auf top 0, der Wert
+   misst also vom oberen Fensterrand. */
 .intro-ton {
   position: absolute;
-  top: 88%;
-  right: 4vw;
-  transform: translateY(-50%);
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 5;
   display: flex;
   align-items: center;

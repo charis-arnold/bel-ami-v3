@@ -799,7 +799,7 @@ function beendeSonifikationAudio() {
 
 
 // ---------------------------------------------------------------------------
-// Introstück (Prototyp): Orgel und Harfe über der dunklen Karte
+// Introstück: die Kategorienstimmen über der dunklen Karte
 // ---------------------------------------------------------------------------
 //
 // Drittes Wiedergabemodell neben Stations- und Elementmodell, und das einzige
@@ -807,10 +807,17 @@ function beendeSonifikationAudio() {
 // dreizehn Schritte à 98vh, zusammen 1276vh, siehe SCROLL_MEILENSTEINE in
 // datenbereinigung.js.
 //
-// Besetzung: Orgel und Harfe in c-moll. Das ist die Tonart von Saint-Saëns'
-// dritter Symphonie (1886, «Orgelsymphonie») und zugleich die, in der die
-// übrige Sonifikation schon steht. Streicher und Klarinetten hat VCSL nicht —
-// die Werke, die zur Bank passen, sind gerade die, die ohne sie auskommen.
+// Besetzung: Orgelpedal als Grund, darüber je Schritt eines der drei
+// Kategorieinstrumente der Kreis-Sonifikation. Kein eigenes Instrumentarium —
+// das Intro führt die Klangfarben des Hauptstücks ein, und zwar in ihrer
+// Bedeutung: Marimba trägt die Texte über die gebaute Stadt, Klavier die über
+// Presse, Geld und Politik, Harfe die beiden über den Einzelnen. Wer den
+// Legendenaufbau erreicht, hat die Zuordnung längst gehört.
+//
+// c-moll ist die Tonart der übrigen Sonifikation und zugleich die von
+// Saint-Saëns' dritter Symphonie (1886, «Orgelsymphonie») — daher das Pedal.
+// Streicher und Klarinetten hat VCSL nicht; die 128 Instrumente der Bank
+// bieten aber sieben Orgelregister.
 //
 // ACHTUNG der Scroll steuert NICHT die Abspielposition, sondern nur, welcher
 // Akkord gerade dran ist. Strudel behält seine eigene Uhr bei cps=0.5; damit
@@ -822,17 +829,59 @@ function beendeSonifikationAudio() {
 // steht ein Akkord, wenn jemand mitten im Schritt liegen bleibt.
 const INTRO_ZYKLUS_DEHNUNG = 4;
 
-// ACHTUNG Oktave nach Gehör zu prüfen. Das Stationsmodell setzt
-// pipeorgan_quiet auf Oktave 4; hier liegt sie eine tiefer, damit die Orgel
-// als Pedal trägt und der Harfe den Raum darüber lässt. Reicht die Aufnahme
-// nicht so weit hinunter, ist 4 der sichere Rückfall.
-// ACHTUNG die Pegel der Bank sind sehr verschieden ausgesteuert (Messung siehe
-// ELEMENT_INSTRUMENTE). Für pipeorgan_quiet liegt keine Messung vor — die
-// beiden gain-Werte sind eine erste Annahme, per Ohr anzupassen.
-const INTRO_INSTRUMENTE = {
-  orgel: { sound: 'pipeorgan_quiet', oktave: 3, attack: 1.2, release: 2.6, gain: 0.5, room: 0.55 },
-  harfe: { sound: 'harp', oktave: 4, attack: 0.02, release: 1.4, gain: 0.45, room: 0.4 },
+// Das Intro besetzt AUSSCHLIESSLICH Instrumente der Kreis-Sonifikation: die
+// drei Kategorienstimmen aus ELEMENT_INSTRUMENTE und das Orgelpedal aus
+// ELEMENT_BASS. Nichts Fremdes kommt hinzu — wer das Intro gehört hat, kennt
+// die Klangfarben des Hauptstücks bereits, bevor die Legende sie erklärt.
+//
+// ACHTUNG abgeleitet, nicht zweitgeschrieben. Wird ein Instrument im
+// Hauptstück getauscht, folgt das Intro von selbst. Die lautstaerke kommt
+// dabei mit: sie gleicht aus, dass die Bank um bis zu 43 dB verschieden
+// ausgesteuert ist (Messung siehe ELEMENT_INSTRUMENTE) und ist keine
+// Gestaltung. Das musikalische Gewicht steht daneben in gain.
+const INTRO_GRUND = {
+  ...ELEMENT_BASS, gain: 0.42, attack: 1.2, release: 3.0, room: 0.55,
 };
+
+// ACHTUNG einzige bewusste Abweichung vom Hauptstück: Klavier in Oktave 4
+// statt 5. Die sechs Texte, die es trägt, sind die dunkelsten des Crawls —
+// Zensur, Pressen, Börse, Bankenkrach; in Oktave 5 klänge das zu hell.
+const INTRO_STIMMEN = {
+  raum_umwelt: {
+    ...ELEMENT_INSTRUMENTE.raum_umwelt,
+    gain: 0.50, attack: 0.01, release: 1.8, room: 0.40,
+  },
+  gesellschaft_soziales: {
+    ...ELEMENT_INSTRUMENTE.gesellschaft_soziales,
+    oktave: 4, gain: 0.55, attack: 0.01, release: 2.0, room: 0.38,
+  },
+  stimmung_emotion: {
+    ...ELEMENT_INSTRUMENTE.stimmung_emotion,
+    gain: 0.50, attack: 0.02, release: 1.6, room: 0.42,
+  },
+};
+
+// Welche Kategorie trägt welchen Text? Der Crawl hat einen eigenen Bogen —
+// die gebaute Stadt, dann das System aus Presse, Geld und Politik, zuletzt
+// der Einzelne. Er endet genau dort, wo die Route beginnt: bei Duroy.
+// Damit spielt jeder Text auf dem Instrument seiner Kategorie, und die
+// Zuordnung ist zwanzig Bildschirmhöhen lang zu hören, bevor der
+// Legendenaufbau sie benennt.
+const INTRO_KATEGORIE_JE_SCHRITT = [
+  null,                    //  0  Titel — nur der Grund
+  'raum_umwelt',           //  1  «1885 wächst Paris explosionsartig»
+  'raum_umwelt',           //  2  Eiffel, Gerüst aus Eisen
+  'raum_umwelt',           //  3  Bahnhöfe als Kathedralen
+  'raum_umwelt',           //  4  Haussmanns Stadt ist fertig gebaut
+  'gesellschaft_soziales', //  5  Zensur abgeschafft
+  'gesellschaft_soziales', //  6  Rotationspressen
+  'gesellschaft_soziales', //  7  Tunesien, Börse
+  'gesellschaft_soziales', //  8  Union Générale bricht zusammen
+  'gesellschaft_soziales', //  9  Geld, Macht, Presse
+  'gesellschaft_soziales', // 10  Republik verspricht Aufstieg
+  'stimmung_emotion',      // 11  junger Mann ohne Geld, ohne Namen
+  'stimmung_emotion',      // 12  «Was folgt, ist die Route»
+];
 
 // Ein Akkord je Schritt, als Stufen der c-moll-Leiter (0=c, 2=es, 4=g …).
 // Die Folge liest den Crawl mit: i steht am Anfang, das Eisen des Eiffelturms
@@ -856,48 +905,50 @@ const INTRO_HARMONIE = [
   [0, 2, 4],    // 12  «Was folgt, ist die Route»   i
 ];
 
-// Die Harfe tritt erst mit dem ersten Crawl-Text ein und geht vor dem
-// Kartenwechsel wieder: der Titel gehört der Orgel allein, und der letzte
-// Schritt löst nach c-moll auf, während das Bild auf die helle Karte wechselt.
-function introHarfenAnteil(schritt) {
-  if (schritt <= 0) return 0;
-  if (schritt === 1) return 0.55;
-  if (schritt >= INTRO_HARMONIE.length - 1) return 0;
-  return 1;
+// Zwei Anschläge je Zyklus, Grundton und Quinte des Akkords.
+//
+// ACHTUNG das Pedal darf NICHT einen einzigen langen Ton halten. Die Aufnahme
+// trägt nicht beliebig weit — ELEMENT_BASS deckelt aus demselben Grund mit
+// maxSek. Bei acht Sekunden Zyklus schlägt der Grund so alle vier Sekunden
+// nach und füllt mit release 3.0 die Lücke dazwischen.
+function introGrundStimme(akkord) {
+  let g = INTRO_GRUND;
+  return n(`${akkord[0]} ${akkord[2]}`)
+    .scale(`c${g.oktave}:minor`)
+    .s(g.sound)
+    .gain(g.gain * (g.lautstaerke ?? 1))
+    .attack(g.attack).release(g.release).room(g.room)
+    .slow(INTRO_ZYKLUS_DEHNUNG);
 }
 
-// Achtel über den gedehnten Zyklus, aus den drei Akkordtönen. +7 ist dieselbe
-// Stufe eine Oktave höher — die Leiter hat sieben Stufen.
+// Acht Plätze über den gedehnten Zyklus, davon zwei Pausen. Die Pausen sind
+// der Unterschied zwischen Figur und Geklimper: ohne sie klang die Harfe wie
+// ein Klavier. +7 ist dieselbe Stufe eine Oktave höher — die Leiter hat
+// sieben Stufen.
 function introArpeggio(akkord) {
   let [a, b, c] = akkord;
-  return `${a} ${b} ${c} ${b} ${c} ${a + 7} ${c} ${b}`;
+  return `${a} ${b} ${c} ~ ${b} ${c} ${a + 7} ~`;
 }
 
+function introKategorieStimme(kategorie, akkord) {
+  let s = INTRO_STIMMEN[kategorie];
+  return n(introArpeggio(akkord))
+    .scale(`c${s.oktave}:minor`)
+    .s(s.sound)
+    .gain(s.gain * (s.lautstaerke ?? 1))
+    .attack(s.attack).release(s.release).room(s.room)
+    .slow(INTRO_ZYKLUS_DEHNUNG);
+}
+
+// Nie mehr als zwei Stimmen: das Orgelpedal trägt durchgehend, darüber steht
+// je Schritt genau ein Kategorieinstrument. Der Titel bekommt den Grund
+// allein — das Stück fängt an, bevor der erste Text da ist.
 function baueIntroMuster(schritt) {
   let akkord = INTRO_HARMONIE[schritt];
-  let orgel = INTRO_INSTRUMENTE.orgel;
-  let harfe = INTRO_INSTRUMENTE.harfe;
+  let stimmen = [introGrundStimme(akkord)];
 
-  let stimmen = [
-    n(akkord.join(','))
-      .scale(`c${orgel.oktave}:minor`)
-      .s(orgel.sound)
-      .attack(orgel.attack).release(orgel.release)
-      .gain(orgel.gain).room(orgel.room)
-      .slow(INTRO_ZYKLUS_DEHNUNG),
-  ];
-
-  let harfenAnteil = introHarfenAnteil(schritt);
-  if (harfenAnteil > 0) {
-    stimmen.push(
-      n(introArpeggio(akkord))
-        .scale(`c${harfe.oktave}:minor`)
-        .s(harfe.sound)
-        .attack(harfe.attack).release(harfe.release)
-        .gain(harfe.gain * harfenAnteil).room(harfe.room)
-        .slow(INTRO_ZYKLUS_DEHNUNG)
-    );
-  }
+  let kategorie = INTRO_KATEGORIE_JE_SCHRITT[schritt];
+  if (kategorie) stimmen.push(introKategorieStimme(kategorie, akkord));
 
   return stack(...stimmen);
 }
