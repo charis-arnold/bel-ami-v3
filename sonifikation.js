@@ -798,8 +798,199 @@ function beendeSonifikationAudio() {
 }
 
 
+// ---------------------------------------------------------------------------
+// Introstück (Prototyp): Orgel und Harfe über der dunklen Karte
+// ---------------------------------------------------------------------------
+//
+// Drittes Wiedergabemodell neben Stations- und Elementmodell, und das einzige
+// scrollgekoppelte. Läuft über den Titel und die zwölf .begleittext-Texte —
+// dreizehn Schritte à 98vh, zusammen 1276vh, siehe SCROLL_MEILENSTEINE in
+// datenbereinigung.js.
+//
+// Besetzung: Orgel und Harfe in c-moll. Das ist die Tonart von Saint-Saëns'
+// dritter Symphonie (1886, «Orgelsymphonie») und zugleich die, in der die
+// übrige Sonifikation schon steht. Streicher und Klarinetten hat VCSL nicht —
+// die Werke, die zur Bank passen, sind gerade die, die ohne sie auskommen.
+//
+// ACHTUNG der Scroll steuert NICHT die Abspielposition, sondern nur, welcher
+// Akkord gerade dran ist. Strudel behält seine eigene Uhr bei cps=0.5; damit
+// bleibt die fehlende setcps-Erreichbarkeit (siehe oben) folgenlos. Ein neues
+// Muster übernimmt zur nächsten Zyklusgrenze, der Wechsel klingt also gesetzt
+// und nicht wie ein Schnitt.
+
+// Ein Zyklus dauert bei cps=0.5 zwei Sekunden; gedehnt sind es acht. So lang
+// steht ein Akkord, wenn jemand mitten im Schritt liegen bleibt.
+const INTRO_ZYKLUS_DEHNUNG = 4;
+
+// ACHTUNG Oktave nach Gehör zu prüfen. Das Stationsmodell setzt
+// pipeorgan_quiet auf Oktave 4; hier liegt sie eine tiefer, damit die Orgel
+// als Pedal trägt und der Harfe den Raum darüber lässt. Reicht die Aufnahme
+// nicht so weit hinunter, ist 4 der sichere Rückfall.
+// ACHTUNG die Pegel der Bank sind sehr verschieden ausgesteuert (Messung siehe
+// ELEMENT_INSTRUMENTE). Für pipeorgan_quiet liegt keine Messung vor — die
+// beiden gain-Werte sind eine erste Annahme, per Ohr anzupassen.
+const INTRO_INSTRUMENTE = {
+  orgel: { sound: 'pipeorgan_quiet', oktave: 3, attack: 1.2, release: 2.6, gain: 0.5, room: 0.55 },
+  harfe: { sound: 'harp', oktave: 4, attack: 0.02, release: 1.4, gain: 0.45, room: 0.4 },
+};
+
+// Ein Akkord je Schritt, als Stufen der c-moll-Leiter (0=c, 2=es, 4=g …).
+// Die Folge liest den Crawl mit: i steht am Anfang, das Eisen des Eiffelturms
+// hellt nach III auf, Haussmanns fertige Stadt liegt auf VI, mit den Pressen
+// und Tunesien kippt es nach iv, der Zusammenbruch der Union Générale steht
+// auf dem verminderten ii°, und über v führt der letzte Text nach i zurück —
+// dorthin, wo die Route beginnt.
+const INTRO_HARMONIE = [
+  [0, 2, 4],    //  0  Titel                        i    c-moll
+  [0, 2, 4],    //  1  «1885 wächst Paris»          i
+  [2, 4, 6],    //  2  Eiffel, Gerüst aus Eisen     III  Es-Dur
+  [2, 4, 6],    //  3  Bahnhöfe                     III
+  [5, 7, 9],    //  4  Haussmann fertig gebaut      VI   As-Dur
+  [5, 7, 9],    //  5  Zensur abgeschafft           VI
+  [3, 5, 7],    //  6  Rotationspressen             iv   f-moll
+  [3, 5, 7],    //  7  Tunesien, Börse              iv
+  [1, 3, 5],    //  8  Union Générale bricht        ii°  vermindert
+  [6, 8, 10],   //  9  Geld, Macht, Presse          VII  B-Dur
+  [4, 6, 8],    // 10  Republik verspricht          v    g-moll
+  [4, 6, 8],    // 11  junger Mann ohne Namen       v
+  [0, 2, 4],    // 12  «Was folgt, ist die Route»   i
+];
+
+// Die Harfe tritt erst mit dem ersten Crawl-Text ein und geht vor dem
+// Kartenwechsel wieder: der Titel gehört der Orgel allein, und der letzte
+// Schritt löst nach c-moll auf, während das Bild auf die helle Karte wechselt.
+function introHarfenAnteil(schritt) {
+  if (schritt <= 0) return 0;
+  if (schritt === 1) return 0.55;
+  if (schritt >= INTRO_HARMONIE.length - 1) return 0;
+  return 1;
+}
+
+// Achtel über den gedehnten Zyklus, aus den drei Akkordtönen. +7 ist dieselbe
+// Stufe eine Oktave höher — die Leiter hat sieben Stufen.
+function introArpeggio(akkord) {
+  let [a, b, c] = akkord;
+  return `${a} ${b} ${c} ${b} ${c} ${a + 7} ${c} ${b}`;
+}
+
+function baueIntroMuster(schritt) {
+  let akkord = INTRO_HARMONIE[schritt];
+  let orgel = INTRO_INSTRUMENTE.orgel;
+  let harfe = INTRO_INSTRUMENTE.harfe;
+
+  let stimmen = [
+    n(akkord.join(','))
+      .scale(`c${orgel.oktave}:minor`)
+      .s(orgel.sound)
+      .attack(orgel.attack).release(orgel.release)
+      .gain(orgel.gain).room(orgel.room)
+      .slow(INTRO_ZYKLUS_DEHNUNG),
+  ];
+
+  let harfenAnteil = introHarfenAnteil(schritt);
+  if (harfenAnteil > 0) {
+    stimmen.push(
+      n(introArpeggio(akkord))
+        .scale(`c${harfe.oktave}:minor`)
+        .s(harfe.sound)
+        .attack(harfe.attack).release(harfe.release)
+        .gain(harfe.gain * harfenAnteil).room(harfe.room)
+        .slow(INTRO_ZYKLUS_DEHNUNG)
+    );
+  }
+
+  return stack(...stimmen);
+}
+
+// Die Schrittgrenzen stehen nicht hier, sondern in denselben data-von-Werten,
+// aus denen draw() die Einblendung der Texte rechnet. Der Akkord wechselt damit
+// genau dann, wenn ein neuer Text erscheint — und bleibt richtig, wenn der
+// Crawl je umgetaktet wird.
+//
+// ACHTUNG eine Gleichteilung der Strecke leistet das NICHT. Die Werte im HTML
+// sind auf sechs Stellen gerundet; gegen eine gerechnete Teilung von
+// kartenwechselStart durch dreizehn driften sie mal knapp darüber, mal knapp
+// darunter. Gemessen lägen nur fünf von zwölf Wechseln auf ihrem Text.
+let introGrenzenCache = null;
+
+function introGrenzen() {
+  if (introGrenzenCache) return introGrenzenCache;
+  // .begleittext-dunkel schliesst die Legenden- und Kapiteltexte aus, die
+  // dieselbe Klasse tragen, aber weit hinter dem Kartenwechsel liegen.
+  let texte = document.querySelectorAll('.begleittext:not(.begleittext-dunkel)');
+  if (!texte.length) return null;
+  // Die 0 davor ist der Titel: er hält, bis der erste Crawl-Text einsetzt.
+  introGrenzenCache = [0].concat(Array.from(texte, el => parseFloat(el.dataset.von)));
+  return introGrenzenCache;
+}
+
+function introSchrittFuer(progress) {
+  let grenzen = introGrenzen();
+  if (!grenzen) return 0;
+  let i = 0;
+  while (i + 1 < grenzen.length && progress >= grenzen[i + 1]) i++;
+  // Kommen Texte dazu, ohne dass INTRO_HARMONIE mitwächst, hält der letzte
+  // Akkord — lieber eine zu lange Schlusswendung als ein Absturz.
+  return Math.min(i, INTRO_HARMONIE.length - 1);
+}
+
+let introTonErlaubt = false;   // hat jemand den Ton eingeschaltet?
+let introLaeuft = false;
+let introSchritt = null;
+
+// Aus draw() bei jedem Frame gerufen, tut aber nur an Schrittgrenzen etwas —
+// über die ganzen 1276vh sind das dreizehn Musterwechsel, nicht 60 je Sekunde.
+function aktualisiereIntroKlang(progress) {
+  if (!introTonErlaubt) return;
+
+  // ACHTUNG läuft eine Kapitel- oder Elementsonifikation, gehört ihr der
+  // Scheduler: ein .play() von hier würde sie ersetzen. Kommt nur vor, wenn
+  // jemand aus der Grafikansicht in den Intro-Bereich zurückspringt.
+  if (sonifikationSpieltGerade) return;
+
+  if (progress >= SCROLL_MEILENSTEINE.kartenwechselEnd) {
+    if (introLaeuft) beendeIntroKlang();
+    return;
+  }
+
+  let schritt = introSchrittFuer(progress);
+  if (introLaeuft && schritt === introSchritt) return;
+
+  introSchritt = schritt;
+  introLaeuft = true;
+  baueIntroMuster(schritt).play();
+}
+
+function beendeIntroKlang() {
+  introLaeuft = false;
+  introSchritt = null;
+  if (typeof hush === 'function') hush();
+}
+
+// Der Schalter. ACHTUNG das Einschalten MUSS aus einem Klick-Handler kommen —
+// Scrollen zählt in Chrome und Safari nicht als Nutzergeste, ein Autostart
+// über den Scroll allein bleibt stumm. Deshalb der Knopf im Titelbild.
+async function schalteIntroTon(an) {
+  if (!an) {
+    introTonErlaubt = false;
+    beendeIntroKlang();
+    return;
+  }
+  await stelleSonifikationBereit();
+  introTonErlaubt = true;
+  introSchritt = null;   // erzwingt den Aufbau im nächsten Frame
+}
+
+function introTonLaeuft() {
+  return introTonErlaubt;
+}
+
+
 // --- Export ------------------------------------------------------------
-// Sieben Namen. Leser: docs/architektur.md.
+// Zehn Namen, die drei obersten fürs Introstück. Leser: docs/architektur.md.
+window.aktualisiereIntroKlang = aktualisiereIntroKlang;
+window.schalteIntroTon = schalteIntroTon;
+window.introTonLaeuft = introTonLaeuft;
 window.SONIFIKATION_GESAMTDAUER_SEK = SONIFIKATION_GESAMTDAUER_SEK;
 window.ELEMENT_INSTRUMENTE = ELEMENT_INSTRUMENTE;
 window.ELEMENT_FWERT_INSTRUMENT = ELEMENT_FWERT_INSTRUMENT;

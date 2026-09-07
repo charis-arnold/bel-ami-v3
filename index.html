@@ -63,6 +63,14 @@
       <p class="kapitel-einstiegstext" data-kapitel="18">«Glocken, Menschenmengen, ein roter Teppich, der bis zur Kirchentür reicht. Georges Du Roy, einst mittellos, tritt hinaus ins Licht von Paris – Ehemann, Erbe, Aufsteiger. Die Stadt, die ihn einst nicht kannte, liegt jetzt zu seinen Füßen. Die Route ist zu Ende. Der Name ist gemacht.»</p>
       <div class="scroll-hinweis"><span class="scroll-hinweis-arrow">&#8964;</span><span class="scroll-hinweis-text">Scrollen</span></div>
 
+      <!-- Introstück: Ton lässt sich nur per Klick starten, Scrollen zählt
+           nicht als Nutzergeste. Steht fest über der dunklen Karte und geht
+           mit ihr wieder weg, siehe aktualisiereIntroTonKnopf() in sketch.js. -->
+      <button class="intro-ton" id="introTon" type="button" aria-pressed="false">
+        <span class="intro-ton-zeichen" aria-hidden="true"></span>
+        <span class="intro-ton-text">Ton</span>
+      </button>
+
       <!-- Leer: am Kapitelende steht derzeit nur das Buttonpaar. Der Platz
            bleibt, falls doch noch ein Text dazukommt. -->
       <p class="kapitel-ende-text" id="kapitelEndeText"></p>

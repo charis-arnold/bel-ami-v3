@@ -12,6 +12,7 @@
 
 let stage, heroText, begleitTexte, kapitelEinstiegsTexte;
 let scrollHinweisEl; // «Scrollen»: im Intro mit dem Titel, danach zu Beginn jedes Akts
+let introTonEl;      // Tonschalter des Introstücks, nur über der dunklen Karte
 let demoGruppenTexte; // die neun .begleittext mit data-demo-gruppe — ihre Fenster steuern auch die Stufen des Legendenaufbaus
 let fotoHinweisText;  // der .begleittext mit data-foto-hinweis — sein Fenster und sein Zielmarker steuern den Bedienhinweis an der Karte
 
@@ -296,6 +297,17 @@ function setup() {
   // steht am Anfang jedes Akts wieder da, siehe draw().
   heroText = document.querySelectorAll('h1, h2, .lead');
   scrollHinweisEl = document.querySelector('.scroll-hinweis');
+
+  // Tonschalter des Introstücks. ACHTUNG das Einschalten muss aus diesem
+  // Klick-Handler kommen — Scrollen zählt nicht als Nutzergeste, sonst bleibt
+  // Strudel stumm. haltKlickAuf hält den mousedown fest, damit der Klick nicht
+  // zusätzlich auf der Leinwand landet.
+  introTonEl = document.getElementById('introTon');
+  haltKlickAuf(introTonEl, () => {
+    let an = introTonEl.getAttribute('aria-pressed') !== 'true';
+    introTonEl.setAttribute('aria-pressed', an ? 'true' : 'false');
+    schalteIntroTon(an);
+  });
   begleitTexte = document.querySelectorAll('.begleittext');
   demoGruppenTexte = [...begleitTexte].filter(el => el.dataset.demoGruppe)
     .sort((a, b) => a.dataset.demoGruppe - b.dataset.demoGruppe);
@@ -784,6 +796,13 @@ function draw() {
   scrollHinweisEl.style.opacity = Math.max(heroOpacity, hinweisAkt);
   // Weiss auf der dunklen Startkarte, danach in der Tinte der Bedienelemente.
   scrollHinweisEl.classList.toggle('auf-hell', progress >= SCROLL_MEILENSTEINE.kartenwechselEnd);
+
+  // Introstück: der Scroll wählt nur den Akkord, gespielt wird in
+  // sonifikation.js. Tut ausserhalb der dreizehn Schritte nichts und wechselt
+  // das Muster nur an Schrittgrenzen — der Aufruf je Frame ist billig.
+  aktualisiereIntroKlang(progress);
+  // Der Tonschalter gehört zum Titelbild und geht mit der dunklen Karte.
+  introTonEl.classList.toggle('verborgen', progress >= SCROLL_MEILENSTEINE.kartenwechselEnd);
 
   // Begleittexte: jedes <p class="begleittext"> blendet in seinem eigenen
   // data-von/data-bis-Fenster ein und aus. Neue Texte brauchen kein JS.
