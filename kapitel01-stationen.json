@@ -1206,7 +1206,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "hasFwert": false,
       "fWertType": null,
       "vorRoutenstart": true,
@@ -1227,7 +1227,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "vorRoutenstart": true,
@@ -1247,7 +1247,7 @@
       "intensitaet": null,
       "f_wert": "emotion_faerbt_raum",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "emotion_faerbt_raum",
       "station": 0
@@ -1266,7 +1266,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": false,
       "fWertType": null,
       "station": 0
@@ -1286,7 +1286,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 0
@@ -1306,7 +1306,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 0
@@ -1326,7 +1326,7 @@
       "intensitaet": 1,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 0
@@ -1346,7 +1346,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 0
@@ -1366,7 +1366,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": false,
       "fWertType": null,
       "station": 0
@@ -1387,7 +1387,7 @@
       "intensitaet": null,
       "f_wert": "emotion_faerbt_raum",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "emotion_faerbt_raum",
       "station": 0
@@ -1408,7 +1408,7 @@
       "intensitaet": 1,
       "f_wert": "emotion_faerbt_raum",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "emotion_faerbt_raum",
       "station": 0
@@ -1429,7 +1429,7 @@
       "intensitaet": null,
       "f_wert": "emotion_faerbt_raum",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "emotion_faerbt_raum",
       "station": 0
@@ -1448,7 +1448,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 0
@@ -1467,7 +1467,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 100
@@ -1487,7 +1487,7 @@
       "intensitaet": 3,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 100
@@ -1507,7 +1507,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 100
@@ -1527,7 +1527,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 100
@@ -1548,7 +1548,7 @@
       "intensitaet": null,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 100
@@ -1569,7 +1569,7 @@
       "intensitaet": 2,
       "f_wert": "persoenliche_sehnsucht",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "persoenliche_sehnsucht",
       "station": 100
@@ -1589,7 +1589,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 100
@@ -1609,7 +1609,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": false,
       "fWertType": null,
       "station": 100
@@ -1631,7 +1631,7 @@
       "intensitaet": null,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 100
@@ -1651,7 +1651,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 100
@@ -1672,7 +1672,7 @@
       "intensitaet": null,
       "f_wert": "koerper_als_sensor",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "koerper_als_sensor",
       "station": 100
@@ -1692,7 +1692,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": false,
       "fWertType": null,
       "station": 100
@@ -1713,7 +1713,7 @@
       "intensitaet": null,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 1
@@ -1733,7 +1733,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 1
@@ -1753,7 +1753,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 1
@@ -1774,7 +1774,7 @@
       "intensitaet": null,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 101
@@ -1795,7 +1795,7 @@
       "intensitaet": 3,
       "f_wert": "koerper_als_sensor",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "koerper_als_sensor",
       "station": 101
@@ -1816,7 +1816,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 101
@@ -1837,7 +1837,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 101
@@ -1857,7 +1857,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 101
@@ -1878,7 +1878,7 @@
       "intensitaet": null,
       "f_wert": "emotion_faerbt_raum",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "emotion_faerbt_raum",
       "station": 101
@@ -1898,7 +1898,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 101
@@ -1918,7 +1918,7 @@
       "intensitaet": 1,
       "f_wert": "emotion_faerbt_raum",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "emotion_faerbt_raum",
       "station": 101
@@ -1937,7 +1937,7 @@
       "intensitaet": 1,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 101
@@ -1957,7 +1957,7 @@
       "intensitaet": 1,
       "f_wert": "emotion_faerbt_raum",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "emotion_faerbt_raum",
       "station": 101
@@ -1977,7 +1977,7 @@
       "intensitaet": 2,
       "f_wert": "emotion_faerbt_raum",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "emotion_faerbt_raum",
       "station": 101
@@ -1997,7 +1997,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": false,
       "fWertType": null,
       "station": 101
@@ -2018,7 +2018,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 101
@@ -2038,7 +2038,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 101
@@ -2058,7 +2058,7 @@
       "intensitaet": 1,
       "f_wert": "koerper_als_sensor",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "koerper_als_sensor",
       "station": 101
@@ -2079,7 +2079,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 101
@@ -2099,7 +2099,7 @@
       "intensitaet": null,
       "f_wert": "emotion_faerbt_raum",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "emotion_faerbt_raum",
       "station": 101
@@ -2118,7 +2118,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": false,
       "fWertType": null,
       "station": 101
@@ -2137,7 +2137,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 2
@@ -2157,7 +2157,7 @@
       "intensitaet": 2,
       "f_wert": "koerper_als_sensor",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "koerper_als_sensor",
       "station": 2
@@ -2176,7 +2176,7 @@
       "intensitaet": 1,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 2
@@ -2197,7 +2197,7 @@
       "intensitaet": 2,
       "f_wert": "koerper_als_sensor",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "koerper_als_sensor",
       "station": 2
@@ -2217,7 +2217,7 @@
       "intensitaet": null,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 2
@@ -2237,7 +2237,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 3
@@ -2257,7 +2257,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 3
@@ -2278,7 +2278,7 @@
       "intensitaet": null,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 3
@@ -2298,7 +2298,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 3
@@ -2317,7 +2317,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": false,
       "fWertType": null,
       "station": 3
@@ -2336,7 +2336,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": false,
       "fWertType": null,
       "station": 102
@@ -2354,7 +2354,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "hasFwert": false,
       "fWertType": null,
       "station": 102
@@ -2373,7 +2373,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 102
@@ -2392,7 +2392,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 102
@@ -2411,7 +2411,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 102
@@ -2431,7 +2431,7 @@
       "intensitaet": 3,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 102
@@ -2451,7 +2451,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 102
@@ -2470,7 +2470,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": false,
       "fWertType": null,
       "station": 102
@@ -2490,7 +2490,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 102
@@ -2508,7 +2508,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 102,
@@ -2528,7 +2528,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "hasFwert": false,
       "fWertType": null,
       "station": 102
@@ -2546,7 +2546,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 102
@@ -2566,7 +2566,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": false,
       "fWertType": null,
       "station": 102
@@ -2585,7 +2585,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "hasFwert": false,
       "fWertType": null,
       "station": 102
@@ -2604,7 +2604,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": false,
       "fWertType": null,
       "station": 102
@@ -2623,7 +2623,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 102
@@ -2643,7 +2643,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 4
@@ -2663,7 +2663,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 4
@@ -2683,7 +2683,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 4
@@ -2703,7 +2703,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 4
@@ -2724,7 +2724,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 4
@@ -2743,7 +2743,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 4
@@ -2762,7 +2762,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": false,
       "fWertType": null,
       "station": 4
@@ -2781,7 +2781,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 4
@@ -2799,7 +2799,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 4
@@ -2818,7 +2818,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 4
@@ -2837,7 +2837,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 4
@@ -2856,7 +2856,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 4
@@ -2876,7 +2876,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 105
@@ -2896,7 +2896,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 5
@@ -2917,7 +2917,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 5
@@ -2936,7 +2936,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "hasFwert": false,
       "fWertType": null,
       "station": 5
@@ -2956,7 +2956,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 5
@@ -2975,7 +2975,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 5
@@ -2994,7 +2994,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 5
@@ -3014,7 +3014,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 5
@@ -3033,7 +3033,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 5
@@ -3053,7 +3053,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 5
@@ -3072,7 +3072,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": false,
       "fWertType": null,
       "station": 5
@@ -3092,7 +3092,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 5
@@ -3113,7 +3113,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 5
@@ -3134,7 +3134,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 5
@@ -3154,7 +3154,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": 5
@@ -3173,7 +3173,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": 103
@@ -3193,7 +3193,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": null
@@ -3212,7 +3212,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3232,7 +3232,7 @@
       "intensitaet": null,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": null
@@ -3250,7 +3250,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3269,7 +3269,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3289,7 +3289,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": null
@@ -3310,7 +3310,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": null
@@ -3331,7 +3331,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": null
@@ -3351,7 +3351,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3370,7 +3370,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3389,7 +3389,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3408,7 +3408,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3427,7 +3427,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3446,7 +3446,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3465,7 +3465,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3484,7 +3484,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3504,7 +3504,7 @@
       "intensitaet": null,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": null
@@ -3524,7 +3524,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3543,7 +3543,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3562,7 +3562,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3582,7 +3582,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3603,7 +3603,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3622,7 +3622,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3641,7 +3641,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3661,7 +3661,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": null
@@ -3681,7 +3681,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": null
@@ -3701,7 +3701,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3720,7 +3720,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3739,7 +3739,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3758,7 +3758,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3778,7 +3778,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": null
@@ -3798,7 +3798,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3820,7 +3820,7 @@
       "intensitaet": 3,
       "f_wert": "koerper_als_sensor",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "koerper_als_sensor",
       "station": null
@@ -3841,7 +3841,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3862,7 +3862,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3881,7 +3881,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3900,7 +3900,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3918,7 +3918,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3938,7 +3938,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": null
@@ -3956,7 +3956,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3974,7 +3974,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -3993,7 +3993,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": null
@@ -4014,7 +4014,7 @@
       "intensitaet": 2,
       "f_wert": "koerper_als_sensor",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "koerper_als_sensor",
       "station": null
@@ -4034,7 +4034,7 @@
       "intensitaet": null,
       "f_wert": "emotion_faerbt_raum",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "emotion_faerbt_raum",
       "station": null
@@ -4054,7 +4054,7 @@
       "intensitaet": 2,
       "f_wert": "emotion_faerbt_raum",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "emotion_faerbt_raum",
       "station": null
@@ -4075,7 +4075,7 @@
       "intensitaet": null,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": null
@@ -4094,7 +4094,7 @@
       "intensitaet": 2,
       "f_wert": "ort_loest_emotion_aus",
       "perspektive": "figur",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "hasFwert": true,
       "fWertType": "ort_loest_emotion_aus",
       "station": null
@@ -4113,7 +4113,7 @@
       "intensitaet": 1,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -4132,7 +4132,7 @@
       "intensitaet": 2,
       "f_wert": null,
       "perspektive": "erzaehler",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -4152,7 +4152,7 @@
       "intensitaet": null,
       "f_wert": null,
       "perspektive": "figur",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "hasFwert": false,
       "fWertType": null,
       "station": null
@@ -4253,19 +4253,19 @@
       "lat": 48.879317,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 2,
           "pos": 0,
           "neutral": 0,
           "unrated": 2
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -4280,19 +4280,19 @@
       "lat": 48.877975,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -4307,19 +4307,19 @@
       "lat": 48.877975,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -4334,19 +4334,19 @@
       "lat": 48.877975,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 2,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -4361,19 +4361,19 @@
       "lat": 48.8782876,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 4
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 1,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -4388,19 +4388,19 @@
       "lat": 48.877975,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -4415,19 +4415,19 @@
       "lat": 48.87509,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 4
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -4442,19 +4442,19 @@
       "lat": 48.8711873,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 1,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -4469,19 +4469,19 @@
       "lat": 48.87145,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 6
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 4,
           "pos": 1,
           "neutral": 0,
           "unrated": 4
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -4496,19 +4496,19 @@
       "lat": 48.8697175,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 3,
           "pos": 0,
           "neutral": 0,
           "unrated": 5
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 7,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
@@ -4523,19 +4523,19 @@
       "lat": 48.869944,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
           "unrated": 2
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -4550,19 +4550,19 @@
       "lat": 48.870622,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 3,
           "pos": 0,
           "neutral": 0,
           "unrated": 4
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 1,
           "pos": 1,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -4577,19 +4577,19 @@
       "lat": 48.8717062,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 5
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 1,
           "pos": 1,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -4604,19 +4604,19 @@
       "lat": 48.8722361,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 2,
           "pos": 1,
           "neutral": 1,
           "unrated": 8
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -4631,19 +4631,19 @@
       "lat": 48.8707626,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 1,
           "neutral": 0,
           "unrated": 3
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 2,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -4658,19 +4658,19 @@
       "lat": 48.87325,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -4685,19 +4685,19 @@
       "lat": 48.8741752,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -4712,19 +4712,19 @@
       "lat": 48.87565,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 4,
           "pos": 2,
           "neutral": 2,
           "unrated": 24
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 4,
           "neutral": 1,
           "unrated": 8
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,

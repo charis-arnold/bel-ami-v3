@@ -7,19 +7,19 @@
       "lat": 48.8796,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -35,19 +35,19 @@
       "lat": 48.8796,
       "nodeType": "space",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -63,19 +63,19 @@
       "lat": 48.8796,
       "nodeType": "space",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
           "unrated": 3
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 2,
           "pos": 1,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -91,19 +91,19 @@
       "lat": 48.8681,
       "nodeType": "muted",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -119,19 +119,19 @@
       "lat": 48.8681,
       "nodeType": "space",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -147,19 +147,19 @@
       "lat": 48.8722,
       "nodeType": "muted",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -175,19 +175,19 @@
       "lat": 48.8644,
       "nodeType": "muted",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 2
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -203,19 +203,19 @@
       "lat": 48.8722,
       "nodeType": "muted",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -231,19 +231,19 @@
       "lat": 48.8711,
       "nodeType": "erinnerung",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 1,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -259,19 +259,19 @@
       "lat": 48.8711,
       "nodeType": "muted",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -287,19 +287,19 @@
       "lat": 48.8711,
       "nodeType": "muted",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -315,19 +315,19 @@
       "lat": 48.8711,
       "nodeType": "erinnerung",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 1,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -343,19 +343,19 @@
       "lat": 48.8711,
       "nodeType": "muted",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -371,19 +371,19 @@
       "lat": 48.87,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -399,19 +399,19 @@
       "lat": 48.87,
       "nodeType": "space",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 2,
           "pos": 0,
           "neutral": 0,
           "unrated": 3
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -427,19 +427,19 @@
       "lat": 48.87,
       "nodeType": "erinnerung",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -455,19 +455,19 @@
       "lat": 48.87,
       "nodeType": "space",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 3,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -483,19 +483,19 @@
       "lat": 48.8722,
       "nodeType": "muted",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
@@ -511,19 +511,19 @@
       "lat": 48.8722,
       "nodeType": "space",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -539,19 +539,19 @@
       "lat": 48.8722,
       "nodeType": "erinnerung",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 2,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -567,19 +567,19 @@
       "lat": 48.8722,
       "nodeType": "muted",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -595,19 +595,19 @@
       "lat": 48.8717,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -623,19 +623,19 @@
       "lat": 48.87085,
       "nodeType": "muted",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -651,19 +651,19 @@
       "lat": 48.87085,
       "nodeType": "space",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 2,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -679,19 +679,19 @@
       "lat": 48.87,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -707,19 +707,19 @@
       "lat": 48.872,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 3
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 1,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -735,19 +735,19 @@
       "lat": 48.8722,
       "nodeType": "muted",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -763,19 +763,19 @@
       "lat": 48.8722,
       "nodeType": "muted",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -791,19 +791,19 @@
       "lat": 48.8722,
       "nodeType": "muted",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 2
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 2,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -819,19 +819,19 @@
       "lat": 48.8644,
       "nodeType": "muted",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -847,19 +847,19 @@
       "lat": 48.8722,
       "nodeType": "muted",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -875,19 +875,19 @@
       "lat": 48.8644,
       "nodeType": "muted",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 2
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -903,19 +903,19 @@
       "lat": 48.8722,
       "nodeType": "muted",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 2,
           "pos": 1,
           "neutral": 0,
           "unrated": 3
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -931,19 +931,19 @@
       "lat": 48.87195,
       "nodeType": "space",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 1,
           "neutral": 1,
           "unrated": 6
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 2
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -959,19 +959,19 @@
       "lat": 48.8717,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 1,
           "neutral": 0,
           "unrated": 5
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -987,19 +987,19 @@
       "lat": 48.8744,
       "nodeType": "space",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -1015,19 +1015,19 @@
       "lat": 48.87,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -1043,19 +1043,19 @@
       "lat": 48.8637,
       "nodeType": "erinnerung",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -1071,19 +1071,19 @@
       "lat": 48.8796,
       "nodeType": "erinnerung",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -1099,19 +1099,19 @@
       "lat": 48.877,
       "nodeType": "space",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -1127,19 +1127,19 @@
       "lat": 48.877,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -1155,19 +1155,19 @@
       "lat": 48.8744,
       "nodeType": "erinnerung",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 1,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -1183,19 +1183,19 @@
       "lat": 48.8738,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 1
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
           "unrated": 0
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 0,
           "pos": 0,
           "neutral": 0,
@@ -1211,19 +1211,19 @@
       "lat": 48.8744,
       "nodeType": "location",
       "bandCounts": {
-        "gold_dunkel": {
+        "raum_umwelt": {
           "neg": 4,
           "pos": 2,
           "neutral": 2,
           "unrated": 24
         },
-        "gold_mittel": {
+        "stimmung_emotion": {
           "neg": 0,
           "pos": 4,
           "neutral": 1,
           "unrated": 8
         },
-        "gold_hell": {
+        "gesellschaft_soziales": {
           "neg": 1,
           "pos": 0,
           "neutral": 0,
@@ -1237,7 +1237,7 @@
   "annotations": [
     {
       "text": "Die Kassiererin gab auf sein 5-Francs-Stück das Geld heraus und Georges Duroy verließ das Lokal.",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "ort": "Wohnung Duroy, Rue Notre-Dame de Lorette",
       "valenz": null,
       "intensitaet": 1,
@@ -1247,7 +1247,7 @@
     },
     {
       "text": "Stattlich gewachsen, richtete er sich auf mit der Haltung eines ehemaligen Unteroffiziers und drehte schneidig-militärisch seinen Schnurrbart zwischen den Fingern.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Wohnung Duroy, Rue Notre-Dame de Lorette",
       "valenz": null,
       "intensitaet": null,
@@ -1257,7 +1257,7 @@
     },
     {
       "text": "Er warf auf die übriggebliebenen Gäste einen schnellen, flüchtigen Blick; einen jener Blicke des schönen Burschen, die unfehlbar treffen, wie der Raubvogel seine Beute.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Wohnung Duroy, Rue Notre-Dame de Lorette",
       "valenz": null,
       "intensitaet": null,
@@ -1267,7 +1267,7 @@
     },
     {
       "text": "Die Frauen blickten ihm neugierig nach: es waren drei kleine Nähmädchen, eine Musiklehrerin unbestimmten Alters, schlecht gekämmt, nachlässig gekleidet mit einem alten, verstaubten Hut und einem Kleid, das niemals sitzen wollte. Dazu zwei bürgerliche Frauen mit ihren Männern, Stammgäste des kleinen Lokals mit »festen Preisen«.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Lokal mit festen Preisen nahe Rue Notre-Dame de Lorette",
       "valenz": null,
       "intensitaet": 1,
@@ -1277,7 +1277,7 @@
     },
     {
       "text": "Es war der 28. Juni — in der Tasche blieben ihm 3 Francs 40 Centimes für den Rest des Monats übrig.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Wohnung Duroy, Rue Notre-Dame de Lorette",
       "valenz": -1,
       "intensitaet": 2,
@@ -1287,7 +1287,7 @@
     },
     {
       "text": "Dafür konnte er sich zwei Mittagessen leisten, dann allerdings kein Frühstück, oder umgekehrt. Er überlegte sich, daß ein Frühstück nur 22 Sous, ein Mittagessen dagegen 30 kostete. Begnügte er sich bloß mit dem Frühstück, so würden ihm 1 Francs 20 Centimes verbleiben, das bedeutete zweimal Würstchen mit Brot und zwei Glas Bier auf dem Boulevard.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Boulevard (unspezifisch)",
       "valenz": -1,
       "intensitaet": 2,
@@ -1297,7 +1297,7 @@
     },
     {
       "text": "Dies war sein kostspieliges Vergnügen, das er sich abends gönnte.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Boulevard (unspezifisch)",
       "valenz": -1,
       "intensitaet": 1,
@@ -1307,7 +1307,7 @@
     },
     {
       "text": "Daraufhin ging er die Rue Notre-Dame de Lorette hinunter.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Wohnung Duroy, Rue Notre-Dame de Lorette",
       "valenz": null,
       "intensitaet": null,
@@ -1317,7 +1317,7 @@
     },
     {
       "text": "So schritt er dahin, wie zur Zeit, als er die Husarenuniform trug, in strammer Haltung mit etwas gespreizten Beinen, wie ein Reiter, der eben vom Pferde gestiegen ist.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Wohnung Duroy, Rue Notre-Dame de Lorette",
       "valenz": 1,
       "intensitaet": 2,
@@ -1327,7 +1327,7 @@
     },
     {
       "text": "Ohne auf jemand Rücksicht zu nehmen, ging er seinen Weg durch die Straßenmenge. Er stieß die Passanten und wollte niemandem ausweichen.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Wohnung Duroy, Rue Notre-Dame de Lorette",
       "valenz": null,
       "intensitaet": null,
@@ -1337,7 +1337,7 @@
     },
     {
       "text": "Seinen alten Zylinderhut rückte er etwas auf das eine Ohr, und laut klangen seine Schritte auf dem Pflaster.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Wohnung Duroy, Rue Notre-Dame de Lorette",
       "valenz": null,
       "intensitaet": 1,
@@ -1347,7 +1347,7 @@
     },
     {
       "text": "Verächtlich und herausfordernd betrachtete er die Menschen, die Häuser, die ganze Stadt: er — der schicke, schneidige Soldat, der zufällig Zivilist war.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Wohnung Duroy, Rue Notre-Dame de Lorette",
       "valenz": null,
       "intensitaet": null,
@@ -1357,7 +1357,7 @@
     },
     {
       "text": "Sein fertiggekaufter Anzug kostete nur 60 Francs, trotzdem trug er eine gewisse betont knallige Eleganz zur Schau; etwas ordinär, dafür echt und eindrucksvoll.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "unspezifisch",
       "valenz": null,
       "intensitaet": 1,
@@ -1367,7 +1367,7 @@
     },
     {
       "text": "Groß und schön gewachsen, hatte er dunkelblondes, rötliches, von Natur krauses Haar, das in der Mitte gescheitelt war; mit einem kecken Schnurrbart, der sich auf seiner Oberlippe kräuselte, und hellen, blauen Augen mit kleinen Pupillen, sah er dem Mordskerl aus einem Hintertreppenroman ähnlich.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "unspezifisch",
       "valenz": null,
       "intensitaet": null,
@@ -1377,7 +1377,7 @@
     },
     {
       "text": "Es war ein heißer Sommertag.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Paris",
       "valenz": null,
       "intensitaet": 1,
@@ -1387,7 +1387,7 @@
     },
     {
       "text": "Kein frischer Luftzug regte sich in Paris. Die Stadt glühte wie ein Kessel und erstickte in der schwülen Nacht.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Paris (allgemein)",
       "valenz": null,
       "intensitaet": 3,
@@ -1397,7 +1397,7 @@
     },
     {
       "text": "Die Straßenkanäle hauchten üblen Duft aus ihren Granitrachen, und aus den Küchen und Kellerräumen drangen ekle Gerüche von Spülwasser und alten Speiseresten auf die Straße.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Strassen von Paris (allgemein)",
       "valenz": null,
       "intensitaet": 2,
@@ -1407,7 +1407,7 @@
     },
     {
       "text": "Unter den Haustoren saßen die »concierges« (Hauswarte) in Hemdsärmeln rittlings auf ihren Strohsesseln und rauchten die Pfeife. Träge schlichen die Menschen dahin, mit entblößtem Kopf, den Hut in der Hand tragend.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Strassen von Paris (allgemein)",
       "valenz": null,
       "intensitaet": 2,
@@ -1417,7 +1417,7 @@
     },
     {
       "text": "Als Georges Duroy den Boulevard erreichte, blieb er stehen, unschlüssig, was er nun tun sollte.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": null,
       "intensitaet": null,
@@ -1427,7 +1427,7 @@
     },
     {
       "text": "Er hatte Lust, in die Champs Elysée und die Avenue du Bois de Boulogne zu gehen, um unter den Bäumen etwas frische Luft zu schöpfen.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Champs-Élysées / Avenue du Bois de Boulogne",
       "valenz": 1,
       "intensitaet": 2,
@@ -1437,7 +1437,7 @@
     },
     {
       "text": "Aber ein anderes Verlangen regte sich in ihm, und zwar nach einem Liebesabenteuer. Wie ihm so ein Abenteuer in den Weg laufen sollte, davon hatte er keine Ahnung, aber seit drei Monaten wartete er darauf jeden Tag und jeden Abend.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "unspezifisch",
       "valenz": null,
       "intensitaet": null,
@@ -1447,7 +1447,7 @@
     },
     {
       "text": "Dank seiner schönen, stattlichen Erscheinung hatte er wohl hier und da ein bißchen Liebe kosten dürfen; genügen tat ihm das nicht, er hoffte immer auf mehr und auf Besseres.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "unspezifisch",
       "valenz": null,
       "intensitaet": null,
@@ -1457,7 +1457,7 @@
     },
     {
       "text": "Mit heißem Blut aber leerer Tasche erregten ihn die Dirnen, die ihm an den Straßenecken zumurmelten: »Komm mit, feiner Junge«, doch er getraute sich nicht, ihnen zu folgen, denn bezahlen konnte er nicht, und dann träumte er auch von anderem, von etwas vornehmerer Liebe und minder gemeinen Küssen.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Strassenecken von Paris (allgemein)",
       "valenz": null,
       "intensitaet": null,
@@ -1467,7 +1467,7 @@
     },
     {
       "text": "Trotzdem liebte er die Orte, wo es von jenen öffentlichen Mädchen wimmelte; er suchte gern ihre Ballokale, ihre Cafés, ihre Straßen auf.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Ballokale, Cafés, Straßen (unspezifisch, Paris)",
       "valenz": 1,
       "intensitaet": 2,
@@ -1477,7 +1477,7 @@
     },
     {
       "text": "Er liebte, sie anzusprechen, sie zu duzen, ihre aufdringlichen Parfüms einzuatmen und ihre Nähe zu fühlen.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "unspezifisch",
       "valenz": null,
       "intensitaet": null,
@@ -1487,7 +1487,7 @@
     },
     {
       "text": "Verachten tat er sie nicht, so wie jeder Mann sie verachtete, der im Schoß der Familie aufgewachsen ist.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "unspezifisch",
       "valenz": null,
       "intensitaet": null,
@@ -1497,7 +1497,7 @@
     },
     {
       "text": "Er lenkte seine Schritte nach der Madeleinekirche und folgte dem Menschenstrom, der sich, von der Hitze bedrückt, schwerfällig dahinwälzte.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Église de la Madeleine, Paris",
       "valenz": null,
       "intensitaet": null,
@@ -1507,7 +1507,7 @@
     },
     {
       "text": "Die Cafés waren überfüllt, dichtgedrängt saßen die Menschen am Bürgersteig, im grellen, blendenden Licht der erleuchteten Fenster.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Cafés nahe Madeleine, Paris",
       "valenz": null,
       "intensitaet": 2,
@@ -1517,7 +1517,7 @@
     },
     {
       "text": "Vor ihnen auf kleinen runden oder viereckigen Tischen standen Gläser mit roten, gelben, grünen und in allen Farben schillernden Flüssigkeiten, und in den Karaffen sah man große, durchsichtige Eisstücke glänzen, die das schöne, klare Wasser kühlten.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Cafés nahe Madeleine, Paris",
       "valenz": null,
       "intensitaet": 2,
@@ -1527,7 +1527,7 @@
     },
     {
       "text": "Duroys Schritte wurden langsamer, und das Verlangen nach einem erfrischenden Getränk trocknete ihm die Kehle.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Cafés nahe Madeleine, Paris",
       "valenz": null,
       "intensitaet": null,
@@ -1537,7 +1537,7 @@
     },
     {
       "text": "Ihn packte ein glühender Durst, ein Durst eines heißen Sommerabends; er dachte immerfort an das köstliche Gefühl, wenn ihm etwas Kaltes durch die Kehle rinnt.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Cafés nahe Madeleine, Paris",
       "valenz": -1,
       "intensitaet": 3,
@@ -1547,7 +1547,7 @@
     },
     {
       "text": "Wenn er sich aber heute auch nur zwei Glas Bier gestattete, dann war es morgen mit seinem kargen Abendbrot vorbei, und die Stunden des Hungers am Monatsende waren ihm nur zu wohl bekannt.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Cafés nahe Madeleine, Paris",
       "valenz": -1,
       "intensitaet": 2,
@@ -1557,7 +1557,7 @@
     },
     {
       "text": "Er sagte sich: »Bis zehn Uhr muß ich aushalten, und dann trinke ich einen Bock à l'Americain. Donnerwetter, habe ich jetzt einen Durst!«",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Café à l'Americain (unspezifisch)",
       "valenz": -1,
       "intensitaet": 2,
@@ -1567,7 +1567,7 @@
     },
     {
       "text": "Und er blickte all diese Menschen an, die an den Tischen saßen, tranken und ihren Durst löschen konnten, soviel sie wollten.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Cafés nahe Madeleine, Paris",
       "valenz": -1,
       "intensitaet": 2,
@@ -1577,7 +1577,7 @@
     },
     {
       "text": "Und während er äußerlich keck und zuversichtlich an den Cafés vorüberging, taxierte er mit raschem Blick nach dem Aussehen und der Kleidung eines jeden Gastes, wieviel Geld er wohl mit sich trug.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Cafés nahe Madeleine, Paris",
       "valenz": null,
       "intensitaet": null,
@@ -1587,7 +1587,7 @@
     },
     {
       "text": "Eine Wut ergriff ihn gegen diese ruhig dasitzenden Leute.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Cafés nahe Madeleine, Paris",
       "valenz": -1,
       "intensitaet": 2,
@@ -1597,7 +1597,7 @@
     },
     {
       "text": "Wenn man ihre Taschen durchsuchte, so würde man Gold, Silber und Kleingeld finden.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Cafés nahe Madeleine, Paris",
       "valenz": -1,
       "intensitaet": 1,
@@ -1607,7 +1607,7 @@
     },
     {
       "text": "Durchschnittlich mußte jeder wohl zwei Zwanzigfrancsstücke bei sich haben, etwa hundert Menschen saßen in jedem Café, und hundertmal zweimal zwanzig macht viertausend Francs.",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": -1,
       "intensitaet": 1,
@@ -1617,7 +1617,7 @@
     },
     {
       "text": "»Schweinehunde!« murmelte er vor sich hin und ging mit wiegenden Schritten weiter.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": -1,
       "intensitaet": 1,
@@ -1627,7 +1627,7 @@
     },
     {
       "text": "Hätte er nur einen an irgendeiner dunklen Straßenecke fassen können, würde er ihm weiß Gott ohne Bedenken den Hals umgedreht haben, wie er es mit den Dorfhühnern an den Tagen der großen Manöver tat.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "imaginierte dunkle Straßenecke, Paris",
       "valenz": -1,
       "intensitaet": 2,
@@ -1637,7 +1637,7 @@
     },
     {
       "text": "In Paris war das anders. Hier konnte man nicht mit dem Säbel an der Seite und dem Revolver in der Faust, fern vom wachsamen Auge der bürgerlichen Gerichtsbarkeit, in voller Freiheit herumplündern.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Paris (allgemein)",
       "valenz": -1,
       "intensitaet": 2,
@@ -1647,7 +1647,7 @@
     },
     {
       "text": "Er hatte sich Besseres erhofft, als er heimkehrte. Und nun ... Ach ja, jetzt hatte er, was er wollte!",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Paris (allgemein)",
       "valenz": -1,
       "intensitaet": 2,
@@ -1657,7 +1657,7 @@
     },
     {
       "text": "Er schnalzte mit der Zunge, als wollte er konstatieren, wie völlig ausgedörrt sein Mund schon wäre.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": -1,
       "intensitaet": 1,
@@ -1667,7 +1667,7 @@
     },
     {
       "text": "Langsam und müde schob sich die Menge an ihm vorüber, und er dachte immer noch: »Dieses Pack! All diese Idioten haben Geld in der Westentasche!«",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": -1,
       "intensitaet": 2,
@@ -1677,7 +1677,7 @@
     },
     {
       "text": "Er rempelte die Menschen an und pfiff dazu eine lustige Melodie.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": null,
       "intensitaet": null,
@@ -1687,7 +1687,7 @@
     },
     {
       "text": "Männer, die er geschubst hatte, drehten sich schimpfend um, und die Frauen riefen entrüstet: »Ungezogener Lümmel!«",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": null,
       "intensitaet": 2,
@@ -1697,7 +1697,7 @@
     },
     {
       "text": "Er ging am Vaudeville vorbei und blieb vor dem Café Americain stehen.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Café Napolitain, Boulevard des Capucines",
       "valenz": null,
       "intensitaet": 1,
@@ -1707,7 +1707,7 @@
     },
     {
       "text": "Er fragte sich, ob er nicht doch ein Glas Bier trinken sollte, so quälte ihn der Durst.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Unbekannte Strasse in Paris, Nähe Boulevard des Capucines",
       "valenz": -1,
       "intensitaet": 2,
@@ -1717,7 +1717,7 @@
     },
     {
       "text": "Ehe er sich entschloß, sah er auf die beleuchtete Uhr mitten auf dem Fahrdamm. Es war ein Viertel nach neun.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Fahrdamm in Paris, Nähe Place de l'Opéra",
       "valenz": -1,
       "intensitaet": 1,
@@ -1727,7 +1727,7 @@
     },
     {
       "text": "Er kannte sich zu genau: sobald das Glas Bier vor ihm stünde, würde er es mit einem Zug hinunterschlucken. Was sollte er dann bis elf Uhr anfangen?",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Fahrdamm in Paris, Nähe Place de l'Opéra",
       "valenz": -1,
       "intensitaet": 2,
@@ -1737,7 +1737,7 @@
     },
     {
       "text": "Er überlegte: »Ich gehe noch bis zur Madeleine und kehre dann langsam zurück.«",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Église de la Madeleine, Paris",
       "valenz": null,
       "intensitaet": null,
@@ -1747,7 +1747,7 @@
     },
     {
       "text": "Als er an die Ecke des Place de l'Opera kam, begegnete er einem dicken jungen Manne, dessen Gesicht ihm irgendwie bekannt erschien.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Place de l'Opéra, Paris",
       "valenz": null,
       "intensitaet": null,
@@ -1757,7 +1757,7 @@
     },
     {
       "text": "Er folgte ihm und suchte sich zu erinnern, während er halblaut vor sich hinsprach: »Zum Teufel, wo kenne ich diesen Kerl her?«",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Place de l'Opéra, Paris",
       "valenz": null,
       "intensitaet": null,
@@ -1767,7 +1767,7 @@
     },
     {
       "text": "Er ging und grübelte, ohne daß es ihm einfiel; dann plötzlich erschien ihm derselbe Mensch durch einen eigentümlichen Vorgang des Gedächtnisses weniger dick, jünger, in Husarenuniform.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Place de l'Opéra, Paris",
       "valenz": null,
       "intensitaet": null,
@@ -1777,7 +1777,7 @@
     },
     {
       "text": "»Halt, Forestier!« rief er laut, beschleunigte seine Schritte und klopfte dem vor ihm Gehenden auf die Schulter.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Place de l'Opéra, Paris",
       "valenz": null,
       "intensitaet": null,
@@ -1787,7 +1787,7 @@
     },
     {
       "text": "Duroy lachte: »Erkennst du mich nicht?«",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Place de l'Opéra, Paris",
       "valenz": 1,
       "intensitaet": 1,
@@ -1797,7 +1797,7 @@
     },
     {
       "text": "Duroy war überrascht und sah ihn erstaunt an.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": -1,
       "intensitaet": 1,
@@ -1807,7 +1807,7 @@
     },
     {
       "text": "Forestier hatte sich sehr verändert, er war reifer geworden. Sein Gebaren, seine Haltung zeigten den gesetzten, selbstsicheren Mann und sein Bäuchlein wußte von guten Diners zu erzählen.",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": null,
       "intensitaet": 2,
@@ -1817,7 +1817,7 @@
     },
     {
       "text": "Früher war er mager, klein und schlank, ein ausgelassener Lebemann und streitsüchtiger Radaumacher, stets angeheitert. Die drei Jahre in Paris hatten aus ihm einen ganz anderen, einen beliebten und ernsthaften Menschen gemacht, der schon einige weiße Haare an den Schläfen hatte, obgleich er nicht mehr als siebenundzwanzig Jahre zählte.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Paris (allgemein)",
       "valenz": null,
       "intensitaet": 2,
@@ -1827,7 +1827,7 @@
     },
     {
       "text": "»Nirgends. Ich mache einen Spaziergang, bevor ich nach Hause gehe.«",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": null,
       "intensitaet": null,
@@ -1837,7 +1837,7 @@
     },
     {
       "text": "Und Arm in Arm gingen sie weiter mit der leichten Vertraulichkeit, die zwischen Schulkameraden und Waffengefährten herrscht.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": null,
       "intensitaet": 1,
@@ -1847,7 +1847,7 @@
     },
     {
       "text": "»Kurz gesagt, ich krepiere vor Hunger. Als meine Dienstzeit vorbei war, wollte ich hierher kommen, um ... um mein Glück zu machen, oder vielmehr, um in Paris leben zu können. Seit sechs Monaten bin ich bei der Verwaltung der Nordbahn angestellt. Ich verdiene fünfzehnhundert Francs im Jahr, keinen Centime mehr.«",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": -1,
       "intensitaet": 3,
@@ -1857,7 +1857,7 @@
     },
     {
       "text": "»Das glaube ich. Aber was soll ich sonst anfangen? Ich bin allein, ich kenne niemanden und habe keine Protektion.«",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": -1,
       "intensitaet": 2,
@@ -1867,7 +1867,7 @@
     },
     {
       "text": "Sein Freund betrachtete ihn vom Kopf bis zu den Füßen, wie ein praktischer Mensch, der einen Gegenstand abschätzt",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "unbekannt",
       "valenz": null,
       "intensitaet": 2,
@@ -1877,7 +1877,7 @@
     },
     {
       "text": "Ich habe überall gesucht und nichts gefunden. Augenblicklich habe ich zwar etwas in Aussicht, man bietet mir eine Stelle als Stallmeister in der Reitbahn von Pellerin an. Da bekomme ich mindestens dreitausend Francs.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "unbekannt",
       "valenz": -1,
       "intensitaet": 2,
@@ -1887,7 +1887,7 @@
     },
     {
       "text": "Forestier blieb plötzlich stehen",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "unbekannt",
       "valenz": null,
       "intensitaet": null,
@@ -1897,7 +1897,7 @@
     },
     {
       "text": "wo ganz Paris verkehrt",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "ort": "Paris (allgemein)",
       "valenz": null,
       "intensitaet": 1,
@@ -1907,7 +1907,7 @@
     },
     {
       "text": "Er schwieg, dachte einige Sekunden nach und fragte",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "unbekannt",
       "valenz": null,
       "intensitaet": 1,
@@ -1917,7 +1917,7 @@
     },
     {
       "text": "Nein, ich bin zweimal durchgefallen.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "unbekannt",
       "valenz": -1,
       "intensitaet": 2,
@@ -1927,7 +1927,7 @@
     },
     {
       "text": "Wenn von Cicero oder Tiberius die Rede ist, dann weißt du ungefähr, wer das ist?",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "unbekannt",
       "valenz": null,
       "intensitaet": 1,
@@ -1937,7 +1937,7 @@
     },
     {
       "text": "Er sprach in ruhig spöttischem Tone, wie einer, der die Welt kennt und blickte dabei lächelnd auf die vorübergehende Menge.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": null,
       "intensitaet": 2,
@@ -1947,7 +1947,7 @@
     },
     {
       "text": "Sie waren jetzt am Boulevard Poissonière und standen vor einer großen Glastür, die von innen mit einer Zeitung beklebt war.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": null,
       "intensitaet": 1,
@@ -1957,7 +1957,7 @@
     },
     {
       "text": "Über dem Tor stand in großen Buchstaben aus Gasflammen der Name der Zeitung: »La Vie Française« geschrieben.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": null,
       "intensitaet": 2,
@@ -1967,7 +1967,7 @@
     },
     {
       "text": "Und die Passanten, die plötzlich in das grelle Licht dieser drei Worte traten, wurden nun auf einmal deutlich sichtbar wie am hellichten Tage, um dann sofort wieder im Dunkel zu verschwinden.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": 1,
       "intensitaet": 2,
@@ -1977,7 +1977,7 @@
     },
     {
       "text": "Duroy ging hinein, stieg eine pomphafte, schmutzige Treppe hinauf, die man von der Straße aus ganz überblicken konnte, ging durch das Vorzimmer, in dem zwei Bureaudiener seinen Gefährten grüßten, bis er in einen Warteraum gelangte.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": null,
       "intensitaet": null,
@@ -1987,7 +1987,7 @@
     },
     {
       "text": "Die Räume waren verstaubt und abgenutzt, mit Tapeten aus schmutzigem, unechtem, grünem Samt, die voller Flecken und hier und da durchlöchert waren, als hätten die Mäuse sie angeknabbert.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": -1,
       "intensitaet": 2,
@@ -1997,7 +1997,7 @@
     },
     {
       "text": "Der seltsame, eigentümliche, unbeschreibliche Geruch eines Redaktionsbureaus erfüllte den Raum. Duroy blieb unbeweglich, etwas eingeschüchtert und überrascht sitzen.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Boulevard Poissonière (Näherung, Kontext)",
       "valenz": -1,
       "intensitaet": 2,
@@ -2007,7 +2007,7 @@
     },
     {
       "text": "Von Zeit zu Zeit liefen Leute an ihm vorbei; sie kamen aus einer Tür und verschwanden durch die andere, noch ehe er Zeit hatte, sie anzusehen.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Redaktion La Vie Française, Paris",
       "valenz": 0,
       "intensitaet": 1,
@@ -2017,7 +2017,7 @@
     },
     {
       "text": "Bald waren es junge, sehr junge Leute mit geschäftigem Gesichtsausdruck, die in der Hand ein Blatt Papier trugen, das bei ihrem Laufen im Winde flatterte.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Redaktion La Vie Française, Paris",
       "valenz": null,
       "intensitaet": 1,
@@ -2027,7 +2027,7 @@
     },
     {
       "text": "Manchmal waren es auch Setzer, unter deren von Tinte beschmutzten Leinenkitteln man reinweiße Hemdkragen und eine elegante Tuchhose von modernem Schnitt sah.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Redaktion La Vie Française, Paris",
       "valenz": null,
       "intensitaet": 2,
@@ -2037,7 +2037,7 @@
     },
     {
       "text": "Vorsichtig trugen sie bedruckte Papierstreifen, frische, noch feuchte Korrekturfahnen.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Redaktion La Vie Française, Paris",
       "valenz": null,
       "intensitaet": 1,
@@ -2047,7 +2047,7 @@
     },
     {
       "text": "Bisweilen trat ein kleiner Herr mit einer etwas auffallenden Eleganz, mit einer etwas zu engen Taille, mit Beinkleidern, die zu eng anlagen, und mit übermäßig spitzen Schnabelschuhen, ein, irgendein Reporter, der Neuigkeiten aus der Lebewelt brachte.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Redaktion La Vie Française, Paris",
       "valenz": null,
       "intensitaet": 1,
@@ -2057,7 +2057,7 @@
     },
     {
       "text": "Auch andere kamen, ernste, gewichtige Persönlichkeiten. Sie trugen Zylinderhüte mit ganz flachen Rändern, als ob sie sich durch diese Form von der ganzen übrigen Menschheit unterscheiden wollten.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Redaktion La Vie Française, Paris",
       "valenz": null,
       "intensitaet": 1,
@@ -2067,7 +2067,7 @@
     },
     {
       "text": "Forestier erschien wieder, Arm in Arm mit einem hochgewachsenen, mageren Mann in den dreißiger Jahren. Dieser war in einen Frack, mit weißer Krawatte, gekleidet, hatte dunkles Haar, einen Schnurrbart mit scharfgedrehten Spitzen und eine dreiste, selbstbewußte Miene.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Redaktion La Vie Française, Paris",
       "valenz": null,
       "intensitaet": 2,
@@ -2077,7 +2077,7 @@
     },
     {
       "text": "stieg dann, einen Spazierstock unter dem Arm, pfeifend die Treppe hinab.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Redaktion La Vie Française, Paris",
       "valenz": 1,
       "intensitaet": 1,
@@ -2087,7 +2087,7 @@
     },
     {
       "text": "»Wer ist das?« fragte Duroy.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Redaktion La Vie Française, Paris",
       "valenz": null,
       "intensitaet": null,
@@ -2097,7 +2097,7 @@
     },
     {
       "text": "Beim Weitergehen begegneten sie einem kleinen dicken Herrn mit langen Haaren und unsauberem Äußeren, der schweratmend die Treppe hinaufkam.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Redaktion La Vie Française, Paris",
       "valenz": null,
       "intensitaet": 1,
@@ -2107,7 +2107,7 @@
     },
     {
       "text": "Kaum hatten sie sich an den Tisch gesetzt, als Forestier rief: »Zwei Bier!« und dann sein Glas mit einem Zuge herunterstürzte, während Duroy das Bier mit langsamen Schlucken trank und sorgsam auskostete, wie eine wundervolle und seltene Kostbarkeit.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Café Napolitain, Boulevard des Capucines",
       "valenz": null,
       "intensitaet": 1,
@@ -2117,7 +2117,7 @@
     },
     {
       "text": "Duroy das Bier mit langsamen Schlucken trank und sorgsam auskostete, wie eine wundervolle und seltene Kostbarkeit.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Café Napolitain, Boulevard des Capucines",
       "valenz": 1,
       "intensitaet": 2,
@@ -2127,7 +2127,7 @@
     },
     {
       "text": "Forestier grüßte sehr tief: »Norbert de Varenne,« sagte er, »der Dichter der ,Erloschenen Sonne', auch ein hochbezahlter Mann. Jede Erzählung, die er herausgibt, kostet dreihundert Francs und die allerlängsten haben noch nicht zweihundert Zeilen«",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Café Napolitain, Boulevard des Capucines",
       "valenz": null,
       "intensitaet": 1,
@@ -2137,7 +2137,7 @@
     },
     {
       "text": "»Komm jetzt ins Café Napolitain, ich sterbe vor Durst!«",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Café Napolitain, Boulevard des Capucines",
       "valenz": null,
       "intensitaet": 1,
@@ -2147,7 +2147,7 @@
     },
     {
       "text": "Duroy zögerte, errötete und wurde verwirrt. Endlich murmelte er: »Es ist nur ... ich habe keinen passenden Anzug ...«",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Café Napolitain, Boulevard des Capucines",
       "valenz": -1,
       "intensitaet": 2,
@@ -2157,7 +2157,7 @@
     },
     {
       "text": "In Paris kann man ein Bett vielleicht entbehren, einen Frack nie.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Paris (allgemein)",
       "valenz": null,
       "intensitaet": 2,
@@ -2167,7 +2167,7 @@
     },
     {
       "text": "Dann griff er plötzlich in seine Westentasche, zog eine Handvoll Geld hervor und legte zwei Zwanzigfrancsstücke vor seinen alten Freund hin, wobei er in einem herzlichen und vertrauten Ton sagte: »Du gibst sie mir wieder, wenn du kannst. Leihe oder kaufe dir die nötigen Kleidungsstücke, indem du eine Anzahlung gibst.«",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Café Napolitain, Boulevard des Capucines",
       "valenz": null,
       "intensitaet": 2,
@@ -2177,7 +2177,7 @@
     },
     {
       "text": "Duroy war verwirrt, aber er nahm das Geld und stammelte: »Du bist wirklich zu liebenswürdig, ich danke dir herzlich ... Verlaß dich darauf, ich werde es nie vergessen.«",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Folies Bergère",
       "valenz": -1,
       "intensitaet": 2,
@@ -2187,7 +2187,7 @@
     },
     {
       "text": "Und sie brachen auf und gingen in der Richtung nach Madeleine",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Église de la Madeleine, Paris",
       "valenz": null,
       "intensitaet": null,
@@ -2197,7 +2197,7 @@
     },
     {
       "text": "Duroy war noch immer verlegen und wußte nicht, was er vorschlagen sollte.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Église de la Madeleine, Paris",
       "valenz": -1,
       "intensitaet": 2,
@@ -2207,7 +2207,7 @@
     },
     {
       "text": "Eine Fahrt ins Bois macht nur Spaß, wenn noch ein Weib dabei ist",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Bois de Boulogne, Paris",
       "valenz": null,
       "intensitaet": 1,
@@ -2217,7 +2217,7 @@
     },
     {
       "text": "Man müßte hier einen Sommergarten haben, wie den Park Monceau, der nachts geöffnet wäre, wo man ausgezeichnete Musik hörte und unter den Bäumen Erfrischungen nehmen könnte.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Parc Monceau, Paris",
       "valenz": null,
       "intensitaet": 2,
@@ -2227,7 +2227,7 @@
     },
     {
       "text": "Man sollte da auf kiesbestreuten Fußwegen herumspazieren können, die elektrisch beleuchtet wären, und sich setzen können, wenn man Lust hätte, um von fern und nah Musik anzuhören.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "imaginierter Sommergarten, Paris",
       "valenz": null,
       "intensitaet": 2,
@@ -2237,7 +2237,7 @@
     },
     {
       "text": "So etwas gab es früher bei Muzard, aber das war zu sehr Ballokal, zuviel Tanzmusik und zuwenig Platz, zuwenig Schatten und Dunkelheit.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Bal Musard, Paris (historisch)",
       "valenz": null,
       "intensitaet": 2,
@@ -2247,7 +2247,7 @@
     },
     {
       "text": "Endlich entschloß er sich: »Ich kenne die Folies Bergère noch gar nicht, da möchte ich ganz gern einmal hin.«",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Folies Bergère",
       "valenz": 1,
       "intensitaet": 2,
@@ -2257,7 +2257,7 @@
     },
     {
       "text": "Sie gingen wieder zurück, um die Rue du Faubourg-Montmartre zu erreichen.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Rue du Faubourg-Montmartre",
       "valenz": null,
       "intensitaet": null,
@@ -2267,7 +2267,7 @@
     },
     {
       "text": "Die erleuchtete Fassade des Theaters warf grellen Schein auf die vier Straßen, die sich an dieser Stelle kreuzten.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 2,
@@ -2277,7 +2277,7 @@
     },
     {
       "text": "Eine Reihe von Droschken wartete auf den Schluß der Vorstellung.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 1,
@@ -2287,7 +2287,7 @@
     },
     {
       "text": "Forestier ging hinein, Duroy hielt ihn zurück: »Wir haben ja noch keine Billetts.«",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": null,
@@ -2297,7 +2297,7 @@
     },
     {
       "text": "Als er sich den drei Kontrolleuren näherte, grüßten sie ihn, und dem mittelsten reichte er die Hand.",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 2,
@@ -2307,7 +2307,7 @@
     },
     {
       "text": "Er nahm den Zettel, der ihm gereicht wurde, öffnete die gepolsterte, kupferbeschlagene Tür, und sie befanden sich im Theaterraum.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 1,
@@ -2317,7 +2317,7 @@
     },
     {
       "text": "Tabakdunst verschleierte wie ein leichter Nebel den Hintergrund, die Bühne und die entfernten Teile des Theaters.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": -1,
       "intensitaet": 2,
@@ -2327,7 +2327,7 @@
     },
     {
       "text": "Dieser Nebel, der ununterbrochen in feinen bläulichen Streifen aus sämtlichen Zigarren und Zigaretten der Besucher emporstieg, ballte sich an der Decke und bildete unter der mächtigen Wölbung einen Wolkenhimmel von Rauch um den Kronleuchter und über der dicht mit Zuschauern besetzten Galerie.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": -1,
       "intensitaet": 2,
@@ -2337,7 +2337,7 @@
     },
     {
       "text": "In der geräumigen Vorhalle am Eingang, die zu den Wandelgängen führte, schweiften aufgeputzte Mädchen inmitten einer Menge dunkelgekleideter Männer umher, eine Gruppe von Frauen wartete auf die Ankömmlinge, und hinter den drei Schanktischen thronten drei geschminkte, welke Verkäuferinnen von Getränken und Liebe.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 2,
@@ -2347,7 +2347,7 @@
     },
     {
       "text": "In den hohen Scheiben hinter ihnen spiegelten sich ihre Rücken und die Gesichter der Vorübergehenden.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 1,
@@ -2357,7 +2357,7 @@
     },
     {
       "text": "Forestier drängte sich schnell durch alle diese Gruppen und schritt rasch vorwärts, wie ein Mann, auf den man Rücksicht zu nehmen hat.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 2,
@@ -2367,7 +2367,7 @@
     },
     {
       "text": "Er trat an die Logenschließerin heran und sagte: »Loge siebzehn!«",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": null,
@@ -2377,7 +2377,7 @@
     },
     {
       "text": "Sie wurden in einen kleinen hölzernen Kasten eingeschlossen, der keine Decke hatte, rot tapeziert war und vier Stühle gleicher Farbe enthielt, die so eng aneinander standen, daß man sich kaum zwischen ihnen hindurchschieben konnte.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 2,
@@ -2387,7 +2387,7 @@
     },
     {
       "text": "Nach rechts und links schlossen sich in weitem Bogen, dessen Enden auf die Bühne stießen, eine lange Reihe ähnlicher Kästen an, wo gleichfalls Menschen saßen, von denen man nur Kopf und Brust sehen konnte.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 2,
@@ -2397,7 +2397,7 @@
     },
     {
       "text": "Auf der Bühne machten drei junge Männer in eng anliegenden Trikots, ein großer, ein mittlerer und ein ganz kleiner, abwechselnd Trapezkunststücke.",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 1,
@@ -2407,7 +2407,7 @@
     },
     {
       "text": "Zunächst trat der große mit kurzen, schnellen Schritten an die Rampe vor, lächelte und grüßte mit einer Kußhand. Unter dem Trikot sah man die Muskeln seiner Arme und Beine arbeiten; er drückte seine Brust möglichst kräftig heraus, um seinen etwas zu dicken Bauch zu verbergen. Sein Gesicht glich dem eines Friseurgehilfen, und ein tadelloser Scheitel teilte sein Haar genau in der Mitte des Kopfes.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 2,
@@ -2417,7 +2417,7 @@
     },
     {
       "text": "Bisweilen hing er mit ausgestreckten Armen und steifem Körper unbeweglich wagerecht in der leeren Luft, indem er sich allein durch die Kraft seiner Handgelenke festhielt.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 2,
@@ -2427,7 +2427,7 @@
     },
     {
       "text": "Duroy hatte wenig Interesse für die Darbietung. Er wandte seinen Kopf und beobachtete unaufhörlich die hinter ihm vorbeiflutende Menge von Männern und Kokotten.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": null,
@@ -2437,7 +2437,7 @@
     },
     {
       "text": "In den Logen sitzen die Stammgäste der Boulevards, einige Künstler und Halbweltdamen, hinter uns findest du die seltsamste Mischung, die es in Paris geben kann.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 2,
@@ -2447,7 +2447,7 @@
     },
     {
       "text": "Da sind die Kommis, Bankangestellte, Beamte, Verkäufer, ferner Reporter, Zuhälter, Offiziere in Zivil, Bummler im Frack, die grade im Restaurant gegessen haben und von der Großen Oper zu den Italienern rennen, und schließlich noch eine ganze Menge verdächtiger Individuen, aus denen man nicht recht klug wird.",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 2,
@@ -2457,7 +2457,7 @@
     },
     {
       "text": "von der Großen Oper zu den Italienern rennen",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 1,
@@ -2467,7 +2467,7 @@
     },
     {
       "text": "Was die Frauen angeht, so gibt es hier nur eine Art: die Halbwelt vom Americain. Sie verkaufen sich für ein oder zwei Goldstücke, wobei sie von Fremden auch fünf nehmen, und winken ihren ständigen Kunden zu, wenn sie frei sind.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 2,
@@ -2477,7 +2477,7 @@
     },
     {
       "text": "Man kennt sie alle seit zehn Jahren, man sieht sie jeden Abend das ganze Jahr hindurch in denselben Lokalen, mit Ausnahme, wenn sie einmal eine heilsame Kur im Frauengefängnis von St. Lazare oder im Lourcine durchmachen.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 2,
@@ -2487,7 +2487,7 @@
     },
     {
       "text": "Duroy hörte nicht mehr zu.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": null,
@@ -2497,7 +2497,7 @@
     },
     {
       "text": "Eins von diesen Mädchen lehnte sich über die Loge und sah ihn an.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 1,
@@ -2507,7 +2507,7 @@
     },
     {
       "text": "Es war eine üppige Brünette mit weißgeschminktem Gesicht und schwarzen Augen, die mit dem Farbstift unterstrichen waren, und riesigen, angemalten Augenbrauen. Über ihrer allzu starken Brust spannte sich die dunkle Seide ihres Kleides, und ihre geschminkten, blutroten Lippen gaben ihr etwas Tierisches, Sinnliches, Wildes, das aber trotzdem anziehend wirkte.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 2,
@@ -2517,7 +2517,7 @@
     },
     {
       "text": "das aber trotzdem anziehend wirkte",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Folies Bergère",
       "valenz": 1,
       "intensitaet": 2,
@@ -2527,7 +2527,7 @@
     },
     {
       "text": "mechanisch tastete er nach den zwei Goldstücken in seiner Westentasche",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": null,
@@ -2537,7 +2537,7 @@
     },
     {
       "text": "Der Vorhang fiel und das Orchester begann einen Walzer zu spielen.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": 0,
       "intensitaet": 1,
@@ -2547,7 +2547,7 @@
     },
     {
       "text": "Wollen wir nicht auch einmal durch den Wandelgang gehen?",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": null,
@@ -2557,7 +2557,7 @@
     },
     {
       "text": "Sie verließen ihre Loge und waren sofort von dem Strom der Menge umgeben.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": 0,
       "intensitaet": 1,
@@ -2567,7 +2567,7 @@
     },
     {
       "text": "Gedrückt, gepreßt, hin und her gestoßen, gingen sie weiter und ein Wald von Hüten wogte vor ihren Augen.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": -1,
       "intensitaet": 2,
@@ -2577,7 +2577,7 @@
     },
     {
       "text": "Zwischen Ellenbogen, Brüsten und Rücken der Männer drängten sich behend paarweise die Kokotten hindurch, die sich hier so recht in ihrem Element, wie Fische im Wasser, zu fühlen schienen.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 2,
@@ -2587,7 +2587,7 @@
     },
     {
       "text": "Duroy war entzückt. Er ließ sich treiben und wurde von der stickigen Luft, die durch Tabak, Menschenausdünstungen und Dirnenparfüms verpestet war, berauscht.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": 1,
       "intensitaet": 3,
@@ -2597,7 +2597,7 @@
     },
     {
       "text": "Sie wandten sich nach links und kamen in eine Art Wintergarten, wo zwei geschmacklose Fontänen ein bißchen kühle Luft schafften.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 1,
@@ -2607,7 +2607,7 @@
     },
     {
       "text": "Unter den paar Taxusbäumen und Thujas saßen Männer und Frauen an Zinktischen und tranken.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 1,
@@ -2617,7 +2617,7 @@
     },
     {
       "text": "Sie setzten sich und beobachteten das Publikum.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Folies Bergère",
       "valenz": 0,
       "intensitaet": 1,
@@ -2627,7 +2627,7 @@
     },
     {
       "text": "Sie bildeten wirklich ein hübsches, gut ausgesuchtes Frauenpaar. Sobald sie Duroy erblickte, lächelte sie, als hätten sich ihre Augen schon vertraute und verschwiegene Dinge gesagt.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 1,
@@ -2637,7 +2637,7 @@
     },
     {
       "text": "Sie nahm einen Stuhl und setzte sich ruhig ihm gegenüber und ließ ihre Freundin auch Platz nehmen.",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 1,
@@ -2647,7 +2647,7 @@
     },
     {
       "text": "Duroy wußte vor Verlegenheit nicht, was er sagen sollte. Er drehte an seinem wohlgepflegten Schnurrbart und lächelte nichtssagend vor sich hin.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": -1,
       "intensitaet": 2,
@@ -2657,7 +2657,7 @@
     },
     {
       "text": "Dann gingen sie fort, sich in den Hüften wiegend.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": null,
@@ -2667,7 +2667,7 @@
     },
     {
       "text": "Sie drückten sich die Hände, und der Journalist ging fort.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": null,
@@ -2677,7 +2677,7 @@
     },
     {
       "text": "Sobald er fort war, fühlte Duroy sich frei.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Folies Bergère",
       "valenz": 1,
       "intensitaet": 2,
@@ -2687,7 +2687,7 @@
     },
     {
       "text": "Er tastete vergnügt von neuem nach den beiden Goldstücken in seiner Westentasche.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": 1,
       "intensitaet": 2,
@@ -2697,7 +2697,7 @@
     },
     {
       "text": "Dann erhob er sich und mischte sich unter die Menge, die er suchend durchforschte.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": null,
@@ -2707,7 +2707,7 @@
     },
     {
       "text": "Bald erblickte er die beiden Mädchen, die Brünette und die Rothaarige, die immer noch in stolzer Haltung durch die Menge zogen.",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Folies Bergère",
       "valenz": 1,
       "intensitaet": 2,
@@ -2717,7 +2717,7 @@
     },
     {
       "text": "Er ging direkt auf sie zu. Als er ihnen ganz nahe war, verlor er wieder den Mut.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": null,
@@ -2727,7 +2727,7 @@
     },
     {
       "text": "Er zitterte vor Begierde",
-      "category": "gold_mittel",
+      "category": "stimmung_emotion",
       "ort": "Folies Bergère",
       "valenz": 1,
       "intensitaet": 2,
@@ -2737,7 +2737,7 @@
     },
     {
       "text": "»Ja, aber ich habe nur ein Goldstück in der Tasche.«",
-      "category": "gold_hell",
+      "category": "gesellschaft_soziales",
       "ort": "Folies Bergère",
       "valenz": -1,
       "intensitaet": 1,
@@ -2747,7 +2747,7 @@
     },
     {
       "text": "Alle drei blieben stehen und hielten die Bewegung der Spaziergänger auf, die einen Wirbel um sie bildeten.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": 2,
@@ -2757,7 +2757,7 @@
     },
     {
       "text": "Als sie das Lokal verließen, überlegte er, daß er sich mit den andern zwanzig Francs ohne Schwierigkeiten für den nächsten Abend einen Frack leihen könnte.",
-      "category": "gold_dunkel",
+      "category": "raum_umwelt",
       "ort": "Folies Bergère",
       "valenz": null,
       "intensitaet": null,

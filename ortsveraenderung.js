@@ -118,7 +118,7 @@ function ovLabelZeilen(text) {
 }
 
 function ovAddiere(ziel, quelle) {
-  ['gold_dunkel', 'gold_mittel', 'gold_hell'].forEach(cat => {
+  ['raum_umwelt', 'stimmung_emotion', 'gesellschaft_soziales'].forEach(cat => {
     ['neg', 'pos', 'neutral', 'unrated'].forEach(v => { ziel[cat][v] += quelle[cat][v]; });
   });
 }

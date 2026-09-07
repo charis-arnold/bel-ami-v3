@@ -267,12 +267,12 @@ def resample_by_arclength(points, n):
 def kategorie_fuer_annotation(tags, valenz):
     tags = tags or []
     if "social" in tags:
-        return "gold_hell"
+        return "gesellschaft_soziales"
     if "mood" in tags or valenz is not None:
-        return "gold_mittel"
+        return "stimmung_emotion"
     if "space" in tags or "location" in tags:
-        return "gold_dunkel"
-    return "gold_dunkel"
+        return "raum_umwelt"
+    return "raum_umwelt"
 
 
 def valenz_bucket(v):
@@ -287,9 +287,9 @@ def valenz_bucket(v):
 
 def leere_bandcounts():
     return {
-        "gold_dunkel": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
-        "gold_mittel": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
-        "gold_hell": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
+        "raum_umwelt": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
+        "stimmung_emotion": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
+        "gesellschaft_soziales": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
     }
 
 

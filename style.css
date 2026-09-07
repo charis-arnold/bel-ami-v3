@@ -250,7 +250,7 @@ h2 {
   border-bottom: 1px solid rgba(58, 80, 88, 0.15);
   background: var(--menue);
   padding: 10px 20px;
-  color: #c6d2d7;
+  color: #C6D2D7;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
 }
@@ -614,7 +614,7 @@ body.legende-offen .annotation-box.pos-unten-links {
 
 .kapitel-register-item.aktiv {
   background: var(--menue);
-  color: #c6d2d7;
+  color: #C6D2D7;
 }
 
 /* "Plan"/"Graph"-Zeile: ersetzt den ehemaligen ansicht-wechseln-btn
@@ -655,7 +655,7 @@ body.legende-offen .annotation-box.pos-unten-links {
 
 .kapitel-register-modus-item.aktiv {
   background: var(--menue);
-  color: #c6d2d7;
+  color: #C6D2D7;
 }
 
 /* Leerzeile zwischen Plan/Graph+Alle (oben) und der Kapitelliste

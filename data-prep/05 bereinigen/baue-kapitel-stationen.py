@@ -18,7 +18,7 @@ Zwei Felder fehlen in kapitel-XX-final.json komplett und werden hier selbst
 deterministisch berechnet (siehe kategorie_fuer_annotation() und die
 Koordinaten-Logik weiter unten):
 
-1. category (gold_dunkel/gold_mittel/gold_hell) — Prioritätsregel nach tags/
+1. category (raum_umwelt/stimmung_emotion/gesellschaft_soziales) — Prioritätsregel nach tags/
    valenz, siehe kategorie_fuer_annotation().
 2. Koordinaten für Annotationen ohne eigene lat/lng — diese werden einem
    gemeinsamen Sammelpunkt-ortRun "Unbestimmt (Kapitel XX)" pro Kapitel
@@ -213,23 +213,23 @@ def resample_by_arclength(points, n):
 
 # ── category-Berechnung ─────────────────────────────────────────────────────
 # Deterministische Prioritätsregel (siehe CATEGORY_LABELS in datenbereinigung.js
-# für die Bedeutung: gold_dunkel="Raum & Umwelt", gold_mittel="Stimmung &
-# Emotion", gold_hell="Soziales"):
-#   1. "social" in tags            -> gold_hell
-#   2. "mood" in tags ODER valenz != null -> gold_mittel
-#   3. "space"/"location" in tags  -> gold_dunkel
-#   4. sonst (move/time/Figurenname etc.) -> gold_dunkel (Default, konsistent
+# für die Bedeutung: raum_umwelt="Raum & Umwelt", stimmung_emotion="Stimmung &
+# Emotion", gesellschaft_soziales="Soziales"):
+#   1. "social" in tags            -> gesellschaft_soziales
+#   2. "mood" in tags ODER valenz != null -> stimmung_emotion
+#   3. "space"/"location" in tags  -> raum_umwelt
+#   4. sonst (move/time/Figurenname etc.) -> raum_umwelt (Default, konsistent
 #      mit Kapitel 1s Praxis: reine Bewegungs-/Zeit-Annotationen sind dort
-#      ebenfalls meist gold_dunkel)
+#      ebenfalls meist raum_umwelt)
 def kategorie_fuer_annotation(a):
     tags = a.get("tags") or []
     if "social" in tags:
-        return "gold_hell"
+        return "gesellschaft_soziales"
     if "mood" in tags or a.get("valenz") is not None:
-        return "gold_mittel"
+        return "stimmung_emotion"
     if "space" in tags or "location" in tags:
-        return "gold_dunkel"
-    return "gold_dunkel"
+        return "raum_umwelt"
+    return "raum_umwelt"
 
 
 def valenz_bucket(v):
@@ -244,9 +244,9 @@ def valenz_bucket(v):
 
 def leere_bandcounts():
     return {
-        "gold_dunkel": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
-        "gold_mittel": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
-        "gold_hell": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
+        "raum_umwelt": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
+        "stimmung_emotion": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
+        "gesellschaft_soziales": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
     }
 
 

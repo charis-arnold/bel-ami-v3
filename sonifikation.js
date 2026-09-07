@@ -146,9 +146,9 @@ const ELEMENT_INSTRUMENTE = {
 // eine Korrektur der Aufnahmen. Wer ein Instrument tauscht, muss neu messen.
 // Das musikalische Gewicht steht getrennt davon in ELEMENT_ROLLEN: lautstaerke
 // gleicht die Aufnahme aus, gain sagt, wie wichtig die Stimme ist.
-  gold_dunkel: { sound: 'marimba', oktave: 3, name: 'Marimba', lautstaerke: 10 }, // Raum und Umwelt
-  gold_mittel: { sound: 'harp', oktave: 4, name: 'Harfe' },              // Stimmung und Emotion
-  gold_hell: { sound: 'steinway', oktave: 5, name: 'Klavier', lautstaerke: 0.12 }, // Gesellschaft und Soziales
+  raum_umwelt: { sound: 'marimba', oktave: 3, name: 'Marimba', lautstaerke: 10 }, // Raum und Umwelt
+  stimmung_emotion: { sound: 'harp', oktave: 4, name: 'Harfe' },              // Stimmung und Emotion
+  gesellschaft_soziales: { sound: 'steinway', oktave: 5, name: 'Klavier', lautstaerke: 0.12 }, // Gesellschaft und Soziales
 };
 
 // Instrument 4: das Vibraphon. Dasselbe Instrument für alle F-Werte, aber je

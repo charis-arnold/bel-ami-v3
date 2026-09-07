@@ -75,9 +75,9 @@ function drawHatchedCircle(cx, cy, r, color, alphaSkala = 1) {
 
 function leereBandCounts() {
   return {
-    gold_dunkel: { neg: 0, pos: 0, neutral: 0, unrated: 0 },
-    gold_mittel: { neg: 0, pos: 0, neutral: 0, unrated: 0 },
-    gold_hell: { neg: 0, pos: 0, neutral: 0, unrated: 0 },
+    raum_umwelt: { neg: 0, pos: 0, neutral: 0, unrated: 0 },
+    stimmung_emotion: { neg: 0, pos: 0, neutral: 0, unrated: 0 },
+    gesellschaft_soziales: { neg: 0, pos: 0, neutral: 0, unrated: 0 },
   };
 }
 
@@ -404,9 +404,9 @@ function zeichneFwertPunkte(cx, cy, radius, fwertAnnotationen, alphaSkala = 1) {
 // Radius hängt allein an pos bzw. neg — bei gleichem pos-Wert läge der neue
 // Halbkreis genau auf dem vorigen, und der Schritt wäre nicht zu sehen.
 const DEMO_BAND_COUNTS = {
-  gold_dunkel: { pos: 8, neg: 3, neutral: 3, unrated: 2 },
-  gold_mittel: { pos: 6, neg: 1, neutral: 2, unrated: 1 },
-  gold_hell: { pos: 4, neg: 2, neutral: 1, unrated: 1 },
+  raum_umwelt: { pos: 8, neg: 3, neutral: 3, unrated: 2 },
+  stimmung_emotion: { pos: 6, neg: 1, neutral: 2, unrated: 1 },
+  gesellschaft_soziales: { pos: 4, neg: 2, neutral: 1, unrated: 1 },
 };
 
 // Umkehrung von valenzBucket(); unrated hat keinen Zahlenwert.
@@ -584,7 +584,7 @@ function stufenBandCounts(bandCounts, mitKategorie, valenzen) {
   // Ohne Kategorie: ein einziges Band. Die Mengen werden
   // auf das grösste Band heruntergerechnet statt summiert — die Summe ergäbe
   // einen grösseren Kreis, und der Aussenradius soll über alle Stufen stehen
-  // bleiben. gold_mittel, weil zeichneKreiseFuerRun genau dieses Band deckend
+  // bleiben. stimmung_emotion, weil zeichneKreiseFuerRun genau dieses Band deckend
   // zeichnet statt im Multiply; ein einzelnes Band soll nicht nachdunkeln.
   /*if (!mitKategorie) {
     let summe = { neg: 0, pos: 0, neutral: 0, unrated: 0 };
@@ -601,7 +601,7 @@ function stufenBandCounts(bandCounts, mitKategorie, valenzen) {
     let gesamt = summe.neg + summe.pos + summe.neutral + summe.unrated;
     if (!gesamt) return {};
     let f = groesstesBand / gesamt;
-    return { gold_mittel: aufteilen({
+    return { stimmung_emotion: aufteilen({
       neg: summe.neg * f, pos: summe.pos * f,
       neutral: summe.neutral * f, unrated: summe.unrated * f,
     }) };

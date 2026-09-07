@@ -15,9 +15,9 @@
 // Legende (kreisgrafik.js) und der Annotationsleiste (sketch.js) — beide
 // müssen dasselbe Wort zeigen.
 const CATEGORY_LABELS = {
-  gold_dunkel: 'Raum und Umwelt',
-  gold_mittel: 'Stimmung und Emotion',
-  gold_hell: 'Gesellschaft und Soziales',
+  raum_umwelt: 'Raum und Umwelt',
+  stimmung_emotion: 'Stimmung und Emotion',
+  gesellschaft_soziales: 'Gesellschaft und Soziales',
 };
 const ROUTE_COLOR = '#63561F';
 
@@ -122,12 +122,23 @@ const FOTO_MARKER_KERN_FARBE_RGB = hexZuRgb(FOTO_MARKER_KERN_FARBE);
 const SCHRIFT_SANS = "'Source Sans 3', sans-serif";
 const SCHRIFT_SERIF = "'Source Serif 4', serif";
 
-// Harmonische Reihe: gleiche Sättigung und Helligkeit, Hue wandert 44°–50°.
-// Die Schlüssel bleiben, daran hängt zaehleBandCounts.
+// Die drei Gefühlskategorien, in Zeichenreihenfolge von innen nach aussen.
+//
+// Keine Farbreihe: die drei Töne trennen sich in Hue UND Helligkeit — Gold
+// (HSL 46° 64% 47%), Altrosa (7° 25% 65%), Nachtblau (222° 28% 28%). Früher
+// standen hier drei Goldtöne, die nur 5° Hue und 4 Punkte Helligkeit
+// auseinanderlagen. docs/Legende.pdf zeigt noch diese alte Reihe
+// (#BA9E00 / #C49600 / #CCAA00) und ist entsprechend nachzuziehen.
+//
+// ACHTUNG die Schlüssel stehen wörtlich in den Daten — als
+// annotation.category und als Schlüssel in ortRuns[].bandCounts in allen
+// kapitelXX-stationen.json sowie in kreisvergleich-orte.json. Geschrieben
+// werden sie von den Skripten in "data-prep/05 bereinigen/". Umbenennen
+// heisst also: JS, JSON und Python gemeinsam anfassen.
 const KREIS_KATEGORIEN = [
-  { key: 'gold_dunkel', farbe: [198, 162, 43] },
-  { key: 'gold_mittel', farbe: [188, 148, 143] },
-  { key: 'gold_hell', farbe: [52, 64, 92] },
+  { key: 'raum_umwelt', farbe: [198, 162, 43] },
+  { key: 'stimmung_emotion', farbe: [188, 148, 143] },
+  { key: 'gesellschaft_soziales', farbe: [52, 64, 92] },
 ];
 
 // Dieselben drei Farben als Hexstrings, für die Aufrufer, die keine Tripel
@@ -388,9 +399,9 @@ function sammleAnnotationenNachOrtBasis(filter, annIndex, daten = stationenData)
 // damit Aufrufer mit beidem nur einmal über daten.annotationen laufen.
 function zaehleBandCounts(annotationen) {
   let ergebnis = {
-    gold_dunkel: { unrated: 0, neg: 0, pos: 0, neutral: 0 },
-    gold_mittel: { unrated: 0, neg: 0, pos: 0, neutral: 0 },
-    gold_hell: { unrated: 0, neg: 0, pos: 0, neutral: 0 },
+    raum_umwelt: { unrated: 0, neg: 0, pos: 0, neutral: 0 },
+    stimmung_emotion: { unrated: 0, neg: 0, pos: 0, neutral: 0 },
+    gesellschaft_soziales: { unrated: 0, neg: 0, pos: 0, neutral: 0 },
   };
   annotationen.forEach(a => {
     ergebnis[a.category][valenzBucket(a.valenz)]++;

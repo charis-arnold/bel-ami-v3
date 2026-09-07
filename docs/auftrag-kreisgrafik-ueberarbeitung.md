@@ -13,26 +13,26 @@ ist abgeschlossen, dieser Auftrag baut darauf auf, ersetzt ihn nicht.
 
 Alte Werte (Helligkeits-Kaskade, verworfen):
 ```js
-const CATEGORY_COLORS = { gold_dunkel: '#63561F', gold_mittel: '#917712', gold_hell: '#BF9E16' };
+const CATEGORY_COLORS = { raum_umwelt: '#63561F', stimmung_emotion: '#917712', gesellschaft_soziales: '#BF9E16' };
 const KREIS_KATEGORIEN = [
-  { key: 'gold_dunkel', farbe: [142, 117, 42] },
-  { key: 'gold_mittel', farbe: [206, 169, 62] },
-  { key: 'gold_hell', farbe: [202, 179, 122] },
+  { key: 'raum_umwelt', farbe: [142, 117, 42] },
+  { key: 'stimmung_emotion', farbe: [206, 169, 62] },
+  { key: 'gesellschaft_soziales', farbe: [202, 179, 122] },
 ];
 ```
 
 Neue Werte (harmonische Reihe, gleiche Sättigung/Helligkeit, Hue
 wandert nur 44°–50°):
 ```js
-const CATEGORY_COLORS = { gold_dunkel: '#DEB031', gold_mittel: '#DEB831', gold_hell: '#DEC131' };
+const CATEGORY_COLORS = { raum_umwelt: '#DEB031', stimmung_emotion: '#DEB831', gesellschaft_soziales: '#DEC131' };
 const KREIS_KATEGORIEN = [
-  { key: 'gold_dunkel', farbe: [222, 176, 49] },
-  { key: 'gold_mittel', farbe: [222, 184, 49] },
-  { key: 'gold_hell', farbe: [222, 193, 49] },
+  { key: 'raum_umwelt', farbe: [222, 176, 49] },
+  { key: 'stimmung_emotion', farbe: [222, 184, 49] },
+  { key: 'gesellschaft_soziales', farbe: [222, 193, 49] },
 ];
 ```
 
-Die Schlüssel `gold_dunkel`/`gold_mittel`/`gold_hell` NICHT umbenennen
+Die Schlüssel `raum_umwelt`/`stimmung_emotion`/`gesellschaft_soziales` NICHT umbenennen
 — zu viele Abhängigkeiten in `kreisgrafik.js`
 (`zaehleBandCounts`, `zeichneKreiseFuerRun`) und vermutlich weiteren
 Dateien. Nur die Farbwerte ändern, keine Schlüssel.

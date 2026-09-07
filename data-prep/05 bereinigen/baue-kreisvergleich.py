@@ -80,14 +80,14 @@ ORTE_DEFINITIONEN = [
 
 def leere_bandcounts():
     return {
-        "gold_dunkel": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
-        "gold_mittel": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
-        "gold_hell": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
+        "raum_umwelt": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
+        "stimmung_emotion": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
+        "gesellschaft_soziales": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
     }
 
 
 def addiere(ziel, quelle):
-    for cat in ("gold_dunkel", "gold_mittel", "gold_hell"):
+    for cat in ("raum_umwelt", "stimmung_emotion", "gesellschaft_soziales"):
         for v in ("neg", "pos", "neutral", "unrated"):
             ziel[cat][v] += quelle.get(cat, {}).get(v, 0)
 

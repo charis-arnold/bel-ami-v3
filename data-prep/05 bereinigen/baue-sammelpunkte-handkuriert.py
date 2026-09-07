@@ -656,9 +656,9 @@ def valenz_bucket(v):
 
 def leere_bandcounts():
     return {
-        "gold_dunkel": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
-        "gold_mittel": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
-        "gold_hell": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
+        "raum_umwelt": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
+        "stimmung_emotion": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
+        "gesellschaft_soziales": {"neg": 0, "pos": 0, "neutral": 0, "unrated": 0},
     }
 
 

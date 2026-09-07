@@ -5,19 +5,19 @@
       {
         "nr": "05",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 2
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 1,
             "pos": 2,
             "neutral": 0,
             "unrated": 2
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 3,
             "pos": 0,
             "neutral": 1,
@@ -28,19 +28,19 @@
       {
         "nr": "07",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 3
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 1,
             "pos": 2,
             "neutral": 0,
             "unrated": 1
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 1,
             "neutral": 0,
@@ -51,19 +51,19 @@
       {
         "nr": "08",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 3
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 2,
             "neutral": 0,
             "unrated": 5
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -74,19 +74,19 @@
       {
         "nr": "09",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 6
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 15,
             "pos": 3,
             "neutral": 0,
             "unrated": 1
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 2,
             "pos": 2,
             "neutral": 0,
@@ -97,19 +97,19 @@
       {
         "nr": "12",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 4
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 2,
             "pos": 0,
             "neutral": 1,
             "unrated": 0
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -120,19 +120,19 @@
       {
         "nr": "13",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 14
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 13,
             "pos": 3,
             "neutral": 1,
             "unrated": 6
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 1,
             "pos": 2,
             "neutral": 0,
@@ -143,19 +143,19 @@
       {
         "nr": "17",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 3
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 2
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -166,19 +166,19 @@
       {
         "nr": "18",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 7
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 5,
             "pos": 0,
             "neutral": 0,
             "unrated": 6
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -194,19 +194,19 @@
       {
         "nr": "01",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 2,
             "pos": 0,
             "neutral": 0,
             "unrated": 5
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 2,
             "pos": 1,
             "neutral": 0,
             "unrated": 5
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -217,19 +217,19 @@
       {
         "nr": "10",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 1
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 3
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -245,19 +245,19 @@
       {
         "nr": "01",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 1,
             "pos": 0,
             "neutral": 0,
             "unrated": 8
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 5,
             "pos": 1,
             "neutral": 0,
             "unrated": 5
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -268,19 +268,19 @@
       {
         "nr": "04",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 1
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 1
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -291,19 +291,19 @@
       {
         "nr": "05",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 10
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 2,
             "neutral": 1,
             "unrated": 5
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 1,
             "pos": 1,
             "neutral": 2,
@@ -314,19 +314,19 @@
       {
         "nr": "10",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 4
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 1,
             "neutral": 0,
             "unrated": 0
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -337,19 +337,19 @@
       {
         "nr": "13",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 1
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 1
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 2,
             "neutral": 0,
@@ -360,19 +360,19 @@
       {
         "nr": "14",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 3
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 1,
             "neutral": 0,
             "unrated": 1
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -388,19 +388,19 @@
       {
         "nr": "03",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 1,
             "neutral": 0,
             "unrated": 2
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 1,
             "neutral": 0,
             "unrated": 1
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -411,19 +411,19 @@
       {
         "nr": "12",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 5
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 1
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -439,19 +439,19 @@
       {
         "nr": "06",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 15
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 11,
             "pos": 7,
             "neutral": 3,
             "unrated": 8
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 5,
             "pos": 2,
             "neutral": 1,
@@ -462,19 +462,19 @@
       {
         "nr": "07",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 2
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 0
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -485,19 +485,19 @@
       {
         "nr": "11",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 7
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 3,
             "pos": 6,
             "neutral": 0,
             "unrated": 0
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -508,19 +508,19 @@
       {
         "nr": "13",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 3
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 1
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -536,19 +536,19 @@
       {
         "nr": "01",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 4,
             "pos": 2,
             "neutral": 2,
             "unrated": 24
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 4,
             "neutral": 1,
             "unrated": 8
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 1,
             "pos": 0,
             "neutral": 0,
@@ -559,19 +559,19 @@
       {
         "nr": "04",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 3
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 3,
             "pos": 2,
             "neutral": 1,
             "unrated": 1
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 2,
             "pos": 0,
             "neutral": 0,
@@ -582,19 +582,19 @@
       {
         "nr": "05",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 11
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 1
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 1,
             "pos": 0,
             "neutral": 0,
@@ -605,19 +605,19 @@
       {
         "nr": "06",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 3
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 1
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -633,19 +633,19 @@
       {
         "nr": "01",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 3,
             "pos": 0,
             "neutral": 0,
             "unrated": 5
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 7,
             "pos": 0,
             "neutral": 0,
             "unrated": 1
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 1,
             "pos": 0,
             "neutral": 0,
@@ -656,19 +656,19 @@
       {
         "nr": "18",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 24
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 3,
             "pos": 15,
             "neutral": 1,
             "unrated": 2
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 1,
             "pos": 9,
             "neutral": 0,
@@ -684,19 +684,19 @@
       {
         "nr": "01",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 2,
             "pos": 1,
             "neutral": 1,
             "unrated": 8
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 1
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -707,19 +707,19 @@
       {
         "nr": "03",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 1,
             "pos": 1,
             "neutral": 1,
             "unrated": 25
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 1,
             "neutral": 0,
             "unrated": 7
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 1,
             "neutral": 0,
@@ -730,19 +730,19 @@
       {
         "nr": "04",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 12
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 2,
             "pos": 0,
             "neutral": 0,
             "unrated": 5
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 3,
             "pos": 3,
             "neutral": 0,
@@ -753,19 +753,19 @@
       {
         "nr": "05",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 3
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 1,
             "pos": 0,
             "neutral": 0,
             "unrated": 4
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 1,
             "pos": 0,
             "neutral": 0,
@@ -776,19 +776,19 @@
       {
         "nr": "06",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 5
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 1,
             "pos": 4,
             "neutral": 0,
             "unrated": 0
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 1,
             "pos": 1,
             "neutral": 0,
@@ -799,19 +799,19 @@
       {
         "nr": "07",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 7
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 1,
             "neutral": 0,
             "unrated": 5
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 1,
             "pos": 0,
             "neutral": 0,
@@ -822,19 +822,19 @@
       {
         "nr": "09",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 0
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 0
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -845,19 +845,19 @@
       {
         "nr": "10",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 5
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 2,
             "pos": 1,
             "neutral": 0,
             "unrated": 0
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 2,
             "pos": 1,
             "neutral": 0,
@@ -868,19 +868,19 @@
       {
         "nr": "11",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 3
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 0
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 1,
             "neutral": 0,
@@ -891,19 +891,19 @@
       {
         "nr": "12",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 7
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 1,
             "pos": 3,
             "neutral": 0,
             "unrated": 0
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -914,19 +914,19 @@
       {
         "nr": "13",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 3
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 3
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
@@ -937,19 +937,19 @@
       {
         "nr": "16",
         "bandCounts": {
-          "gold_dunkel": {
+          "raum_umwelt": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
             "unrated": 1
           },
-          "gold_mittel": {
+          "stimmung_emotion": {
             "neg": 1,
             "pos": 0,
             "neutral": 0,
             "unrated": 6
           },
-          "gold_hell": {
+          "gesellschaft_soziales": {
             "neg": 0,
             "pos": 0,
             "neutral": 0,
